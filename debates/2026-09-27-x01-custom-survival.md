@@ -8,7 +8,7 @@ card: C001
 ## Final conclusion
 節慶習俗能否跨世代存活，由三個條件共同決定：(a) 相關性校正後的**有效**獨立傳播通道數 $k_{\text{eff}}$ 夠高，且其中至少一條屬於斜向/制度型通道（而非只計算通道「數量」）；(b) 至少一個制度/曆法錨點的存廢**不被單一集中權力片面決定**（漸進侵蝕與片面撤除是兩種不同、需分開評估的失效模式）；(c) 該槽位原始服務的社會功能仍被實際履行，且此判定使用**事前**（非事後）的功能判準。儀式內建的結構性代價/可驗證承諾（costly signaling）屬於相關因子，因為它可能鞏固或催生條件(b)的錨點；但觀察者事後的主觀懷舊/情感濃度，若不伴隨結構性代價或制度支持，仍是邊際因子。任一必要條件缺席，即使名目通道數字面上很多，習俗仍可能一代內消失；反之，缺席也非結構性不可逆——人為刻意介入（復振、重新制度化）可以逆轉，這點必須與「保護態」的說法同時成立，不能自相矛盾。
 
-**Confidence: medium** (medium by explicit decision at final review 2026-09-27 — the Step 5 rule strictly yields low (proposer self-rated medium-low); low and medium route identically (delta debate), user may change: lin-debate Step 5 unreviewed-revision rule — claims first introduced in the proposer's revision were never re-checked by critics, and no round 2 ran; grader-found residual problems are listed in card C001 **Open objections**).
+**Confidence: medium** — round 2 (2026-09-27, option b) re-checked the claims introduced in the revision; open majors remain (see Round 2 below).
 
 ## Objection ledger
 | role | objection | severity | outcome (conceded/refuted/open) |
@@ -125,3 +125,15 @@ OBJECTION 3
 - source: none
 - severity: minor
 - would resolve it: Keep the physics analogy (it serves the physics-trained learner) but add one plain-language restatement immediately before or after each occurrence — e.g. "single family line = single point of failure, no redundancy" ahead of the Josephson-junction language — so the conclusion is legible without the physics vocabulary.
+
+## Round 2 — re-check of revised claims (2026-09-27)
+New claims listed by each critic: Skeptic 18, Insider 4 (total 22).
+
+| role | objection (one line) | severity | outcome |
+|---|---|---|---|
+| Skeptic O1 | 斜向/制度通道在政治性壓制風險相關時仍可能塌縮回 $k_{\text{eff}}\approx1$，$k_{\text{eff}}$ 公式的 $\bar\rho$ 僅校正人口結構相關性，未涵蓋此項 | major | open |
+| Skeptic O2 | 「原始功能」判準對缺乏早期民族誌/普查基線的習俗不可判定，criterion (b) 在最可能滅絕的邊緣案例上無法評估 | major | open |
+| Skeptic O3 | 儀式代價/可見度可能反而提高被單一集中權力鎖定壓制的曝光度，與「costly signaling 無條件鞏固存續」的列法矛盾 | major | open |
+| Insider O1 | Sosis costly-signaling 效果在原研究中僅對宗教框架的公社成立，世俗公社效果不顯著，修訂稿卻當一般性機制陳述 | major | open |
+
+Verbatim: `_backup-2026-09-27/debate-r2/`

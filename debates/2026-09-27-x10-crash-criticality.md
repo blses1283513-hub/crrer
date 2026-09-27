@@ -10,7 +10,7 @@ card: C003
 
 Original confidence annotation (moved from front matter): high for the core claim (cannot predict crash date); the "risk dashboard" part is recorded as an unproven hypothesis (low) inside the card's Open objections.
 
-**Confidence: medium** (downgraded 2026-09-27 at final review: lin-debate Step 5 unreviewed-revision rule — claims first introduced in the proposer's revision were never re-checked by critics, and no round 2 ran; grader-found residual problems are listed in card C003 **Open objections**).
+**Confidence: medium** — round 2 (2026-09-27, option b) re-checked the claims introduced in the revision; open majors remain (see Round 2 below).
 
 ## Objection ledger
 | role | objection | severity | outcome (conceded/refuted/open) |
@@ -126,3 +126,16 @@ OBJECTION 3
 - source: none
 - severity: minor
 - would resolve it: replace or follow the RG/lattice sentence with a one-line finance-native restatement, e.g. "discrete self-similar herding — small cliques rolling up into ever-larger ones at a roughly constant branching ratio — is what produces the oscillation frequency ω; no renormalization-group machinery is needed to state that."
+
+## Round 2 — re-check of revised claims (2026-09-27)
+New claims listed by each critic: Skeptic 12, Insider 9 (total 21).
+
+| role | objection (one line) | severity | outcome |
+|---|---|---|---|
+| Skeptic O1 | $\lambda$ 非定態可能只是短窗估計雜訊造成的假象，與參數簡併是同一弱點的兩種症狀，而非第四條獨立證據 | major | open |
+| Skeptic O2 | $N\ge15$「獨立」歷史泡沫實際上互相相關（共享全球流動性循環），違反 Brier score 檢定的獨立性假設 | major | open |
+| Skeptic O3 | GSADF「收斂」只佐證了「崩盤難精確報時」這個沒人反對的瑣碎結論，對 LPPL 機制本身不構成佐證 | minor | open |
+| Insider O1 | 引用 GSADF/SADF 為乾淨的第二條獨立證據，卻未提及其在槓桿效應/序列相關雜訊下已知的檢定力不足與尺寸失真問題 | major | open |
+| Insider O2 | Phillips-Wu-Yu/Phillips-Shi-Yu 實際上會為泡沫起訖做日期標定，與「只測爆炸區間、非精確時間點」的描述不符 | minor | open |
+
+Verbatim: `_backup-2026-09-27/debate-r2/`

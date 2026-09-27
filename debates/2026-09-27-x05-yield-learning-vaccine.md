@@ -8,7 +8,7 @@ card: C002
 ## Final conclusion
 晶圓良率學習的統計工具骨架（SPC、DOE/QbD、多變量監控）可以**有條件地**搬到疫苗量產放大，但條件比原稿嚴格得多：(a) SPC 需先有 ≥20–25 個穩定、盡量獨立的歷史批次才可信；(b) 回饋迴路必須拆成「製程內 CPP/CQA 監控」（PAT 已達分鐘級，可搬）與「批次放行決策」（potency/sterility 等仍是週級到月級，不可搬）兩層分開計價，不能用單一數字代表整個回饋迴路；(c) 「疫苗」必須先按生產平台分流（mRNA-LNP 無細胞 IVT vs. 活細胞培養/發酵 vs. 蛋白次單位），因為回饋迴路頻率差距與失敗機制本身隨平台不同（mRNA 平台約 $10^1$–$10^2$ 倍，活細胞培養平台約 $10^3$–$10^4$ 倍，而非原稿單一給出的 $10^4$–$10^5$ 倍）；(d) 任何以代理訊號（PAT/拉曼）做的可證偽測試，必須先驗證代理訊號與真實放行 assay 的相關性（$R^2$ 門檻），否則測試結果不可信。物理類比（缺陷模型↔Abrikosov-Gorkov、學習曲線↔RG 固定點）僅作教學橋接，不構成本結論的證據，且橋接一需限定映射於 pair-breaking 雜質（Anderson's theorem 排除非磁性無序），橋接二的「固定點存在」需由 Protected 改列 Fragile（前提：製程平穩，生物端未驗證）。
 
-**Confidence: medium** (medium by explicit decision at final review 2026-09-27 — the Step 5 rule strictly yields low (proposer self-rated medium-low); low and medium route identically (delta debate), user may change: lin-debate Step 5 unreviewed-revision rule — claims first introduced in the proposer's revision were never re-checked by critics, and no round 2 ran; grader-found residual problems are listed in card C002 **Open objections**).
+**Confidence: medium** — round 2 (2026-09-27, option b) re-checked the claims introduced in the revision; open majors remain (see Round 2 below).
 
 ## Objection ledger
 | role | objection | severity | outcome (conceded/refuted/open) |
@@ -122,3 +122,17 @@ OBJECTION 3
 - source: none
 - severity: minor
 - would resolve it: 把「跨域物理橋接」兩段改寫成工程語言版本（例如：「良率模型 vs 生物失效模型」只講「外生獨立顆粒 vs 內生批次相關噪聲」的差異，不必引入超導序參量或 RG 語言），或明確標註「本段為附加類比，非結論依據，物理背景讀者可跳過」。
+
+## Round 2 — re-check of revised claims (2026-09-27)
+New claims listed by each critic: Skeptic 13, Insider 7 (total 20).
+
+| role | objection (one line) | severity | outcome |
+|---|---|---|---|
+| Skeptic O1 | mRNA-LNP 的 $10^1$–$10^2$ 倍差距只算了 CQA 量測時間，未計入仍為週級的滅菌/放行檢測，重蹈 Objection 4 剛承認的監控/放行混淆 | major | open |
+| Skeptic O2 | ≥20–25 批 SPC 門檻忽略了同一份修訂稿剛承認的細胞庫世代漂移導致的非平穩性問題 | major | open |
+| Skeptic O3 | ≥3 家藥廠信心調高門檻未要求按平台分層，單一平台資料即可能誤觸發全產業信心調升 | major | open |
+| Insider O1 | Stage 0 的 $R^2\ge0.7$ 門檻遠低於業界 PAT/拉曼校正實務標準（文獻報告 $R^2>0.93$、SEP<5–10%） | major | open |
+| Insider O2 | mRNA-LNP 平台差距重複了 Objection 4 剛修正的監控/放行層混淆——滅菌放行檢測仍為週級 | major | open |
+| Insider O3 | 跨藥廠批次失敗資料的合併假設各廠 assay 已標準化，但業界實務多為各廠自建 in-house assay，尚無協調標準 | minor | open |
+
+Verbatim: `_backup-2026-09-27/debate-r2/`
