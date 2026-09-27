@@ -8,7 +8,7 @@ card: C002
 ## Final conclusion
 晶圓良率學習的統計工具骨架（SPC、DOE/QbD、多變量監控）可以**有條件地**搬到疫苗量產放大，但條件比原稿嚴格得多：(a) SPC 需先有 ≥20–25 個穩定、盡量獨立的歷史批次才可信；(b) 回饋迴路必須拆成「製程內 CPP/CQA 監控」（PAT 已達分鐘級，可搬）與「批次放行決策」（potency/sterility 等仍是週級到月級，不可搬）兩層分開計價，不能用單一數字代表整個回饋迴路；(c) 「疫苗」必須先按生產平台分流（mRNA-LNP 無細胞 IVT vs. 活細胞培養/發酵 vs. 蛋白次單位），因為回饋迴路頻率差距與失敗機制本身隨平台不同（mRNA 平台約 $10^1$–$10^2$ 倍，活細胞培養平台約 $10^3$–$10^4$ 倍，而非原稿單一給出的 $10^4$–$10^5$ 倍）；(d) 任何以代理訊號（PAT/拉曼）做的可證偽測試，必須先驗證代理訊號與真實放行 assay 的相關性（$R^2$ 門檻），否則測試結果不可信。物理類比（缺陷模型↔Abrikosov-Gorkov、學習曲線↔RG 固定點）僅作教學橋接，不構成本結論的證據，且橋接一需限定映射於 pair-breaking 雜質（Anderson's theorem 排除非磁性無序），橋接二的「固定點存在」需由 Protected 改列 Fragile（前提：製程平穩，生物端未驗證）。
 
-**Confidence: medium** (downgraded 2026-09-27 at final review: lin-debate Step 5 unreviewed-revision rule — claims first introduced in the proposer's revision were never re-checked by critics, and no round 2 ran; grader-found residual problems are listed in card C002 **Open objections**).
+**Confidence: medium** (medium by explicit decision at final review 2026-09-27 — the Step 5 rule strictly yields low (proposer self-rated medium-low); low and medium route identically (delta debate), user may change: lin-debate Step 5 unreviewed-revision rule — claims first introduced in the proposer's revision were never re-checked by critics, and no round 2 ran; grader-found residual problems are listed in card C002 **Open objections**).
 
 ## Objection ledger
 | role | objection | severity | outcome (conceded/refuted/open) |

@@ -8,7 +8,7 @@ card: C001
 ## Final conclusion
 節慶習俗能否跨世代存活，由三個條件共同決定：(a) 相關性校正後的**有效**獨立傳播通道數 $k_{\text{eff}}$ 夠高，且其中至少一條屬於斜向/制度型通道（而非只計算通道「數量」）；(b) 至少一個制度/曆法錨點的存廢**不被單一集中權力片面決定**（漸進侵蝕與片面撤除是兩種不同、需分開評估的失效模式）；(c) 該槽位原始服務的社會功能仍被實際履行，且此判定使用**事前**（非事後）的功能判準。儀式內建的結構性代價/可驗證承諾（costly signaling）屬於相關因子，因為它可能鞏固或催生條件(b)的錨點；但觀察者事後的主觀懷舊/情感濃度，若不伴隨結構性代價或制度支持，仍是邊際因子。任一必要條件缺席，即使名目通道數字面上很多，習俗仍可能一代內消失；反之，缺席也非結構性不可逆——人為刻意介入（復振、重新制度化）可以逆轉，這點必須與「保護態」的說法同時成立，不能自相矛盾。
 
-**Confidence: medium** (downgraded 2026-09-27 at final review: lin-debate Step 5 unreviewed-revision rule — claims first introduced in the proposer's revision were never re-checked by critics, and no round 2 ran; grader-found residual problems are listed in card C001 **Open objections**).
+**Confidence: medium** (medium by explicit decision at final review 2026-09-27 — the Step 5 rule strictly yields low (proposer self-rated medium-low); low and medium route identically (delta debate), user may change: lin-debate Step 5 unreviewed-revision rule — claims first introduced in the proposer's revision were never re-checked by critics, and no round 2 ran; grader-found residual problems are listed in card C001 **Open objections**).
 
 ## Objection ledger
 | role | objection | severity | outcome (conceded/refuted/open) |

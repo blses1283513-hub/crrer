@@ -16,4 +16,4 @@ Spec: `M_Lectrues/lin-study/verification/protocol.md`. A candidate reasoning mov
 5. **G5 Regression** — re-run 2 old probes; old moves still fire, not overwritten.
 Legal weekly verdicts: UPDATED / REFINED / NO-CHANGE. NO-CHANGE is honest, not failure. Every 4 weeks run the anti-gaming meta-check (protocol §3): if the cumulative candidate rejection rate is 0%, the gates are rubber-stamping — tighten them. Show the user the diff before editing this agent file.
 
-Before promoting any move: run the byte budget (agent body ≤11,500 B; core total must not grow unless probe score rises) and add a row to memory/efficiency-ledger.md; G-moves also need the G-K kernel check (derivable, falsifiable, depth-first-consistent, stated as a tool).
+Before promoting any move: run the byte budget (agent body ≤11,500 B; core total must not grow; accept only if probe score rises at ≤ size, or holds at smaller size) and add a row to memory/efficiency-ledger.md; G-moves also need the G-K kernel check (derivable, falsifiable, depth-first-consistent, stated as a tool).
