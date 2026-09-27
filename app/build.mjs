@@ -1,6 +1,6 @@
 // Compiles the Lin Brain vault (this repo) into one self-contained Artifact page
 // plus a seed file for the app's memory store.  Run: node app/build.mjs
-import { readFileSync, writeFileSync, readdirSync } from "node:fs";
+import { readFileSync, writeFileSync, readdirSync, mkdirSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -133,4 +133,8 @@ for (const [k, v] of Object.entries(inject)) {
 }
 writeFileSync(join(APP, "dist", "lin-brain.html"), html);
 writeFileSync(join(APP, "dist", "seed.json"), JSON.stringify(seed, null, 1));
+mkdirSync(join(APP, "dist", "animals"), { recursive: true });
+for (const f of readdirSync(join(APP, "assets", "animals")).filter((f) => f.endsWith(".glb"))) {
+  writeFileSync(join(APP, "dist", "animals", f.replace(/\.glb$/, ".txt")), readFileSync(join(APP, "assets", "animals", f)).toString("base64"));
+}
 console.log(`lin-brain.html ${Buffer.byteLength(html)} B · moves ${Object.keys(knowledge.moves).length} · arXiv ids ${knowledge.arxiv.length} · cards ${Object.keys(seed.cards).length} · debates ${Object.keys(seed.debates).length} · insights ${n}`);

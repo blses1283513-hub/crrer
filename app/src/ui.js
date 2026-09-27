@@ -165,12 +165,12 @@
     });
     if (ev.cycle) {
       let k = 0;
-      const show = () => { const c = ev.cycle[k++ % ev.cycle.length]; Orb.setShape(c.animal); orbEl.querySelector(".orb-fallback-face").textContent = Orb.ANIMALS[c.animal]; status.textContent = c.label + " 審問中"; };
+      const show = () => { const c = ev.cycle[k++ % ev.cycle.length]; Orb.setShape(c.animal); orbEl.querySelector(".orb-fallback-face").textContent = Orb.ANIMALS[c.animal]?.emoji || ""; status.textContent = c.label + " 審問中"; };
       show();
       cycleTimer = setInterval(show, 2600);
     } else {
       Orb.setShape(ev.animal);
-      orbEl.querySelector(".orb-fallback-face").textContent = Orb.ANIMALS[ev.animal] || "";
+      orbEl.querySelector(".orb-fallback-face").textContent = Orb.ANIMALS[ev.animal]?.emoji || "";
     }
   }
 

@@ -5,10 +5,10 @@ const Brain = (() => {
   const K = window.LIN;
   const P = K.prompts;
   const ROLES = [
-    { key: "skeptic", name: "Skeptic", animal: "eagle", task: P["role-skeptic"] },
-    { key: "bridge", name: "Bridge auditor", animal: "octopus", task: P["role-bridge"] },
-    { key: "practitioner", name: "Practitioner", animal: "beaver", task: P["role-practitioner"] },
-    { key: "insider", name: "Field insider", animal: "fox", task: P["role-insider"] },
+    { key: "skeptic", name: "Skeptic", animal: "horse", task: P["role-skeptic"] },
+    { key: "bridge", name: "Bridge auditor", animal: "flamingo", task: P["role-bridge"] },
+    { key: "practitioner", name: "Practitioner", animal: "foxWalk", task: P["role-practitioner"] },
+    { key: "insider", name: "Field insider", animal: "parrot", task: P["role-insider"] },
   ];
   const SEV = { fatal: 3, major: 2, minor: 1 };
   const FINAL = "### 最終回答";
@@ -105,7 +105,7 @@ const Brain = (() => {
   async function indexCheck(question, emit) {
     const list = activeCards();
     if (!list.length) return { route: "none", related: [], keywords: [] };
-    emit({ type: "stage", step: "memory", animal: "elephant", label: "大象 · 翻閱結論索引" });
+    emit({ type: "stage", step: "memory", animal: "foxSurvey", label: "狐狸 · 翻閱結論索引" });
     let r;
     try {
       r = await sample.json(fill(P["index-check"], { QUESTION: question, INDEX: list.map(indexLine).join("\n") }), { modelTier: "quick", cache: false, signal: emit.signal });
@@ -134,7 +134,7 @@ const Brain = (() => {
     const idx = force ? { route: "none", related: [], keywords: [] } : await indexCheck(q, emit);
     if (force) trace.notes.push("重新辯論：略過索引重用，跑完整辯論");
     if (idx.route === "exact") {
-      emit({ type: "stage", step: "memory", animal: "elephant", label: `大象 · 重用結論卡 ${idx.card.id}` });
+      emit({ type: "stage", step: "memory", animal: "foxSurvey", label: `狐狸 · 重用結論卡 ${idx.card.id}` });
       const res = await sample(fill(P.reuse, { QUESTION: q, ID: idx.card.id, CARD: cardText(idx.card) }), {
         modelTier: "default", cache: false, signal: ctx.signal, onText: ({ text }) => emit({ type: "final", text }),
       });
@@ -145,7 +145,7 @@ const Brain = (() => {
     if (idx.related.length) await touchCards(idx.related);
 
     // Step 1 — mentor draft.
-    emit({ type: "stage", step: "mentor", animal: "owl", label: "貓頭鷹 · 導師推導中" });
+    emit({ type: "stage", step: "mentor", animal: "stork", label: "白鸛 · 導師推導中" });
     const sys = mentorSystem(idx.related);
     const turns = [{ role: "user", content: sys }];
     for (const t of ctx.history.slice(-4)) {
@@ -161,7 +161,7 @@ const Brain = (() => {
           const key = "M" + Number(String(id).replace(/\D/g, ""));
           if (!K.moves[key]) throw new Error("No such move. Valid: " + Object.keys(K.moves).join(", "));
           trace.moves.push(key);
-          emit({ type: "stage", step: "mentor", animal: "owl", label: `貓頭鷹 · 展開 ${key}` });
+          emit({ type: "stage", step: "mentor", animal: "stork", label: `白鸛 · 展開 ${key}` });
           return K.moves[key];
         },
       },
@@ -180,7 +180,7 @@ const Brain = (() => {
     }
 
     // Step 2 — four blind critics in parallel.
-    emit({ type: "stage", step: "critics", animal: "eagle", label: "四位審查者平行審問", cycle: ROLES.map((r) => ({ animal: r.animal, label: `${animalName(r.animal)} · ${r.name}` })) });
+    emit({ type: "stage", step: "critics", animal: "horse", label: "四位審查者平行審問", cycle: ROLES.map((r) => ({ animal: r.animal, label: `${animalName(r.animal)} · ${r.name}` })) });
     const scope = idx.related.length
       ? "delta only — judge only what this draft adds or changes relative to these stored cards:\n" + idx.related.map((c) => `${c.id}: ${c.claim}`).join("\n")
       : "full";
@@ -206,7 +206,7 @@ const Brain = (() => {
     // Step 3 — revision (concede / refute).
     let finalText = draft, finalBlock = block;
     if (objections.length) {
-      emit({ type: "stage", step: "revision", animal: "dolphin", label: "海豚 · 逐條承認或反駁，改寫結論" });
+      emit({ type: "stage", step: "revision", animal: "flamingo", label: "紅鶴 · 逐條承認或反駁，改寫結論" });
       const rev = fill(P.revision, { QUESTION: q, DRAFT: draft, OBJECTIONS: objections.map(objectionText).join("\n\n") });
       const revRes = await sample([{ role: "user", content: K.mentor + "\n\n" + rev }], {
         modelTier: "complex", cache: false, signal: ctx.signal,
@@ -230,7 +230,7 @@ const Brain = (() => {
     // Step 4 — round 2, only for refuted fatal objections.
     const refutedFatal = objections.filter((o) => o.outcome === "refuted" && o.severity === "fatal");
     if (refutedFatal.length) {
-      emit({ type: "stage", step: "revision", animal: "eagle", label: "老鷹 · 第二回合：致命反對是否仍成立" });
+      emit({ type: "stage", step: "revision", animal: "horse", label: "駿馬 · 第二回合：致命反對是否仍成立" });
       await Promise.all(refutedFatal.map(async (o) => {
         try {
           const r = await sample.json(fill(P.round2, { ROLE: o.role, QUESTION: q, OBJECTION: objectionText(o, 0), REFUTATION: o.reply, BLOCK: finalBlock.raw }), { modelTier: "default", cache: false, signal: ctx.signal });
@@ -240,7 +240,7 @@ const Brain = (() => {
     }
 
     // Step 5 — judge (recorder call + fixed confidence rule).
-    emit({ type: "stage", step: "judge", animal: "whale", label: "鯨 · 裁判評定信心" });
+    emit({ type: "stage", step: "judge", animal: "stork", label: "白鸛 · 裁判評定信心" });
     const ledger = objections.map((o, i) => `O${i + 1} | ${o.role} | ${o.failure.slice(0, 200)} | ${o.severity} | ${o.outcome}${o.reply ? " — " + o.reply : ""}`).join("\n") || "(no objections survived the filter)";
     let j = {};
     try {
@@ -252,10 +252,10 @@ const Brain = (() => {
       : open.some((o) => o.severity === "major") || unreviewed.length ? "medium" : "high";
 
     // Step 6 — store (record, card, index, insight) and step 7 review every 5 debates.
-    emit({ type: "stage", step: "store", animal: "squirrel", label: "松鼠 · 收藏結論卡" });
+    emit({ type: "stage", step: "store", animal: "foxRun", label: "狐狸 · 收藏結論卡" });
     const stored = await store({ q, route: trace.route, block, finalBlock, finalText, objections, critics, j, unreviewed, confidence, exactCard: force ? idx.exactCard : null });
     if (stored?.review) {
-      emit({ type: "stage", step: "store", animal: "turtle", label: "烏龜 · 每五場回顧" });
+      emit({ type: "stage", step: "store", animal: "foxWalk", label: "狐狸 · 每五場回顧" });
       trace.review = await review();
     }
     return {
@@ -268,7 +268,7 @@ const Brain = (() => {
     const r = blockRange(text);
     return (r ? text.slice(0, r.at) + text.slice(r.end) : text).trim();
   }
-  function animalName(a) { return { elephant: "大象", owl: "貓頭鷹", eagle: "老鷹", octopus: "章魚", beaver: "河狸", fox: "狐狸", dolphin: "海豚", whale: "鯨", squirrel: "松鼠", turtle: "烏龜" }[a] || a; }
+  function animalName(a) { return { horse: "駿馬", flamingo: "紅鶴", parrot: "鸚鵡", stork: "白鸛", foxSurvey: "狐狸", foxWalk: "狐狸", foxRun: "狐狸" }[a] || a; }
 
   async function touchCards(list) {
     if (!db) return;

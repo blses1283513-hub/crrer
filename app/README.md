@@ -13,3 +13,9 @@ review every 5 debates.
   archived debate records; the originals (`references/roles/`) are not in this repo.
 - Out of scope in the app (they need the web or vault files): news update, corpus refresh, weekly study,
   teaching material. Run those in Claude Code.
+
+## Animal models
+The orb re-forms into rigged, animated glTF animals: its particles are re-sampled from the moving
+surface every frame. Models ship as base64 `.txt` next to the page (artifacts don't serve `.glb`).
+- Horse, Flamingo, Parrot, Stork: from the three.js examples (r128, `examples/models/gltf`), originally from the RO.ME project.
+- Fox: Khronos glTF-Sample-Assets, CC-BY 4.0 (model by PixelMannen, rigging and animation by @tomkranis).
