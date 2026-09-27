@@ -5,10 +5,10 @@ const Brain = (() => {
   const K = window.LIN;
   const P = K.prompts;
   const ROLES = [
-    { key: "skeptic", name: "Skeptic", animal: "horse", task: P["role-skeptic"] },
-    { key: "bridge", name: "Bridge auditor", animal: "flamingo", task: P["role-bridge"] },
-    { key: "practitioner", name: "Practitioner", animal: "foxWalk", task: P["role-practitioner"] },
-    { key: "insider", name: "Field insider", animal: "parrot", task: P["role-insider"] },
+    { key: "skeptic", name: "Skeptic", task: P["role-skeptic"] },
+    { key: "bridge", name: "Bridge auditor", task: P["role-bridge"] },
+    { key: "practitioner", name: "Practitioner", task: P["role-practitioner"] },
+    { key: "insider", name: "Field insider", task: P["role-insider"] },
   ];
   const SEV = { fatal: 3, major: 2, minor: 1 };
   const FINAL = "### 最終回答";
@@ -105,7 +105,7 @@ const Brain = (() => {
   async function indexCheck(question, emit) {
     const list = activeCards();
     if (!list.length) return { route: "none", related: [], keywords: [] };
-    emit({ type: "stage", step: "memory", animal: "foxSurvey", label: "狐狸 · 翻閱結論索引" });
+    emit({ type: "stage", step: "memory", label: "翻閱結論索引" });
     let r;
     try {
       r = await sample.json(fill(P["index-check"], { QUESTION: question, INDEX: list.map(indexLine).join("\n") }), { modelTier: "quick", cache: false, signal: emit.signal });
@@ -127,14 +127,17 @@ const Brain = (() => {
     const emit = (ev) => ctx.on(ev);
     emit.signal = ctx.signal;
     const trace = { moves: [], route: "none", notes: [] };
-    let force = false;
-    const q = question.replace(/^\s*重新辯論[\s:：,，]*/, () => { force = true; return ""; }).trim() || question;
+    let force = false, now = ctx.mode === "strict";
+    const q = question.replace(/^\s*(重新辯論|開辯論)[\s:：,，]*/, (_, w) => { now = true; force = w === "重新辯論"; return ""; }).trim() || question;
 
     // Step 0
-    const idx = force ? { route: "none", related: [], keywords: [] } : await indexCheck(q, emit);
-    if (force) trace.notes.push("重新辯論：略過索引重用，跑完整辯論");
+    const idx = await indexCheck(q, emit);
+    if (force) {
+      trace.notes.push("重新辯論：不重用結論卡，跑完整辯論");
+      if (idx.route === "exact") Object.assign(idx, { route: "related", exactCard: idx.card });
+    }
     if (idx.route === "exact") {
-      emit({ type: "stage", step: "memory", animal: "foxSurvey", label: `狐狸 · 重用結論卡 ${idx.card.id}` });
+      emit({ type: "stage", step: "memory", label: `重用結論卡 ${idx.card.id}` });
       const res = await sample(fill(P.reuse, { QUESTION: q, ID: idx.card.id, CARD: cardText(idx.card) }), {
         modelTier: "default", cache: false, signal: ctx.signal, onText: ({ text }) => emit({ type: "final", text }),
       });
@@ -145,7 +148,7 @@ const Brain = (() => {
     if (idx.related.length) await touchCards(idx.related);
 
     // Step 1 — mentor draft.
-    emit({ type: "stage", step: "mentor", animal: "stork", label: "白鸛 · 導師推導中" });
+    emit({ type: "stage", step: "mentor", label: "導師推導中" });
     const sys = mentorSystem(idx.related);
     const turns = [{ role: "user", content: sys }];
     for (const t of ctx.history.slice(-4)) {
@@ -161,7 +164,7 @@ const Brain = (() => {
           const key = "M" + Number(String(id).replace(/\D/g, ""));
           if (!K.moves[key]) throw new Error("No such move. Valid: " + Object.keys(K.moves).join(", "));
           trace.moves.push(key);
-          emit({ type: "stage", step: "mentor", animal: "stork", label: `白鸛 · 展開 ${key}` });
+          emit({ type: "note", label: `展開 ${key}` });
           return K.moves[key];
         },
       },
@@ -171,16 +174,31 @@ const Brain = (() => {
         execute: () => { trace.moves.push("D0–D9"); return K.lessons; },
       },
     ] : undefined;
-    const draftRes = await ask(turns, { modelTier: "complex", cache: false, signal: ctx.signal, tools }, emit, "mentor");
+    const draftRes = await ask(turns, { modelTier: now ? "complex" : "default", cache: false, signal: ctx.signal, tools }, emit, "mentor");
     const draft = draftRes.text.trim();
     const block = parseBlock(draft);
     if (!block) {
       emit({ type: "final", text: draft });
       return { answer: draft, route: "no-conclusion", trace };
     }
+    const pending = {
+      q, draft, route: trace.route, moves: trace.moves, notes: trace.notes,
+      related: idx.related.map((c) => ({ id: c.id, claim: c.claim })), exactCardId: force && idx.exactCard ? idx.exactCard.id : null,
+    };
+    if (!now) return { answer: stripBlock(draft), route: "draft", block, pending, trace };
+    return debate(pending, ctx);
+  }
+
+  // lin-debate steps 2–7 on a mentor draft (right away, or later from the 「開辯論」 button).
+  async function debate(pending, ctx) {
+    const emit = (ev) => ctx.on(ev);
+    emit.signal = ctx.signal;
+    const { q, draft } = pending, block = parseBlock(draft);
+    const trace = { moves: pending.moves || [], route: pending.route, notes: [...(pending.notes || [])] };
+    const idx = { related: pending.related || [], exactCard: pending.exactCardId ? cards.get(pending.exactCardId) : null };
 
     // Step 2 — four blind critics in parallel.
-    emit({ type: "stage", step: "critics", animal: "horse", label: "四位審查者平行審問", cycle: ROLES.map((r) => ({ animal: r.animal, label: `${animalName(r.animal)} · ${r.name}` })) });
+    emit({ type: "stage", step: "critics", label: "審問中", cycle: ROLES.map((r) => r.name) });
     const scope = idx.related.length
       ? "delta only — judge only what this draft adds or changes relative to these stored cards:\n" + idx.related.map((c) => `${c.id}: ${c.claim}`).join("\n")
       : "full";
@@ -191,7 +209,7 @@ const Brain = (() => {
         SOURCE_LINE: role.key === "insider" ? "- source: <URL or none>\n" : "",
       });
       try {
-        const r = await ask(prompt, { modelTier: "default", cache: false, signal: ctx.signal }, emit, role.key);
+        const r = await ask(prompt, { modelTier: "quick", cache: false, signal: ctx.signal }, emit, role.key);
         emit({ type: "critic-done", role: role.name });
         return { role, text: r.text, objections: parseObjections(r.text, role) };
       } catch (e) {
@@ -206,7 +224,7 @@ const Brain = (() => {
     // Step 3 — revision (concede / refute).
     let finalText = draft, finalBlock = block;
     if (objections.length) {
-      emit({ type: "stage", step: "revision", animal: "flamingo", label: "紅鶴 · 逐條承認或反駁，改寫結論" });
+      emit({ type: "stage", step: "revision", label: "逐條承認或反駁，改寫結論" });
       const rev = fill(P.revision, { QUESTION: q, DRAFT: draft, OBJECTIONS: objections.map(objectionText).join("\n\n") });
       const revRes = await sample([{ role: "user", content: K.mentor + "\n\n" + rev }], {
         modelTier: "complex", cache: false, signal: ctx.signal,
@@ -230,17 +248,17 @@ const Brain = (() => {
     // Step 4 — round 2, only for refuted fatal objections.
     const refutedFatal = objections.filter((o) => o.outcome === "refuted" && o.severity === "fatal");
     if (refutedFatal.length) {
-      emit({ type: "stage", step: "revision", animal: "horse", label: "駿馬 · 第二回合：致命反對是否仍成立" });
+      emit({ type: "stage", step: "revision", label: "第二回合：致命反對是否仍成立" });
       await Promise.all(refutedFatal.map(async (o) => {
         try {
-          const r = await sample.json(fill(P.round2, { ROLE: o.role, QUESTION: q, OBJECTION: objectionText(o, 0), REFUTATION: o.reply, BLOCK: finalBlock.raw }), { modelTier: "default", cache: false, signal: ctx.signal });
+          const r = await sample.json(fill(P.round2, { ROLE: o.role, QUESTION: q, OBJECTION: objectionText(o, 0), REFUTATION: o.reply, BLOCK: finalBlock.raw }), { modelTier: "quick", cache: false, signal: ctx.signal });
           if (r?.stands) { o.outcome = "open"; o.round2 = r.failure_case || ""; } else o.round2 = "withdrawn";
         } catch (e) { if (e.code === "cancelled") throw e; }
       }));
     }
 
     // Step 5 — judge (recorder call + fixed confidence rule).
-    emit({ type: "stage", step: "judge", animal: "stork", label: "白鸛 · 裁判評定信心" });
+    emit({ type: "stage", step: "judge", label: "裁判評定信心" });
     const ledger = objections.map((o, i) => `O${i + 1} | ${o.role} | ${o.failure.slice(0, 200)} | ${o.severity} | ${o.outcome}${o.reply ? " — " + o.reply : ""}`).join("\n") || "(no objections survived the filter)";
     let j = {};
     try {
@@ -252,10 +270,10 @@ const Brain = (() => {
       : open.some((o) => o.severity === "major") || unreviewed.length ? "medium" : "high";
 
     // Step 6 — store (record, card, index, insight) and step 7 review every 5 debates.
-    emit({ type: "stage", step: "store", animal: "foxRun", label: "狐狸 · 收藏結論卡" });
-    const stored = await store({ q, route: trace.route, block, finalBlock, finalText, objections, critics, j, unreviewed, confidence, exactCard: force ? idx.exactCard : null });
+    emit({ type: "stage", step: "store", label: "收藏結論卡" });
+    const stored = await store({ q, route: trace.route, block, finalBlock, finalText, objections, critics, j, unreviewed, confidence, exactCard: idx.exactCard });
     if (stored?.review) {
-      emit({ type: "stage", step: "store", animal: "foxWalk", label: "狐狸 · 每五場回顧" });
+      emit({ type: "stage", step: "store", label: "每五場回顧" });
       trace.review = await review();
     }
     return {
@@ -268,7 +286,6 @@ const Brain = (() => {
     const r = blockRange(text);
     return (r ? text.slice(0, r.at) + text.slice(r.end) : text).trim();
   }
-  function animalName(a) { return { horse: "駿馬", flamingo: "紅鶴", parrot: "鸚鵡", stork: "白鸛", foxSurvey: "狐狸", foxWalk: "狐狸", foxRun: "狐狸" }[a] || a; }
 
   async function touchCards(list) {
     if (!db) return;
@@ -366,5 +383,5 @@ const Brain = (() => {
     return downloads.save({ filename: `${c.id}.md`, data });
   }
 
-  return { connect, run, onCards, activeCards, dispute, exportCard, hasDownloads: () => !!downloads, hasDb: () => !!db };
+  return { connect, run, debate, onCards, activeCards, dispute, exportCard, hasDownloads: () => !!downloads, hasDb: () => !!db };
 })();

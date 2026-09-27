@@ -14,8 +14,17 @@ review every 5 debates.
 - Out of scope in the app (they need the web or vault files): news update, corpus refresh, weekly study,
   teaching material. Run those in Claude Code.
 
+## Modes
+- 快速 (default): memory check + mentor answer (1–2 Claude calls). The answer shows 「開辯論」, which runs
+  the four-critic debate on that same draft and stores the conclusion card.
+- 嚴謹: every conclusion-point prompt runs the full debate. Prefixing a prompt with 「開辯論」 or 「重新辯論」
+  forces it in either mode. Critics and round 2 run on the quick model tier.
+
 ## Animal models
-The orb re-forms into rigged, animated glTF animals: its particles are re-sampled from the moving
-surface every frame. Models ship as base64 `.txt` next to the page (artifacts don't serve `.glb`).
+Each thinking stage draws the next of 44 kinds from a shuffled deck.
+- 39 procedural species (`app/src/animals.js`): anatomical parts posed per frame by their own gait
+  (walk, trot, gallop, hop, flap, hover, swim, slither, scuttle), with markings and interior culling.
+- 5 rigged glTF models whose particles are re-sampled from the moving surface every frame. They ship as
+  base64 `.txt` next to the page (artifacts don't serve `.glb`).
 - Horse, Flamingo, Parrot, Stork: from the three.js examples (r128, `examples/models/gltf`), originally from the RO.ME project.
 - Fox: Khronos glTF-Sample-Assets, CC-BY 4.0 (model by PixelMannen, rigging and animation by @tomkranis).

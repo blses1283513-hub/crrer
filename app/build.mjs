@@ -123,6 +123,7 @@ let html = src("index.html");
 const inject = {
   "/*@STYLE*/": src("style.css"),
   "/*@KNOWLEDGE*/": "window.LIN = " + JSON.stringify(knowledge).replace(/</g, "\\u003c") + ";",
+  "/*@ANIMALS*/": src("animals.js"),
   "/*@ORB*/": src("orb.js"),
   "/*@BRAIN*/": src("brain.js"),
   "/*@UI*/": src("ui.js"),

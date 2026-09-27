@@ -23,6 +23,15 @@
 
   let history = load();
   let ctl = null, cycleTimer = null, running = false;
+  let mode = (() => { try { return localStorage.getItem("lin-brain-mode") || "quick"; } catch { return "quick"; } })();
+  const modeBtn = $("#mode");
+  function paintMode() {
+    modeBtn.textContent = mode === "quick" ? "快速" : "嚴謹";
+    modeBtn.setAttribute("aria-pressed", String(mode === "strict"));
+    modeBtn.title = mode === "quick" ? "快速：只跑導師推導，想審查時按「開辯論」" : "嚴謹：每題都跑完整四方辯論";
+  }
+  modeBtn.onclick = () => { mode = mode === "quick" ? "strict" : "quick"; try { localStorage.setItem("lin-brain-mode", mode); } catch {} paintMode(); };
+  paintMode();
 
   const webgl = Orb.init(orbEl);
   if (!webgl) orbEl.classList.add("no-webgl");
@@ -33,7 +42,7 @@
     b.onclick = () => { prompt.value = text; grow(); prompt.focus(); };
     $("#examples").append(b);
   }
-  history.forEach((t) => { const el = addTurn(t.q); renderAnswer(el, t.answer, true); renderVerdict(el, t.meta || {}); });
+  history.forEach((t) => { const el = addTurn(t.q); el._entry = t; renderAnswer(el, t.answer, true); renderVerdict(el, t.meta || {}); });
   syncThread();
 
   Brain.connect().then(({ sample }) => {
@@ -98,7 +107,7 @@
     return el;
   }
 
-  const ROUTE = { full: "完整辯論", reused: "重用記憶", "no-conclusion": "直接回答" };
+  const ROUTE = { full: "完整辯論", reused: "重用記憶", "no-conclusion": "直接回答", draft: "快速回答" };
   function routeLabel(r) { return ROUTE[r] || (String(r).startsWith("delta") ? "差分辯論 · " + r.replace(/^delta\s*/, "") : r || ""); }
   const OUT = { open: "未解", conceded: "承認並修正", refuted: "已反駁" };
 
@@ -114,6 +123,12 @@
     }
     if (m.confidence) {
       const p = document.createElement("span"); p.className = "pill conf-" + m.confidence; p.textContent = "信心 " + m.confidence; v.append(p);
+    } else if (m.route === "draft") {
+      const p = document.createElement("span"); p.className = "pill conf-none"; p.textContent = "未辯論"; v.append(p);
+      const b = document.createElement("button"); b.type = "button"; b.className = "ghost debate-btn"; b.textContent = "開辯論";
+      b.title = "四位審查者審問這個結論，修訂後存成結論卡（約 5–7 次 Claude 呼叫）";
+      b.onclick = () => debateTurn(turn);
+      v.append(b);
     }
     const bits = [routeLabel(m.route)];
     if (m.card) bits.push("結論卡 " + m.card);
@@ -155,9 +170,18 @@
     v.append(d);
   }
 
+  let currentZh = "";
+  function showAnimal(label) {
+    const a = Orb.next();
+    currentZh = a.zh;
+    Orb.setShape(a.key);
+    orbEl.querySelector(".orb-fallback-face").textContent = a.emoji;
+    status.textContent = `${a.zh} · ${label}`;
+  }
+
   function setStage(ev) {
+    if (ev.type === "note") { status.textContent = `${currentZh} · ${ev.label}`; return; }
     clearInterval(cycleTimer);
-    status.textContent = ev.label;
     const idx = STEP_ORDER.indexOf(ev.step);
     steps.querySelectorAll("li").forEach((li, i) => {
       li.classList.toggle("now", i === idx);
@@ -165,28 +189,23 @@
     });
     if (ev.cycle) {
       let k = 0;
-      const show = () => { const c = ev.cycle[k++ % ev.cycle.length]; Orb.setShape(c.animal); orbEl.querySelector(".orb-fallback-face").textContent = Orb.ANIMALS[c.animal]?.emoji || ""; status.textContent = c.label + " 審問中"; };
+      const show = () => showAnimal(`${ev.cycle[k++ % ev.cycle.length]} ${ev.label}`);
       show();
-      cycleTimer = setInterval(show, 2600);
-    } else {
-      Orb.setShape(ev.animal);
-      orbEl.querySelector(".orb-fallback-face").textContent = Orb.ANIMALS[ev.animal]?.emoji || "";
-    }
+      cycleTimer = setInterval(show, 3200);
+    } else showAnimal(ev.label);
   }
 
-  async function go(text) {
+  // Runs one Brain job on a turn: streaming, orb, stop button and error copy.
+  async function execute(turn, job, onDone) {
     running = true;
-    prompt.value = ""; grow();
     send.hidden = true; stop.hidden = false; steps.hidden = false;
     steps.querySelectorAll("li").forEach((li) => li.classList.remove("now", "done"));
-    const turn = addTurn(text);
-    turn.querySelector(".a").textContent = "思考中…";
-    turn.scrollIntoView({ behavior: "smooth", block: "start" });
+    turn.querySelectorAll(".error").forEach((n) => n.remove());
     Orb.setBusy(true);
     ctl = new AbortController();
     let partial = "", lastPaint = 0;
     const on = (ev) => {
-      if (ev.type === "stage") setStage(ev);
+      if (ev.type === "stage" || ev.type === "note") setStage(ev);
       else if (ev.type === "tick") ticker.textContent = ev.text.replace(/\s+/g, " ").slice(-90);
       else if (ev.type === "final") {
         partial = ev.text;
@@ -195,19 +214,19 @@
       }
     };
     try {
-      const r = await Brain.run(text, { history, signal: ctl.signal, on });
+      const r = await job({ history, signal: ctl.signal, on, mode });
       const meta = {
-        route: r.route, confidence: r.confidence, card: r.card, claim: r.block?.claim,
+        route: r.route, confidence: r.confidence, card: r.card, claim: r.block?.claim, pending: r.pending,
         objections: (r.objections || []).map(({ role, failure, severity, outcome, reply }) => ({ role, failure, severity, outcome, reply })),
         diff: r.diff, unreviewed: r.unreviewed, moves: r.trace?.moves, notes: [...(r.trace?.notes || []), ...(r.trace?.review?.note ? [r.trace.review.note] : [])],
       };
       renderAnswer(turn, r.answer, true);
       renderVerdict(turn, meta);
-      history.push({ q: text, answer: r.answer, meta });
+      onDone(r.answer, meta);
       save();
     } catch (e) {
       const a = turn.querySelector(".a");
-      if (partial || e?.text) renderAnswer(turn, partial || e.text, true); else a.textContent = "";
+      if (partial || e?.text) renderAnswer(turn, partial || e.text, true); else if (!a.innerHTML) a.textContent = "";
       const p = document.createElement("p"); p.className = "error";
       p.textContent = ERR[e?.code] || "連線中斷。已保留目前的內容，可以再按一次「思考」。";
       turn.append(p);
@@ -219,6 +238,22 @@
       Orb.setBusy(false);
       orbEl.querySelector(".orb-fallback-face").textContent = "";
     }
+  }
+
+  function go(text) {
+    prompt.value = ""; grow();
+    const turn = addTurn(text);
+    turn.querySelector(".a").textContent = "思考中…";
+    turn.scrollIntoView({ behavior: "smooth", block: "start" });
+    const entry = { q: text, answer: "", meta: {} };
+    turn._entry = entry;
+    return execute(turn, (ctx) => Brain.run(text, ctx), (answer, meta) => { entry.answer = answer; entry.meta = meta; history.push(entry); });
+  }
+
+  function debateTurn(turn) {
+    const entry = turn._entry;
+    if (running || !entry?.meta?.pending) return;
+    execute(turn, (ctx) => Brain.debate(entry.meta.pending, ctx), (answer, meta) => { entry.answer = answer; entry.meta = meta; });
   }
 
   // Memory drawer

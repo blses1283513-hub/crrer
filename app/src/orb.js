@@ -12,8 +12,11 @@ const Orb = (() => {
     foxWalk: { file: "animals/fox.txt", clip: "Walk", yaw: 0, emoji: "🦊", speed: 1 },
     foxRun: { file: "animals/fox.txt", clip: "Run", yaw: 0, emoji: "🦊", speed: 0.8 },
   };
+  const REAL = { horse: "駿馬", flamingo: "紅鶴", parrot: "鸚鵡", stork: "白鸛", fox: "狐狸" };
+  const Z = () => (typeof Zoo !== "undefined" ? Zoo : null);
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const models = new Map(), rigs = new Map(), silhouettes = new Map();
+  const models = new Map(), rigs = new Map(), silhouettes = new Map(), zoo = new Map();
+  let deck = [];
   let N, renderer, scene, camera, group, geo, mat, rings = [], glow;
   let cur, curN, curS, tgt, tgtN, tgtS, delay, switchAt = 0, shape = "sphere", live = null, busy = 0, busyTarget = 0;
   let yaw = 0, pitch = 0, dragYaw = 0, dragPitch = 0, velYaw = 0, dragging = false, lastX = 0, lastY = 0;
@@ -199,7 +202,7 @@ const Orb = (() => {
       vec3 n = normalize(normalMatrix * aNormal);
       float key = abs(dot(n, normalize(vec3(-0.45, 0.7, 0.55))));
       float rim = pow(1.0 - abs(n.z), 2.0);
-      vLight = aShade * (0.28 + 0.72 * key) + rim * 0.35;
+      vLight = aShade * (0.28 + 0.72 * key + rim * 0.3);
       vDepth = clamp((mv.z + 4.3) / 2.4, 0.0, 1.0);
       vSeed = aSeed;
     }`;
@@ -308,7 +311,7 @@ const Orb = (() => {
     if (document.hidden) { running = false; return; }
     const dt = Math.min(0.05, (now - last) / 1000); last = now; clock += dt;
     busy += (busyTarget - busy) * Math.min(1, dt * 3);
-    if (live) live.fill(((clock - switchAt) * live.speed) % live.duration, tgt, tgtN);
+    if (live) live.fill(((clock - switchAt) * live.speed) % live.duration, tgt, tgtN, tgtS);
     const since = clock - switchAt;
     // Ease in while re-forming, then track the animation exactly.
     const k = reduced || since > 1.6 ? 1 : Math.min(1, dt * 4.5);
@@ -355,8 +358,15 @@ const Orb = (() => {
   async function setShape(name) {
     if (!renderer || name === shape) return;
     const my = ++token;
-    shape = name in ANIMALS ? name : "sphere";
+    shape = name in ANIMALS || Z()?.has(name) ? name : "sphere";
     if (shape === "sphere") { live = null; apply(sphere()); return; }
+    if (Z()?.has(shape)) {
+      if (!zoo.has(shape)) zoo.set(shape, Z().make(shape, N));
+      live = zoo.get(shape);
+      apply({ p: new Float32Array(N * 3), n: new Float32Array(N * 3), s: new Float32Array(live.shade) });
+      live.fill(0, tgt, tgtN, tgtS);
+      return;
+    }
     try {
       if (!THREE.GLTFLoader) throw new Error("no loader");
       const r = await rig(shape);
@@ -372,5 +382,18 @@ const Orb = (() => {
 
   function setBusy(on) { busyTarget = on ? 1 : 0; if (!on) setShape("sphere"); start(); }
 
-  return { init, setShape, setBusy, ANIMALS };
+  // Every stage draws the next kind from a shuffled deck, so all species appear before any repeats.
+  function next() {
+    if (!deck.length) {
+      deck = [...Object.keys(REAL), ...Object.keys(Z()?.names || {})];
+      for (let i = deck.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [deck[i], deck[j]] = [deck[j], deck[i]]; }
+    }
+    const kind = deck.pop();
+    const key = kind === "fox" ? ["foxSurvey", "foxWalk", "foxRun"][(Math.random() * 3) | 0] : kind;
+    return { key, zh: REAL[kind] || Z().names[kind], emoji: ANIMALS[key]?.emoji || "" };
+  }
+
+  const kinds = () => Object.keys(REAL).length + Object.keys(Z()?.names || {}).length;
+
+  return { init, setShape, setBusy, next, kinds, ANIMALS };
 })();

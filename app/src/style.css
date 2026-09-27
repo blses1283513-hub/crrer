@@ -99,6 +99,13 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--foam); o
 .claim b { color: var(--foam); font-weight: 500; margin-right: 6px; }
 .pill { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; border: 1px solid currentColor; letter-spacing: 0.04em; }
 .pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.conf-none { color: var(--mist); }
+.debate-btn { color: var(--foam); border-color: rgba(140, 190, 255, 0.45); }
+.mode {
+  flex: none; align-self: stretch; border-radius: 16px; padding: 0 12px; font: 500 12.5px var(--mono); letter-spacing: 0.08em;
+  background: rgba(7, 22, 49, 0.92); border: 1px solid rgba(95, 150, 255, 0.35); color: var(--mist);
+}
+.mode[aria-pressed="true"] { color: var(--foam); border-color: var(--tide); box-shadow: 0 0 14px rgba(47, 123, 255, 0.35); }
 .conf-high { color: var(--high); } .conf-medium { color: var(--medium); } .conf-low { color: var(--low); }
 .trace { width: 100%; }
 .trace summary { cursor: pointer; color: var(--mist); width: max-content; }
