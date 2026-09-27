@@ -154,13 +154,13 @@ All four critics run on every debate, including science-only topics (the insider
 1. **Draft** — the proposer's conclusion block (4.5).
 2. **Critique** — the four critics run in parallel, blind to each other, draft pasted inline. Each returns ≤3 objections in this form: target step · concrete failure case · severity (fatal/major/minor) · what would resolve it. The judge discards objections without a concrete failure case.
 3. **Revision** — continue the same proposer agent (SendMessage) with the surviving objections. For each: **concede** (change the conclusion) or **refute** (with evidence or derivation).
-4. **Optional round 2** — only if a *fatal* objection was refuted and the critic who raised it disputes the refutation. Then stop.
+4. **Round 2 (last round)** — runs if a *fatal* objection was refuted (that critic re-checks the refutation) **or** the revision introduced new claims, numbers, or thresholds (Skeptic, plus Field insider for factual claims, re-check only those revised claims; decided 2026-09-27). Surviving objections are marked open. Then stop.
 
 ### 4.4 Record
 
 Judge writes the full record to the archive `lin-study/debates/YYYY-MM-DD-<topic>.md`, then writes a conclusion card + index line + at most one insight-queue line (Part 5). The full record contains:
 - Final conclusion
-- Confidence: **high** (no open major/fatal) · **medium** (open majors only) · **low** (any open fatal)
+- Confidence: **high** (no open major/fatal) · **medium** (open majors only) · **low** (any open fatal); then take the minimum with the proposer's self-rating. Claims first introduced in the revision count as unreviewed unless round 2 re-checked them; if unreviewed, confidence is capped at medium (decided 2026-09-27).
 - Objection ledger: role · objection · severity · conceded / refuted / open
 - **Draft → final diff**: what changed and which objection caused it
 - Open objections, carried forward

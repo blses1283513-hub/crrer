@@ -29,12 +29,15 @@ Dispatch four `general-purpose` agents with the prompts in `references/roles/{sk
 ## Step 3 — Revision
 Continue the same proposer (SendMessage to its agent ID; load SendMessage via ToolSearch if deferred) with the surviving objections, numbered. If that agent is no longer reachable, dispatch a fresh `lin-hsiu-hau-mentor` with the question + its draft pasted inline + the objections. Instruction: "For each objection: CONCEDE (revise the conclusion) or REFUTE (evidence or derivation). Then output a revised ## 結論草稿 block."
 
-## Step 4 — Optional round 2 (max)
-Only if a **fatal** objection was refuted: send that refutation to the critic role that raised it (fresh dispatch, same role prompt + refutation). If it still stands with a concrete case → mark open. Then stop.
+## Step 4 — Round 2 (max; the last round)
+Run round 2 if either trigger holds (one combined round, never a third):
+- **Refuted fatal:** send that refutation to the critic role that raised it (fresh dispatch, same role prompt + refutation).
+- **Revised claims:** the revision introduced new claims, numbers, or thresholds (not in the draft the critics saw). List them as `{SCOPE} = delta only: <the new claims>` and dispatch the **Skeptic** plus the **Field insider** (the latter only if any new claim is factual/empirical), same role prompts.
+Surviving objections with a concrete case → mark open (no further revision). Then stop.
 
 ## Step 5 — Judge & record
 Confidence: **high** = no open major/fatal · **medium** = open majors only · **low** = any open fatal.
-**Revision text is unreviewed:** any claim, number, or threshold that first appears in the proposer's revision (not in the draft the critics saw) counts as unreviewed. Final confidence = min(rule result, the proposer's own self-rated confidence), and is capped at medium unless round 2 re-checks the revised claims.
+**Revision text is unreviewed:** any claim, number, or threshold that first appears in the proposer's revision (not in the draft the critics saw) counts as unreviewed. Final confidence = min(rule result, the proposer's own self-rated confidence; a range like "medium-low" takes its lower end; a split rating applies per sub-claim). If round 2 re-checked the revised claims, they count as reviewed and the rule result stands; if round 2 was skipped, confidence is capped at medium.
 Write `L/debates/YYYY-MM-DD-<slug>.md`:
 ```
 ---
