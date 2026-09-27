@@ -5,8 +5,9 @@
 <style>
 :root {
   color-scheme: dark;
-  --abyss: #030a18;
-  --trench: #071631;
+  --abyss: #000000;
+  --trench: #05070c;
+  --glass: #04070d;
   --deep: #0b3d91;
   --tide: #2f7bff;
   --foam: #bfe6ff;
@@ -24,7 +25,7 @@
 html, body { height: 100%; }
 body {
   margin: 0;
-  background: radial-gradient(120% 70% at 50% 0%, #0a2250 0%, var(--abyss) 60%) fixed, var(--abyss);
+  background: var(--abyss);
   color: var(--ink);
   font: 15px/1.7 var(--sans);
 }
@@ -54,7 +55,7 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--foam); o
 .stage {
   position: sticky; top: calc(env(safe-area-inset-top, 0px) + 48px); z-index: 4;
   display: flex; flex-direction: column; align-items: center; gap: 6px; padding-block: 4px 14px;
-  background: linear-gradient(var(--abyss) 88%, transparent);
+  background: radial-gradient(circle at 50% 42%, rgba(24, 84, 220, 0.28), transparent 62%), linear-gradient(var(--abyss) 88%, transparent);
 }
 .orb {
   width: min(56vw, 220px); aspect-ratio: 1; max-width: 100%; position: relative; flex: none;
@@ -84,13 +85,13 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--foam); o
 .lede { margin: 0; font: 600 clamp(20px, 3.4vw, 26px)/1.4 var(--serif); color: var(--ink); text-wrap: balance; }
 .examples { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; max-width: 640px; }
 .example {
-  background: rgba(47, 123, 255, 0.07); border: 1px solid var(--line); border-radius: 12px;
+  background: var(--glass); border: 1px solid rgba(95, 150, 255, 0.28); border-radius: 12px;
   padding: 8px 12px; font-size: 13.5px; line-height: 1.5; color: var(--mist); text-align: left; max-width: 100%;
 }
-.example:hover { color: var(--ink); background: rgba(47, 123, 255, 0.14); }
+.example:hover { color: var(--ink); border-color: var(--tide); box-shadow: 0 0 14px rgba(47, 123, 255, 0.25); }
 
 .turn { display: flex; flex-direction: column; gap: 14px; }
-.q { align-self: flex-end; max-width: 85%; margin: 0; padding: 10px 14px; border-radius: 14px 14px 4px 14px; background: rgba(47, 123, 255, 0.16); border: 1px solid var(--line); white-space: pre-wrap; overflow-wrap: anywhere; }
+.q { align-self: flex-end; max-width: 85%; margin: 0; padding: 10px 14px; border-radius: 14px 14px 4px 14px; background: var(--glass); border: 1px solid rgba(95, 150, 255, 0.4); box-shadow: inset 0 0 18px rgba(47, 123, 255, 0.12); white-space: pre-wrap; overflow-wrap: anywhere; }
 .a { font: 16px/1.85 var(--serif); color: var(--ink); overflow-wrap: anywhere; }
 .a.pending { font: 13px var(--mono); color: var(--mist); }
 .a h1, .a h2, .a h3, .a h4 { font-family: var(--sans); color: var(--foam); line-height: 1.4; text-wrap: balance; margin: 1.4em 0 0.5em; }
@@ -115,7 +116,7 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--foam); o
 .debate-btn { color: var(--foam); border-color: rgba(140, 190, 255, 0.45); }
 .mode {
   flex: none; align-self: stretch; border-radius: 16px; padding: 0 12px; font: 500 12.5px var(--mono); letter-spacing: 0.08em;
-  background: rgba(7, 22, 49, 0.92); border: 1px solid rgba(95, 150, 255, 0.35); color: var(--mist);
+  background: var(--glass); border: 1px solid rgba(95, 150, 255, 0.35); color: var(--mist);
 }
 .mode[aria-pressed="true"] { color: var(--foam); border-color: var(--tide); box-shadow: 0 0 14px rgba(47, 123, 255, 0.35); }
 .conf-high { color: var(--high); } .conf-medium { color: var(--medium); } .conf-low { color: var(--low); }
@@ -141,7 +142,7 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--foam); o
 .composer textarea {
   flex: 1; min-width: 0; resize: none; height: 64px; overflow-y: auto; box-sizing: border-box;
   padding: 12px 16px; border-radius: 20px; border: 1px solid rgba(95, 150, 255, 0.35);
-  background: rgba(7, 22, 49, 0.92); color: var(--ink); font: 15px/1.5 var(--sans);
+  background: var(--glass); color: var(--ink); font: 15px/1.5 var(--sans);
   box-shadow: 0 0 0 4px rgba(47, 123, 255, 0.06), 0 10px 40px rgba(0, 10, 40, 0.6);
 }
 .composer textarea::placeholder { color: rgba(138, 163, 199, 0.6); }
@@ -156,14 +157,14 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--foam); o
 .drawer {
   position: fixed; inset: 0 0 0 auto; z-index: 10; width: min(440px, 100%); box-sizing: border-box;
   padding: calc(16px + env(safe-area-inset-top, 0px)) 16px calc(16px + env(safe-area-inset-bottom, 0px));
-  background: rgba(5, 14, 33, 0.97); border-left: 1px solid var(--line); overflow-y: auto;
+  background: rgba(1, 2, 5, 0.97); border-left: 1px solid rgba(95, 150, 255, 0.3); overflow-y: auto;
   box-shadow: -20px 0 60px rgba(0, 0, 0, 0.5);
 }
 .drawer-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .drawer h2 { margin: 0; font: 600 18px var(--serif); color: var(--foam); }
 .drawer-note { color: var(--mist); font-size: 13px; }
 .memory-list { display: flex; flex-direction: column; gap: 10px; }
-.card { padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: rgba(47, 123, 255, 0.05); display: flex; flex-direction: column; gap: 6px; }
+.card { padding: 12px 14px; border: 1px solid rgba(95, 150, 255, 0.25); border-radius: 12px; background: var(--glass); display: flex; flex-direction: column; gap: 6px; }
 .card-top { display: flex; align-items: center; gap: 10px; font: 12px var(--mono); color: var(--mist); flex-wrap: wrap; }
 .card-id { color: var(--foam); }
 .card-claim { margin: 0; font-size: 14px; line-height: 1.6; }
@@ -173,7 +174,7 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--foam); o
 
 @media (min-width: 960px) {
   .layout { flex-direction: row; align-items: flex-start; gap: 40px; }
-  .stage { flex: 0 0 440px; top: calc(env(safe-area-inset-top, 0px) + 56px); height: calc(100vh - 72px); justify-content: center; background: none; padding-block: 0; }
+  .stage { flex: 0 0 440px; top: calc(env(safe-area-inset-top, 0px) + 56px); height: calc(100vh - 72px); justify-content: center; background: radial-gradient(circle at 50% 46%, rgba(24, 84, 220, 0.26), transparent 58%); padding-block: 0; }
   .orb { width: 420px; }
   .col { min-height: calc(100vh - 72px); }
   .turn { scroll-margin-top: 72px; }
@@ -1019,7 +1020,7 @@ const Orb = (() => {
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const models = new Map(), rigs = new Map(), silhouettes = new Map(), zoo = new Map();
   let deck = [];
-  let N, renderer, scene, camera, group, geo, mat, rings = [], glow;
+  let N, renderer, scene, camera, group, geo, mat, rings = [], glow, core, coreScale = 1;
   let cur, curN, curS, tgt, tgtN, tgtS, delay, switchAt = 0, shape = "sphere", live = null, busy = 0, busyTarget = 0;
   let yaw = 0, pitch = 0, dragYaw = 0, dragPitch = 0, velYaw = 0, dragging = false, lastX = 0, lastY = 0;
   let mouse = { x: 9, y: 9, on: 0 }, host, clock = 0, last = 0, running = false, token = 0;
@@ -1187,11 +1188,11 @@ const Orb = (() => {
 
   // ---------- rendering ----------
   const VERT = `
-    attribute float aSeed, aShade;
+    attribute float aSeed, aShade, aInk;
     attribute vec3 aNormal;
-    uniform float uTime, uSize, uRatio, uBusy, uMouseOn;
+    uniform float uTime, uSize, uRatio, uBusy, uMouseOn, uInkScale;
     uniform vec2 uMouse;
-    varying float vDepth, vSeed, vLight;
+    varying float vDepth, vSeed, vLight, vInk;
     void main() {
       vec3 p = position;
       p += aNormal * sin(uTime * 1.4 + aSeed * 6.283 + p.y * 3.0) * (0.006 + 0.01 * uBusy);
@@ -1200,7 +1201,8 @@ const Orb = (() => {
       vec2 dv = clip.xy / clip.w - uMouse;
       mv.xy += normalize(dv + 1e-5) * uMouseOn * smoothstep(0.32, 0.0, length(dv)) * 0.22;
       gl_Position = projectionMatrix * mv;
-      gl_PointSize = uSize * (0.55 + aSeed * 0.8) * uRatio * (3.4 / -mv.z);
+      gl_PointSize = uSize * (0.55 + aSeed * 0.8) * uRatio * (3.4 / -mv.z) * mix(1.0, uInkScale, aInk);
+      vInk = aInk;
       vec3 n = normalize(normalMatrix * aNormal);
       float key = abs(dot(n, normalize(vec3(-0.45, 0.7, 0.55))));
       float rim = pow(1.0 - abs(n.z), 2.0);
@@ -1211,8 +1213,9 @@ const Orb = (() => {
   const FRAG = `
     uniform vec3 uDeep, uMid, uLight;
     uniform float uTime;
-    varying float vDepth, vSeed, vLight;
+    varying float vDepth, vSeed, vLight, vInk;
     void main() {
+      if (vInk > 0.5) discard;
       float d = length(gl_PointCoord - 0.5);
       if (d > 0.5) discard;
       float a = smoothstep(0.5, 0.0, d); a *= a;
@@ -1221,6 +1224,19 @@ const Orb = (() => {
       col = mix(col, uLight, smoothstep(0.6, 1.05, b) + step(0.95, vSeed) * 0.5);
       float tw = 0.82 + 0.18 * sin(uTime * 2.1 + vSeed * 40.0);
       gl_FragColor = vec4(col, a * tw * (0.25 + 0.75 * b));
+    }`;
+  // Black beads with a thin blue rim, drawn over the blue light for a two-tone, inky body.
+  const INK = `
+    uniform vec3 uMid;
+    varying float vDepth, vSeed, vLight, vInk;
+    void main() {
+      if (vInk < 0.5 || vLight < 0.01) discard;
+      float d = length(gl_PointCoord - 0.5);
+      if (d > 0.5) discard;
+      float body = smoothstep(0.5, 0.38, d);
+      float rim = smoothstep(0.3, 0.42, d) * smoothstep(0.5, 0.44, d);
+      vec3 col = uMid * rim * (0.3 + 0.6 * clamp(vLight, 0.0, 1.0));
+      gl_FragColor = vec4(col, body * (0.6 + 0.35 * vDepth));
     }`;
 
   function ring(radius, tiltX, tiltZ) {
@@ -1257,22 +1273,28 @@ const Orb = (() => {
     cur = s0.p; curN = s0.n; curS = s0.s;
     tgt = new Float32Array(cur); tgtN = new Float32Array(curN); tgtS = new Float32Array(curS);
     delay = new Float32Array(N);
-    const seeds = new Float32Array(N);
-    for (let i = 0; i < N; i++) { seeds[i] = Math.random(); delay[i] = Math.random() * 0.45; }
+    const seeds = new Float32Array(N), ink = new Float32Array(N);
+    for (let i = 0; i < N; i++) { seeds[i] = Math.random(); delay[i] = Math.random() * 0.45; ink[i] = Math.random() < 0.18 ? 1 : 0; }
     geo = new THREE.BufferGeometry();
     geo.setAttribute("position", new THREE.BufferAttribute(cur, 3));
     geo.setAttribute("aNormal", new THREE.BufferAttribute(curN, 3));
     geo.setAttribute("aShade", new THREE.BufferAttribute(curS, 1));
     geo.setAttribute("aSeed", new THREE.BufferAttribute(seeds, 1));
+    geo.setAttribute("aInk", new THREE.BufferAttribute(ink, 1));
     mat = new THREE.ShaderMaterial({
       vertexShader: VERT, fragmentShader: FRAG, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
       uniforms: {
         uTime: { value: 0 }, uSize: { value: 4.6 }, uRatio: { value: renderer.getPixelRatio() }, uBusy: { value: 0 },
-        uMouse: { value: new THREE.Vector2(9, 9) }, uMouseOn: { value: 0 },
+        uMouse: { value: new THREE.Vector2(9, 9) }, uMouseOn: { value: 0 }, uInkScale: { value: 1.12 },
         uDeep: { value: new THREE.Color("#0b3d91") }, uMid: { value: new THREE.Color("#2f7bff") }, uLight: { value: new THREE.Color("#cfeeff") },
       },
     });
-    group.add(new THREE.Points(geo, mat));
+    // A black core inside the blue shell: it hides the far side of the sphere, and the glow behind it becomes a corona.
+    core = new THREE.Mesh(new THREE.SphereGeometry(0.9, 48, 32), new THREE.MeshBasicMaterial({ color: 0x000000 }));
+    core.renderOrder = 0; group.add(core);
+    const blue = new THREE.Points(geo, mat); blue.renderOrder = 1; group.add(blue);
+    const inkMat = new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: INK, transparent: true, depthWrite: false, blending: THREE.NormalBlending, uniforms: { ...mat.uniforms } });
+    const dark = new THREE.Points(geo, inkMat); dark.renderOrder = 2; group.add(dark);
     rings = [ring(1.32, 1.2, 0.3), ring(1.46, 1.75, -0.5), ring(1.22, 0.4, 1.1)];
     rings.forEach((r) => scene.add(r));
     glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
@@ -1337,6 +1359,8 @@ const Orb = (() => {
     }
     pitch += ((shape === "sphere" ? 0.18 : 0.08) - pitch) * Math.min(1, dt * 2);
     group.rotation.set(pitch + dragPitch, yaw + dragYaw, 0);
+    coreScale += ((shape === "sphere" ? 1 : 0.001) - coreScale) * Math.min(1, dt * (shape === "sphere" ? 2.2 : 6));
+    core.scale.setScalar(coreScale); core.visible = coreScale > 0.02;
     const ringAlpha = shape === "sphere" ? 0.16 + busy * 0.12 : 0.04;
     rings.forEach((r, i) => {
       if (!reduced) r.rotation.y += dt * (0.06 + i * 0.03) * (1 + busy * 3);

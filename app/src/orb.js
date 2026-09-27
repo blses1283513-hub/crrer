@@ -17,7 +17,7 @@ const Orb = (() => {
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const models = new Map(), rigs = new Map(), silhouettes = new Map(), zoo = new Map();
   let deck = [];
-  let N, renderer, scene, camera, group, geo, mat, rings = [], glow;
+  let N, renderer, scene, camera, group, geo, mat, rings = [], glow, core, coreScale = 1;
   let cur, curN, curS, tgt, tgtN, tgtS, delay, switchAt = 0, shape = "sphere", live = null, busy = 0, busyTarget = 0;
   let yaw = 0, pitch = 0, dragYaw = 0, dragPitch = 0, velYaw = 0, dragging = false, lastX = 0, lastY = 0;
   let mouse = { x: 9, y: 9, on: 0 }, host, clock = 0, last = 0, running = false, token = 0;
@@ -185,11 +185,11 @@ const Orb = (() => {
 
   // ---------- rendering ----------
   const VERT = `
-    attribute float aSeed, aShade;
+    attribute float aSeed, aShade, aInk;
     attribute vec3 aNormal;
-    uniform float uTime, uSize, uRatio, uBusy, uMouseOn;
+    uniform float uTime, uSize, uRatio, uBusy, uMouseOn, uInkScale;
     uniform vec2 uMouse;
-    varying float vDepth, vSeed, vLight;
+    varying float vDepth, vSeed, vLight, vInk;
     void main() {
       vec3 p = position;
       p += aNormal * sin(uTime * 1.4 + aSeed * 6.283 + p.y * 3.0) * (0.006 + 0.01 * uBusy);
@@ -198,7 +198,8 @@ const Orb = (() => {
       vec2 dv = clip.xy / clip.w - uMouse;
       mv.xy += normalize(dv + 1e-5) * uMouseOn * smoothstep(0.32, 0.0, length(dv)) * 0.22;
       gl_Position = projectionMatrix * mv;
-      gl_PointSize = uSize * (0.55 + aSeed * 0.8) * uRatio * (3.4 / -mv.z);
+      gl_PointSize = uSize * (0.55 + aSeed * 0.8) * uRatio * (3.4 / -mv.z) * mix(1.0, uInkScale, aInk);
+      vInk = aInk;
       vec3 n = normalize(normalMatrix * aNormal);
       float key = abs(dot(n, normalize(vec3(-0.45, 0.7, 0.55))));
       float rim = pow(1.0 - abs(n.z), 2.0);
@@ -209,8 +210,9 @@ const Orb = (() => {
   const FRAG = `
     uniform vec3 uDeep, uMid, uLight;
     uniform float uTime;
-    varying float vDepth, vSeed, vLight;
+    varying float vDepth, vSeed, vLight, vInk;
     void main() {
+      if (vInk > 0.5) discard;
       float d = length(gl_PointCoord - 0.5);
       if (d > 0.5) discard;
       float a = smoothstep(0.5, 0.0, d); a *= a;
@@ -219,6 +221,19 @@ const Orb = (() => {
       col = mix(col, uLight, smoothstep(0.6, 1.05, b) + step(0.95, vSeed) * 0.5);
       float tw = 0.82 + 0.18 * sin(uTime * 2.1 + vSeed * 40.0);
       gl_FragColor = vec4(col, a * tw * (0.25 + 0.75 * b));
+    }`;
+  // Black beads with a thin blue rim, drawn over the blue light for a two-tone, inky body.
+  const INK = `
+    uniform vec3 uMid;
+    varying float vDepth, vSeed, vLight, vInk;
+    void main() {
+      if (vInk < 0.5 || vLight < 0.01) discard;
+      float d = length(gl_PointCoord - 0.5);
+      if (d > 0.5) discard;
+      float body = smoothstep(0.5, 0.38, d);
+      float rim = smoothstep(0.3, 0.42, d) * smoothstep(0.5, 0.44, d);
+      vec3 col = uMid * rim * (0.3 + 0.6 * clamp(vLight, 0.0, 1.0));
+      gl_FragColor = vec4(col, body * (0.6 + 0.35 * vDepth));
     }`;
 
   function ring(radius, tiltX, tiltZ) {
@@ -255,22 +270,28 @@ const Orb = (() => {
     cur = s0.p; curN = s0.n; curS = s0.s;
     tgt = new Float32Array(cur); tgtN = new Float32Array(curN); tgtS = new Float32Array(curS);
     delay = new Float32Array(N);
-    const seeds = new Float32Array(N);
-    for (let i = 0; i < N; i++) { seeds[i] = Math.random(); delay[i] = Math.random() * 0.45; }
+    const seeds = new Float32Array(N), ink = new Float32Array(N);
+    for (let i = 0; i < N; i++) { seeds[i] = Math.random(); delay[i] = Math.random() * 0.45; ink[i] = Math.random() < 0.18 ? 1 : 0; }
     geo = new THREE.BufferGeometry();
     geo.setAttribute("position", new THREE.BufferAttribute(cur, 3));
     geo.setAttribute("aNormal", new THREE.BufferAttribute(curN, 3));
     geo.setAttribute("aShade", new THREE.BufferAttribute(curS, 1));
     geo.setAttribute("aSeed", new THREE.BufferAttribute(seeds, 1));
+    geo.setAttribute("aInk", new THREE.BufferAttribute(ink, 1));
     mat = new THREE.ShaderMaterial({
       vertexShader: VERT, fragmentShader: FRAG, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
       uniforms: {
         uTime: { value: 0 }, uSize: { value: 4.6 }, uRatio: { value: renderer.getPixelRatio() }, uBusy: { value: 0 },
-        uMouse: { value: new THREE.Vector2(9, 9) }, uMouseOn: { value: 0 },
+        uMouse: { value: new THREE.Vector2(9, 9) }, uMouseOn: { value: 0 }, uInkScale: { value: 1.12 },
         uDeep: { value: new THREE.Color("#0b3d91") }, uMid: { value: new THREE.Color("#2f7bff") }, uLight: { value: new THREE.Color("#cfeeff") },
       },
     });
-    group.add(new THREE.Points(geo, mat));
+    // A black core inside the blue shell: it hides the far side of the sphere, and the glow behind it becomes a corona.
+    core = new THREE.Mesh(new THREE.SphereGeometry(0.9, 48, 32), new THREE.MeshBasicMaterial({ color: 0x000000 }));
+    core.renderOrder = 0; group.add(core);
+    const blue = new THREE.Points(geo, mat); blue.renderOrder = 1; group.add(blue);
+    const inkMat = new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: INK, transparent: true, depthWrite: false, blending: THREE.NormalBlending, uniforms: { ...mat.uniforms } });
+    const dark = new THREE.Points(geo, inkMat); dark.renderOrder = 2; group.add(dark);
     rings = [ring(1.32, 1.2, 0.3), ring(1.46, 1.75, -0.5), ring(1.22, 0.4, 1.1)];
     rings.forEach((r) => scene.add(r));
     glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
@@ -335,6 +356,8 @@ const Orb = (() => {
     }
     pitch += ((shape === "sphere" ? 0.18 : 0.08) - pitch) * Math.min(1, dt * 2);
     group.rotation.set(pitch + dragPitch, yaw + dragYaw, 0);
+    coreScale += ((shape === "sphere" ? 1 : 0.001) - coreScale) * Math.min(1, dt * (shape === "sphere" ? 2.2 : 6));
+    core.scale.setScalar(coreScale); core.visible = coreScale > 0.02;
     const ringAlpha = shape === "sphere" ? 0.16 + busy * 0.12 : 0.04;
     rings.forEach((r, i) => {
       if (!reduced) r.rotation.y += dt * (0.06 + i * 0.03) * (1 + busy * 3);

@@ -1,7 +1,8 @@
 :root {
   color-scheme: dark;
-  --abyss: #030a18;
-  --trench: #071631;
+  --abyss: #000000;
+  --trench: #05070c;
+  --glass: #04070d;
   --deep: #0b3d91;
   --tide: #2f7bff;
   --foam: #bfe6ff;
@@ -19,7 +20,7 @@
 html, body { height: 100%; }
 body {
   margin: 0;
-  background: radial-gradient(120% 70% at 50% 0%, #0a2250 0%, var(--abyss) 60%) fixed, var(--abyss);
+  background: var(--abyss);
   color: var(--ink);
   font: 15px/1.7 var(--sans);
 }
@@ -49,7 +50,7 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--foam); o
 .stage {
   position: sticky; top: calc(env(safe-area-inset-top, 0px) + 48px); z-index: 4;
   display: flex; flex-direction: column; align-items: center; gap: 6px; padding-block: 4px 14px;
-  background: linear-gradient(var(--abyss) 88%, transparent);
+  background: radial-gradient(circle at 50% 42%, rgba(24, 84, 220, 0.28), transparent 62%), linear-gradient(var(--abyss) 88%, transparent);
 }
 .orb {
   width: min(56vw, 220px); aspect-ratio: 1; max-width: 100%; position: relative; flex: none;
@@ -79,13 +80,13 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--foam); o
 .lede { margin: 0; font: 600 clamp(20px, 3.4vw, 26px)/1.4 var(--serif); color: var(--ink); text-wrap: balance; }
 .examples { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; max-width: 640px; }
 .example {
-  background: rgba(47, 123, 255, 0.07); border: 1px solid var(--line); border-radius: 12px;
+  background: var(--glass); border: 1px solid rgba(95, 150, 255, 0.28); border-radius: 12px;
   padding: 8px 12px; font-size: 13.5px; line-height: 1.5; color: var(--mist); text-align: left; max-width: 100%;
 }
-.example:hover { color: var(--ink); background: rgba(47, 123, 255, 0.14); }
+.example:hover { color: var(--ink); border-color: var(--tide); box-shadow: 0 0 14px rgba(47, 123, 255, 0.25); }
 
 .turn { display: flex; flex-direction: column; gap: 14px; }
-.q { align-self: flex-end; max-width: 85%; margin: 0; padding: 10px 14px; border-radius: 14px 14px 4px 14px; background: rgba(47, 123, 255, 0.16); border: 1px solid var(--line); white-space: pre-wrap; overflow-wrap: anywhere; }
+.q { align-self: flex-end; max-width: 85%; margin: 0; padding: 10px 14px; border-radius: 14px 14px 4px 14px; background: var(--glass); border: 1px solid rgba(95, 150, 255, 0.4); box-shadow: inset 0 0 18px rgba(47, 123, 255, 0.12); white-space: pre-wrap; overflow-wrap: anywhere; }
 .a { font: 16px/1.85 var(--serif); color: var(--ink); overflow-wrap: anywhere; }
 .a.pending { font: 13px var(--mono); color: var(--mist); }
 .a h1, .a h2, .a h3, .a h4 { font-family: var(--sans); color: var(--foam); line-height: 1.4; text-wrap: balance; margin: 1.4em 0 0.5em; }
@@ -110,7 +111,7 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--foam); o
 .debate-btn { color: var(--foam); border-color: rgba(140, 190, 255, 0.45); }
 .mode {
   flex: none; align-self: stretch; border-radius: 16px; padding: 0 12px; font: 500 12.5px var(--mono); letter-spacing: 0.08em;
-  background: rgba(7, 22, 49, 0.92); border: 1px solid rgba(95, 150, 255, 0.35); color: var(--mist);
+  background: var(--glass); border: 1px solid rgba(95, 150, 255, 0.35); color: var(--mist);
 }
 .mode[aria-pressed="true"] { color: var(--foam); border-color: var(--tide); box-shadow: 0 0 14px rgba(47, 123, 255, 0.35); }
 .conf-high { color: var(--high); } .conf-medium { color: var(--medium); } .conf-low { color: var(--low); }
@@ -136,7 +137,7 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--foam); o
 .composer textarea {
   flex: 1; min-width: 0; resize: none; height: 64px; overflow-y: auto; box-sizing: border-box;
   padding: 12px 16px; border-radius: 20px; border: 1px solid rgba(95, 150, 255, 0.35);
-  background: rgba(7, 22, 49, 0.92); color: var(--ink); font: 15px/1.5 var(--sans);
+  background: var(--glass); color: var(--ink); font: 15px/1.5 var(--sans);
   box-shadow: 0 0 0 4px rgba(47, 123, 255, 0.06), 0 10px 40px rgba(0, 10, 40, 0.6);
 }
 .composer textarea::placeholder { color: rgba(138, 163, 199, 0.6); }
@@ -151,14 +152,14 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--foam); o
 .drawer {
   position: fixed; inset: 0 0 0 auto; z-index: 10; width: min(440px, 100%); box-sizing: border-box;
   padding: calc(16px + env(safe-area-inset-top, 0px)) 16px calc(16px + env(safe-area-inset-bottom, 0px));
-  background: rgba(5, 14, 33, 0.97); border-left: 1px solid var(--line); overflow-y: auto;
+  background: rgba(1, 2, 5, 0.97); border-left: 1px solid rgba(95, 150, 255, 0.3); overflow-y: auto;
   box-shadow: -20px 0 60px rgba(0, 0, 0, 0.5);
 }
 .drawer-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .drawer h2 { margin: 0; font: 600 18px var(--serif); color: var(--foam); }
 .drawer-note { color: var(--mist); font-size: 13px; }
 .memory-list { display: flex; flex-direction: column; gap: 10px; }
-.card { padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: rgba(47, 123, 255, 0.05); display: flex; flex-direction: column; gap: 6px; }
+.card { padding: 12px 14px; border: 1px solid rgba(95, 150, 255, 0.25); border-radius: 12px; background: var(--glass); display: flex; flex-direction: column; gap: 6px; }
 .card-top { display: flex; align-items: center; gap: 10px; font: 12px var(--mono); color: var(--mist); flex-wrap: wrap; }
 .card-id { color: var(--foam); }
 .card-claim { margin: 0; font-size: 14px; line-height: 1.6; }
@@ -168,7 +169,7 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--foam); o
 
 @media (min-width: 960px) {
   .layout { flex-direction: row; align-items: flex-start; gap: 40px; }
-  .stage { flex: 0 0 440px; top: calc(env(safe-area-inset-top, 0px) + 56px); height: calc(100vh - 72px); justify-content: center; background: none; padding-block: 0; }
+  .stage { flex: 0 0 440px; top: calc(env(safe-area-inset-top, 0px) + 56px); height: calc(100vh - 72px); justify-content: center; background: radial-gradient(circle at 50% 46%, rgba(24, 84, 220, 0.26), transparent 58%); padding-block: 0; }
   .orb { width: 420px; }
   .col { min-height: calc(100vh - 72px); }
   .turn { scroll-margin-top: 72px; }
