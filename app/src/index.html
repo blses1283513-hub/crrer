@@ -1,0 +1,74 @@
+<title>Lin Brain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@400;600&display=swap">
+<style>
+/*@STYLE*/
+</style>
+
+<div id="app" class="app">
+  <header class="bar">
+    <div class="mark" aria-label="Lin Brain">LIN<span>·</span>BRAIN</div>
+    <nav class="bar-actions">
+      <button id="btn-memory" class="ghost" type="button">記憶 <span id="card-count" class="count"></span></button>
+      <button id="btn-new" class="ghost" type="button">新對話</button>
+    </nav>
+  </header>
+
+  <section class="stage" aria-label="Lin Brain">
+    <div id="orb" class="orb" aria-hidden="true"><div class="orb-fallback-face" id="orb-face"></div></div>
+    <p id="status" class="status" aria-live="polite">待命 · 林秀豪式思考</p>
+    <ol id="steps" class="steps" hidden>
+      <li data-step="memory">記憶</li><li data-step="mentor">推導</li><li data-step="critics">審查</li>
+      <li data-step="revision">修訂</li><li data-step="judge">裁定</li><li data-step="store">收藏</li>
+    </ol>
+    <p id="ticker" class="ticker" aria-hidden="true"></p>
+  </section>
+
+  <main id="thread" class="thread">
+    <section id="welcome" class="welcome">
+      <p class="lede">問任何你今天想弄懂的事。</p>
+      <div class="examples" id="examples"></div>
+    </section>
+  </main>
+
+  <form id="composer" class="composer" autocomplete="off">
+    <label for="prompt" class="sr">提問</label>
+    <textarea id="prompt" rows="1" placeholder="例如：為什麼抗生素停用後，抗藥菌不一定會消失？"></textarea>
+    <button id="send" type="submit" class="primary">思考</button>
+    <button id="stop" type="button" class="ghost" hidden>停止</button>
+  </form>
+
+  <aside id="memory" class="drawer" hidden aria-label="結論記憶">
+    <div class="drawer-head">
+      <h2>結論記憶</h2>
+      <button id="memory-close" type="button" class="ghost">關閉</button>
+    </div>
+    <p class="drawer-note">每場辯論存成一張結論卡。之後問到同一題、且信心為 high 時直接重用。</p>
+    <div id="memory-list" class="memory-list"></div>
+  </aside>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
+<script>
+window.MathJax = {
+  tex: { inlineMath: [["$", "$"], ["\\(", "\\)"]], displayMath: [["$$", "$$"], ["\\[", "\\]"]] },
+  svg: { fontCache: "global" },
+  startup: { typeset: false },
+};
+</script>
+<script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg.min.js"></script>
+<script>
+/*@KNOWLEDGE*/
+</script>
+<script>
+/*@ORB*/
+</script>
+<script>
+/*@BRAIN*/
+</script>
+<script>
+/*@UI*/
+</script>
