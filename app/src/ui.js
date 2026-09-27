@@ -168,18 +168,16 @@
     v.append(d);
   }
 
-  let currentZh = "";
-  function showAnimal(label) {
-    const a = Orb.next();
-    currentZh = a.zh;
-    Orb.setShape(a.key);
-    orbEl.querySelector(".orb-fallback-face").textContent = a.emoji;
-    status.textContent = `${a.zh} · ${label}`;
-  }
-
+  // One prompt, one animal: it is drawn when the prompt starts and stays for every stage.
+  let animal = null;
   function setStage(ev) {
-    if (ev.type === "note") { status.textContent = `${currentZh} · ${ev.label}`; return; }
+    if (!animal) {
+      animal = Orb.next();
+      Orb.setShape(animal.key);
+      orbEl.querySelector(".orb-fallback-face").textContent = animal.emoji;
+    }
     clearInterval(cycleTimer);
+    if (ev.type === "note") { status.textContent = `${animal.zh} · ${ev.label}`; return; }
     const idx = STEP_ORDER.indexOf(ev.step);
     steps.querySelectorAll("li").forEach((li, i) => {
       li.classList.toggle("now", i === idx);
@@ -187,10 +185,10 @@
     });
     if (ev.cycle) {
       let k = 0;
-      const show = () => showAnimal(`${ev.cycle[k++ % ev.cycle.length]} ${ev.label}`);
+      const show = () => { status.textContent = `${animal.zh} · ${ev.cycle[k++ % ev.cycle.length]} ${ev.label}`; };
       show();
       cycleTimer = setInterval(show, 3200);
-    } else showAnimal(ev.label);
+    } else status.textContent = `${animal.zh} · ${ev.label}`;
   }
 
   // Runs one Brain job on a turn: streaming, orb, stop button and error copy.
@@ -230,6 +228,7 @@
       turn.append(p);
     } finally {
       clearInterval(cycleTimer);
+      animal = null;
       running = false; ctl = null;
       send.hidden = false; stop.hidden = true; steps.hidden = true;
       ticker.textContent = ""; status.textContent = IDLE;
