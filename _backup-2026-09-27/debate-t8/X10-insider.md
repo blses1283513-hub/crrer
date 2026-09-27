@@ -1,0 +1,23 @@
+OBJECTION 1
+- type: missing-field-knowledge
+- target step: "以上三筆的期刊/年份是我記憶中的內容,**arXiv ID/DOI 待查證**...真實世界紀錄大致是:有一些提前公開喊出的案例事後被認為方向正確,但也有明確的假警報,獨立統計學界對「這訊號是否顯著、還是雜訊裡挑出來的巧合」長期有爭議。"
+- failure case: I opened the arXiv abstract page for Sornette & Johansen, "Significance of log-periodic precursors to financial crashes" (confirms the draft's citation is accurate: Quantitative Finance 1(4), 452–471, 2001) and its abstract states the paper's actual content: a direct rebuttal of a named critic (Feigenbaum) who rejected log-periodicity by removing the final year of pre-crash data, which Sornette & Johansen call methodologically flawed — "naive to analyze a critical point phenomenon... by removing the most important part of the data closest to the critical point." The draft's "獨立統計學界...長期有爭議" flattens this into a vague, unnamed disagreement. A practitioner reading the draft would not learn that the entire dispute turns on a concrete, well-known data-windowing / look-ahead-bias argument — which matters directly for §4's proposed out-of-sample calibration test: if the cutoff date used to fit $(t_c,m,\omega)$ is chosen with hindsight (i.e., using data close to or past the actual crash), the same objection reappears inside the "corrected," supposedly falsifiable test.
+- source: https://arxiv.org/abs/cond-mat/0106520
+- severity: major
+- would resolve it: name the Feigenbaum vs. Sornette-Johansen dispute explicitly, and add the requirement that any out-of-sample/calibration test must freeze the data cutoff strictly before $t_c$ is estimated (no fitting window that creeps toward the crash), otherwise the look-ahead critique that originally divided the field simply migrates into the "fixed" test.
+
+OBJECTION 2
+- type: missing-field-knowledge
+- target step: "把 $h(t)$ 讀成「未來某個時間窗內崩盤的機率」...打不打得贏「不知道就當常數風險率」的笨方法基準線?這才是可證偽的版本,也是唯一公平的考法。"
+- failure case: I opened a review of Phillips, Shi & Yu's bubble-detection method (SADF/GSADF), which confirms that mainstream financial econometrics already has a widely published, peer-reviewed toolkit for exactly this question — explosive-root tests (Phillips-Wu-Yu 2011; Phillips-Shi-Yu 2015, GSADF) used across stock, housing, FX and crypto markets — and that this toolkit has **no connection at all** to critical-phenomena/LPPL framing ("no discussion of physics-style critical phenomena, log-periodic power laws, or any connection... remains purely within econometric and time-series traditions"). The draft presents its calibration/Brier-score proposal as "唯一公平的考法" (the only fair test), which is true only within the LPPL literature; it omits that the field this question is actually about (empirical finance) already has an accepted, unrelated default method for bubble detection, and that even that mainstream method admits the same limitation the draft reaches by a different route — the reviewer notes GSADF "at worst... is a test for periods of extreme return persistence," not a test that yields a crash date. A finance-trained reader would reasonably ask "why isn't this compared to GSADF?" and the draft gives no answer.
+- source: https://marcosammon.com/2016/06/17/post.html
+- severity: major
+- would resolve it: add one sentence naming SADF/GSADF as the mainstream alternative bubble-detection framework, and note that its independent, physics-agnostic conclusion (detects explosive persistence, not exact timing) corroborates rather than undercuts the draft's own "不能當時鐘" claim.
+
+OBJECTION 3
+- type: jargon
+- target step: "這跟你在凝態物理裡看過的「階層晶格(hierarchical lattice / Cayley tree)上的重整化群」給出**複數臨界指數**是同一件事——連續 RG 流的不動點在離散分支結構上退化成複數本徵值,實部給冪次律,虛部給對數週期修正。你如果算過 diamond lattice 或分支數列的 RG,這個結構應該不陌生。"
+- failure case: the question is asked from finance/market practice ("股市崩盤...可以用臨界指數預測崩盤時間吧"), so the real target reader has no background in renormalization-group flow, Cayley trees, or diamond-lattice fixed points degenerating into complex eigenvalues. This sentence is written to a condensed-matter classmate, not to that reader, and gives no financial-mechanism restatement of what the RG detour is supposed to establish (namely: why a roughly constant branching ratio in herding communities produces an oscillation frequency ω). Left as-is, the paragraph either gets skipped or mistaken for rigor it doesn't communicate to the actual audience.
+- source: none
+- severity: minor
+- would resolve it: replace or follow the RG/lattice sentence with a one-line finance-native restatement, e.g. "discrete self-similar herding — small cliques rolling up into ever-larger ones at a roughly constant branching ratio — is what produces the oscillation frequency ω; no renormalization-group machinery is needed to state that."

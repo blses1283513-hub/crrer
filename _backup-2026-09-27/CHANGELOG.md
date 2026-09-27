@@ -1,0 +1,20 @@
+# CHANGELOG 2026-09-27 — Lin mentor cross-domain build
+
+- Task 1: backups; M1–M10 → M1–M11 in Hub (2x), agent:48, deployment-lessons:9
+- Task 2: protocols/ created (5 files, verbatim from agent 103–136)
+- Task 3: agent slimmed to 11137 body bytes; regression P01/P06 → PASS 4/4 (see regression-P01-P06.md)
+- Task 4: X01–X12 appended; memory/ + debates/ skeleton
+- Task 7: lin-debate skill + 4 roles
+- Task 5: grader notes written (44 items, 41 sourced / 3 unsourced; spot-check 5 verified / 5 weak / 2 failed→unsourced); awaiting user approval
+- Task 7 fix (user decision): stale high-confidence exact hit → Related route (SKILL.md Step 0 + spec 5.2)
+- Task 5 round 2: full source check of all 44 items → 27 verified / 11 ⚠weak / 6 unsourced; v1 kept as _backup-2026-09-27/probe-grader-notes.v1-spotcheck.md
+- Task 5 round 3: 11 weak items re-sourced → 9 upgraded, 2 unsourced (X01.1, X10.1); final 36 sourced / 8 unsourced, 0 weak; v2 kept as probe-grader-notes.v2-fullcheck.md
+- Task 5: user approved grader notes in chat 2026-09-27 (recorded in front matter)
+- FIX (pre-existing bug found in Task 6): agent front matter description was an invalid YAML plain scalar (multi-line with <example>/'Context:' lines) → agent never registered. Rewrote as 'description: |' block scalar; body unchanged (11137 B). Takes effect next session; Tasks 6/8 use general-purpose persona emulation (reads the agent file + follows its boot sequence).
+- CORRECTION: YAML diagnosis NOT confirmed — after a mid-session agent reload, lin-hsiu-hau-mentor AND the unmodified materials-team agents all registered. Likely cause was a stale agent list at session start. The block-scalar conversion is kept (valid, harmless). Baseline X01–X11 already dispatched via emulation; later dispatches use the real agent type.
+- Task 6: baseline mean=0.69 (X01 .25, X03 1.0, X05 .88, X07 .50, X10 1.0, X11 .50); ledger row 1; 6 probes burned
+- Task 8: debates X01/X05/X10 → mean 0.71→0.79 (gain = X01.2 via Field insider); records/cards via record-writer. Task 9: bridge-audit candidate REJECTED (G3 no named delta; G5 PASS vs control); X06/X12 burned; no edits to M07/agent/Hub.
+- Task 10 (Steps 1–4): curriculum W09–W10 moved up; Hub links added at 3398 B (was 3399)
+- RETRACTION of the earlier 'CORRECTION': the YAML diagnosis WAS right. The side session (user-started) fixed 7 more agents with the same invalid multi-line description at 16:21, just before the mid-session agent reload — that is why they registered. See memory agent-frontmatter-yaml.md; originals in ~/.claude/_agents-backup-2026-09-27/.
+- Task 10 Step 5: memory lin-hsiu-hau-mentor-agent.md appended + MEMORY.md line updated
+- Final-review fix wave (backups in pre-final-fix/): C1 lin-debate unreviewed-revision rule + severity defs, C001–C003/index/3 debate records → confidence medium, grader-found open objections on cards; I1 index-grep-before-dispatch rule (SKILL + memory note); I2 budget+ledger+G-K rule (weekly-study, SKILL Step 7, Hub rule 2, spec path); I3 t8 debate files + persona/agent-id/mentor-def copied here, scorecard persistence note; I4 X-baseline run-restrictions + diagnosis reframed; I5 grader/baseline links removed from Hub; I6 W-X decision record; m1 agent Language = Traditional Chinese (Taiwan); m2 ledger row; m3 Hub 僕人 phrase. Core 11133+3402=14535 B (unchanged).
