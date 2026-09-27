@@ -21,9 +21,13 @@ review every 5 debates.
   forces it in either mode. Critics and round 2 run on the quick model tier.
 
 ## Animal models
-Each thinking stage draws the next of 44 kinds from a shuffled deck.
-- 39 procedural species (`app/src/animals.js`): anatomical parts posed per frame by their own gait
-  (walk, trot, gallop, hop, flap, hover, swim, slither, scuttle), with markings and interior culling.
+Each thinking stage draws the next of 45 kinds from a shuffled deck.
+- 40 procedural species (`app/src/animals.js`). Motion follows published locomotion studies
+  (Muybridge's gait photographs, Hildebrand's footfall timing): legs use two-bone IK with planted feet,
+  lateral-sequence walk, trot, pace (giraffe, camel), amble (elephant), rotary gallop with spine flex
+  (cheetah); stabilized heads, lagging tails, countershading; birds with a longer downstroke, wrist fold
+  on the upstroke, slotted primaries and flap-glide (eagle); owl head snaps and blinks; octopus jet
+  strokes; jellyfish fast-squeeze/slow-refill; crouch-push-flight-landing hops.
 - 5 rigged glTF models whose particles are re-sampled from the moving surface every frame. They ship as
   base64 `.txt` next to the page (artifacts don't serve `.glb`).
 - Horse, Flamingo, Parrot, Stork: from the three.js examples (r128, `examples/models/gltf`), originally from the RO.ME project.

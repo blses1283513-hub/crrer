@@ -53,56 +53,107 @@ const Zoo = (() => {
   }
 
   // ---------------- quadrupeds ----------------
-  const GAITS = { walk: [0.25, 0.75, 0, 0.5], trot: [0, 0.5, 0.5, 0], gallop: [0.55, 0.65, 0, 0.1], amble: [0, 0.5, 0.1, 0.6] };
+  // Footfall timing from gait studies (Muybridge's photographs, Hildebrand's gait diagrams).
+  // Offsets are the phase at which each foot touches down, in order [LH, LF, RH, RF]; duty = stance fraction.
+  const GAITS = {
+    walk: { off: [0, 0.25, 0.5, 0.75], duty: 0.66, bob: 2 },    // four-beat lateral-sequence walk
+    amble: { off: [0, 0.25, 0.5, 0.75], duty: 0.55, bob: 2 },   // elephant: fast walk, no suspension
+    pace: { off: [0, 0.02, 0.5, 0.52], duty: 0.6, bob: 2 },     // giraffe, camel: same-side legs together
+    trot: { off: [0, 0.5, 0.5, 0], duty: 0.46, bob: 2 },        // diagonal pairs
+    gallop: { off: [0, 0.5, 0.12, 0.6], duty: 0.34, bob: 1 },   // transverse gallop
+    rotary: { off: [0, 0.62, 0.1, 0.5], duty: 0.28, bob: 1 },   // cheetah: rotary gallop with spine flex
+  };
+  const LEGTYPE = { hoof: [0.36, 0.34, 0.3], paw: [0.4, 0.37, 0.23], plant: [0.47, 0.43, 0.1], column: [0.52, 0.44, 0.04] };
+
+  // Two-bone IK in the leg's plane; bend > 0 puts the middle joint behind the line (elbow), < 0 in front (stifle).
+  function ik(A, F, l1, l2, bend) {
+    let d = sub(F, A), D = len(d);
+    const max = (l1 + l2) * 0.999;
+    if (D > max) { F = add(A, mul(d, max / D)); d = sub(F, A); D = max; }
+    const u = mul(d, 1 / D), a = (l1 * l1 - l2 * l2 + D * D) / (2 * D), h = Math.sqrt(Math.max(0, l1 * l1 - a * a));
+    const perp = norm(cross(u, [0, 0, 1]));
+    return add(add(A, mul(u, a)), mul(perp, h * bend));
+  }
+
   function quad(o) {
-    const L = o.L, H = o.H, R = o.R, offs = GAITS[o.gait || "walk"], A = o.swing ?? (o.gait === "gallop" ? 0.7 : 0.42);
+    const G = GAITS[o.gait || "walk"], seg = LEGTYPE[o.legs || "hoof"];
+    const L = o.L, Hw = o.Hw, Hh = o.Hh ?? Hw * 0.97, stride = o.stride ?? L * 0.8, lift = o.lift ?? Hw * 0.12;
+    const cR = o.chest, bR = o.barrel ?? cR, rR = o.rump ?? bR, sh = o.sh ?? 0.8;
+    const base = o.pat || COAT, pat = (u) => base(u) * (u[1] < -0.35 ? 1.28 : 1); // countershading: paler belly
     return (t) => {
-      const ph = (TAU * t) / o.T, parts = [], sh = o.sh ?? 0.8, pat = o.pat || COAT;
-      const bob = (o.gait === "gallop" ? 0.05 : 0.016) * Math.sin(2 * ph);
-      const pitch = o.gait === "gallop" ? 0.07 * Math.sin(ph + 1) : 0.015 * Math.sin(2 * ph);
-      const d = fw(pitch), up = fw(pitch + Math.PI / 2);
-      const c = [0, H + R[0] * 0.5 + bob, 0];
-      parts.push(E(c, d, [L / 2, R[0], R[1]], sh, { pat }));
-      parts.push(E(add(c, mul(d, L * 0.26)), d, [L * 0.26, R[0] * 1.06, R[1] * 1.02], sh, { pat }));
-      [[L * 0.36, 1], [L * 0.36, -1], [-L * 0.34, 1], [-L * 0.34, -1]].forEach(([fx, side], i) => {
-        const front = i < 2, hip = add(add(c, mul(d, fx)), [0, -R[0] * 0.3, side * R[1] * 0.6]);
-        const p = ph + TAU * offs[i], sw = A * Math.sin(p), lift = pos(Math.cos(p)) * (o.lift ?? 0.75);
-        const l = hip[1] * 0.53, knee = add(hip, mul(dn(sw * 0.8), l));
-        const foot = add(knee, mul(dn(sw + (front ? -lift : lift * 0.6)), l));
-        const lr = o.legR;
-        parts.push(T(hip, knee, lr * (front ? 1.3 : 1.55), lr, o.legSh ?? sh * 0.92, { pat }), T(knee, foot, lr, lr * 0.82, o.legSh ?? sh * 0.92, { pat }));
-        parts.push(E(add(foot, [lr * 0.3, lr * 0.3, 0]), [1, 0, 0], [lr * 1.1, lr * 0.7, lr], o.footSh ?? 0.55));
+      const ph = (t / o.T) % 1, w = TAU * ph, parts = [];
+      const galloping = G.bob === 1;
+      const bob = galloping ? Hw * 0.045 * Math.sin(w + 0.8) : -Hw * (o.bobA ?? 0.012) * Math.cos(2 * w);
+      const pitch = galloping ? 0.09 * Math.sin(w + 2.2) : 0.012 * Math.sin(w);
+      const flex = (o.flex ?? (galloping ? 0.06 : 0)) * L * Math.cos(w);
+      const roll = galloping ? 0 : 0.025 * Math.sin(w);
+      const sx = L / 2 + flex * 0.5, hx = -L / 2 - flex * 0.5;
+      const sy = Hw * 0.9 + bob + pitch * L * 0.5, hy = Hh * 0.9 + bob - pitch * L * 0.5;
+      const S0 = [sx, sy, 0], H0 = [hx, hy, 0], spine = norm(sub(S0, H0));
+      const up = norm(cross([0, 0, 1], spine));
+      // Torso: chest, barrel and rump volumes along the spine; overlaps are culled into one surface.
+      parts.push(E(add(S0, add(mul(spine, -cR[0] * 0.25), mul(up, cR[1] * 0.1))), spine, cR, sh, { pat }));
+      // Barrel spans withers to hips with its top on the back line, so the belly tucks up and the back stays continuous.
+      const bTop = Math.max(cR[1], rR[1]) * 0.96;
+      parts.push(E(add(mix(S0, H0, 0.5), mul(up, bTop - bR[1] + (o.sag ?? 0))), spine, [Math.max(bR[0], L * 0.5), bR[1], bR[2]], sh, { pat }));
+      parts.push(E(add(mix(S0, H0, 0.5), mul(up, bTop - Math.min(cR[1], rR[1]) * 0.55)), spine, [L * 0.55, Math.min(cR[1], rR[1]) * 0.55, Math.min(cR[2], rR[2]) * 0.9], sh, { pat }));
+      parts.push(E(add(H0, add(mul(spine, rR[0] * 0.25), mul(up, rR[1] * 0.12))), spine, rR, sh, { pat }));
+      // Legs: [LH, LF, RH, RF]
+      [[false, 1], [true, 1], [false, -1], [true, -1]].forEach(([front, side], i) => {
+        const J0 = add(front ? S0 : H0, [front ? -0.02 * L : 0.03 * L, -(front ? cR[1] : rR[1]) * 0.35, side * (front ? cR[2] : rR[2]) * 0.62]);
+        const legLen = J0[1] * (o.reach ?? 1.02), l1 = legLen * seg[0], l2 = legLen * seg[1], l3 = legLen * seg[2];
+        const p = (ph - G.off[i] + 2) % 1, stance = p < G.duty;
+        const s = stance ? p / G.duty : (p - G.duty) / (1 - G.duty), e = s * s * (3 - 2 * s);
+        const baseX = (front ? sx : hx) + (front ? 0.02 : 0.06) * L;
+        const fx = stance ? baseX + stride * (0.5 - s) : baseX + stride * (-0.5 + e);
+        const fy = stance ? 0 : lift * Math.sin(Math.PI * s) * (front ? 1 : 0.8);
+        const F = [fx, fy + l3 * 0.08, side * (front ? cR[2] : rR[2]) * 0.55];
+        const fold = stance ? 0 : Math.sin(Math.PI * Math.min(1, s * 1.2));
+        const ca = front ? 0.06 + (o.flexF ?? 1.5) * fold : -(0.32 + 0.55 * fold);
+        const C = add(F, [Math.sin(ca) * l3, Math.cos(ca) * l3, 0]);
+        const K = ik(J0, C, l1, l2, front ? 1 : -1);
+        const lr = o.legR, ls = o.legSh ?? sh * 0.9;
+        parts.push(E(mix(J0, K, 0.42), sub(K, J0), [l1 * 0.55, lr * (front ? 1.9 : 2.4), lr * (front ? 1.5 : 1.8)], sh, { pat })); // shoulder / thigh muscle
+        parts.push(T(J0, K, lr * 1.3, lr * 1.05, ls, { pat }), T(K, C, lr * 1.05, lr * 0.8, ls, { pat }), T(C, F, lr * 0.8, lr * 0.72, ls));
+        const footLen = o.legs === "plant" ? lr * 2.6 : lr * 1.2;
+        parts.push(E(add(F, [footLen * 0.35, -lr * 0.05, 0]), [1, 0, 0], [footLen, lr * 0.62, lr * 1.0], o.footSh ?? 0.5));
       });
-      const nod = 0.05 * Math.sin(2 * ph) * (o.nod ?? 1);
-      const nb = add(c, add(mul(d, L * 0.46), mul(up, R[0] * 0.2)));
-      const ne = add(nb, mul(fw((o.neckA ?? 0.7) + nod + pitch), o.neck));
-      const nr = o.neckR ?? R[0] * 0.55;
+      // Neck and head: the head is stabilized (held level) while the body bobs, and nods with the forelimbs.
+      const nb = add(S0, add(mul(spine, cR[0] * 0.55), mul(up, cR[1] * 0.45)));
+      const nod = galloping ? 0.05 * Math.sin(w + 1) : (o.nod ?? 0.025) * Math.cos(2 * w);
+      const want = [nb[0] + Math.cos(o.neckA) * o.neck, Hw * 0.9 + Math.sin(o.neckA) * o.neck + nod * Hw + cR[1] * 0.45, 0];
+      const ne = add(nb, mul(norm(sub(want, nb)), o.neck));
+      const nr = o.neckR ?? cR[1] * 0.55;
       parts.push(T(nb, ne, nr, nr * 0.72, sh, { pat }));
-      const hd = fw((o.headA ?? -0.4) + nod), hl = o.headL, hr = o.headR;
+      if (o.mane) parts.push(T(add(nb, mul(up, nr * 0.8)), add(ne, [-0.02, nr * 0.75, 0]), nr * 0.35, nr * 0.25, o.maneSh ?? sh * 0.6));
+      const hd = fw(o.headA + nod * 0.6), hl = o.headL, hr = o.headR;
       const hc = add(ne, mul(hd, hl * 0.3));
-      parts.push(E(hc, hd, [hl * 0.5, hr, hr * 0.88], o.headSh ?? sh * 1.05, { pat }));
-      if (o.snout) parts.push(E(add(hc, mul(hd, hl * 0.42)), hd, [o.snout[0], o.snout[1], o.snout[1] * 0.92], o.headSh ?? sh * 1.05));
-      eyes(parts, add(hc, add(mul(hd, hl * 0.1), [0, hr * 0.42, 0])), hd, 1, hr * 0.15, hr * 0.8);
+      parts.push(E(hc, hd, [hl * 0.5, hr, hr * 0.85], o.headSh ?? sh * 1.02, { pat: base }));
+      if (o.snout) parts.push(E(add(hc, mul(hd, hl * 0.45)), fw(o.headA - 0.12), [o.snout[0], o.snout[1], o.snout[1] * 0.85], o.headSh ?? sh * 1.02));
+      if (o.jaw) parts.push(E(add(hc, add(mul(hd, hl * 0.2), [0, -hr * 0.55, 0])), hd, [hl * 0.38, hr * 0.35, hr * 0.7], sh));
+      eyes(parts, add(hc, add(mul(hd, hl * 0.12), [0, hr * 0.4, 0])), hd, 1, hr * 0.14, hr * 0.78);
       if (o.ears) {
         const [el, ew, ea] = o.ears;
         for (const s of [1, -1]) {
-          const eb = add(hc, add(mul(hd, -hl * 0.18), [0, hr * 0.75, s * hr * 0.5]));
-          const flick = 0.1 * Math.sin(ph * 0.5 + s);
-          parts.push(T(eb, add(eb, [-Math.sin(ea) * el * 0.4, Math.cos(ea + flick) * el, s * el * (o.earOut ?? 0.3)]), ew, ew * 0.2, sh * 0.95));
+          const eb = add(hc, add(mul(hd, -hl * 0.2), [0, hr * 0.72, s * hr * 0.48]));
+          const twitch = 0.12 * Math.max(0, Math.sin(TAU * t / 2.7 + s * 2)) ** 8;
+          parts.push(T(eb, add(eb, [-Math.sin(ea) * el * 0.4, Math.cos(ea + twitch) * el, s * el * (o.earOut ?? 0.3)]), ew, ew * 0.18, sh * 0.95));
         }
       }
+      // Tail: a lagging chain (follow-through), swinging against the hips.
       if (o.tail) {
         const [tl, tr, tu] = o.tail;
-        let p0 = add(c, add(mul(d, -L * 0.48), mul(up, R[0] * 0.3))), ang = Math.PI + tu;
-        for (let k = 0; k < 3; k++) {
-          const a = ang + 0.22 * Math.sin(ph * (o.tailF ?? 1) + k * 0.9) * (o.tailSw ?? 1);
-          const p1 = add(p0, mul([Math.cos(a), Math.sin(a), 0.12 * Math.sin(ph + k)], tl / 3));
-          parts.push(T(p0, p1, tr * (1 - k * 0.25), tr * (0.78 - k * 0.25) + 0.004, sh * 0.9));
+        let p0 = add(H0, add(mul(spine, -rR[0] * 0.95), mul(up, rR[1] * 0.35))), ang = Math.PI + tu;
+        for (let k = 0; k < 4; k++) {
+          const a = ang + (o.tailSw ?? 0.18) * Math.sin(w * (galloping ? 1 : 1) - k * 0.7) + (o.tailDroop ?? 0.06) * k;
+          const p1 = add(p0, mul([Math.cos(a), Math.sin(a), 0.1 * Math.sin(w - k * 0.9)], tl / 4));
+          parts.push(T(p0, p1, tr * (1 - k * 0.2), tr * (0.8 - k * 0.2) + 0.004, sh * 0.9, { pat: o.tailPat }));
           p0 = p1; ang = a + (o.tailCurl ?? 0);
         }
-        if (o.tuft) parts.push(E(p0, [1, 0, 0], [o.tuft * 1.4, o.tuft, o.tuft], sh * 0.7));
+        if (o.tuft) parts.push(E(p0, [1, 0, 0], [o.tuft * 1.5, o.tuft, o.tuft], sh * 0.6));
       }
-      o.extra?.(parts, { c, d, up, hc, hd, hl, hr, ph, ne, nb, L, R, sh });
+      o.extra?.(parts, { S0, H0, spine, up, hc, hd, hl, hr, ph, w, t, ne, nb, L, Hw, cR, bR, sh });
+      if (roll) rotate(parts, "x", roll, [0, Hw * 0.5, 0]);
       return parts;
     };
   }
@@ -111,8 +162,13 @@ const Zoo = (() => {
   function hopper(o) {
     return (t) => {
       const ph = (TAU * t) / o.T, parts = [], sh = o.sh ?? 0.8;
-      const air = pos(Math.sin(ph)), e = Math.pow(air, 0.7);
-      const c = [0, o.H + o.jump * air, 0];
+      const cy = (t / o.T) % 1;
+      let air = 0, e = 0, squat = 0;
+      if (cy < 0.2) squat = Math.sin((Math.PI * cy) / 0.2) * 0.6;                                   // anticipation crouch
+      else if (cy < 0.32) { e = (cy - 0.2) / 0.12; air = 0.1 * e; }                                  // push-off
+      else if (cy < 0.72) { const f = (cy - 0.32) / 0.4; air = Math.sin(Math.PI * f); e = 1 - 0.5 * f; } // flight
+      else { const f = (cy - 0.72) / 0.28; squat = Math.sin(Math.PI * f) * 0.8; e = 0.5 * (1 - f); }     // landing absorbs
+      const c = [0, o.H * (1 - 0.35 * squat) + o.jump * air, 0];
       const tilt = o.tilt + (o.tiltAir ?? 0) * e;
       const d = fw(tilt), up = fw(tilt + Math.PI / 2);
       parts.push(E(c, d, o.body, sh, { pat: o.pat || COAT }));
@@ -156,7 +212,14 @@ const Zoo = (() => {
       const bob = o.mode === "fly" ? -0.04 * Math.sin(ph) : 0;
       const c = [0, bob, 0], d = fw(o.bodyA ?? 0.05), up = fw((o.bodyA ?? 0.05) + Math.PI / 2);
       parts.push(E(c, d, o.body, sh, { pat: o.bodyPat || COAT }));
-      const turn = o.headTurn ? 0.9 * Math.sin(ph * 0.35) : 0;
+      let turn = 0;
+      if (o.headTurn) {
+        // Owls hold the head still, then snap it to a new bearing.
+        const keys = [0, -1.15, -1.15, 0.25, 1.0, 1.0, 0.1], hold = 0.85, k = Math.floor(t / hold), f = (t / hold) % 1;
+        const from = keys[k % keys.length], to = keys[(k + 1) % keys.length], m = f < 0.78 ? 0 : (f - 0.78) / 0.22;
+        turn = from + (to - from) * m * m * (3 - 2 * m);
+      }
+      const blink = o.blink && t % 3.3 < 0.13 ? 0.05 : 1;
       const hc = add(c, add(mul(d, bl * (o.headAt ?? 0.95)), mul(up, by * (o.neckUp ?? 0.6))));
       const hd = norm([Math.cos(turn) * Math.cos(o.headA ?? 0), Math.sin(o.headA ?? 0), Math.sin(turn)]);
       parts.push(T(add(c, mul(d, bl * 0.55)), hc, by * 0.55, o.head * 0.8, sh));
@@ -166,7 +229,7 @@ const Zoo = (() => {
       const side = norm(cross(hd, [0, 1, 0]));
       for (const s of [1, -1]) {
         const ec = add(hc, add(mul(hd, o.head * (o.disc ? 0.75 : 0.45)), add([0, o.head * 0.25, 0], mul(side, s * o.head * (o.disc ? 0.42 : 0.78)))));
-        parts.push(E(ec, hd, [o.head * 0.2, o.head * (o.disc ? 0.26 : 0.17), o.head * (o.disc ? 0.26 : 0.17)], 1.9, { w: 6 }));
+        parts.push(E(ec, hd, [o.head * 0.2, o.head * (o.disc ? 0.26 : 0.17), o.head * (o.disc ? 0.26 : 0.17)], 1.9, { w: 6, dim: blink }));
       }
       if (o.tufts) for (const s of [1, -1]) {
         const tb = add(hc, add([0, o.head * 0.8, 0], mul(side, s * o.head * 0.55)));
@@ -177,7 +240,12 @@ const Zoo = (() => {
         parts.push(T(tb, add(tb, [-o.head * 0.3, o.head * 1.3, s * o.head * 0.5]), o.head * 0.35, 0.004, sh));
       }
       const [span, chord] = o.wing;
-      const flap = o.fold ? 0.12 * Math.sin(ph) : (o.amp ?? 0.6) * Math.sin(ph) + (o.bias ?? 0.1);
+      let beat = (t / o.T) % 1, gliding = false;
+      if (o.glide) { const k = t % (o.T * (o.glide + 2)); gliding = k > o.T * 2; beat = (k / o.T) % 1; }
+      const down = 0.58, ez = (x) => x * x * (3 - 2 * x); // the powered downstroke takes longer than the recovery
+      const stroke = beat < down ? 1 - 2 * ez(beat / down) : -1 + 2 * ez((beat - down) / (1 - down));
+      const wrist = gliding || beat < down ? 0 : Math.sin((Math.PI * (beat - down)) / (1 - down));
+      const flap = o.fold ? 0.12 * Math.sin(ph) : gliding ? (o.bias ?? 0.1) + 0.06 : (o.amp ?? 0.6) * stroke + (o.bias ?? 0.1);
       for (const s of [1, -1]) {
         const sd = add(c, add(mul(d, bl * (o.wingAt ?? 0.15)), add(mul(up, by * 0.55), [0, 0, s * bz * 0.7])));
         if (o.fold) {
@@ -185,12 +253,23 @@ const Zoo = (() => {
           parts.push(Q(add(sd, mul(d, chord * 0.3)), back, add(back, [0, -chord * 0.8, 0]), add(sd, [0, -chord * 0.9, s * 0.01]), o.wingSh ?? sh * 0.9));
           continue;
         }
-        const a2 = flap * (o.bend ?? 1.35), ed = span * 0.42;
+        const a2 = flap * (o.bend ?? 1.35) - wrist * 0.55, ed = span * 0.42, hand = (span - ed) * (1 - 0.45 * wrist);
         const el = add(sd, [0, Math.sin(flap) * ed, s * Math.cos(flap) * ed]);
-        const tip = add(el, [-chord * (o.sweep ?? 0.35), Math.sin(a2) * (span - ed), s * Math.cos(a2) * (span - ed)]);
+        const fig = o.fig8 ? chord * 0.6 * Math.sin(TAU * beat * 2) : 0;
+        const tip = add(el, [-chord * ((o.sweep ?? 0.35) + 0.8 * wrist) + fig, Math.sin(a2) * hand, s * Math.cos(a2) * hand]);
         const ws = o.wingSh ?? sh * 0.95;
         parts.push(Q(add(sd, [chord * 0.45, 0, 0]), add(el, [chord * 0.4, 0, 0]), add(el, [-chord * 0.6, 0, 0]), add(sd, [-chord * 0.55, 0, 0]), ws));
         parts.push(Q(add(el, [chord * 0.4, 0, 0]), add(tip, [chord * 0.12, 0, 0]), add(tip, [-chord * (o.tipChord ?? 0.2), 0, 0]), add(el, [-chord * 0.6, 0, 0]), ws, { pat: o.wingPat }));
+        if (o.primaries) {
+          // Slotted primary feathers ("fingers") fanning from the wingtip, as eagles and crows show in flight.
+          const out = norm(sub(tip, el)), n = o.primaries;
+          for (let k = 0; k < n; k++) {
+            const root = add(tip, [chord * (0.1 - 0.32 * (k / (n - 1))), 0, 0]);
+            const end = add(root, add(mul(out, chord * (0.5 - 0.06 * k) * (1 - 0.5 * wrist)), [-chord * 0.12 * k, -Math.abs(stroke) * 0.02 * k, 0]));
+            const wd = chord * 0.055;
+            parts.push(Q(root, end, add(end, [-wd, 0, 0]), add(root, [-wd * 1.6, 0, 0]), ws * 0.95));
+          }
+        }
       }
       if (o.tail) {
         const tb = add(c, mul(d, -bl * 0.85)), tw = o.tail[1], tlen = o.tail[0], ta = Math.PI + (o.tailA ?? 0.05) + 0.05 * Math.sin(ph);
@@ -205,6 +284,7 @@ const Zoo = (() => {
         parts.push(E(add(foot, [by * 0.18, 0, 0]), [1, 0, 0], [by * 0.25, by * 0.05, by * 0.15], o.legSh ?? 0.65));
       }
       if (o.mode === "waddle") rotate(parts, "x", 0.12 * Math.sin(ph), [0, -by, 0]);
+      if (o.mode === "fly" && !gliding) rotate(parts, "z", -0.05 * stroke, c);
       if (o.mode === "hover") rotate(parts, "z", 0.05 * Math.sin(ph * 0.1), c);
       return parts;
     };
@@ -332,18 +412,20 @@ const Zoo = (() => {
   }
 
   function octopus(t) {
-    const ph = TAU * t / 2.2, parts = [], pulse = Math.sin(ph);
-    const c = [0, 0.35 + 0.05 * pulse, 0];
-    parts.push(E(add(c, [-0.12, 0.2, 0]), fw(2.1), [0.28, 0.2, 0.19], 0.8, { pat: SPOTS(16, 0.6) }));
+    // Jet stroke: the mantle contracts fast and the arms stream behind, then it refills while the arms open like an umbrella.
+    const cy = (t / 2.4) % 1, parts = [];
+    const jet = cy < 0.28 ? Math.sin((Math.PI * cy) / 0.28) : 0, open = cy < 0.28 ? 1 - cy / 0.28 : (cy - 0.28) / 0.72;
+    const c = [0, 0.35 + 0.1 * Math.sin(TAU * cy - 0.6), 0], m = 1 - 0.22 * jet;
+    parts.push(E(add(c, [-0.12, 0.2, 0]), fw(2.1), [0.28 * m, 0.2 * m, 0.19 * m], 0.8, { pat: SPOTS(16, 0.6) }));
     parts.push(E(c, [1, 0, 0], [0.16, 0.14, 0.17], 0.85));
     eyes(parts, add(c, [0.1, 0.06, 0]), [1, 0, 0], 1, 0.03, 0.12);
     for (let k = 0; k < 8; k++) {
-      const th = (k / 8) * TAU + 0.2, dir = [Math.cos(th), 0, Math.sin(th)];
-      let p0 = add(c, [dir[0] * 0.1, -0.1, dir[2] * 0.1]), ang = -0.35 - 0.3 * pulse;
+      const th = (k / 8) * TAU + 0.2, rad = 0.35 + 0.65 * open, dir = [Math.cos(th) * rad, 0, Math.sin(th) * rad];
+      let p0 = add(c, [Math.cos(th) * 0.1, -0.1, Math.sin(th) * 0.1]), ang = -0.35 - 0.95 * (1 - open);
       for (let j = 0; j < 6; j++) {
-        const a = ang - j * (0.12 + 0.12 * Math.sin(ph + k * 0.8 + j * 0.5));
-        const step = add(mul(dir, Math.cos(a) * 0.1), [0, Math.sin(a) * 0.1, 0]);
-        const p1 = add(p0, step), r0 = 0.045 * (1 - j / 6.5) + 0.006;
+        const a = ang - j * (0.1 + 0.1 * Math.sin(TAU * cy + k * 0.8 + j * 0.5)) + (j > 3 ? 0.25 * open : 0);
+        const p1 = add(p0, add(mul(dir, Math.cos(a) * 0.1), [0, Math.sin(a) * 0.1, 0]));
+        const r0 = 0.045 * (1 - j / 6.5) + 0.006;
         parts.push(T(p0, p1, r0, r0 * 0.82, 0.82, { pat: j > 1 ? BANDS(2) : undefined }));
         p0 = p1;
       }
@@ -352,7 +434,9 @@ const Zoo = (() => {
   }
 
   function jellyfish(t) {
-    const ph = TAU * t / 1.8, parts = [], pulse = pos(Math.sin(ph)), c = [0, 0.45 + 0.06 * Math.sin(ph - 1), 0];
+    const cy = (t / 2.2) % 1, ph = TAU * cy, parts = [];
+    const pulse = cy < 0.3 ? Math.sin((Math.PI / 2) * (cy / 0.3)) : 1 - (cy - 0.3) / 0.7; // quick squeeze, slow refill
+    const c = [0, 0.45 + 0.07 * Math.sin(ph - 1.2), 0];
     parts.push(E(c, [0, 1, 0], [0.17 - 0.03 * pulse, 0.34 - 0.06 * pulse, 0.34 - 0.06 * pulse], 1.05, { pat: STRIPES(3) }));
     parts.push(E(add(c, [0, -0.05, 0]), [0, 1, 0], [0.06, 0.2, 0.2], 1.3));
     for (let k = 0; k < 12; k++) {
@@ -473,60 +557,62 @@ const Zoo = (() => {
 
   // ---------------- the zoo ----------------
   const S = {
-    wolf: ["狼", 0.8, quad({ L: 1, H: 0.5, R: [0.17, 0.15], legR: 0.042, gait: "trot", T: 0.8, neck: 0.2, neckA: 0.55, headA: -0.2, headL: 0.28, headR: 0.09, snout: [0.12, 0.045], ears: [0.12, 0.04, 0.15], tail: [0.45, 0.06, 0.55], tailSw: 0.6 })],
-    cat: ["貓", 1, quad({ L: 0.8, H: 0.36, R: [0.13, 0.12], legR: 0.032, T: 1, neck: 0.12, neckA: 0.75, headA: -0.1, headL: 0.2, headR: 0.085, snout: [0.05, 0.04], ears: [0.08, 0.035, 0.05], tail: [0.62, 0.028, -1.1], tailCurl: 0.35, pat: STRIPES(7) })],
-    deer: ["鹿", 1.1, quad({ L: 0.95, H: 0.72, R: [0.17, 0.14], legR: 0.028, T: 1.1, neck: 0.36, neckA: 1.0, headA: -0.55, headL: 0.28, headR: 0.075, snout: [0.1, 0.04], ears: [0.12, 0.04, 0.9], earOut: 0.6, tail: [0.1, 0.04, -0.8], extra: (P, g) => {
+    wolf: ["狼", 0.62, quad({ L: 0.72, Hw: 0.78, chest: [0.26, 0.2, 0.14], barrel: [0.24, 0.16, 0.14], rump: [0.2, 0.15, 0.13], legR: 0.03, legs: "paw", gait: "trot", T: 0.62, stride: 0.5, neck: 0.26, neckA: 0.55, headA: -0.15, headL: 0.3, headR: 0.1, snout: [0.13, 0.05], jaw: true, ears: [0.12, 0.035, 0.12], tail: [0.5, 0.055, 0.9], tailSw: 0.12 })],
+    cat: ["貓", 1.0, quad({ L: 0.5, Hw: 0.42, chest: [0.16, 0.11, 0.09], barrel: [0.18, 0.1, 0.1], rump: [0.15, 0.11, 0.1], legR: 0.022, legs: "paw", T: 1.0, stride: 0.3, lift: 0.06, neck: 0.12, neckA: 0.5, headA: -0.05, headL: 0.2, headR: 0.08, snout: [0.05, 0.04], ears: [0.08, 0.035, 0.05], tail: [0.55, 0.024, -0.9], tailCurl: 0.25, tailSw: 0.25, pat: STRIPES(7) })],
+    deer: ["鹿", 1.1, quad({ L: 0.7, Hw: 1.0, chest: [0.24, 0.18, 0.13], barrel: [0.24, 0.15, 0.13], rump: [0.2, 0.16, 0.13], legR: 0.022, T: 1.1, stride: 0.55, neck: 0.45, neckA: 1.0, neckR: 0.06, headA: -0.5, headL: 0.28, headR: 0.075, snout: [0.1, 0.04], ears: [0.13, 0.04, 0.9], earOut: 0.6, tail: [0.1, 0.04, -0.5], extra: (P, g) => {
       for (const s of [1, -1]) {
         const b = add(g.hc, [-0.02, g.hr * 0.9, s * 0.04]), m = add(b, [-0.05, 0.2, s * 0.08]), tip = add(m, [0.02, 0.18, s * 0.06]);
         P.push(T(b, m, 0.014, 0.011, 0.95), T(m, tip, 0.011, 0.004, 0.95), T(m, add(m, [0.1, 0.1, s * 0.02]), 0.009, 0.003, 0.95), T(b, add(b, [0.09, 0.08, s * 0.03]), 0.009, 0.003, 0.95));
       }
     } })],
-    elephant: ["大象", 1.6, quad({ L: 1.2, H: 0.7, R: [0.38, 0.34], legR: 0.12, T: 1.6, swing: 0.28, neck: 0.1, neckA: 0.3, headA: -0.3, headL: 0.42, headR: 0.25, tail: [0.35, 0.025, 1.3], tuft: 0.03, nod: 0.5, extra: (P, g) => {
-      let p0 = add(g.hc, mul(g.hd, g.hl * 0.45)), ang = -1.2;
-      for (let k = 0; k < 5; k++) { const a = ang - 0.15 * k + 0.25 * Math.sin(g.ph + k * 0.6); const p1 = add(p0, mul(fw(a), 0.13)); P.push(T(p0, p1, 0.07 - k * 0.011, 0.06 - k * 0.011, 0.8)); p0 = p1; }
+    elephant: ["大象", 1.7, quad({ L: 1.0, Hw: 1.55, chest: [0.42, 0.5, 0.42], barrel: [0.5, 0.52, 0.45], rump: [0.4, 0.48, 0.42], legR: 0.1, legs: "column", gait: "amble", T: 1.7, stride: 0.7, lift: 0.1, bobA: 0.006, neck: 0.15, neckA: 0.3, neckR: 0.3, headA: -0.35, headL: 0.5, headR: 0.33, nod: 0.01, tail: [0.5, 0.025, 1.2], tuft: 0.03, extra: (P, g) => {
+      let p0 = add(g.hc, mul(g.hd, g.hl * 0.45)), ang = -1.25;
+      for (let k = 0; k < 6; k++) { const a = ang - 0.1 * k + 0.22 * Math.sin(g.w + k * 0.55); const p1 = add(p0, mul([Math.cos(a), Math.sin(a), 0.1 * Math.sin(g.w * 0.5 + k)], 0.14)); P.push(T(p0, p1, 0.085 - k * 0.011, 0.075 - k * 0.011, 0.8, { pat: BANDS(3) })); p0 = p1; }
       for (const s of [1, -1]) {
-        const eb = add(g.hc, [-0.12, 0.08, s * 0.2]), fl = 0.25 + 0.2 * Math.sin(g.ph * 1.5 + s);
-        P.push(Q(eb, add(eb, [-0.22, 0.12, s * 0.08 * fl]), add(eb, [-0.26, -0.28, s * 0.2 * fl]), add(eb, [0, -0.3, s * 0.12 * fl]), 0.78));
-        const tb = add(g.hc, [0.12, -0.12, s * 0.1]);
-        P.push(T(tb, add(tb, [0.22, -0.06, s * 0.03]), 0.025, 0.012, 1.4));
+        const eb = add(g.hc, [-0.14, 0.12, s * 0.26]), fl = 0.3 + 0.25 * Math.sin(g.t * 2.2 + s);
+        P.push(Q(eb, add(eb, [-0.3, 0.14, s * 0.1 * fl]), add(eb, [-0.34, -0.36, s * 0.26 * fl]), add(eb, [0, -0.4, s * 0.15 * fl]), 0.76));
+        const tb = add(g.hc, [0.16, -0.18, s * 0.13]);
+        P.push(T(tb, add(tb, [0.3, -0.06, s * 0.04]), 0.035, 0.012, 1.4));
       }
     } })],
-    giraffe: ["長頸鹿", 1.4, quad({ L: 1, H: 1.0, R: [0.2, 0.16], legR: 0.033, gait: "amble", T: 1.4, neck: 1.05, neckA: 1.15, neckR: 0.07, headA: -0.35, headL: 0.3, headR: 0.07, snout: [0.08, 0.04], ears: [0.08, 0.03, 1.3], earOut: 0.8, tail: [0.45, 0.02, 1.1], tuft: 0.04, pat: SPOTS(13, 0.35), extra: (P, g) => {
+    giraffe: ["長頸鹿", 1.5, quad({ L: 0.8, Hw: 1.55, Hh: 1.3, chest: [0.3, 0.26, 0.18], barrel: [0.3, 0.22, 0.18], rump: [0.24, 0.21, 0.17], legR: 0.03, gait: "pace", T: 1.5, stride: 0.9, neck: 1.25, neckA: 1.15, neckR: 0.08, headA: -0.35, headL: 0.32, headR: 0.075, snout: [0.09, 0.045], ears: [0.08, 0.03, 1.3], earOut: 0.8, tail: [0.5, 0.018, 1.2], tuft: 0.04, mane: true, maneSh: 0.5, pat: SPOTS(13, 0.35), extra: (P, g) => {
       for (const s of [1, -1]) { const b = add(g.hc, [-0.05, g.hr * 0.9, s * 0.03]); P.push(T(b, add(b, [-0.01, 0.1, 0]), 0.012, 0.01, 0.9), E(add(b, [-0.01, 0.1, 0]), [1, 0, 0], [0.018, 0.018, 0.018], 0.7)); }
     } })],
-    bear: ["熊", 1.3, quad({ L: 1.1, H: 0.48, R: [0.3, 0.27], legR: 0.085, gait: "amble", T: 1.3, neck: 0.12, neckA: 0.3, headA: -0.2, headL: 0.3, headR: 0.14, snout: [0.09, 0.07], ears: [0.06, 0.05, 0.1], tail: [0.08, 0.04, 0.2], sh: 0.7 })],
-    lion: ["獅子", 1.1, quad({ L: 1.1, H: 0.58, R: [0.22, 0.19], legR: 0.055, T: 1.1, neck: 0.15, neckA: 0.5, headA: -0.2, headL: 0.32, headR: 0.13, snout: [0.1, 0.07], ears: [0.05, 0.04, 0.2], tail: [0.7, 0.025, 0.9], tuft: 0.06, extra: (P, g) => {
-      P.push(E(add(g.hc, [-0.1, 0.01, 0]), fw(-0.2), [0.14, 0.26, 0.26], 0.62, { pat: (u) => 0.75 + 0.25 * Math.sin(u[1] * 30 + u[2] * 25) }));
+    bear: ["熊", 1.4, quad({ L: 0.75, Hw: 0.95, Hh: 0.9, chest: [0.35, 0.36, 0.28], barrel: [0.36, 0.34, 0.3], rump: [0.3, 0.34, 0.29], legR: 0.075, legs: "plant", T: 1.4, stride: 0.5, neck: 0.18, neckA: 0.3, neckR: 0.18, headA: -0.2, headL: 0.34, headR: 0.16, snout: [0.11, 0.075], ears: [0.07, 0.055, 0.1], tail: [0.08, 0.04, 0.5], sh: 0.68, extra: (P, g) => {
+      P.push(E(add(g.S0, mul(g.up, g.cR[1] * 0.75)), g.spine, [0.22, 0.14, 0.2], 0.68));
     } })],
-    zebra: ["斑馬", 0.75, quad({ L: 1, H: 0.7, R: [0.2, 0.17], legR: 0.038, gait: "trot", T: 0.75, neck: 0.4, neckA: 0.9, neckR: 0.09, headA: -0.9, headL: 0.42, headR: 0.08, snout: [0.12, 0.06], ears: [0.12, 0.035, 0.3], tail: [0.4, 0.02, 1.0], tuft: 0.04, pat: STRIPES(9), extra: (P, g) => {
-      P.push(T(add(g.nb, [-0.02, 0.07, 0]), add(g.ne, [-0.05, 0.08, 0]), 0.035, 0.03, 0.5));
+    lion: ["獅子", 1.2, quad({ L: 0.85, Hw: 0.95, chest: [0.3, 0.25, 0.19], barrel: [0.3, 0.2, 0.18], rump: [0.25, 0.21, 0.18], legR: 0.045, legs: "paw", T: 1.2, stride: 0.6, neck: 0.22, neckA: 0.45, headA: -0.15, headL: 0.34, headR: 0.14, snout: [0.11, 0.08], jaw: true, ears: [0.06, 0.04, 0.2], tail: [0.8, 0.025, 0.9], tuft: 0.06, extra: (P, g) => {
+      P.push(E(add(g.hc, [-0.12, 0.0, 0]), fw(-0.25), [0.18, 0.3, 0.3], 0.6, { pat: (u) => 0.75 + 0.25 * Math.sin(u[1] * 30 + u[2] * 25) }));
     } })],
-    pig: ["豬", 0.7, quad({ L: 0.9, H: 0.3, R: [0.22, 0.2], legR: 0.045, T: 0.7, neck: 0.05, neckA: 0.2, headA: -0.1, headL: 0.26, headR: 0.15, snout: [0.08, 0.075], ears: [0.1, 0.06, -0.6], earOut: 0.5, tail: [0.14, 0.015, -0.5], tailCurl: 1.6, sh: 0.9 })],
-    cow: ["牛", 1.4, quad({ L: 1.2, H: 0.6, R: [0.3, 0.24], legR: 0.06, T: 1.4, neck: 0.2, neckA: 0.4, headA: -0.85, headL: 0.36, headR: 0.12, snout: [0.1, 0.09], ears: [0.1, 0.04, 1.6], earOut: 0.9, tail: [0.6, 0.02, 1.3], tuft: 0.05, pat: SPOTS(7, 0.35), extra: (P, g) => {
-      for (const s of [1, -1]) { const b = add(g.hc, [-0.06, g.hr * 0.8, s * 0.07]); P.push(T(b, add(b, [0.02, 0.1, s * 0.12]), 0.018, 0.004, 1.2)); }
+    zebra: ["斑馬", 0.72, quad({ L: 0.9, Hw: 1.25, chest: [0.3, 0.27, 0.19], barrel: [0.33, 0.25, 0.2], rump: [0.28, 0.26, 0.2], legR: 0.03, gait: "trot", T: 0.72, stride: 0.9, neck: 0.5, neckA: 0.95, neckR: 0.1, headA: -1.0, headL: 0.5, headR: 0.09, snout: [0.13, 0.07], ears: [0.13, 0.035, 0.3], tail: [0.5, 0.025, 1.0], tuft: 0.05, mane: true, maneSh: 0.35, pat: STRIPES(9) })],
+    pig: ["豬", 0.6, quad({ L: 0.55, Hw: 0.5, chest: [0.26, 0.24, 0.21], barrel: [0.28, 0.26, 0.23], rump: [0.24, 0.25, 0.22], legR: 0.035, gait: "trot", T: 0.6, stride: 0.3, neck: 0.08, neckA: 0.1, neckR: 0.15, headA: -0.15, headL: 0.3, headR: 0.15, snout: [0.09, 0.08], ears: [0.1, 0.06, -0.6], earOut: 0.5, tail: [0.16, 0.014, 0.3], tailCurl: 1.4, sh: 0.92 })],
+    cow: ["牛", 1.5, quad({ L: 1.0, Hw: 1.35, chest: [0.34, 0.35, 0.26], barrel: [0.4, 0.36, 0.3], rump: [0.32, 0.33, 0.28], legR: 0.045, T: 1.5, stride: 0.7, neck: 0.3, neckA: 0.35, neckR: 0.17, headA: -0.9, headL: 0.44, headR: 0.13, snout: [0.11, 0.1], ears: [0.12, 0.04, 1.6], earOut: 0.9, tail: [0.8, 0.02, 1.4], tuft: 0.06, pat: SPOTS(7, 0.35), extra: (P, g) => {
+      for (const s of [1, -1]) { const b = add(g.hc, [-0.08, g.hr * 0.8, s * 0.08]); P.push(T(b, add(b, [0.03, 0.12, s * 0.14]), 0.02, 0.004, 1.2)); }
     } })],
-    sheep: ["綿羊", 1, quad({ L: 0.9, H: 0.4, R: [0.27, 0.24], legR: 0.032, T: 1, neck: 0.1, neckA: 0.5, headA: -0.7, headL: 0.25, headR: 0.085, ears: [0.08, 0.03, 1.6], earOut: 1, tail: [0.08, 0.05, 0.6], legSh: 0.5, headSh: 0.55, sh: 1.05, extra: (P, g) => {
-      for (let k = 0; k < 14; k++) { const a = (k / 14) * TAU, b = k * 2.3; P.push(E(add(g.c, [Math.cos(a) * 0.36, Math.sin(b) * 0.15 + 0.06, Math.sin(a) * 0.18]), [1, 0, 0], [0.13, 0.11, 0.11], 1.05)); }
+    sheep: ["綿羊", 1.1, quad({ L: 0.6, Hw: 0.7, chest: [0.28, 0.28, 0.24], barrel: [0.3, 0.3, 0.26], rump: [0.26, 0.28, 0.24], legR: 0.025, T: 1.1, stride: 0.4, neck: 0.14, neckA: 0.5, headA: -0.7, headL: 0.28, headR: 0.09, ears: [0.08, 0.03, 1.6], earOut: 1, tail: [0.1, 0.05, 0.8], legSh: 0.5, headSh: 0.55, sh: 1.05, extra: (P, g) => {
+      const c = mix(g.S0, g.H0, 0.5);
+      for (let k = 0; k < 16; k++) { const a = (k / 16) * TAU, b = k * 2.3; P.push(E(add(c, [Math.cos(a) * 0.36, Math.sin(b) * 0.14 + 0.06, Math.sin(a) * 0.2]), [1, 0, 0], [0.12, 0.1, 0.1], 1.05)); }
     } })],
-    camel: ["駱駝", 1.3, quad({ L: 1.1, H: 0.85, R: [0.22, 0.18], legR: 0.038, gait: "amble", T: 1.3, neck: 0.55, neckA: 0.45, headA: -0.15, headL: 0.32, headR: 0.08, snout: [0.08, 0.06], ears: [0.05, 0.03, 0.3], tail: [0.35, 0.02, 1.2], tuft: 0.03, extra: (P, g) => {
-      P.push(E(add(g.c, [0.02, g.R[0] * 0.95, 0]), fw(0), [0.25, 0.2, 0.15], 0.82));
+    camel: ["駱駝", 1.5, quad({ L: 0.9, Hw: 1.8, Hh: 1.7, chest: [0.3, 0.28, 0.2], barrel: [0.34, 0.26, 0.22], rump: [0.28, 0.26, 0.2], legR: 0.035, gait: "pace", T: 1.5, stride: 1.1, neck: 0.75, neckA: 0.25, neckR: 0.09, headA: -0.1, headL: 0.38, headR: 0.1, snout: [0.1, 0.075], ears: [0.06, 0.03, 0.3], tail: [0.45, 0.02, 1.2], tuft: 0.03, extra: (P, g) => {
+      P.push(E(add(mix(g.S0, g.H0, 0.45), mul(g.up, g.bR[1] * 1.0)), g.spine, [0.26, 0.24, 0.16], 0.82));
     } })],
-    rhino: ["犀牛", 1.3, quad({ L: 1.2, H: 0.5, R: [0.32, 0.28], legR: 0.1, T: 1.3, neck: 0.12, neckA: 0.1, headA: -0.5, headL: 0.45, headR: 0.16, ears: [0.1, 0.04, 0.2], tail: [0.2, 0.02, 1.2], sh: 0.72, extra: (P, g) => {
+    rhino: ["犀牛", 1.0, quad({ L: 0.95, Hw: 1.4, chest: [0.38, 0.42, 0.34], barrel: [0.44, 0.44, 0.38], rump: [0.36, 0.42, 0.36], legR: 0.08, legs: "column", gait: "trot", T: 1.0, stride: 0.6, neck: 0.18, neckA: 0.1, neckR: 0.25, headA: -0.55, headL: 0.55, headR: 0.2, ears: [0.12, 0.05, 0.2], tail: [0.3, 0.025, 1.2], sh: 0.7, extra: (P, g) => {
       const n = add(g.hc, mul(g.hd, g.hl * 0.42)), m = add(g.hc, mul(g.hd, g.hl * 0.12));
-      P.push(T(add(n, [0, 0.08, 0]), add(n, [0.04, 0.3, 0]), 0.055, 0.004, 1.1), T(add(m, [0, 0.12, 0]), add(m, [0.01, 0.24, 0]), 0.04, 0.004, 1.1));
+      P.push(T(add(n, [0, 0.1, 0]), add(n, [0.05, 0.38, 0]), 0.065, 0.004, 1.1), T(add(m, [0, 0.15, 0]), add(m, [0.01, 0.3, 0]), 0.045, 0.004, 1.1));
     } })],
-    hippo: ["河馬", 1.4, quad({ L: 1.3, H: 0.33, R: [0.36, 0.33], legR: 0.1, T: 1.4, swing: 0.3, neck: 0.06, neckA: 0, headA: -0.1, headL: 0.5, headR: 0.2, snout: [0.2, 0.17], ears: [0.05, 0.04, 0.2], tail: [0.12, 0.03, 1], sh: 0.72 })],
+    hippo: ["河馬", 1.5, quad({ L: 1.05, Hw: 0.95, chest: [0.45, 0.45, 0.4], barrel: [0.5, 0.47, 0.43], rump: [0.42, 0.45, 0.4], legR: 0.09, legs: "column", T: 1.5, stride: 0.45, lift: 0.07, neck: 0.12, neckA: 0, neckR: 0.3, headA: -0.1, headL: 0.6, headR: 0.24, snout: [0.22, 0.2], jaw: true, ears: [0.05, 0.04, 0.2], tail: [0.18, 0.03, 1], sh: 0.72 })],
+    cheetah: ["獵豹", 0.42, quad({ L: 0.75, Hw: 0.82, chest: [0.24, 0.2, 0.13], barrel: [0.22, 0.14, 0.12], rump: [0.18, 0.15, 0.12], legR: 0.026, legs: "paw", gait: "rotary", T: 0.42, stride: 1.0, lift: 0.18, flex: 0.2, neck: 0.24, neckA: 0.35, headA: -0.1, headL: 0.22, headR: 0.085, snout: [0.06, 0.05], ears: [0.05, 0.035, 0.2], tail: [0.75, 0.03, 0.6], tailSw: 0.35, pat: SPOTS(22, 0.35) })],
     rabbit: ["兔子", 0.7, hopper({ T: 0.7, H: 0.2, jump: 0.2, tilt: 0.35, tiltAir: -0.35, body: [0.26, 0.19, 0.16], thigh: [0.12, 0.09], leg: [0.1, 0.1, 0.14], legR: 0.028, arm: 0.14, head: [0.1, 0.09, 0.085], headAt: [1.0, 0.6], headA: -0.3, ears: [0.28, 0.035], tail: [0, 0.055] })],
     kangaroo: ["袋鼠", 0.9, hopper({ T: 0.9, H: 0.45, jump: 0.28, tilt: 1.05, tiltAir: -0.55, body: [0.35, 0.2, 0.17], thigh: [0.18, 0.12], leg: [0.2, 0.2, 0.26], legR: 0.035, arm: 0.16, armAir: 0.5, head: [0.12, 0.08, 0.07], headAt: [1.05, 0.3], headA: -0.1, snout: [0.06, 0.04, 0.04], ears: [0.16, 0.035], tail: [0.8, 0.07], tailA: -0.5 })],
     frog: ["青蛙", 1, hopper({ T: 1, H: 0.12, jump: 0.24, tilt: 0.25, tiltAir: -0.2, body: [0.22, 0.12, 0.17], thigh: [0.12, 0.07], leg: [0.16, 0.16, 0.18], legR: 0.03, arm: 0.12, head: [0.12, 0.07, 0.15], headAt: [0.85, 0.2], eyeR: 0.04, eyeUp: 1.0, eyeOut: 0.6, pat: SPOTS(20, 0.55), sh: 0.85 })],
     turtle: ["烏龜", 2.4, turtle],
     crocodile: ["鱷魚", 1.8, crocodile],
     snake: ["蛇", 1.6, snake],
-    eagle: ["老鷹", 1.4, bird({ T: 1.4, mode: "fly", body: [0.3, 0.1, 0.1], head: 0.075, headSh: 1.25, beak: [0.07, 0.022, 0.03], wing: [1.1, 0.3], amp: 0.32, bias: 0.12, tail: [0.24, 0.2], legs: 0.1 })],
-    crow: ["烏鴉", 0.6, bird({ T: 0.6, mode: "fly", body: [0.24, 0.085, 0.085], head: 0.06, beak: [0.07, 0.016], wing: [0.7, 0.2], amp: 0.7, tail: [0.18, 0.12], legs: 0.08, sh: 0.62 })],
-    owl: ["貓頭鷹", 3, bird({ T: 3, mode: "perch", bodyA: 1.35, body: [0.3, 0.2, 0.18], head: 0.15, headAt: 1.0, neckUp: 0.05, headA: -0.1, headTurn: true, disc: true, tufts: true, beak: [0.04, 0.02, 0.02], wing: [0.42, 0.3], fold: true, legs: 0.08, headAtY: 0, bodyPat: SPOTS(22, 0.7) })],
+    eagle: ["老鷹", 1.4, bird({ T: 1.4, mode: "fly", body: [0.3, 0.1, 0.1], head: 0.075, headSh: 1.25, beak: [0.07, 0.022, 0.03], wing: [1.1, 0.3], amp: 0.42, bias: 0.12, glide: 3, primaries: 5, tail: [0.24, 0.2], legs: 0.1 })],
+    crow: ["烏鴉", 0.6, bird({ T: 0.6, mode: "fly", body: [0.24, 0.085, 0.085], head: 0.06, beak: [0.07, 0.016], wing: [0.7, 0.2], amp: 0.7, primaries: 4, tail: [0.18, 0.12], legs: 0.08, sh: 0.62 })],
+    owl: ["貓頭鷹", 3, bird({ T: 3, mode: "perch", bodyA: 1.35, body: [0.3, 0.2, 0.18], head: 0.15, headAt: 1.0, neckUp: 0.05, headA: -0.1, headTurn: true, blink: true, disc: true, tufts: true, beak: [0.04, 0.02, 0.02], wing: [0.42, 0.3], fold: true, legs: 0.08, headAtY: 0, bodyPat: SPOTS(22, 0.7) })],
     penguin: ["企鵝", 0.9, bird({ T: 0.9, mode: "waddle", bodyA: 1.45, body: [0.36, 0.18, 0.17], head: 0.1, headAt: 1.05, neckUp: 0, headA: 0.1, beak: [0.09, 0.022, 0.02], wing: [0.26, 0.09], amp: 0.5, bias: -0.9, bend: 1, sweep: 0.1, legs: 0.05, legSh: 0.8, bodyPat: (u) => (u[1] < -0.1 ? 1.5 : 0.62) })],
-    hummingbird: ["蜂鳥", 0.1, bird({ T: 0.1, mode: "hover", bodyA: 0.7, body: [0.16, 0.06, 0.055], head: 0.05, beak: [0.2, 0.008], wing: [0.36, 0.08], amp: 1.0, bias: 0.3, bend: 1, sweep: 0.05, tail: [0.1, 0.06], sh: 0.9 })],
+    hummingbird: ["蜂鳥", 0.1, bird({ T: 0.1, mode: "hover", bodyA: 0.7, body: [0.16, 0.06, 0.055], head: 0.05, beak: [0.2, 0.008], wing: [0.36, 0.08], amp: 1.0, bias: 0.3, bend: 1, sweep: 0.05, fig8: true, tail: [0.1, 0.06], sh: 0.9 })],
     bat: ["蝙蝠", 0.45, bird({ T: 0.45, mode: "fly", body: [0.14, 0.07, 0.07], head: 0.06, headSh: 0.7, ears: true, wing: [0.6, 0.34], amp: 0.9, bias: 0.05, sweep: 0.22, tipChord: 0.3, legs: 0.08, sh: 0.55, wingSh: 0.6 })],
     shark: ["鯊魚", 1.3, swimmer({ T: 1.3, L: 1.7, amp: 0.1, k: 0.9, n: 12, prof: (s) => 0.1 * Math.pow(Math.sin(Math.PI * Math.min(1, s * 1.1 + 0.02)), 0.8) + 0.004, fz: 0.85, tailFin: [0.3, 0.32], lower: 0.6, dorsal: [0.35, 0.22, 0.12], pecs: [0.3, 0.12], sh: 0.72 })],
     whale: ["鯨", 3, swimmer({ T: 3, L: 2.2, amp: 0.12, k: 0.8, vertical: true, prof: (s) => 0.1 * Math.pow(Math.sin(Math.PI * Math.min(1, s * 1.05 + 0.08)), 0.7) + 0.006, fz: 0.95, tailFin: [0.25, 0.4], pecs: [0.55, 0.14], dorsal: [0.62, 0.05, 0.05], pat: STRIPES(18), sh: 0.75 })],
@@ -639,7 +725,7 @@ const Zoo = (() => {
             if (ex * ex + ey * ey + ez * ez < r * r) { hidden = true; break; }
           }
         }
-        Sh[i] = hidden ? 0 : shade[i];
+        Sh[i] = hidden ? 0 : shade[i] * (parts[own].dim ?? 1);
       }
     }
 
