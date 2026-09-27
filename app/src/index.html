@@ -15,6 +15,7 @@
     </nav>
   </header>
 
+  <div class="layout">
   <section class="stage" aria-label="Lin Brain">
     <div id="orb" class="orb" aria-hidden="true"><div class="orb-fallback-face" id="orb-face"></div></div>
     <p id="status" class="status" aria-live="polite">待命 · 林秀豪式思考</p>
@@ -25,6 +26,7 @@
     <p id="ticker" class="ticker" aria-hidden="true"></p>
   </section>
 
+  <div class="col">
   <main id="thread" class="thread">
     <section id="welcome" class="welcome">
       <p class="lede">問任何你今天想弄懂的事。</p>
@@ -35,10 +37,12 @@
   <form id="composer" class="composer" autocomplete="off">
     <label for="prompt" class="sr">提問</label>
     <button id="mode" type="button" class="mode" aria-pressed="false">快速</button>
-    <textarea id="prompt" rows="1" placeholder="例如：為什麼抗生素停用後，抗藥菌不一定會消失？"></textarea>
+    <textarea id="prompt" rows="2" placeholder="例如：為什麼抗生素停用後，抗藥菌不一定會消失？"></textarea>
     <button id="send" type="submit" class="primary">思考</button>
     <button id="stop" type="button" class="ghost" hidden>停止</button>
   </form>
+  </div>
+  </div>
 
   <aside id="memory" class="drawer" hidden aria-label="結論記憶">
     <div class="drawer-head">

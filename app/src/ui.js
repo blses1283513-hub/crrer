@@ -39,7 +39,7 @@
   for (const text of EXAMPLES) {
     const b = document.createElement("button");
     b.type = "button"; b.className = "example"; b.textContent = text;
-    b.onclick = () => { prompt.value = text; grow(); prompt.focus(); };
+    b.onclick = () => { prompt.value = text; prompt.focus(); };
     $("#examples").append(b);
   }
   history.forEach((t) => { const el = addTurn(t.q); el._entry = t; renderAnswer(el, t.answer, true); renderVerdict(el, t.meta || {}); });
@@ -58,8 +58,6 @@
   function save() { try { localStorage.setItem("lin-brain-thread", JSON.stringify(history.slice(-20))); } catch {} }
   function syncThread() { app.classList.toggle("has-thread", thread.querySelectorAll(".turn").length > 0); }
 
-  function grow() { prompt.style.height = "auto"; prompt.style.height = Math.min(prompt.scrollHeight, innerHeight * 0.34) + "px"; }
-  prompt.addEventListener("input", grow);
   prompt.addEventListener("keydown", (e) => {
     if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); $("#composer").requestSubmit(); }
   });
@@ -241,7 +239,7 @@
   }
 
   function go(text) {
-    prompt.value = ""; grow();
+    prompt.value = "";
     const turn = addTurn(text);
     turn.querySelector(".a").textContent = "思考中…";
     turn.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -286,7 +284,7 @@
         acts.append(b);
       }
       const redo = document.createElement("button"); redo.type = "button"; redo.className = "ghost"; redo.textContent = "重新辯論";
-      redo.onclick = () => { drawer.hidden = true; prompt.value = "重新辯論 " + c.question; grow(); prompt.focus(); };
+      redo.onclick = () => { drawer.hidden = true; prompt.value = "重新辯論 " + c.question; prompt.focus(); };
       acts.append(redo);
       if (Brain.hasDownloads()) {
         const dl = document.createElement("button"); dl.type = "button"; dl.className = "ghost"; dl.textContent = "下載 .md";
