@@ -13,6 +13,8 @@ Scope: {{SCOPE}}
 
 ## Rules
 - Every objection needs a concrete failure case: a specific case, number, counterexample or reader where the draft's step gives a wrong or useless result. No failure case, no objection.
+- Today is {{TODAY}}. A draft that states a time-sensitive fact as current (a price, a listing or IPO status, who holds a post, whether an event has happened) from training data alone, without a date, has a logic error: object to it.
+- A forecast without concrete numbers (expected % and a base / bull / bear range) is a major objection.
 - At most 3 objections, most severe first.
 - Severity: fatal = the main claim or a load-bearing step is wrong, so the conclusion must change. major = the claim survives only with changed scope, conditions or confidence. minor = wording, presentation or a non-load-bearing detail.
 - Do not rewrite the draft and do not praise it. If nothing meets the bar, output exactly: NO OBJECTIONS

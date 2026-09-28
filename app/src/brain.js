@@ -51,7 +51,7 @@ const Brain = (() => {
   }
 
   function mentorSystem(related) {
-    let s = K.mentor + "\n\n" + fill(P["app-preamble"], { ARXIV: K.arxiv.join(", ") }) +
+    let s = K.mentor + "\n\n" + fill(P["app-preamble"], { ARXIV: K.arxiv.join(", "), TODAY: today() }) +
       "\n\n## Lin Thinking Hub (loaded at boot)\n" + K.hub;
     if (related.length) s += "\n\n## Memory: related conclusion cards\n" + related.map((c) => `### ${c.id}\n${cardText(c)}`).join("\n\n");
     return s;
@@ -138,7 +138,7 @@ const Brain = (() => {
     }
     if (idx.route === "exact") {
       emit({ type: "stage", step: "memory", label: `重用結論卡 ${idx.card.id}` });
-      const res = await sample(fill(P.reuse, { QUESTION: q, ID: idx.card.id, CARD: cardText(idx.card) }), {
+      const res = await sample(fill(P.reuse, { TODAY: today(), QUESTION: q, ID: idx.card.id, CARD: cardText(idx.card) }), {
         modelTier: "default", cache: false, signal: ctx.signal, onText: ({ text }) => emit({ type: "final", text }),
       });
       await touchCards([idx.card]);
@@ -205,7 +205,7 @@ const Brain = (() => {
     const critics = await Promise.all(ROLES.map(async (role) => {
       const [task, types] = role.task.split(/\nTYPES:\s*/);
       const prompt = fill(P["critic-common"], {
-        ROLE: role.name, SCOPE: scope, QUESTION: q, DRAFT: draft, TASK: task, TYPES: types || "",
+        TODAY: today(), ROLE: role.name, SCOPE: scope, QUESTION: q, DRAFT: draft, TASK: task, TYPES: types || "",
         SOURCE_LINE: role.key === "insider" ? "- source: <URL or none>\n" : "",
       });
       try {
@@ -225,7 +225,7 @@ const Brain = (() => {
     let finalText = draft, finalBlock = block;
     if (objections.length) {
       emit({ type: "stage", step: "revision", label: "逐條承認或反駁，改寫結論" });
-      const rev = fill(P.revision, { QUESTION: q, DRAFT: draft, OBJECTIONS: objections.map(objectionText).join("\n\n") });
+      const rev = fill(P.revision, { TODAY: today(), QUESTION: q, DRAFT: draft, OBJECTIONS: objections.map(objectionText).join("\n\n") });
       const revRes = await sample([{ role: "user", content: K.mentor + "\n\n" + rev }], {
         modelTier: "complex", cache: false, signal: ctx.signal,
         onText: ({ text }) => {

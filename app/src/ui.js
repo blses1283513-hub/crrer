@@ -202,7 +202,6 @@
     let partial = "", lastPaint = 0;
     const on = (ev) => {
       if (ev.type === "stage" || ev.type === "note") setStage(ev);
-      else if (ev.type === "tick") ticker.textContent = ev.text.replace(/\s+/g, " ").slice(-90);
       else if (ev.type === "final") {
         partial = ev.text;
         const now = performance.now();
