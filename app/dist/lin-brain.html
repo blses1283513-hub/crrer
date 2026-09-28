@@ -1684,7 +1684,7 @@ const Brain = (() => {
       const query = (b.match(/\bquery='([^']+)'/) || [, ""])[1];
       const body = b.replace(/<\/?result[^>]*>/g, "").replace(/!\[[^\]]*\]\([^)]*\)/g, "").replace(/\\([|$])/g, "$1").replace(/\n{2,}/g, "\n").trim();
       return { kind: "wolfram", url, date: "", title: query, text: body.slice(0, 2200) };
-    }).filter((r) => r.text);
+    }).filter((r) => r.text && !/^No Results Found$/i.test(r.text.trim()));
   };
 
   const KIND_HEAD = { web: "Web", arXiv: "arXiv papers (alphaXiv)", paper: "Peer-reviewed papers (Consensus)", flight: "Flights (Expedia, prices at search time)", hotel: "Hotels (Expedia, prices at search time)", wolfram: "Wolfram|Alpha (computed, curated data)", stay: "Stays compared across booking sites (Blue Pillow, prices at search time)" };
