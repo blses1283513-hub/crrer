@@ -17,4 +17,5 @@ line-format: "- YYYY-MM-DD · from [[debates/<record>]] · G|D candidate · <one
 - 2026-09-28 · from [[debates/2026-09-28-compute-four-fields-economy]] · G candidate · 先分清樞紐與輪輻：宣稱多個領域「共用瓶頸」之前，逐一寫出每個領域真正的限制因子，只有相同的才算共用。
 - 2026-09-28 · from [[debates/2026-09-28-open-source-ai-fund-overlap]] · G candidate · 讀持倉先分方向性與市場中性：多策略基金的多頭部位多半有對沖，不能當需求訊號。
 - 2026-09-28 · from [[debates/2026-09-28-ai-content-acceptance-countries]] · G candidate · 先對齊構念：問題問的是 X、資料量的是 Y 時，先寫出兩者的差距，再決定能推論到哪裡。
+- 2026-09-28 · from [[debates/2026-09-28-digital-smell-taste-industries]] · G candidate · 數位化一種感官先問三件事：座標系、感測器、輸出原色；缺哪一個，產業就卡在哪一步。
 
