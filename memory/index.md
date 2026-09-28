@@ -19,4 +19,7 @@ line-format: "- C### · kw: k1, k2, k3 · <一句主張> · conf: high|medium|lo
 - C012 · kw: 企業壽命, firm-mortality, Kleiber定律, 組織生態學, survival-analysis · Kleiber 式標度理論不能預測企業壽命：推導前提在公司端不存在；上市公司死亡率近似常數（半衰期約十年、含併購），全體企業呈年齡依賴的倒 U 風險。 · conf: high · used: 2026-09-28 · recheck: none · [[cards/C012]]
 - C013 · kw: 八度等價, octave-equivalence, 協和, consonance, Tsimane · 對數音高與低整數比音程的知覺融合可能普世，但協和偏好與八度等價是文化習得；「幾乎所有文化用八度」受轉錄偏誤影響。 · conf: medium · used: 2026-09-28 · recheck: none · [[cards/C013]]
 - C014 · kw: scaling-law, 臨界現象, 冪律, universality, LLM · LLM scaling law 與臨界冪律只共享數學形式：損失冪律可由資料長尾統計推導、指數非普適，不需臨界性解釋；它會在不可約損失、資料用盡與非單調現象處斷。 · conf: medium · used: 2026-09-28 · recheck: 2027-03-28 · [[cards/C014]]
+- C015 · kw: Anthropic, IPO, 估值, revenue-multiple, OpenAI, SPCX · Anthropic 上市後一年高於 IPO 價的機率約 50–55%，上市估值超過約 $1.3T 時基準情境的預期報酬趨近零。 · conf: medium · used: 2026-09-28 · recheck: 2026-12-28 · [[cards/C015]]
+- C016 · kw: 韓劇, K-drama, 恨與情, 壓縮現代化, 療癒劇, 朴海英 · 這五部韓劇的相似來自作者、制度、文化三層；可複製的是產製制度，韓國特有的是壓縮現代性下的世代犧牲與無價值感語境，以及以「情」為解方的敘事框架。 · conf: medium · used: 2026-09-28 · recheck: none · [[cards/C016]]
+- C017 · kw: 記憶體週期, memory-cycle, DRAM, HBM, capacity-lag, 寡占 · 記憶體週期主要由供給端長前置期、預測誤差與不可逆投資造成，需求決定觸發與振幅，製程轉換是次要供給衝擊；寡占與 HBM 長約已降低波動，週期性主要留在一般 DRAM 與 NAND。 · conf: medium · used: 2026-09-28 · recheck: 2027-03-28 · [[cards/C017]]
 

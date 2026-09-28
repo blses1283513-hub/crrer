@@ -12,4 +12,6 @@ line-format: "- YYYY-MM-DD · from [[debates/<record>]] · G|D candidate · <one
 - 2026-09-28 · from [[debates/2026-09-28-bank-run-r0-coordination]] · G candidate · 看介入後的反應速度辨機制：若一個政策讓現象瞬間停止而非逐漸衰減，底層是均衡選擇（協調），不是傳播率。
 - 2026-09-28 · from [[debates/2026-09-28-sleep-replay-experience-replay]] · G candidate · 問因果實驗實際操弄了什麼：證據若只操弄到上層容器（睡眠），就不能歸因給其中一個機制（重播）。
 - 2026-09-28 · from [[debates/2026-09-28-octave-fifth-physics-culture]] · G candidate · 把「普世」拆成知覺層與偏好層：跨文化反例常只打到偏好層，知覺層可能仍普世，分開陳述才不會整個丟掉物理機制。
+- 2026-09-28 · from [[debates/2026-09-28-anthropic-ipo-confidence]] · G candidate · 先找參照類別的基準率再調整個案：對單一事件給機率前，先寫出同類事件的歷史比例，再逐一說明個案往上或往下調的理由。
+- 2026-09-28 · from [[debates/2026-09-28-kdrama-healing-realism-culture]] · G candidate · 文化解釋先拆三層：看到一組作品的共同點，先排除作者效應與制度效應，剩下的才算文化。
 
