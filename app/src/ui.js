@@ -107,7 +107,7 @@
 
   const ROUTE = { full: "完整辯論", reused: "重用記憶", "no-conclusion": "直接回答", draft: "快速回答" };
   function routeLabel(r) { return ROUTE[r] || (String(r).startsWith("delta") ? "差分辯論 · " + r.replace(/^delta\s*/, "") : r || ""); }
-  const SRC_KIND = { arXiv: "arXiv", paper: "論文", flight: "機票", hotel: "住宿" };
+  const SRC_KIND = { arXiv: "arXiv", paper: "論文", flight: "機票", hotel: "住宿", stay: "比價" };
   const OUT = { open: "未解", conceded: "承認並修正", refuted: "已反駁" };
 
   function renderVerdict(turn, m) {
@@ -140,7 +140,7 @@
       links.forEach((x) => {
         const a = document.createElement("a");
         a.href = x.url; a.target = "_blank"; a.rel = "noopener noreferrer"; a.title = x.title || x.url;
-        a.textContent = `[${m.sources.indexOf(x) + 1}] ${SRC_KIND[x.kind] || new URL(x.url).hostname.replace(/^www\./, "")}${x.date && x.kind !== "hotel" ? " " + x.date : ""}`;
+        a.textContent = `[${m.sources.indexOf(x) + 1}] ${SRC_KIND[x.kind] || new URL(x.url).hostname.replace(/^www\./, "")}${x.date && x.kind !== "hotel" && x.kind !== "stay" ? " " + x.date : ""}`;
         src.append(a);
       });
       v.append(src);

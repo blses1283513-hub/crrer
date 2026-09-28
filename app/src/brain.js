@@ -213,7 +213,63 @@ const Brain = (() => {
     },
   };
 
-  const KIND_HEAD = { web: "Web", arXiv: "arXiv papers (alphaXiv)", paper: "Peer-reviewed papers (Consensus)", flight: "Flights (Expedia, prices at search time)", hotel: "Hotels (Expedia, prices at search time)" };
+  READERS.stays = (res) => {
+    const list = Array.isArray(res?.payload?.results) ? res.payload.results : [];
+    return list.filter((r) => r?.availability_status !== "unavailable").slice(0, 6).map((r) => {
+      const offers = (Array.isArray(r.offers) ? r.offers : []).filter((o) => Number.isFinite(o?.amount)).sort((a, b) => a.amount - b.amount);
+      const best = offers[0], top = offers[offers.length - 1];
+      const spread = best && top && top !== best ? `（各站 ${best.amount}–${top.amount}）` : "";
+      return {
+        kind: "stay", url: String(r.web_url || ""), date: "", title: String(r.name || ""),
+        text: clip(`${r.name} · ${r.property_type || ""}${r.stars ? " " + r.stars + "★" : ""} · 評分 ${r.rating ?? "?"}/5（${r.rating_count || 0} 則）· ${r.location?.city || ""} · ` +
+          (best ? `最低 ${best.amount} ${best.currency}（每晚 ${best.amount_per_night}，${best.ota}${best.refundable ? "，可退" : "，不可退"}${best.breakfast_included ? "，含早餐" : ""}${best.rooms_left ? "，剩 " + best.rooms_left + " 間" : ""}）${spread}` : "無報價"), 500),
+      };
+    });
+  };
+
+  // Blue Pillow needs an anonymous, non-secret key; each viewer gets one and keeps it in this browser.
+  const BP = "Blue Pillow Hotels & Stays", BP_KEY = "lin-brain.bluepillow-key";
+  let bpKey = null;
+  async function bluePillowKey(emit, notes, fresh) {
+    if (!fresh) {
+      if (bpKey) return bpKey;
+      try { bpKey = localStorage.getItem(BP_KEY); } catch {}
+      if (bpKey) return bpKey;
+    }
+    const r = await connector(BP, "b2a_get_key", { agent: "lin-brain-app" }, emit, notes);
+    const key = r?.payload?.key;
+    if (typeof key !== "string" || !key) return null;
+    bpKey = key;
+    try { localStorage.setItem(BP_KEY, key); } catch {}
+    return key;
+  }
+
+  async function bluePillowStays(h, emit, notes) {
+    const [name, ...rest] = String(h.destination).split(",").map((x) => x.trim());
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const api_key = await bluePillowKey(emit, notes, attempt > 0);
+      if (!api_key) return null;
+      const quiet = [];
+      const dest = await connector(BP, "resolve_destination", { api_key, name, ...(rest.length ? { country: rest[rest.length - 1] } : {}) }, emit, quiet);
+      if (!dest) {
+        if (attempt === 0 && quiet.some((n) => !/未連線|重新連線|未獲准|政策|選定/.test(n))) { bpKey = null; try { localStorage.removeItem(BP_KEY); } catch {} continue; }
+        notes.push(...quiet);
+        return null;
+      }
+      const cands = Array.isArray(dest.payload?.candidates) ? dest.payload.candidates : [];
+      const c = cands.find((x) => x.type === "city") || cands[0];
+      if (!c?.id) { notes.push(`${BP} 找不到「${name}」`); return null; }
+      return connector(BP, "search_stays", {
+        api_key, location: { type: "destination_id", value: c.id },
+        dates: { check_in: h.check_in, check_out: h.check_out },
+        guests: { adults: Math.min(Math.max(Number(h.adults) || 2, 1), 16) },
+        user_country: "TW", currency: "USD", page: { limit: 6 },
+      }, emit, notes);
+    }
+    return null;
+  }
+
+  const KIND_HEAD = { web: "Web", arXiv: "arXiv papers (alphaXiv)", paper: "Peer-reviewed papers (Consensus)", flight: "Flights (Expedia, prices at search time)", hotel: "Hotels (Expedia, prices at search time)", stay: "Stays compared across booking sites (Blue Pillow, prices at search time)" };
 
   async function research(q, emit, notes) {
     if (!mcp || !sample) return null;
@@ -227,35 +283,37 @@ const Brain = (() => {
     const jobs = [];
     const w = plan?.web;
     const queries = (Array.isArray(w?.queries) ? w.queries : []).map(String).filter(Boolean).slice(0, 3);
-    if (queries.length) jobs.push(["web", "Parallel Search", "web_search", { objective: clip(w.objective || q, 400), search_queries: queries, session_id: SEARCH_SESSION }]);
+    const call = (key, server, tool, input) => jobs.push([key, server, () => connector(server, tool, input, emit, notes)]);
+    if (queries.length) call("web", "Parallel Search", "web_search", { objective: clip(w.objective || q, 400), search_queries: queries, session_id: SEARCH_SESSION });
     const pa = plan?.papers;
     const kw = (Array.isArray(pa?.keywords) ? pa.keywords : []).map(String).filter(Boolean).slice(0, 4);
     const use = Array.isArray(pa?.use) ? pa.use : [];
     if (pa && kw.length) {
-      if (use.includes("arxiv")) jobs.push(["arxiv", "alphaXiv", "discover_papers", { question: clip(pa.question || q, 300), keywords: kw, difficulty: 3 }]);
-      if (use.includes("consensus")) jobs.push(["consensus", "Consensus", "search", { query: clip(pa.question || kw.join(" "), 300) }]);
+      if (use.includes("arxiv")) call("arxiv", "alphaXiv", "discover_papers", { question: clip(pa.question || q, 300), keywords: kw, difficulty: 3 });
+      if (use.includes("consensus")) call("consensus", "Consensus", "search", { query: clip(pa.question || kw.join(" "), 300) });
     }
     const f = plan?.flights;
     if (f?.origin && f?.destination && isDate(f.departure_date)) {
-      jobs.push(["flights", "Expedia", "search_flights", {
+      call("flights", "Expedia", "search_flights", {
         origin: String(f.origin), destination: String(f.destination), departure_date: f.departure_date,
         ...(isDate(f.return_date) && f.return_date >= f.departure_date ? { return_date: f.return_date } : {}),
         adult_count: Math.min(Math.max(Number(f.adults) || 1, 1), 6), limit: 5,
         user_locale: "en-US", client_device_info: { device_type: "desktop", agent_name: "ClaudeAI" },
-      }]);
+      });
     }
     const h = plan?.hotels;
     if (h?.destination && isDate(h.check_in) && isDate(h.check_out) && h.check_out > h.check_in) {
-      jobs.push(["hotels", "Expedia", "search_hotels", {
+      call("hotels", "Expedia", "search_hotels", {
         destination: String(h.destination), check_in_date: h.check_in, check_out_date: h.check_out,
         adult_count: Math.min(Math.max(Number(h.adults) || 2, 1), 8), limit: 6,
         user_locale: "en-US", client_device_info: { device_type: "desktop", agent_name: "ClaudeAI" },
-      }]);
+      });
+      jobs.push(["stays", BP, () => bluePillowStays(h, emit, notes)]);
     }
     if (!jobs.length) return null;
     emit({ type: "stage", step: "memory", label: "查詢即時資料" });
-    const got = await Promise.all(jobs.map(async ([key, server, tool, input]) => {
-      const res = await connector(server, tool, input, emit, notes);
+    const got = await Promise.all(jobs.map(async ([key, server, run]) => {
+      const res = await run();
       if (!res) return [];
       try { return READERS[key](res); } catch { notes.push(`${server} 回傳格式無法解讀`); return []; }
     }));
