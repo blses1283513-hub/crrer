@@ -15,4 +15,6 @@ line-format: "- YYYY-MM-DD · from [[debates/<record>]] · G|D candidate · <one
 - 2026-09-28 · from [[debates/2026-09-28-anthropic-ipo-confidence]] · G candidate · 先找參照類別的基準率再調整個案：對單一事件給機率前，先寫出同類事件的歷史比例，再逐一說明個案往上或往下調的理由。
 - 2026-09-28 · from [[debates/2026-09-28-kdrama-healing-realism-culture]] · G candidate · 文化解釋先拆三層：看到一組作品的共同點，先排除作者效應與制度效應，剩下的才算文化。
 - 2026-09-28 · from [[debates/2026-09-28-compute-four-fields-economy]] · G candidate · 先分清樞紐與輪輻：宣稱多個領域「共用瓶頸」之前，逐一寫出每個領域真正的限制因子，只有相同的才算共用。
+- 2026-09-28 · from [[debates/2026-09-28-open-source-ai-fund-overlap]] · G candidate · 讀持倉先分方向性與市場中性：多策略基金的多頭部位多半有對沖，不能當需求訊號。
+- 2026-09-28 · from [[debates/2026-09-28-ai-content-acceptance-countries]] · G candidate · 先對齊構念：問題問的是 X、資料量的是 Y 時，先寫出兩者的差距，再決定能推論到哪裡。
 
