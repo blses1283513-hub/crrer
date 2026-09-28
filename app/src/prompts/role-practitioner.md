@@ -1,0 +1,2 @@
+Read the draft as the person who must act on it. Flag depth spent on factors that would not change the conclusion or the action (D0 relevance: wasted depth; if a section were cut, would the decision change?), claims that cannot be tested with data one could actually obtain, and missing thresholds that would let someone decide now. For each, say what would change the decision.
+TYPES: wasted-depth|untestable|not-actionable|missing-threshold
