@@ -12,7 +12,17 @@ const Brain = (() => {
   ];
   const SEV = { fatal: 3, major: 2, minor: 1 };
   const FINAL = "### 最終回答";
-  let sample = null, db = null, downloads = null, canTools = false;
+  let sample = null, db = null, downloads = null, mcp = null, canTools = false;
+  const SEARCH = "Parallel Search";
+  const SEARCH_SESSION = Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, "0")).join("");
+  const SEARCH_ERR = {
+    server_not_connected: "未連線 Parallel Search：在 claude.ai 設定 → Connectors 加入後，回答才會含即時資料",
+    needs_reauth: "Parallel Search 需要重新連線（claude.ai 設定 → Connectors）",
+    not_in_manifest: "這個頁面未獲准使用 Parallel Search，回答未含即時資料",
+    selection_required: "有多個 Parallel Search 連線，請在 claude.ai 選定一個",
+    blocked_by_policy: "組織政策封鎖了 Parallel Search",
+  };
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   const cards = new Map();
   let meta = { debates_since_review: 0, reviews: 0 };
   const listeners = new Set();
@@ -22,7 +32,7 @@ const Brain = (() => {
 
   async function connect() {
     if (!window.claude) return { sample: false, db: false };
-    [sample, db, downloads] = await Promise.all([claude.use("sample"), claude.use("db"), claude.use("downloads")]);
+    [sample, db, downloads, mcp] = await Promise.all([claude.use("sample"), claude.use("db"), claude.use("downloads"), claude.use("mcp")]);
     if (sample) canTools = !!(await sample.limits().catch(() => null))?.tools;
     if (db) {
       db.collection("cards").onSnapshot((snap) => {
@@ -123,6 +133,58 @@ const Brain = (() => {
     return { route: "related", related: hit.slice(0, 3), exactCard: r.match === "exact" ? c : null, keywords: r.keywords || [] };
   }
 
+  // Live web results from the viewer's Parallel Search connector, for time-sensitive questions only.
+  async function webSearch(q, emit, notes) {
+    if (!mcp || !sample) return null;
+    let plan;
+    try {
+      plan = await sample.json(fill(P["web-check"], { TODAY: today(), QUESTION: q }), { modelTier: "quick", cache: false, signal: emit.signal });
+    } catch (e) {
+      if (e.code === "cancelled") throw e;
+      return null;
+    }
+    const queries = (Array.isArray(plan?.queries) ? plan.queries : []).map(String).filter(Boolean).slice(0, 3);
+    if (!plan?.search || !queries.length) return null;
+    emit({ type: "stage", step: "memory", label: "搜尋最新資料" });
+    const input = { objective: String(plan.objective || q).slice(0, 400), search_queries: queries, session_id: SEARCH_SESSION };
+    let res;
+    for (let attempt = 0; ; attempt++) {
+      try {
+        res = await mcp.callTool(SEARCH, "web_search", input, { signal: emit.signal });
+        break;
+      } catch (e) {
+        if (emit.signal?.aborted) throw { code: "cancelled" };
+        if (e?.retryable && attempt === 0) { await wait(Math.min(e.retryAfterMs ?? 600 + Math.random() * 900, 5000)); continue; }
+        notes.push(SEARCH_ERR[e?.code] || (/rate limit/i.test(e?.message || "")
+          ? "Parallel Search 免費額度暫時用完，這次回答未含即時資料"
+          : `網路搜尋失敗（${e?.code || "error"}），這次回答未含即時資料`));
+        return null;
+      }
+    }
+    const sources = parseResults(res);
+    if (!sources.length) { notes.push("網路搜尋沒有結果"); return null; }
+    const text = `## Live web results (searched ${today()}; newer than your training data — cite as [n])\n` +
+      sources.map((r, i) => `[${i + 1}] ${r.title}${r.url ? " — " + r.url : ""}${r.date ? " (" + r.date + ")" : ""}\n${r.text}`).join("\n\n");
+    return { text, sources: sources.map(({ title, url, date }) => ({ title, url, date })) };
+  }
+
+  // The connector's result shape is read defensively: a results list, or else the raw text.
+  function parseResults(res) {
+    let p = res?.payload ?? res;
+    if (typeof p === "string") {
+      try { p = JSON.parse(p); } catch { return p.trim() ? [{ title: "", url: "", date: "", text: p.slice(0, 9000) }] : []; }
+    }
+    const list = Array.isArray(p) ? p : Array.isArray(p?.results) ? p.results : Array.isArray(p?.data?.results) ? p.data.results : null;
+    if (!list) return p ? [{ title: "", url: "", date: "", text: JSON.stringify(p).slice(0, 9000) }] : [];
+    return list.slice(0, 8).map((r) => ({
+      url: String(r?.url || r?.link || ""),
+      title: String(r?.title || r?.name || ""),
+      date: String(r?.publish_date || r?.published_date || r?.date || "").slice(0, 10),
+      text: (Array.isArray(r?.excerpts) ? r.excerpts.join(" … ") : String(r?.excerpt || r?.snippet || r?.content || r?.text || ""))
+        .replace(/\s+/g, " ").slice(0, 1400),
+    })).filter((r) => r.text || r.title);
+  }
+
   async function run(question, ctx) {
     const emit = (ev) => ctx.on(ev);
     emit.signal = ctx.signal;
@@ -130,8 +192,13 @@ const Brain = (() => {
     let force = false, now = ctx.mode === "strict";
     const q = question.replace(/^\s*(重新辯論|開辯論)[\s:：,，]*/, (_, w) => { now = true; force = w === "重新辯論"; return ""; }).trim() || question;
 
-    // Step 0
-    const idx = await indexCheck(q, emit);
+    // Step 0 — memory index check, and a live web search when the question is time-sensitive.
+    const [idx, web] = await Promise.all([indexCheck(q, emit), webSearch(q, emit, trace.notes)]);
+    const sources = web?.sources;
+    if (web && idx.route === "exact") {
+      trace.notes.push("有即時網路資料，不直接重用結論卡");
+      Object.assign(idx, { route: "related", exactCard: idx.card });
+    }
     if (force) {
       trace.notes.push("重新辯論：不重用結論卡，跑完整辯論");
       if (idx.route === "exact") Object.assign(idx, { route: "related", exactCard: idx.card });
@@ -154,7 +221,7 @@ const Brain = (() => {
     for (const t of ctx.history.slice(-4)) {
       turns.push({ role: "user", content: t.q }, { role: "assistant", content: t.answer.slice(0, 5000) });
     }
-    turns.push({ role: "user", content: "## Student prompt\n" + q });
+    turns.push({ role: "user", content: (web ? web.text + "\n\n" : "") + "## Student prompt\n" + q });
     const tools = canTools ? [
       {
         name: "open_move",
@@ -179,13 +246,13 @@ const Brain = (() => {
     const block = parseBlock(draft);
     if (!block) {
       emit({ type: "final", text: draft });
-      return { answer: draft, route: "no-conclusion", trace };
+      return { answer: draft, route: "no-conclusion", sources, trace };
     }
     const pending = {
-      q, draft, route: trace.route, moves: trace.moves, notes: trace.notes,
+      q, draft, web, route: trace.route, moves: trace.moves, notes: trace.notes,
       related: idx.related.map((c) => ({ id: c.id, claim: c.claim })), exactCardId: force && idx.exactCard ? idx.exactCard.id : null,
     };
-    if (!now) return { answer: stripBlock(draft), route: "draft", block, pending, trace };
+    if (!now) return { answer: stripBlock(draft), route: "draft", block, pending, sources, trace };
     return debate(pending, ctx);
   }
 
@@ -205,7 +272,7 @@ const Brain = (() => {
     const critics = await Promise.all(ROLES.map(async (role) => {
       const [task, types] = role.task.split(/\nTYPES:\s*/);
       const prompt = fill(P["critic-common"], {
-        TODAY: today(), ROLE: role.name, SCOPE: scope, QUESTION: q, DRAFT: draft, TASK: task, TYPES: types || "",
+        TODAY: today(), WEB: pending.web?.text || "", ROLE: role.name, SCOPE: scope, QUESTION: q, DRAFT: draft, TASK: task, TYPES: types || "",
         SOURCE_LINE: role.key === "insider" ? "- source: <URL or none>\n" : "",
       });
       try {
@@ -225,7 +292,7 @@ const Brain = (() => {
     let finalText = draft, finalBlock = block;
     if (objections.length) {
       emit({ type: "stage", step: "revision", label: "逐條承認或反駁，改寫結論" });
-      const rev = fill(P.revision, { TODAY: today(), QUESTION: q, DRAFT: draft, OBJECTIONS: objections.map(objectionText).join("\n\n") });
+      const rev = fill(P.revision, { TODAY: today(), WEB: pending.web?.text || "", QUESTION: q, DRAFT: draft, OBJECTIONS: objections.map(objectionText).join("\n\n") });
       const revRes = await sample([{ role: "user", content: K.mentor + "\n\n" + rev }], {
         modelTier: "complex", cache: false, signal: ctx.signal,
         onText: ({ text }) => {
@@ -278,7 +345,7 @@ const Brain = (() => {
     }
     return {
       answer: stripBlock(finalText), block: finalBlock, route: trace.route, confidence, card: stored?.card, slug: stored?.slug,
-      objections, open, unreviewed, diff: Array.isArray(j.diff) ? j.diff : [], insight: j.insight || null, trace,
+      objections, open, unreviewed, diff: Array.isArray(j.diff) ? j.diff : [], insight: j.insight || null, sources: pending.web?.sources, trace,
     };
   }
 

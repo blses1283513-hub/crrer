@@ -132,6 +132,18 @@
     if (m.card) bits.push("結論卡 " + m.card);
     if (m.objections?.length) bits.push(`${m.objections.length} 項反對 · ${m.objections.filter((o) => o.outcome === "open").length} 項未解`);
     const s = document.createElement("span"); s.textContent = bits.join(" · "); v.append(s);
+    const links = (m.sources || []).filter((x) => /^https?:\/\//.test(x.url || "")).slice(0, 8);
+    if (links.length) {
+      const src = document.createElement("p"); src.className = "sources";
+      const b = document.createElement("b"); b.textContent = "即時來源"; src.append(b);
+      links.forEach((x) => {
+        const a = document.createElement("a");
+        a.href = x.url; a.target = "_blank"; a.rel = "noopener noreferrer"; a.title = x.title || x.url;
+        a.textContent = `[${m.sources.indexOf(x) + 1}] ${new URL(x.url).hostname.replace(/^www\./, "")}${x.date ? " " + x.date : ""}`;
+        src.append(a);
+      });
+      v.append(src);
+    }
     if (!m.objections?.length && !m.moves?.length && !m.notes?.length && !m.diff?.length) return;
 
     const d = document.createElement("details"); d.className = "trace";
@@ -213,7 +225,7 @@
       const meta = {
         route: r.route, confidence: r.confidence, card: r.card, claim: r.block?.claim, pending: r.pending,
         objections: (r.objections || []).map(({ role, failure, severity, outcome, reply }) => ({ role, failure, severity, outcome, reply })),
-        diff: r.diff, unreviewed: r.unreviewed, moves: r.trace?.moves, notes: [...(r.trace?.notes || []), ...(r.trace?.review?.note ? [r.trace.review.note] : [])],
+        diff: r.diff, unreviewed: r.unreviewed, sources: r.sources, moves: r.trace?.moves, notes: [...(r.trace?.notes || []), ...(r.trace?.review?.note ? [r.trace.review.note] : [])],
       };
       renderAnswer(turn, r.answer, true);
       renderVerdict(turn, meta);

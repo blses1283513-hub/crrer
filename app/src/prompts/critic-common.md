@@ -5,6 +5,8 @@ Scope: {{SCOPE}}
 ## Question
 {{QUESTION}}
 
+{{WEB}}
+
 ## Draft (the mentor's full answer, ending with its ## 結論草稿 block)
 {{DRAFT}}
 

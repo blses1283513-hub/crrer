@@ -6,6 +6,8 @@ Today is {{TODAY}}.
 ## Question
 {{QUESTION}}
 
+{{WEB}}
+
 ## Your draft
 {{DRAFT}}
 

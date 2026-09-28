@@ -105,6 +105,10 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--foam); o
 .verdict { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding-top: 12px; border-top: 1px solid var(--line); font: 12.5px/1.5 var(--mono); color: var(--mist); }
 .claim { width: 100%; margin: 0 0 4px; font: 15px/1.7 var(--sans); color: var(--ink); }
 .claim b { color: var(--foam); font-weight: 500; margin-right: 6px; }
+.sources { width: 100%; margin: 2px 0 0; display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.sources b { color: var(--foam); font-weight: 500; }
+.sources a { color: var(--mist); text-decoration: none; border-bottom: 1px dotted currentColor; overflow-wrap: anywhere; }
+.sources a:hover { color: var(--ink); }
 .pill { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; border: 1px solid currentColor; letter-spacing: 0.04em; }
 .pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 .conf-none { color: var(--mist); }
