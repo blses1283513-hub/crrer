@@ -170,6 +170,12 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--foam); o
 .card-q { margin: 0; font-size: 12.5px; color: var(--mist); }
 .card-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 .card-actions .ghost { padding: 3px 10px; font-size: 12px; }
+.card-check { width: 15px; height: 15px; accent-color: var(--foam); }
+.batch-bar { display: flex; gap: 6px; flex-wrap: wrap; }
+.batch-bar .ghost { padding: 4px 11px; font-size: 12.5px; }
+.batch-bar .ghost:disabled { opacity: 0.4; cursor: not-allowed; }
+#batch-note { margin-top: -4px; }
+.batch-status { font: 12px var(--mono); color: var(--mist); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 40vw; }
 
 @media (min-width: 960px) {
   .layout { flex-direction: row; align-items: flex-start; gap: 40px; }

@@ -267,24 +267,72 @@
 
   // Memory drawer
   const drawer = $("#memory");
-  $("#btn-memory").onclick = () => { drawer.hidden = false; $("#memory-close").focus(); };
+  $("#btn-memory").onclick = () => { renderMemory(); drawer.hidden = false; $("#memory-close").focus(); };
   $("#memory-close").onclick = () => { drawer.hidden = true; };
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") drawer.hidden = true; });
 
+  // Batch: re-run several stored cards' own questions, one at a time, each through a real full debate
+  // (the same call go() makes) so the four critics run as genuinely independent parallel calls, not
+  // something typed here. A "重新辯論：" prefix on the exact stored question makes Brain.run overwrite
+  // the same card id instead of creating a new one.
+  let batchSelected = new Set(), batchInited = false, batchRunning = false, batchAbort = false;
+  const batchBar = $("#batch-bar"), batchStatus = $("#batch-status");
+  function batchSync(list) {
+    const ids = new Set(list.map((c) => c.id));
+    if (!batchInited) { batchSelected = new Set(ids); batchInited = true; }
+    else { for (const c of list) if (!batchSelected.has(c.id) && !c._batchSeen) batchSelected.add(c.id); for (const id of [...batchSelected]) if (!ids.has(id)) batchSelected.delete(id); }
+  }
+  function setBatchStatus(text) { batchStatus.hidden = !text; batchStatus.textContent = text || ""; batchStatus.title = text || ""; }
+  $("#batch-all").onclick = () => { batchSelected = new Set(Brain.activeCards().map((c) => c.id)); renderMemory(); };
+  $("#batch-none").onclick = () => { batchSelected.clear(); renderMemory(); };
+  $("#batch-stop").onclick = () => { batchAbort = true; ctl?.abort(); };
+  $("#batch-run").onclick = () => runBatch();
+
+  async function runBatch() {
+    if (running || batchRunning) return;
+    const queue = Brain.activeCards().filter((c) => batchSelected.has(c.id)).map((c) => ({ id: c.id, question: c.question }));
+    if (!queue.length) return;
+    batchRunning = true; batchAbort = false;
+    $("#batch-run").hidden = true; $("#batch-stop").hidden = false;
+    $("#batch-all").disabled = true; $("#batch-none").disabled = true;
+    drawer.hidden = true;
+    let done = 0;
+    for (const item of queue) {
+      if (batchAbort) break;
+      setBatchStatus(`批次重新辯論 ${done + 1}/${queue.length}（${item.id}）：${item.question.slice(0, 22)}…`);
+      await go("重新辯論：" + item.question);
+      done++;
+    }
+    batchRunning = false;
+    $("#batch-run").hidden = false; $("#batch-stop").hidden = true;
+    $("#batch-all").disabled = false; $("#batch-none").disabled = false;
+    setBatchStatus(batchAbort ? `批次已停止（完成 ${done}/${queue.length}）` : done ? `批次完成：${done}/${queue.length} 題已用真正平行審查重新存卡` : "");
+    if (!batchAbort) setTimeout(() => setBatchStatus(""), 8000);
+    renderMemory();
+  }
+
   function renderMemory() {
     const list = Brain.activeCards();
+    batchSync(list);
     $("#card-count").textContent = list.length ? String(list.length) : "";
     const box = $("#memory-list");
     box.replaceChildren();
+    batchBar.hidden = !list.length;
+    $("#batch-note").hidden = !list.length;
     if (!Brain.hasDb()) { box.append(Object.assign(document.createElement("p"), { className: "drawer-note", textContent: "記憶庫只在 claude.ai 中可用。" })); return; }
     if (!list.length) { box.append(Object.assign(document.createElement("p"), { className: "drawer-note", textContent: "還沒有結論卡。問一個問題，辯論結束後會自動存下。" })); return; }
     for (const c of list) {
+      c._batchSeen = true;
       const el = document.createElement("div"); el.className = "card";
       const top = document.createElement("div"); top.className = "card-top";
+      const check = document.createElement("input"); check.type = "checkbox"; check.className = "card-check";
+      check.checked = batchSelected.has(c.id); check.disabled = running || batchRunning;
+      check.title = "納入批次重新辯論"; check.setAttribute("aria-label", "納入批次重新辯論：" + c.id);
+      check.onchange = () => { if (check.checked) batchSelected.add(c.id); else batchSelected.delete(c.id); };
       const id = document.createElement("span"); id.className = "card-id"; id.textContent = c.id;
       const pill = document.createElement("span"); pill.className = "pill conf-" + c.confidence; pill.textContent = c.confidence + (c.disputed ? " · 有異議" : "");
       const used = document.createElement("span"); used.textContent = "用於 " + (c.last_used || "—") + (c.recheck && c.recheck !== "none" ? " · 複查 " + c.recheck : "");
-      top.append(id, pill, used);
+      top.append(check, id, pill, used);
       const claim = document.createElement("p"); claim.className = "card-claim"; claim.textContent = c.claim;
       const q = document.createElement("p"); q.className = "card-q"; q.textContent = "問：" + c.question;
       const acts = document.createElement("div"); acts.className = "card-actions";
@@ -295,6 +343,7 @@
         acts.append(b);
       }
       const redo = document.createElement("button"); redo.type = "button"; redo.className = "ghost"; redo.textContent = "重新辯論";
+      redo.disabled = running || batchRunning;
       redo.onclick = () => { drawer.hidden = true; prompt.value = "重新辯論 " + c.question; prompt.focus(); };
       acts.append(redo);
       if (Brain.hasDownloads()) {

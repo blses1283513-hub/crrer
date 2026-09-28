@@ -175,6 +175,12 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--foam); o
 .card-q { margin: 0; font-size: 12.5px; color: var(--mist); }
 .card-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 .card-actions .ghost { padding: 3px 10px; font-size: 12px; }
+.card-check { width: 15px; height: 15px; accent-color: var(--foam); }
+.batch-bar { display: flex; gap: 6px; flex-wrap: wrap; }
+.batch-bar .ghost { padding: 4px 11px; font-size: 12.5px; }
+.batch-bar .ghost:disabled { opacity: 0.4; cursor: not-allowed; }
+#batch-note { margin-top: -4px; }
+.batch-status { font: 12px var(--mono); color: var(--mist); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 40vw; }
 
 @media (min-width: 960px) {
   .layout { flex-direction: row; align-items: flex-start; gap: 40px; }
@@ -194,6 +200,7 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--foam); o
   <header class="bar">
     <div class="mark" aria-label="Lin Brain">LIN<span>·</span>BRAIN</div>
     <nav class="bar-actions">
+      <span id="batch-status" class="batch-status" aria-live="polite" hidden></span>
       <button id="btn-memory" class="ghost" type="button">記憶 <span id="card-count" class="count"></span></button>
       <button id="btn-new" class="ghost" type="button">新對話</button>
     </nav>
@@ -234,6 +241,13 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--foam); o
       <button id="memory-close" type="button" class="ghost">關閉</button>
     </div>
     <p class="drawer-note">每場辯論存成一張結論卡。之後問到同一題、且信心為 high 時直接重用。</p>
+    <div id="batch-bar" class="batch-bar">
+      <button id="batch-all" type="button" class="ghost">全選</button>
+      <button id="batch-none" type="button" class="ghost">全不選</button>
+      <button id="batch-run" type="button" class="ghost">批次重新辯論已選項目</button>
+      <button id="batch-stop" type="button" class="ghost" hidden>停止批次</button>
+    </div>
+    <p class="drawer-note" id="batch-note">批次會對每張勾選的卡片，以原問題重新跑一次真正平行、互相不知情的四位審查者，並覆蓋回同一張卡（每題約 5–7 次 Claude 呼叫，逐題依序執行，可在下方主畫面看到即時過程）。</p>
     <div id="memory-list" class="memory-list"></div>
   </aside>
 </div>
@@ -2291,24 +2305,72 @@ const Brain = (() => {
 
   // Memory drawer
   const drawer = $("#memory");
-  $("#btn-memory").onclick = () => { drawer.hidden = false; $("#memory-close").focus(); };
+  $("#btn-memory").onclick = () => { renderMemory(); drawer.hidden = false; $("#memory-close").focus(); };
   $("#memory-close").onclick = () => { drawer.hidden = true; };
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") drawer.hidden = true; });
 
+  // Batch: re-run several stored cards' own questions, one at a time, each through a real full debate
+  // (the same call go() makes) so the four critics run as genuinely independent parallel calls, not
+  // something typed here. A "重新辯論：" prefix on the exact stored question makes Brain.run overwrite
+  // the same card id instead of creating a new one.
+  let batchSelected = new Set(), batchInited = false, batchRunning = false, batchAbort = false;
+  const batchBar = $("#batch-bar"), batchStatus = $("#batch-status");
+  function batchSync(list) {
+    const ids = new Set(list.map((c) => c.id));
+    if (!batchInited) { batchSelected = new Set(ids); batchInited = true; }
+    else { for (const c of list) if (!batchSelected.has(c.id) && !c._batchSeen) batchSelected.add(c.id); for (const id of [...batchSelected]) if (!ids.has(id)) batchSelected.delete(id); }
+  }
+  function setBatchStatus(text) { batchStatus.hidden = !text; batchStatus.textContent = text || ""; batchStatus.title = text || ""; }
+  $("#batch-all").onclick = () => { batchSelected = new Set(Brain.activeCards().map((c) => c.id)); renderMemory(); };
+  $("#batch-none").onclick = () => { batchSelected.clear(); renderMemory(); };
+  $("#batch-stop").onclick = () => { batchAbort = true; ctl?.abort(); };
+  $("#batch-run").onclick = () => runBatch();
+
+  async function runBatch() {
+    if (running || batchRunning) return;
+    const queue = Brain.activeCards().filter((c) => batchSelected.has(c.id)).map((c) => ({ id: c.id, question: c.question }));
+    if (!queue.length) return;
+    batchRunning = true; batchAbort = false;
+    $("#batch-run").hidden = true; $("#batch-stop").hidden = false;
+    $("#batch-all").disabled = true; $("#batch-none").disabled = true;
+    drawer.hidden = true;
+    let done = 0;
+    for (const item of queue) {
+      if (batchAbort) break;
+      setBatchStatus(`批次重新辯論 ${done + 1}/${queue.length}（${item.id}）：${item.question.slice(0, 22)}…`);
+      await go("重新辯論：" + item.question);
+      done++;
+    }
+    batchRunning = false;
+    $("#batch-run").hidden = false; $("#batch-stop").hidden = true;
+    $("#batch-all").disabled = false; $("#batch-none").disabled = false;
+    setBatchStatus(batchAbort ? `批次已停止（完成 ${done}/${queue.length}）` : done ? `批次完成：${done}/${queue.length} 題已用真正平行審查重新存卡` : "");
+    if (!batchAbort) setTimeout(() => setBatchStatus(""), 8000);
+    renderMemory();
+  }
+
   function renderMemory() {
     const list = Brain.activeCards();
+    batchSync(list);
     $("#card-count").textContent = list.length ? String(list.length) : "";
     const box = $("#memory-list");
     box.replaceChildren();
+    batchBar.hidden = !list.length;
+    $("#batch-note").hidden = !list.length;
     if (!Brain.hasDb()) { box.append(Object.assign(document.createElement("p"), { className: "drawer-note", textContent: "記憶庫只在 claude.ai 中可用。" })); return; }
     if (!list.length) { box.append(Object.assign(document.createElement("p"), { className: "drawer-note", textContent: "還沒有結論卡。問一個問題，辯論結束後會自動存下。" })); return; }
     for (const c of list) {
+      c._batchSeen = true;
       const el = document.createElement("div"); el.className = "card";
       const top = document.createElement("div"); top.className = "card-top";
+      const check = document.createElement("input"); check.type = "checkbox"; check.className = "card-check";
+      check.checked = batchSelected.has(c.id); check.disabled = running || batchRunning;
+      check.title = "納入批次重新辯論"; check.setAttribute("aria-label", "納入批次重新辯論：" + c.id);
+      check.onchange = () => { if (check.checked) batchSelected.add(c.id); else batchSelected.delete(c.id); };
       const id = document.createElement("span"); id.className = "card-id"; id.textContent = c.id;
       const pill = document.createElement("span"); pill.className = "pill conf-" + c.confidence; pill.textContent = c.confidence + (c.disputed ? " · 有異議" : "");
       const used = document.createElement("span"); used.textContent = "用於 " + (c.last_used || "—") + (c.recheck && c.recheck !== "none" ? " · 複查 " + c.recheck : "");
-      top.append(id, pill, used);
+      top.append(check, id, pill, used);
       const claim = document.createElement("p"); claim.className = "card-claim"; claim.textContent = c.claim;
       const q = document.createElement("p"); q.className = "card-q"; q.textContent = "問：" + c.question;
       const acts = document.createElement("div"); acts.className = "card-actions";
@@ -2319,6 +2381,7 @@ const Brain = (() => {
         acts.append(b);
       }
       const redo = document.createElement("button"); redo.type = "button"; redo.className = "ghost"; redo.textContent = "重新辯論";
+      redo.disabled = running || batchRunning;
       redo.onclick = () => { drawer.hidden = true; prompt.value = "重新辯論 " + c.question; prompt.focus(); };
       acts.append(redo);
       if (Brain.hasDownloads()) {
