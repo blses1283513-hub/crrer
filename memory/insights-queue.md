@@ -14,4 +14,5 @@ line-format: "- YYYY-MM-DD · from [[debates/<record>]] · G|D candidate · <one
 - 2026-09-28 · from [[debates/2026-09-28-octave-fifth-physics-culture]] · G candidate · 把「普世」拆成知覺層與偏好層：跨文化反例常只打到偏好層，知覺層可能仍普世，分開陳述才不會整個丟掉物理機制。
 - 2026-09-28 · from [[debates/2026-09-28-anthropic-ipo-confidence]] · G candidate · 先找參照類別的基準率再調整個案：對單一事件給機率前，先寫出同類事件的歷史比例，再逐一說明個案往上或往下調的理由。
 - 2026-09-28 · from [[debates/2026-09-28-kdrama-healing-realism-culture]] · G candidate · 文化解釋先拆三層：看到一組作品的共同點，先排除作者效應與制度效應，剩下的才算文化。
+- 2026-09-28 · from [[debates/2026-09-28-compute-four-fields-economy]] · G candidate · 先分清樞紐與輪輻：宣稱多個領域「共用瓶頸」之前，逐一寫出每個領域真正的限制因子，只有相同的才算共用。
 

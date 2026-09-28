@@ -22,4 +22,5 @@ line-format: "- C### · kw: k1, k2, k3 · <一句主張> · conf: high|medium|lo
 - C015 · kw: Anthropic, IPO, 估值, revenue-multiple, OpenAI, SPCX · Anthropic 上市後一年高於 IPO 價的機率約 50–55%，上市估值超過約 $1.3T 時基準情境的預期報酬趨近零。 · conf: medium · used: 2026-09-28 · recheck: 2026-12-28 · [[cards/C015]]
 - C016 · kw: 韓劇, K-drama, 恨與情, 壓縮現代化, 療癒劇, 朴海英 · 這五部韓劇的相似來自作者、制度、文化三層；可複製的是產製制度，韓國特有的是壓縮現代性下的世代犧牲與無價值感語境，以及以「情」為解方的敘事框架。 · conf: medium · used: 2026-09-28 · recheck: none · [[cards/C016]]
 - C017 · kw: 記憶體週期, memory-cycle, DRAM, HBM, capacity-lag, 寡占 · 記憶體週期主要由供給端長前置期、預測誤差與不可逆投資造成，需求決定觸發與振幅，製程轉換是次要供給衝擊；寡占與 HBM 長約已降低波動，週期性主要留在一般 DRAM 與 NAND。 · conf: medium · used: 2026-09-28 · recheck: 2027-03-28 · [[cards/C017]]
+- C018 · kw: 高運算力, compute-energy, AI經濟衝擊, 比特幣礦工轉型, 軌道資料中心, 外包服務 · 四個領域以 AI 為樞紐連結；高運算力的經濟衝擊最先落在數位認知服務外包（先重組後定價權轉移），新體系以電力、晶片產能與驗證能力為核心，算力以容量合約而非庫存交易。 · conf: medium · used: 2026-09-28 · recheck: 2027-03-28 · [[cards/C018]]
 
