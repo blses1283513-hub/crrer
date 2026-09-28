@@ -269,7 +269,17 @@ const Brain = (() => {
     return null;
   }
 
-  const KIND_HEAD = { web: "Web", arXiv: "arXiv papers (alphaXiv)", paper: "Peer-reviewed papers (Consensus)", flight: "Flights (Expedia, prices at search time)", hotel: "Hotels (Expedia, prices at search time)", stay: "Stays compared across booking sites (Blue Pillow, prices at search time)" };
+  READERS.wolfram = (res) => {
+    const t = textOf(res);
+    return t.split(/(?=<result\b)/).filter((b) => b.trim()).slice(0, 3).map((b) => {
+      const url = (b.match(/\burl='([^']+)'/) || [, ""])[1];
+      const query = (b.match(/\bquery='([^']+)'/) || [, ""])[1];
+      const body = b.replace(/<\/?result[^>]*>/g, "").replace(/!\[[^\]]*\]\([^)]*\)/g, "").replace(/\\([|$])/g, "$1").replace(/\n{2,}/g, "\n").trim();
+      return { kind: "wolfram", url, date: "", title: query, text: body.slice(0, 2200) };
+    }).filter((r) => r.text);
+  };
+
+  const KIND_HEAD = { web: "Web", arXiv: "arXiv papers (alphaXiv)", paper: "Peer-reviewed papers (Consensus)", flight: "Flights (Expedia, prices at search time)", hotel: "Hotels (Expedia, prices at search time)", wolfram: "Wolfram|Alpha (computed, curated data)", stay: "Stays compared across booking sites (Blue Pillow, prices at search time)" };
 
   async function research(q, emit, notes) {
     if (!mcp || !sample) return null;
@@ -292,6 +302,7 @@ const Brain = (() => {
       if (use.includes("arxiv")) call("arxiv", "alphaXiv", "discover_papers", { question: clip(pa.question || q, 300), keywords: kw, difficulty: 3 });
       if (use.includes("consensus")) call("consensus", "Consensus", "search", { query: clip(pa.question || kw.join(" "), 300) });
     }
+    const cq = (Array.isArray(plan?.compute?.queries) ? plan.compute.queries : []).map(String).filter(Boolean).slice(0, 3);
     const f = plan?.flights;
     if (f?.origin && f?.destination && isDate(f.departure_date)) {
       call("flights", "Expedia", "search_flights", {
@@ -310,6 +321,9 @@ const Brain = (() => {
       });
       jobs.push(["stays", BP, () => bluePillowStays(h, emit, notes)]);
     }
+    // Travel prices come back in USD, so add today's USD→TWD rate when no query asks for it.
+    if ((jobs.some(([k]) => k === "flights" || k === "hotels")) && !cq.some((x) => /USD|TWD|NT\$|dollar/i.test(x))) cq.push("1 USD in TWD");
+    cq.forEach((query) => call("wolfram", "Wolfram", "WolframAlpha", { query: clip(query, 200) }));
     if (!jobs.length) return null;
     emit({ type: "stage", step: "memory", label: "查詢即時資料" });
     const got = await Promise.all(jobs.map(async ([key, server, run]) => {

@@ -107,7 +107,7 @@
 
   const ROUTE = { full: "完整辯論", reused: "重用記憶", "no-conclusion": "直接回答", draft: "快速回答" };
   function routeLabel(r) { return ROUTE[r] || (String(r).startsWith("delta") ? "差分辯論 · " + r.replace(/^delta\s*/, "") : r || ""); }
-  const SRC_KIND = { arXiv: "arXiv", paper: "論文", flight: "機票", hotel: "住宿", stay: "比價" };
+  const SRC_KIND = { arXiv: "arXiv", paper: "論文", flight: "機票", hotel: "住宿", stay: "比價", wolfram: "Wolfram" };
   const OUT = { open: "未解", conceded: "承認並修正", refuted: "已反駁" };
 
   function renderVerdict(turn, m) {
