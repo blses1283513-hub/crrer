@@ -107,6 +107,7 @@
 
   const ROUTE = { full: "完整辯論", reused: "重用記憶", "no-conclusion": "直接回答", draft: "快速回答" };
   function routeLabel(r) { return ROUTE[r] || (String(r).startsWith("delta") ? "差分辯論 · " + r.replace(/^delta\s*/, "") : r || ""); }
+  const SRC_KIND = { arXiv: "arXiv", paper: "論文", flight: "機票", hotel: "住宿" };
   const OUT = { open: "未解", conceded: "承認並修正", refuted: "已反駁" };
 
   function renderVerdict(turn, m) {
@@ -132,14 +133,14 @@
     if (m.card) bits.push("結論卡 " + m.card);
     if (m.objections?.length) bits.push(`${m.objections.length} 項反對 · ${m.objections.filter((o) => o.outcome === "open").length} 項未解`);
     const s = document.createElement("span"); s.textContent = bits.join(" · "); v.append(s);
-    const links = (m.sources || []).filter((x) => /^https?:\/\//.test(x.url || "")).slice(0, 8);
+    const links = (m.sources || []).filter((x) => /^https?:\/\//.test(x.url || "")).slice(0, 12);
     if (links.length) {
       const src = document.createElement("p"); src.className = "sources";
       const b = document.createElement("b"); b.textContent = "即時來源"; src.append(b);
       links.forEach((x) => {
         const a = document.createElement("a");
         a.href = x.url; a.target = "_blank"; a.rel = "noopener noreferrer"; a.title = x.title || x.url;
-        a.textContent = `[${m.sources.indexOf(x) + 1}] ${new URL(x.url).hostname.replace(/^www\./, "")}${x.date ? " " + x.date : ""}`;
+        a.textContent = `[${m.sources.indexOf(x) + 1}] ${SRC_KIND[x.kind] || new URL(x.url).hostname.replace(/^www\./, "")}${x.date && x.kind !== "hotel" ? " " + x.date : ""}`;
         src.append(a);
       });
       v.append(src);
