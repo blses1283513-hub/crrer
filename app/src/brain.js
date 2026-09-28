@@ -110,26 +110,32 @@ const Brain = (() => {
     return res;
   }
 
-  // Step 0 — index check (exact / related / none).
-  async function indexCheck(question, emit) {
+  // Step 0 — one quick call: conclusion-index match, answer depth, keywords and the live-source plan.
+  async function step0(question, emit) {
     const list = activeCards();
-    if (!list.length) return { route: "none", related: [], keywords: [] };
-    emit({ type: "stage", step: "memory", label: "翻閱結論索引" });
-    let r;
+    emit({ type: "stage", step: "memory", label: list.length ? "翻閱結論索引" : "規劃查詢" });
     try {
-      r = await sample.json(fill(P["index-check"], { QUESTION: question, INDEX: list.map(indexLine).join("\n") }), { modelTier: "quick", cache: false, signal: emit.signal });
+      return await sample.json(fill(P.step0, {
+        TODAY: today(), QUESTION: question,
+        INDEX: list.length ? list.map(indexLine).join("\n") : "(empty)",
+        SOURCES: mcp ? P["step0-sources"] : "No connectors are available in this view: set web, papers, compute, flights and hotels to null.",
+      }), { modelTier: "quick", cache: false, signal: emit.signal }) || {};
     } catch (e) {
       if (e.code === "cancelled") throw e;
-      return { route: "none", related: [], keywords: [] };
+      return {};
     }
-    const hit = (Array.isArray(r?.cards) ? r.cards : []).map((id) => cards.get(String(id))).filter((c) => c && !c.archived);
-    if (!hit.length || r.match === "none") return { route: "none", related: [], keywords: r?.keywords || [] };
+  }
+
+  function interpretIndex(r) {
+    const keywords = (Array.isArray(r.keywords) ? r.keywords : []).map(String).filter(Boolean).slice(0, 6);
+    const hit = (Array.isArray(r.cards) ? r.cards : []).map((id) => cards.get(String(id))).filter((c) => c && !c.archived);
+    if (!hit.length || r.match === "none") return { route: "none", related: [], keywords };
     const c = hit[0];
     const fresh = !c.recheck || c.recheck === "none" || c.recheck > today();
     if (r.match === "exact" && c.confidence === "high" && fresh && !c.disputed && String(r.same_reason || "").trim()) {
-      return { route: "exact", card: c, reason: r.same_reason, related: [c], keywords: r.keywords || [] };
+      return { route: "exact", card: c, reason: r.same_reason, related: [c], keywords };
     }
-    return { route: "related", related: hit.slice(0, 3), exactCard: r.match === "exact" ? c : null, keywords: r.keywords || [] };
+    return { route: "related", related: hit.slice(0, 3), exactCard: r.match === "exact" ? c : null, keywords };
   }
 
   // Live research from the viewer's connectors: a quick plan picks the sources, the calls run in parallel,
@@ -281,15 +287,8 @@ const Brain = (() => {
 
   const KIND_HEAD = { web: "Web", arXiv: "arXiv papers (alphaXiv)", paper: "Peer-reviewed papers (Consensus)", flight: "Flights (Expedia, prices at search time)", hotel: "Hotels (Expedia, prices at search time)", wolfram: "Wolfram|Alpha (computed, curated data)", stay: "Stays compared across booking sites (Blue Pillow, prices at search time)" };
 
-  async function research(q, emit, notes) {
-    if (!mcp || !sample) return null;
-    let plan;
-    try {
-      plan = await sample.json(fill(P["research-plan"], { TODAY: today(), QUESTION: q }), { modelTier: "quick", cache: false, signal: emit.signal });
-    } catch (e) {
-      if (e.code === "cancelled") throw e;
-      return null;
-    }
+  async function research(plan, q, emit, notes) {
+    if (!mcp || !plan) return null;
     const jobs = [];
     const w = plan?.web;
     const queries = (Array.isArray(w?.queries) ? w.queries : []).map(String).filter(Boolean).slice(0, 3);
@@ -347,8 +346,11 @@ const Brain = (() => {
     let force = false, now = ctx.mode === "strict";
     const q = question.replace(/^\s*(重新辯論|開辯論)[\s:：,，]*/, (_, w) => { now = true; force = w === "重新辯論"; return ""; }).trim() || question;
 
-    // Step 0 — memory index check, and a live web search when the question is time-sensitive.
-    const [idx, web] = await Promise.all([indexCheck(q, emit), research(q, emit, trace.notes)]);
+    // Step 0 — one call plans memory, depth and live sources; the planned connector calls then run in parallel.
+    const plan = await step0(q, emit);
+    const idx = interpretIndex(plan);
+    const web = await research(plan, q, emit, trace.notes);
+    const deep = plan.deep === true;
     const sources = web?.sources;
     if (web && idx.route === "exact") {
       trace.notes.push("有即時資料，不直接重用結論卡");
@@ -396,7 +398,9 @@ const Brain = (() => {
         execute: () => { trace.moves.push("D0–D9"); return K.lessons; },
       },
     ] : undefined;
-    const draftRes = await ask(turns, { modelTier: now ? "complex" : "default", cache: false, signal: ctx.signal, tools }, emit, "mentor");
+    // Depth, not mode, sets the mentor tier: only questions that need derivation or a bridge get the complex tier.
+    trace.notes.push(deep ? "導師：深度題（complex）" : "導師：一般題（default）");
+    const draftRes = await ask(turns, { modelTier: deep ? "complex" : "default", cache: false, signal: ctx.signal, tools }, emit, "mentor");
     const draft = draftRes.text.trim();
     const block = parseBlock(draft);
     if (!block) {
@@ -404,7 +408,7 @@ const Brain = (() => {
       return { answer: draft, route: "no-conclusion", sources, trace };
     }
     const pending = {
-      q, draft, web, route: trace.route, moves: trace.moves, notes: trace.notes,
+      q, draft, web, keywords: idx.keywords, route: trace.route, moves: trace.moves, notes: trace.notes,
       related: idx.related.map((c) => ({ id: c.id, claim: c.claim })), exactCardId: force && idx.exactCard ? idx.exactCard.id : null,
     };
     if (!now) return { answer: stripBlock(draft), route: "draft", block, pending, sources, trace };
@@ -493,7 +497,7 @@ const Brain = (() => {
 
     // Step 6 — store (record, card, index, insight) and step 7 review every 5 debates.
     emit({ type: "stage", step: "store", label: "收藏結論卡" });
-    const stored = await store({ q, route: trace.route, block, finalBlock, finalText, objections, critics, j, unreviewed, confidence, exactCard: idx.exactCard });
+    const stored = await store({ q, keywords: pending.keywords, route: trace.route, block, finalBlock, finalText, objections, critics, j, unreviewed, confidence, exactCard: idx.exactCard });
     if (stored?.review) {
       emit({ type: "stage", step: "store", label: "每五場回顧" });
       trace.review = await review();
@@ -542,7 +546,7 @@ const Brain = (() => {
     const open = r.objections.filter((o) => o.outcome === "open").map((o) => `${o.role}: ${o.failure.slice(0, 160)}`);
     if (r.unreviewed.length) open.push("修訂新增、未經 critic 複審（unreviewed）：" + r.unreviewed.join("；"));
     const card = {
-      id, question: r.q, keywords: (r.j.keywords || []).slice(0, 6), confidence: r.confidence,
+      id, question: r.q, keywords: (r.keywords?.length ? r.keywords : r.j.keywords || []).slice(0, 6), confidence: r.confidence,
       created: r.exactCard?.created || date, last_used: date, recheck: /^\d{4}-\d{2}-\d{2}$/.test(r.j.recheck || "") ? r.j.recheck : "none",
       archive: slug, claim: r.j.claim || r.finalBlock.claim, scope: r.j.scope || "", break_points: r.j.break_points || "",
       decisive: r.j.decisive_objections || "", open: open.join("；") || "none", moves_used: r.j.moves_used || r.finalBlock.moves, disputed: false,

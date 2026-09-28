@@ -21,7 +21,6 @@ Reply with only this JSON (strings in Traditional Chinese unless noted):
   "break_points": "conditions under which the claim fails",
   "decisive_objections": "the objections that changed the conclusion, one line",
   "moves_used": "M/G numbers from the final block",
-  "keywords": ["3 to 6 keywords, mix Chinese and English terms"],
   "recheck": "YYYY-MM-DD at most 6 months after today if the claim depends on facts that can change, else none",
   "insight": null or {"kind": "G or D", "pattern": "a thinking pattern revealed by an objection that M1–M11 and D0–D9 do not cover, stated as a tool in one line"},
   "slug": "short-kebab-case-english-slug"
