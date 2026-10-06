@@ -38,6 +38,7 @@ purpose: 導師思維單檔啟動點 (boot note)，學習 session 先讀，深�
 - 證據源：[[Lin Hsiu-Hau — Scholarly Profile]]；週讀 [[Week-01 — Emergent Symmetry, Mechanism, Cross-over]]；語錄 [[Lecture Notes - Quantum Scattering & Dirac Equation]]
 - 程序：`protocols/`（news-update·weekly-study·corpus-refresh·teaching-material·dashboard，觸發才讀）
 - 跨域題庫 X01–X12：[[probe-bank]]
+- 膜厚量測應用工程知識庫：[[00 - Metro Thickness Hub]]（`metro-thickness/`）
 - 結論記憶：`memory/index.md`→先 grep→`memory/cards/`→`debates/`存檔；辯論＝skill `lin-debate`；G 系列見 `docs/superpowers/specs/2026-09-27-lin-mentor-cross-domain-design.md §5.4`
 
 ## 使用規則（給 mentor agent）
