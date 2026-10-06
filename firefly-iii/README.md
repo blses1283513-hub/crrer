@@ -15,7 +15,8 @@ purpose: Firefly III 個人記帳系統的入口：安裝、匯入、每月流�
 | `docker-compose.yml` | Firefly III + MariaDB + Data Importer + 排程 |
 | `.env.example` / `.db.env.example` / `.importer.env.example` | 設定範本（複製後填密碼） |
 | `importer/玉山-存款.json`、`importer/玉山-信用卡.json` | 玉山銀行 CSV 匯入設定 |
-| `scripts/backup.sh` | 備份資料庫與附件 |
+| `scripts/check.ps1` | Windows 安裝檢查（唯讀） |
+| `scripts/backup.sh` | 備份資料庫與附件（Windows 用 Git Bash 或 WSL 執行） |
 
 > 🔒 `.gitignore` 已排除 `.env`、`.db.env`、`.importer.env`、`*.csv`、`*.xls(x)` 與 `backups/`。**真正的密碼與銀行對帳單永遠不要提交到 Git。**
 
@@ -24,6 +25,8 @@ purpose: Firefly III 個人記帳系統的入口：安裝、匯入、每月流�
 ## 1. 安裝（約 15 分鐘）
 
 需求：已安裝 Docker 與 Docker Compose 的電腦或 NAS（Synology 用 Container Manager、QNAP 用 Container Station），至少 1 GB 記憶體。
+
+**Windows PC：** 安裝 [Docker Desktop for Windows](https://www.docker.com/products/docker-desktop/)（需開啟 WSL 2，安裝程式會引導），安裝後**重新開機並啟動 Docker Desktop**。以下指令在 PowerShell 執行，並先 `cd` 到本資料夾。電腦要保持開機，手機才連得到；睡眠時服務會中斷。
 
 ```sh
 cd firefly-iii
@@ -34,6 +37,11 @@ cp .importer.env.example .importer.env
 # 產生兩組不同的 32 字元隨機字串，分別填入 .env 的 APP_KEY 與 STATIC_CRON_TOKEN
 head -c 200 /dev/urandom | LC_ALL=C tr -dc 'A-Za-z0-9' | head -c 32; echo
 head -c 200 /dev/urandom | LC_ALL=C tr -dc 'A-Za-z0-9' | head -c 32; echo
+```
+
+Windows PowerShell 版本（`cp` 同樣可用；上面兩行產生字串的指令改用這個，執行兩次）：
+```powershell
+-join ((48..57)+(65..90)+(97..122) | Get-Random -Count 32 | ForEach-Object {[char]$_})
 ```
 
 編輯設定檔：
@@ -62,6 +70,48 @@ docker compose logs -f app   # 看到 "Firefly III is ready" 類訊息後按 Ctr
    ```sh
    docker compose up -d importer
    ```
+
+## 2.5 安裝檢查清單（Windows 電腦 + Android 手機）
+
+先在電腦跑自動檢查（唯讀，不會改任何東西）：
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\check.ps1
+```
+它會檢查 Docker、三個設定檔、金鑰長度、四個容器與兩個網頁，並列出手機可用的網址。全部 `[OK]` 才算電腦端完成。手機端無法自動檢查，請逐項打勾：
+
+| # | 裝置 | 檢查項目 | 應該看到 | ✓ |
+|---|---|---|---|---|
+| 1 | 電腦 | `check.ps1` 沒有 `[FAIL]` | 最後一行綠字「全部檢查通過」 | ☐ |
+| 2 | 電腦 | 開 `http://localhost:8080` | Firefly III 登入或註冊頁 | ☐ |
+| 3 | 電腦 | 已註冊管理員，主要幣別 TWD | 儀表板顯示 NT$ | ☐ |
+| 4 | 電腦 | 開 `http://localhost:8081` | 匯入工具頁面（權杖已填） | ☐ |
+| 5 | 手機 | 連同一個 Wi-Fi，Chrome 開 `http://<電腦區網IP>:8080` | 登入頁 | ☐ |
+| 6 | 手機 | 登入成功 | 看得到儀表板 | ☐ |
+| 7 | 手機 | Chrome ⋮ → 新增至主畫面 | 主畫面出現圖示 | ☐ |
+| 8 | 手機 | 關掉 Wi-Fi 用行動網路，已連 Tailscale，開 Tailscale 位址 | 同樣的登入頁 | ☐ |
+
+**手機在家連不上時（第 5 項失敗），最常見原因是 Windows 防火牆。** 以系統管理員開 PowerShell，只放行這兩個埠，且只限區網：
+```powershell
+New-NetFirewallRule -DisplayName "Firefly III" -Direction Inbound -Protocol TCP -LocalPort 8080,8081 -Action Allow -Profile Private -RemoteAddress LocalSubnet
+```
+同時確認 Wi-Fi 的網路類型是「私人」，而不是「公用」。
+
+## 2.6 外出連線：Tailscale（Windows 電腦 + Android 手機）
+
+目的：不開放路由器埠、不暴露到網際網路，只有你自己的裝置能連回家裡的電腦。Tailscale 個人使用免費。
+
+1. **電腦：** 到 [tailscale.com/download](https://tailscale.com/download) 安裝 Windows 版，用 Google 或 Microsoft 帳號登入。
+2. **手機：** Google Play 安裝 Tailscale，用**同一個帳號**登入，開啟 VPN 開關。
+3. 在電腦 Tailscale 圖示上看電腦的 Tailscale IP（`100.x.y.z`）。`check.ps1` 也會列出。
+4. 手機（關閉 Wi-Fi 測試）開 `http://100.x.y.z:8080`，應看到登入頁。
+5. 編輯 `.env` 的 `APP_URL` 與 `.importer.env` 的 `VANITY_URL`，改成你**最常用**的網址（在家用區網 IP，或統一用 Tailscale IP），然後：
+   ```powershell
+   docker compose up -d
+   ```
+6. 在 Tailscale 管理頁（login.tailscale.com）對電腦選「Disable key expiry」，避免金鑰到期後突然連不上。
+
+> ⚠️ 不要使用 Tailscale Funnel，也不要在路由器做埠轉發：那會把你的財務資料公開到網際網路上。
+> `APP_URL` 只能設一個。用另一個網址開啟時，登入通常仍可用，但部分連結會導回 `APP_URL`；若發生，統一改用一種網址即可。
 
 ## 3. 匯入玉山銀行 CSV
 
