@@ -1,0 +1,33 @@
+{
+  "version": 3,
+  "source": "ff3-importer-crrer-template",
+  "created_at": "2026-10-06T00:00:00+08:00",
+  "date": "Y/m/d",
+  "default_account": 1,
+  "delimiter": "comma",
+  "headers": true,
+  "rules": true,
+  "webhooks": false,
+  "skip_form": false,
+  "add_import_tag": true,
+  "roles": [
+    "date_transaction",
+    "_ignore",
+    "description",
+    "amount_debit",
+    "amount_credit",
+    "_ignore",
+    "note",
+    "opposing-number"
+  ],
+  "do_mapping": [false, false, false, false, false, false, false, false],
+  "mapping": [],
+  "duplicate_detection_method": "classic",
+  "ignore_duplicate_lines": true,
+  "unique_column_index": 0,
+  "unique_column_type": "internal_reference",
+  "flow": "file",
+  "content_type": "csv",
+  "custom_tag": "",
+  "conversion": false
+}

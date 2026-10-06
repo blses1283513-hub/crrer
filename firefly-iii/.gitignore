@@ -1,0 +1,10 @@
+# 真正的設定檔含密碼與金鑰，絕不提交
+.env
+.db.env
+.importer.env
+
+# 銀行對帳單與備份含個人財務資料，絕不提交
+*.csv
+*.xls
+*.xlsx
+backups/
