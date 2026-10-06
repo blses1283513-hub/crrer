@@ -90,11 +90,12 @@ powershell -ExecutionPolicy Bypass -File scripts\check.ps1
 | 7 | 手機 | Chrome ⋮ → 新增至主畫面 | 主畫面出現圖示 | ☐ |
 | 8 | 手機 | 關掉 Wi-Fi 用行動網路，已連 Tailscale，開 Tailscale 位址 | 同樣的登入頁 | ☐ |
 
-**手機在家連不上時（第 5 項失敗），最常見原因是 Windows 防火牆。** 以系統管理員開 PowerShell，只放行這兩個埠，且只限區網：
+**手機連不上時（第 5 或第 8 項失敗），最常見原因是 Windows 防火牆。** 以系統管理員開 PowerShell（開始選單搜尋 PowerShell → 右鍵 → 以系統管理員身分執行），只放行這兩個埠，且只限家裡區網與 Tailscale：
 ```powershell
-New-NetFirewallRule -DisplayName "Firefly III" -Direction Inbound -Protocol TCP -LocalPort 8080,8081 -Action Allow -Profile Private -RemoteAddress LocalSubnet
+New-NetFirewallRule -DisplayName "Firefly III" -Direction Inbound -Protocol TCP -LocalPort 8080,8081 -Action Allow -Profile Any -RemoteAddress LocalSubnet,100.64.0.0/10
 ```
-同時確認 Wi-Fi 的網路類型是「私人」，而不是「公用」。
+`100.64.0.0/10` 是 Tailscale 使用的位址範圍。這條規則不會讓網際網路上的其他人連入。
+> 舊版本的這份文件用的是 `-Profile Private -RemoteAddress LocalSubnet`，Tailscale 的連線可能被擋，請改用上面這條。已建立過舊規則的話，先執行 `Remove-NetFirewallRule -DisplayName "Firefly III"` 再建立新的。
 
 ## 2.6 外出連線：Tailscale（Windows 電腦 + Android 手機）
 
@@ -104,14 +105,16 @@ New-NetFirewallRule -DisplayName "Firefly III" -Direction Inbound -Protocol TCP 
 2. **手機：** Google Play 安裝 Tailscale，用**同一個帳號**登入，開啟 VPN 開關。
 3. 在電腦 Tailscale 圖示上看電腦的 Tailscale IP（`100.x.y.z`）。`check.ps1` 也會列出。
 4. 手機（關閉 Wi-Fi 測試）開 `http://100.x.y.z:8080`，應看到登入頁。
-5. 編輯 `.env` 的 `APP_URL` 與 `.importer.env` 的 `VANITY_URL`，改成你**最常用**的網址（在家用區網 IP，或統一用 Tailscale IP），然後：
+5. 編輯 `.env` 的 `APP_URL` 與 `.importer.env` 的 `VANITY_URL`，都改成 `http://100.x.y.z:8080`（電腦的 Tailscale 位址）。**建議在家和外出都統一用這個網址**：它不會因為換 Wi-Fi 而改變。`APP_URL` 若還是 `localhost`，手機登入後可能被導回 `localhost` 而打不開。改完後執行：
    ```powershell
-   docker compose up -d
+   docker compose up -d --force-recreate
    ```
-6. 在 Tailscale 管理頁（login.tailscale.com）對電腦選「Disable key expiry」，避免金鑰到期後突然連不上。
+6. 讓電腦保持可連線：電腦要開機且不能睡眠；Docker Desktop 設定 → General → 勾選「Start Docker Desktop when you sign in」。
+7. 在 Tailscale 管理頁（login.tailscale.com）對電腦選「Disable key expiry」，避免金鑰到期後突然連不上。
 
 > ⚠️ 不要使用 Tailscale Funnel，也不要在路由器做埠轉發：那會把你的財務資料公開到網際網路上。
 > `APP_URL` 只能設一個。用另一個網址開啟時，登入通常仍可用，但部分連結會導回 `APP_URL`；若發生，統一改用一種網址即可。
+> 手機要記帳時需先開啟 Tailscale。
 
 ## 3. 匯入玉山銀行 CSV
 
@@ -177,6 +180,18 @@ New-NetFirewallRule -DisplayName "Firefly III" -Direction Inbound -Protocol TCP 
 
 ## 5. 備份與還原
 
+**Windows PowerShell 版**（在 `firefly-iii` 資料夾執行）：
+```powershell
+mkdir backup
+docker compose exec -T db sh -c 'exec mariadb-dump --single-transaction -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE" > /tmp/firefly.sql'
+docker cp firefly_iii_db:/tmp/firefly.sql .\backup\firefly.sql
+docker cp firefly_iii_core:/var/www/html/storage/upload .\backup\upload
+copy .env, .db.env, .importer.env .\backup\
+dir backup
+```
+確認 `backup\firefly.sql` 不是 0 KB。這裡刻意不用 PowerShell 的 `>` 轉向輸出，因為 Windows PowerShell 會把檔案轉成 UTF-16，之後無法匯入。
+
+**macOS / Linux / NAS / Git Bash / WSL 版：**
 ```sh
 sh scripts/backup.sh          # 產生 backups/YYYY-MM-DD/
 ```
@@ -191,6 +206,44 @@ docker compose exec -T app tar -xzf - -C /var/www/html/storage < backups/2026-10
 ```
 
 > ⚠️ 還原時 `.env` 的 `APP_KEY` 必須與備份當時**相同**，否則加密欄位無法讀取。
+
+## 5.5 換電腦
+
+你的記帳資料存在舊電腦 Docker 的資料庫磁碟區，**不在 GitHub，也不在資料夾裡**。只複製資料夾到新電腦，得到的會是空的 Firefly III。
+
+| 項目 | 搬移方式 | 沒搬的後果 |
+|---|---|---|
+| 記帳資料（資料庫） | 匯出再匯入（見下） | 全部記錄消失 |
+| `.env`、`.db.env`、`.importer.env` | 手動複製，用隨身碟，不要用雲端或寄信；它們被 `.gitignore` 排除，GitHub 上沒有 | 密碼與金鑰遺失 |
+| `APP_KEY`（在 `.env` 裡） | 新電腦用**完全相同**的值 | **加密欄位無法讀取，最大的坑** |
+| 附件（收據照片） | 匯出再匯入 | 附件消失 |
+| Tailscale、防火牆規則、Docker 開機自啟、電源設定 | 在新電腦重做（第 2.6 節） | 手機連不上 |
+
+**步驟：**
+
+1. **舊電腦備份**：照第 5 節的 PowerShell 版備份，確認 `backup\firefly.sql` 有內容。`backup` 資料夾含密碼與全部財務資料，只放在隨身碟，用完刪除或加密保存。
+2. **新電腦準備**：安裝 Docker Desktop，下載 `firefly-iii` 資料夾，把備份裡的三個設定檔放進去，**內容不要改**。
+3. **先只啟動資料庫並匯入：**
+   ```powershell
+   docker compose up -d db
+   # 等約 1 分鐘
+   docker cp .\backup\firefly.sql firefly_iii_db:/tmp/firefly.sql
+   docker compose exec -T db sh -c 'exec mariadb -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE" < /tmp/firefly.sql'
+   ```
+4. **啟動全部並還原附件：**
+   ```powershell
+   docker compose up -d
+   docker cp .\backup\upload firefly_iii_core:/var/www/html/storage/
+   docker compose exec -u root app chown -R www-data:www-data /var/www/html/storage/upload
+   ```
+5. 開 `http://localhost:8080`，用**原本的帳號密碼**登入，確認帳戶餘額與交易都在。
+6. **重設手機連線**：新電腦安裝 Tailscale（同一個帳號），會得到新的 `100.x.y.z`。更新新電腦 `.env` 的 `APP_URL` 與 `.importer.env` 的 `VANITY_URL`，執行 `docker compose up -d --force-recreate`；重做第 2.5 節的防火牆規則；手機刪掉舊主畫面圖示，用新網址重新加入；到 Tailscale 管理頁移除舊電腦。
+
+**注意：**
+- 舊電腦先不要關、不要刪 Docker 資料，新電腦用一週確認無誤再清理。
+- 匯入工具若提示權杖無效，到 Firefly III 重建個人存取權杖，更新 `.importer.env`，再 `docker compose up -d --force-recreate importer`。
+- 把 `APP_KEY` 與資料庫密碼另外存在密碼管理員：這兩樣遺失，備份也無法還原。
+- 這份流程尚未在實際換機時驗證，請先在新電腦確認資料正確再處理舊電腦。
 
 ## 6. 升級
 
@@ -211,4 +264,7 @@ docker image prune -f
 | 匯入後中文亂碼 | CSV 是 Big5 → 見 3.2 節轉成 UTF-8 |
 | 匯入失敗 "date" 錯誤 | 民國年或日期格式不符 → 見 3.2 節 |
 | 定期交易沒自動產生 | `STATIC_CRON_TOKEN` 不是剛好 32 字元 → `docker compose logs cron` |
+| 網頁 HTTP 500，日誌出現 `Unsupported cipher or incorrect key length` | `.env` 的 `APP_KEY` 不是剛好 32 字元（常見：占位字串沒換、多了引號或空格）。檢查長度：`((Select-String -Path .env -Pattern '^APP_KEY=').Line -replace '^APP_KEY=','').Length` 應為 32，修正後 `docker compose up -d --force-recreate app` |
+| 手機登入後被導到 localhost | `APP_URL` 仍是 `localhost` → 改成 Tailscale 位址並 `docker compose up -d --force-recreate` |
+| 手機連不上，電腦正常 | 防火牆 → 見 2.5 節；確認 Tailscale 已開啟 |
 | 匯入工具連不上 | `FIREFLY_III_ACCESS_TOKEN` 空白或過期 → 重建權杖後執行 `docker compose up -d importer` |
