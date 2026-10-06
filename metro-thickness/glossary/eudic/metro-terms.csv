@@ -1,0 +1,208 @@
+﻿term,chinese,definition_en,definition_zh,related,aliases,note
+Metrology,量測,"The science and practice of measurement; in a fab, the group and tools that measure wafers.",晶圓量測的技術與部門。,Inspection; CTQ; Measurement uncertainty,Metro,01 Role and Manufacturing Loop
+CTQ,關鍵品質特性,A measurable parameter that directly determines product quality and is controlled against a specification.,直接影響產品品質、需依規格管控的參數。,Specification limit; SPC; Cpk,Critical to quality,01 Role and Manufacturing Loop
+Applications engineer,應用工程師,"Engineer who develops, validates and troubleshoots measurement recipes so results can be trusted for process control.",開發與驗證量測配方、確保數據可信的工程師。,Recipe; Model; Excursion,,01 Role and Manufacturing Loop
+APC,先進製程控制,Automated feedback/feed-forward control that adjusts process settings from measured results.,依量測結果自動調整製程參數的控制系統。,R2R; Feed-forward; EWMA,Advanced process control,01 Role and Manufacturing Loop
+R2R,批次間控制,"Adjusting a recipe between runs (e.g., deposition time) using the previous run's measurement.",依前一批量測值修正下一批製程設定。,APC; EWMA; Deposition rate,Run-to-run control,01 Role and Manufacturing Loop
+Feed-forward,前饋控制,"Using an upstream measurement to set a downstream step, e.g., pre-CMP thickness to set polish time.",以前段量測值決定後段製程設定。,Feedback; APC; CMP,feedforward,18 Excursion Case Studies
+Excursion,製程異常／偏移事件,"A departure of a process or measurement from its normal, controlled behavior.",製程或量測偏離正常受控狀態的事件。,OCAP; RCA; SPC,excursions,18 Excursion Case Studies
+Film stack,膜堆疊,The ordered sequence of layers on the wafer that the optical model must represent.,晶圓上各層薄膜的排列順序與組成。,Interfacial layer; Optical model; Substrate,stack,08 Film Stack and Dispersion Models
+Substrate,基板,"The bulk material beneath the films, usually crystalline silicon.",薄膜底下的主體材料，通常為矽。,Film stack; c-Si,,08 Film Stack and Dispersion Models
+ALD,原子層沉積,"Deposition by alternating self-limiting surface reactions, adding a sub-monolayer per cycle.",以交替自限表面反應逐層沉積的方法。,GPC; ALD window; Nucleation delay,Atomic layer deposition,02 Process Modules
+GPC,每循環成長量,"Film thickness added per ALD cycle, typically ~0.1 nm.",ALD 每一循環增加的膜厚。,ALD; ALD window; Cycle count,Growth per cycle,02 Process Modules
+ALD window,ALD 製程窗口,Temperature range where GPC is nearly constant because reactions are self-limiting.,GPC 幾乎不隨溫度變化的溫度區間。,GPC; Parasitic CVD; Self-limiting,,02 Process Modules
+Self-limiting,自限性,"A reaction that stops once surface sites are saturated, independent of extra dose.",表面位置飽和後反應自動停止。,ALD; Saturation,,02 Process Modules
+Precursor,前驅物,Chemical reactant delivered as a vapor that supplies the film's elements.,提供薄膜元素的氣相化學反應物。,ALD; CVD; Purge,precursors,02 Process Modules
+Purge,吹淨,Inert-gas step that removes excess precursor and by-products between ALD pulses.,以惰性氣體清除殘餘前驅物與副產物。,ALD; Parasitic CVD,,02 Process Modules
+Parasitic CVD,寄生 CVD 成長,"Unwanted gas-phase reaction in ALD when precursors mix, giving extra, non-uniform growth.",ALD 中前驅物混合造成的額外不均勻成長。,Purge; ALD window,,02 Process Modules
+Nucleation delay,成核延遲,Initial cycles with little or no growth before a film starts on a surface.,薄膜開始成長前幾乎不沉積的初始循環。,ALD; Interfacial layer,,02 Process Modules
+Seasoning,腔體調理,Coating chamber walls after a clean so that subsequent wafers see a stable environment.,清機後先沉積使腔體狀態穩定。,PM; First-wafer effect,chamber seasoning,02 Process Modules
+CVD,化學氣相沉積,Deposition from gas-phase chemical reactions on a heated surface.,利用氣相化學反應在基板上沉積薄膜。,PECVD; LPCVD; Arrhenius,Chemical vapor deposition,02 Process Modules
+PECVD,電漿輔助化學氣相沉積,CVD using plasma to drive reactions at lower temperature.,以電漿促進反應的低溫 CVD。,CVD; RF power,Plasma-enhanced CVD,02 Process Modules
+LPCVD,低壓化學氣相沉積,"Furnace CVD at reduced pressure, usually surface-reaction limited.",低壓爐管 CVD，多屬表面反應控制。,CVD; Furnace,Low-pressure CVD,02 Process Modules
+Surface-reaction limited,表面反應控制,"Regime where growth rate is set by surface kinetics, so it is very temperature sensitive.",成長速率由表面反應決定，對溫度敏感。,Arrhenius; Mass-transport limited,reaction-limited; reaction limited,02 Process Modules
+Mass-transport limited,質傳控制,"Regime where growth rate is set by gas supply to the surface, so it follows flow patterns.",成長速率由氣體傳輸決定，隨流場分布。,Surface-reaction limited; Boundary layer,transport limited,02 Process Modules
+Arrhenius,阿瑞尼斯關係,Exponential dependence of rate on temperature: k = k0 exp(−Ea/kT).,反應速率隨溫度呈指數變化。,Activation energy; Surface-reaction limited,,02 Process Modules
+PVD,物理氣相沉積／濺鍍,Deposition by sputtering atoms from a target onto the wafer.,以濺射靶材原子沉積薄膜。,Target life; XRF; Sheet resistance,Physical vapor deposition; Sputtering,02 Process Modules
+Target life,靶材壽命,Accumulated energy through a sputter target; erosion changes rate and uniformity.,靶材累積使用量，影響速率與均勻性。,PVD; Drift,kWh,02 Process Modules
+Epitaxy,磊晶,Growth of a crystalline layer that continues the substrate's crystal lattice.,延續基板晶格的單晶薄膜成長。,FTIR; SiGe; Doping,epi,02 Process Modules
+Deal–Grove,Deal–Grove 氧化模型,"Thermal oxidation model x² + Ax = B(t+τ): linear when thin, parabolic when thick.",熱氧化成長模型：薄時線性、厚時拋物線。,Thermal oxide; Oxidation,Deal-Grove,02 Process Modules
+Thermal oxide,熱氧化層,SiO₂ grown by reacting silicon with O₂ or H₂O at high temperature.,矽在高溫與氧或水反應生成的氧化矽。,Deal–Grove; SiO2,oxidation,02 Process Modules
+Etch rate,蝕刻速率,Thickness removed per unit time: (d_before − d_after)/t.,單位時間移除的膜厚。,Selectivity; Loading; Endpoint,ER,18 Excursion Case Studies
+Selectivity,選擇比,Ratio of etch (or polish) rates between the target film and another film.,目標膜與停止層的蝕刻速率比。,Etch rate; Stop layer,,02 Process Modules
+Endpoint,終點偵測,In-situ signal that tells the tool when a layer has been cleared.,判斷蝕刻或研磨何時到達終點的訊號。,Etch rate; CMP,endpoint detection,02 Process Modules
+Loading,負載效應,Etch or deposition rate depending on pattern density or aspect ratio.,速率隨圖形密度或深寬比改變。,Etch rate; Pattern density,loading effect; ARDE,02 Process Modules
+CMP,化學機械研磨,Planarizing a wafer by combined chemical slurry and mechanical pad polishing.,以研磨液與研磨墊平坦化晶圓。,Preston equation; Dishing; Erosion,Chemical mechanical planarization; polish,02 Process Modules
+Preston equation,Preston 方程式,CMP removal rate ≈ Kp × pressure × velocity.,研磨速率約與壓力與相對速度成正比。,CMP; Removal rate,Preston,02 Process Modules
+Removal rate,研磨移除率,Thickness removed per unit time in CMP.,CMP 單位時間移除的厚度。,Preston equation; Feed-forward,RR,02 Process Modules
+Dishing,碟形凹陷,"Recess of a soft metal line below the surrounding dielectric after CMP, worst on wide lines.",寬金屬線研磨後低於周圍介電層的凹陷。,Erosion; CMP; AFM,,02 Process Modules
+Erosion,侵蝕,Thinning of dielectric in dense pattern arrays during CMP.,密集圖形區介電層被過度研磨變薄。,Dishing; Pattern density,,02 Process Modules
+WIWNU,晶圓內不均勻度,"Variation of a parameter across one wafer, usually in percent.",單片晶圓內的參數變異。,Uniformity; Radial profile,Within-wafer non-uniformity,10 Sampling Wafer Maps and Uniformity
+Photoresist,光阻,Light-sensitive polymer film patterned by lithography.,經曝光顯影形成圖形的感光高分子膜。,Swing curve; BARC; CD,resist,02 Process Modules
+Swing curve,擺動曲線,"Oscillation of dose-to-clear or CD with resist thickness, period λ/(2n).",CD 隨光阻厚度週期性振盪的曲線。,Photoresist; Thin-film interference,,02 Process Modules
+BARC,底部抗反射層,Layer under resist that suppresses reflections and standing waves.,抑制反射與駐波的光阻下層。,Swing curve; Photoresist,Bottom anti-reflective coating,02 Process Modules
+CD,關鍵尺寸,The controlled width of a patterned feature.,圖形關鍵寬度。,OCD; CD-SEM; SWA,Critical dimension,06 OCD Scatterometry
+Reflectometry,反射光譜量測,Measuring film thickness from the wavelength-dependent reflectance R(λ).,由反射率光譜推算膜厚。,Fresnel coefficients; Fringe; Ellipsometry,spectral reflectometry; reflectometer,04 Reflectometry
+Reflectance,反射率,Fraction of incident light intensity reflected by the sample.,入射光被反射的比例。,Reflectometry; Fresnel coefficients,R(λ),04 Reflectometry
+Fresnel coefficients,菲涅耳係數,"Amplitude reflection/transmission ratios (r_s, r_p) at an interface between two media.",兩介質界面的振幅反射與穿透係數。,s-polarization; p-polarization; Snell's law,Fresnel,04 Reflectometry
+Snell's law,司乃耳定律,n₀ sin θ₀ = n₁ sin θ₁: how light bends crossing an interface.,光通過界面時的折射關係。,Refractive index; AOI,Snell,25 Core Equations
+Thin-film interference,薄膜干涉,"Superposition of reflections from the top and bottom of a film, making R vary with λ and d.",上下界面反射光疊加形成的干涉。,Fringe; Reflectometry,interference,04 Reflectometry
+Fringe,干涉條紋,A maximum or minimum of reflectance caused by thin-film interference.,薄膜干涉造成的反射率極大或極小。,Fringe order; Thin-film interference,fringes; interference fringe,04 Reflectometry
+Fringe order,干涉級次,Integer m in 2nd cosθ = mλ; a fit on the wrong order gives a thickness jump of about λ/(2n).,干涉級數；選錯會使膜厚跳動約 λ/2n。,Fringe; Local minimum,fringe-order hop,04 Reflectometry
+Airy formula,Airy 公式,Closed-form reflection coefficient of a single film including multiple internal reflections.,含多重反射的單層膜反射係數公式。,Transfer matrix; Fresnel coefficients,,04 Reflectometry
+Transfer matrix,轉移矩陣法,Method that multiplies layer matrices to compute the optical response of a multilayer.,以矩陣相乘計算多層膜光學響應。,Airy formula; Film stack,transfer-matrix method,04 Reflectometry
+Ellipsometry,橢圓偏光術,"Measures the change in polarization (Ψ, Δ) on reflection to infer thickness and optical constants.",量測反射後偏振改變以推算膜厚與光學常數。,Psi; Delta; Mueller matrix,SE; spectroscopic ellipsometry; ellipsometer,05 Ellipsometry
+Psi,振幅比角 Ψ,Ellipsometric angle with tan Ψ = |r_p|/|r_s|.,p 與 s 反射振幅比的角度。,Delta; Ellipsometry,Ψ,05 Ellipsometry
+Delta,相位差 Δ,Ellipsometric phase difference between p and s reflections; very sensitive to thin films.,p 與 s 反射的相位差，對超薄膜很敏感。,Psi; Ellipsometry,Δ,05 Ellipsometry
+s-polarization,s 偏振,Light polarized perpendicular to the plane of incidence.,電場垂直入射面的偏振。,p-polarization; Fresnel coefficients,s-polarized,04 Reflectometry
+p-polarization,p 偏振,Light polarized parallel to the plane of incidence.,電場平行入射面的偏振。,s-polarization; Brewster angle,p-polarized,04 Reflectometry
+Brewster angle,布魯斯特角,Angle where p-reflection is minimal; tan θ_B = n₂/n₁ (~75.5° for Si).,p 偏振反射最小的入射角。,AOI; p-polarization,,05 Ellipsometry
+AOI,入射角,Angle between the incoming beam and the surface normal.,入射光與法線的夾角。,Brewster angle; Calibration,Angle of incidence,05 Ellipsometry
+Mueller matrix,穆勒矩陣,"4×4 matrix describing the full polarization response, including depolarization and anisotropy.",描述完整偏振響應的 4×4 矩陣。,Ellipsometry; OCD; Depolarization,,05 Ellipsometry
+Depolarization,去偏振,"Loss of polarization purity from thickness variation, roughness or backside reflection.",因不均勻或背面反射使偏振度下降。,Mueller matrix; Backside reflection,,05 Ellipsometry
+Refractive index,折射率,Real part of the complex index; ratio of light speed in vacuum to that in the material.,複折射率實部，描述光速變慢程度。,Extinction coefficient; Dispersion,n,05 Ellipsometry
+Extinction coefficient,消光係數,Imaginary part of the complex index; describes absorption.,複折射率虛部，描述吸收。,Refractive index; Absorption coefficient,k,05 Ellipsometry
+Optical constants,光學常數,"The pair n and k (or ε₁, ε₂) versus wavelength for a material.",材料隨波長變化的 n 與 k。,Dispersion model; n/k library,"n/k; n,k",08 Film Stack and Dispersion Models
+Dielectric function,介電函數,Complex ε = ε₁ + iε₂ = ñ²; the material response used in models.,複介電常數，等於複折射率平方。,Optical constants; Kramers–Kronig,permittivity; ε,05 Ellipsometry
+Absorption coefficient,吸收係數,α = 4πk/λ; 1/α is the penetration depth.,α=4πk/λ，倒數為穿透深度。,Extinction coefficient; Penetration depth,α,05 Ellipsometry
+Penetration depth,穿透深度,Depth where light intensity falls to 1/e; sets how deep optics can see.,光強衰減到 1/e 的深度。,Absorption coefficient,,05 Ellipsometry
+Anisotropy,異向性,"Optical properties that depend on direction, requiring n_o and n_e in the model.",光學性質隨方向不同。,Mueller matrix; Uniaxial,anisotropic,05 Ellipsometry
+OCD,光學關鍵尺寸量測,"Inferring CD, height and profile from the optical response of a periodic grating.",由週期光柵的光學響應推算尺寸與輪廓。,RCWA; Library; Identifiability,Scatterometry; Optical critical dimension,06 OCD Scatterometry
+RCWA,嚴格耦合波分析,Fourier-mode electromagnetic solver for gratings used in OCD models.,OCD 模型使用的光柵電磁解算法。,OCD; Diffraction order,Rigorous coupled-wave analysis,06 OCD Scatterometry
+Diffraction order,繞射級數,Discrete directions of light scattered by a grating; RCWA truncates them.,光柵繞射光的離散方向。,RCWA; Pitch,orders,06 OCD Scatterometry
+Library,模型庫,"Pre-computed spectra over a parameter grid, matched to measurements in production.",預先計算的光譜資料庫，供產線比對。,OCD; Regression,OCD library,06 OCD Scatterometry
+SWA,側壁角,Angle of a feature's sidewall relative to the substrate.,圖形側壁與基板的夾角。,CD; OCD,Sidewall angle,06 OCD Scatterometry
+Pitch,週期／節距,Repeat distance of a periodic pattern.,週期圖形重複的距離。,OCD; Diffraction order,,06 OCD Scatterometry
+Identifiability,可辨識性,Whether model parameters can be uniquely determined from the data.,參數能否由數據唯一決定。,Parameter correlation; Sensitivity,,06 OCD Scatterometry
+Hybrid metrology,混合量測,Feeding a result from one technique into another's model to break correlations.,將一種量測結果輸入另一模型以降低相關性。,Feed-forward; OCD; XRR,,03 Metrology Technology Map
+XRR,X 光反射率量測,"Grazing-incidence X-ray reflectivity giving thickness, density and roughness.",低角度 X 光反射，得膜厚、密度與粗糙度。,Kiessig fringes; Critical angle; Roughness,X-ray reflectometry; X-ray reflectivity,07 XRR XRF FTIR Profilometry
+Kiessig fringes,Kiessig 干涉條紋,"XRR oscillations with period Δθ ≈ λ/(2d), giving near model-free thickness.",XRR 振盪條紋，週期反映膜厚。,XRR; Fringe,Kiessig,07 XRR XRF FTIR Profilometry
+Critical angle,臨界角,"Angle below which X-rays are totally reflected; θc ≈ √(2δ), related to density.",X 光全反射的臨界角，與密度相關。,XRR; Density,θc,07 XRR XRF FTIR Profilometry
+Parratt recursion,Parratt 遞迴法,Recursive calculation of X-ray reflectivity for a multilayer.,計算多層膜 X 光反射率的遞迴法。,XRR; Transfer matrix,Parratt,07 XRR XRF FTIR Profilometry
+XRF,X 光螢光分析,Element-specific fluorescence intensity giving mass thickness and composition.,以元素特徵螢光量測質量厚度與成分。,Mass thickness; PVD; Density,X-ray fluorescence,07 XRR XRF FTIR Profilometry
+Mass thickness,質量厚度,Mass per unit area (ρ·t); what XRF actually measures.,單位面積質量，即密度乘厚度。,XRF; Density,areal density,07 XRR XRF FTIR Profilometry
+FTIR,傅立葉轉換紅外光譜,Infrared spectroscopy for epi thickness and chemical bonding/composition.,紅外光譜，用於磊晶厚度與鍵結成分。,Epitaxy; Free-carrier absorption,Fourier transform infrared; IR metrology,07 XRR XRF FTIR Profilometry
+Free-carrier absorption,自由載子吸收,IR absorption by mobile carriers; creates optical contrast between epi and doped substrate.,載子造成的紅外吸收，形成磊晶與基板對比。,FTIR; Drude model,,07 XRR XRF FTIR Profilometry
+Profilometry,輪廓量測,Measuring surface height or step height by stylus or optical scanning.,以探針或光學掃描量測表面高度。,AFM; Step height,profiler; stylus profiler,07 XRR XRF FTIR Profilometry
+AFM,原子力顯微鏡,Scanning-tip microscope measuring height with sub-nm vertical resolution.,以探針掃描量測次奈米高度。,Profilometry; Roughness; Dishing,Atomic force microscopy,07 XRR XRF FTIR Profilometry
+Step height,階高,Height difference across an edge; a direct geometric thickness reference.,邊緣兩側的高度差，可作膜厚參考。,Profilometry; AFM,,07 XRR XRF FTIR Profilometry
+CD-SEM,關鍵尺寸電子顯微鏡,Top-down SEM that measures feature widths.,由上方量測線寬的電子顯微鏡。,CD; OCD,,03 Metrology Technology Map
+TEM,穿透式／截面電子顯微鏡,"Cross-section imaging used as an absolute (but destructive, local) thickness reference.",截面影像，作為破壞性絕對參考。,Reference metrology; Accuracy,XSEM; cross-section,07 XRR XRF FTIR Profilometry
+Sheet resistance,片電阻,"Resistance of a square of film, Rs = ρ/t; links metal thickness to electrical behavior.",薄膜方塊電阻，等於電阻率除以厚度。,PVD; Resistivity,Rs; 4-point probe; four-point probe,03 Metrology Technology Map
+Spot size,光斑大小,Size of the measurement beam on the wafer; must fit inside the pad.,量測光束在晶圓上的大小。,Pad; AOI,spot,03 Metrology Technology Map
+Pad,量測墊,Dedicated blanket or grating area (often in the scribe line) for metrology.,切割道上專供量測的區域。,Spot size; Scribe line,measurement pad; test pad,03 Metrology Technology Map
+Dispersion model,色散模型,"Parameterized formula for n(λ), k(λ) of a material.",描述 n、k 隨波長變化的參數化公式。,Cauchy; Tauc–Lorentz; Drude model,dispersion,08 Film Stack and Dispersion Models
+Cauchy,柯西模型,n = A + B/λ² + C/λ⁴; for transparent dielectrics.,透明介電層的簡單色散公式。,Sellmeier; Dispersion model,Cauchy model,08 Film Stack and Dispersion Models
+Sellmeier,Sellmeier 模型,Pole-based dispersion for transparent materials with better extrapolation than Cauchy.,以極點描述透明材料的色散。,Cauchy,,08 Film Stack and Dispersion Models
+Tauc–Lorentz,Tauc–Lorentz 模型,"KK-consistent model for amorphous materials with a band gap (a-Si, SiN, HfO₂).",適用於有能隙非晶材料的色散模型。,Band gap; Kramers–Kronig,Tauc-Lorentz; TL,08 Film Stack and Dispersion Models
+Drude model,Drude 模型,Free-electron dispersion for metals and doped semiconductors.,描述金屬與摻雜載子的色散模型。,Free-carrier absorption; TiN,Drude,08 Film Stack and Dispersion Models
+Lorentz oscillator,勞侖茲振子,Resonance term in ε used to model absorption bands.,描述吸收峰的共振項。,Dispersion model,,08 Film Stack and Dispersion Models
+EMA,有效介質近似,"Mixes dielectric functions of components (e.g., film + void) for roughness or porosity.",混合多種材料介電函數以描述粗糙或孔隙。,Roughness; Poly-Si,Bruggeman; Effective medium approximation,08 Film Stack and Dispersion Models
+Kramers–Kronig,克拉莫-克若尼關係,Causality relation linking n and k; physical dispersion models obey it.,連結 n 與 k 的因果關係式。,Dielectric function; Tauc–Lorentz,Kramers-Kronig; KK,08 Film Stack and Dispersion Models
+Band gap,能隙,Energy below which a semiconductor or dielectric does not absorb (k≈0).,低於此能量材料不吸收光。,Tauc–Lorentz; Absorption coefficient,Eg,08 Film Stack and Dispersion Models
+Interfacial layer,介面層,"Thin layer between two films (e.g., SiO₂ under high-k) that must be in the model.",兩層膜之間的薄層，模型需納入。,Film stack; Native oxide,IL; interface layer,08 Film Stack and Dispersion Models
+Native oxide,原生氧化層,~1–2 nm SiO₂ that forms on silicon in air.,矽在空氣中自然生成的薄氧化層。,Interfacial layer; Reference wafer,,08 Film Stack and Dispersion Models
+Roughness,表面粗糙度,Height fluctuation of a surface; modeled with an EMA layer or Névot–Croce factor.,表面高度起伏。,EMA; AFM; XRR,surface roughness,08 Film Stack and Dispersion Models
+Multi-sample analysis,多樣品聯合分析,"Fitting several thicknesses with shared n,k to decorrelate n from d.",多片不同厚度共用 n、k 同時擬合。,Parameter correlation; n/k library,,08 Film Stack and Dispersion Models
+n/k library,光學常數資料庫,Controlled set of material optical constants used by recipes.,配方使用的材料光學常數集。,Optical constants; Change control,material library,08 Film Stack and Dispersion Models
+Backside reflection,背面反射,"Light returning from the back of a transparent substrate, distorting the measurement.",透明基板背面反射造成的干擾。,Depolarization,,08 Film Stack and Dispersion Models
+Recipe,量測配方,"Tool program defining sites, acquisition, model, fit and outputs.",定義量測點位、模型與輸出的程式。,Model; Site map; Change control,metrology recipe; metro recipe,09 Recipe Development
+Optical model,光學模型,Physical description of the stack used to compute spectra for fitting.,用於計算光譜的膜堆疊物理描述。,Film stack; Dispersion model; Fit,model,09 Recipe Development
+Regression,迴歸擬合,Adjusting model parameters to minimize the difference between measured and modeled spectra.,調整參數使模型光譜貼近量測。,Chi-square; GOF; Local minimum,fit; fitting,15 Residuals Fit Quality and Model Risk
+Local minimum,局部極小值,"A false best-fit solution, e.g., a wrong fringe order.",非全域最佳的擬合解。,Fringe order; Regression,,04 Reflectometry
+Pattern recognition,圖形辨識,Image-based alignment that finds the measurement site.,以影像對位找到量測點。,Alignment; Site map,PR,09 Recipe Development
+Sensitivity,靈敏度,"How much the signal changes per unit change of a parameter, compared with noise.",參數改變造成的訊號變化量。,Identifiability; Jacobian,sensitivity analysis,09 Recipe Development
+Jacobian,雅可比矩陣,Matrix of derivatives ∂S/∂θ used for sensitivity and covariance.,光譜對參數的偏微分矩陣。,Covariance; Sensitivity,,05 Ellipsometry
+Covariance,共變異數矩陣,(JᵀWJ)⁻¹: parameter uncertainties and their correlations.,描述參數不確定度與相關性的矩陣。,Parameter correlation; Jacobian,covariance matrix,05 Ellipsometry
+Parameter correlation,參數相關性,When two fitted parameters trade off so the data cannot separate them.,兩個擬合參數互相補償難以分離。,Identifiability; Covariance,correlated parameters,05 Ellipsometry
+Residual,殘差,Measured minus modeled signal at each wavelength.,量測值減模型值。,Chi-square; GOF,residuals,15 Residuals Fit Quality and Model Risk
+Chi-square,卡方值,Noise-weighted sum of squared residuals; reduced χ² ≈ 1 means fit within noise.,以雜訊加權的殘差平方和。,Residual; GOF,χ²; reduced chi-square,15 Residuals Fit Quality and Model Risk
+GOF,擬合優度,Vendor metric of fit quality; necessary but not sufficient for correctness.,擬合品質指標，必要但不充分。,Chi-square; Residual,Goodness of fit; MSE,15 Residuals Fit Quality and Model Risk
+Bound hit,參數撞到邊界,"A fitted parameter stuck at its allowed limit, signaling the model cannot explain the data.",參數擬合停在上下限，模型可能有誤。,Regression; Model risk,parameter bound,15 Residuals Fit Quality and Model Risk
+Model risk,模型風險,"Systematic error from wrong model assumptions, usually larger than statistical error.",模型假設錯誤造成的系統誤差。,Accuracy; Reference metrology,,15 Residuals Fit Quality and Model Risk
+Reference metrology,參考量測,"Independent, more accurate method (TEM, XRR, AFM) used to validate a production recipe.",用來驗證產線配方的獨立準確方法。,Accuracy; TEM; XRR,reference method,15 Residuals Fit Quality and Model Risk
+Site map,量測點位圖,The set of wafer coordinates measured by a recipe.,配方量測的晶圓座標點集合。,49-point map; Edge exclusion,sampling plan; site plan,10 Sampling Wafer Maps and Uniformity
+49-point map,49 點量測圖,Polar map of 1 + 8 + 16 + 24 sites used for uniformity qualification.,中心加三圈共 49 點的量測圖。,Site map; Uniformity,49-site,10 Sampling Wafer Maps and Uniformity
+Edge exclusion,邊緣排除區,Outer band of the wafer excluded from measurement and specification.,晶圓外緣不量測的範圍。,Site map; Edge roll-off,,10 Sampling Wafer Maps and Uniformity
+Wafer map,晶圓分布圖,Plot of a parameter over wafer coordinates; its pattern fingerprints the process.,參數在晶圓上的分布圖。,Dome; Bowl; Tilt,,10 Sampling Wafer Maps and Uniformity
+Uniformity,均勻性,"Spread of thickness across a wafer; definitions (half-range, 1σ, 3σ) differ.",晶圓內厚度分散程度，定義需註明。,WIWNU; Half-range,non-uniformity,10 Sampling Wafer Maps and Uniformity
+Half-range,半全距均勻度,(max − min)/(2·mean) × 100 %.,(最大−最小)/(2×平均)。,Uniformity; Range,,10 Sampling Wafer Maps and Uniformity
+Dome,中心厚（圓頂型）,"Map pattern thick at center, thin at edge (radial coefficient a₁ < 0).",中心厚邊緣薄的分布。,Bowl; Radial profile,center-thick,10 Sampling Wafer Maps and Uniformity
+Bowl,邊緣厚（碗型）,"Map pattern thick at edge, thin at center (a₁ > 0).",邊緣厚中心薄的分布。,Dome; Radial profile,edge-thick,10 Sampling Wafer Maps and Uniformity
+Tilt,線性傾斜,"Map gradient from one side to the other, e.g., from gas-inlet asymmetry.",晶圓一側到另一側的線性梯度。,Wafer map; Azimuthal,linear tilt,10 Sampling Wafer Maps and Uniformity
+Radial profile,徑向分布,Thickness versus radius; fitted as a₀ + a₁ρ² + a₂ρ⁴.,厚度對半徑的變化曲線。,Dome; Bowl; Zernike,radial fit,10 Sampling Wafer Maps and Uniformity
+Azimuthal,方位角方向,"Varying around the wafer at fixed radius (e.g., lift pins, pump port).",在同一半徑上繞圓周的變化。,Tilt; Wafer map,,10 Sampling Wafer Maps and Uniformity
+Zernike,Zernike 多項式,Orthogonal basis on a disk used to decompose wafer maps.,圓盤上的正交多項式，用於分解晶圓圖。,Radial profile; Wafer map,Zernike polynomials,10 Sampling Wafer Maps and Uniformity
+Edge roll-off,邊緣滾降,Rapid thickness change near the wafer edge.,晶圓邊緣附近厚度急遽變化。,Edge exclusion; CMP,,10 Sampling Wafer Maps and Uniformity
+SPC,統計製程管制,Monitoring a process with control charts to detect non-random change.,以管制圖監控製程的非隨機變化。,Control chart; Run rules; OCAP,Statistical process control,11 Statistics SPC and Capability
+Control chart,管制圖,Time plot of a statistic with control limits from the process's own variation.,含管制界限的時間序列圖。,Control limit; SPC,I-MR; X-bar,11 Statistics SPC and Capability
+Control limit,管制界限,±3σ bounds of the plotted statistic from stable history; not the spec.,由穩定期數據計算的 ±3σ 界限。,Specification limit; Control chart,UCL; LCL,11 Statistics SPC and Capability
+Specification limit,規格界限,Upper/lower acceptable values set by product requirements.,產品要求的上下限。,Control limit; Cpk,USL; LSL; spec,11 Statistics SPC and Capability
+Run rules,判異規則,"Pattern rules (e.g., 8 points one side) that flag non-random behavior.",判斷非隨機變化的管制圖規則。,Control chart; False alarm,Western Electric rules; Nelson rules,11 Statistics SPC and Capability
+False alarm,誤警報,An SPC signal when the process has not actually changed.,製程未變卻觸發的警報。,Run rules,,11 Statistics SPC and Capability
+EWMA,指數加權移動平均,Smoothed statistic sensitive to small sustained shifts; also used in R2R control.,對小幅持續偏移敏感的平滑統計量。,CUSUM; R2R,Exponentially weighted moving average,11 Statistics SPC and Capability
+CUSUM,累積和管制圖,Chart accumulating deviations to detect small shifts quickly.,累積偏差以快速偵測小偏移。,EWMA; Control chart,Cumulative sum,11 Statistics SPC and Capability
+Cp,製程潛在能力,"(USL − LSL)/6σ: spread relative to spec, ignoring centering.",規格寬度與 6σ 之比。,Cpk; Ppk,,11 Statistics SPC and Capability
+Cpk,製程能力指標,"min(USL−μ, μ−LSL)/3σ: capability including centering.",考慮偏心的製程能力。,Cp; Ppk; Specification limit,,11 Statistics SPC and Capability
+Ppk,製程績效指標,Capability using overall long-term σ; Ppk < Cpk signals drift or lot effects.,使用長期總變異的能力指標。,Cpk,Pp,11 Statistics SPC and Capability
+Standard deviation,標準差,Square root of variance; sample form uses N−1.,變異數平方根，樣本用 N−1。,Variance; Mean,sigma; σ,11 Statistics SPC and Capability
+Nested variance,巢狀變異分解,"Splitting variation into lot, wafer, site and measurement components.",將變異分解為批、片、點與量測。,ANOVA; GR&R,variance components,11 Statistics SPC and Capability
+MAD,中位數絕對偏差,Robust spread measure; σ ≈ 1.4826 × MAD.,穩健的分散度量。,Outlier; Standard deviation,median absolute deviation,11 Statistics SPC and Capability
+Outlier,離群值,A value far from the rest; check for measurement artifacts before excluding.,明顯偏離其他數據的值。,MAD; Robust statistics,outliers,21 Python Toolkit
+Drift,漂移,Gradual change over time in process or measurement output.,隨時間緩慢變化。,Calibration; Monitor wafer,,14 Calibration and Drift
+Step change,階躍變化,"Abrupt shift, often tied to maintenance, recipe or material change.",突然的偏移，常與保養或變更有關。,Drift; Timeline overlay,sudden step,17 Root Cause Framework
+MSA,量測系統分析,Study of how much variation the measurement itself adds.,評估量測本身造成的變異。,GR&R; P/T,Measurement system analysis,12 MSA and Gauge R&R
+GR&R,量具重複性與再現性,Study splitting measurement variation into repeatability and reproducibility.,將量測變異分為重複性與再現性。,Repeatability; Reproducibility; P/T,Gauge R&R; Gage R&R,12 MSA and Gauge R&R
+Repeatability,重複性,Variation of repeated measurements on one tool and one sample.,同機台同樣品重複量測的變異。,Reproducibility; Precision,static repeatability; dynamic repeatability,12 MSA and Gauge R&R
+Reproducibility,再現性,"Variation when conditions change: tool, day, operator.",不同機台、日期或人員間的變異。,Repeatability; Matching,,12 MSA and Gauge R&R
+Precision,精密度,Closeness of repeated results to each other (random error).,重複結果彼此接近程度。,Accuracy; Repeatability,,12 MSA and Gauge R&R
+Accuracy,準確度,Closeness of the result to the true value (systematic error).,結果接近真值的程度。,Precision; Reference metrology,,12 MSA and Gauge R&R
+P/T,精度公差比,6σ_meas/(USL−LSL); below ~10 % is good.,量測變異佔規格寬度的比例。,GR&R; Specification limit,Precision-to-tolerance,12 MSA and Gauge R&R
+ndc,可區分類別數,1.41 σ_part/σ_meas; should be ≥ 5.,量測可區分的類別數，應≥5。,GR&R,number of distinct categories,12 MSA and Gauge R&R
+ANOVA,變異數分析,Statistical method that attributes variation to factors.,將變異歸因到各因子的統計方法。,GR&R; DOE,Analysis of variance,12 MSA and Gauge R&R
+Guard band,防護帶,Tightened acceptance limits that account for measurement uncertainty.,考慮量測誤差而收緊的判定界限。,P/T; Specification limit,guard-banding,12 MSA and Gauge R&R
+Measurement uncertainty,量測不確定度,Combined estimate of all measurement error sources.,綜合各誤差來源的不確定度。,Precision; Matching; Accuracy,TMU; Total measurement uncertainty,13 Tool-to-Tool Matching
+Tool matching,機台匹配,Ensuring different metrology tools give the same result on the same wafer.,確保不同機台量測同一片結果一致。,Bias; Deming regression; Reference wafer,matching; tool-to-tool,13 Tool-to-Tool Matching
+Bias,偏差,Systematic difference between tools or versus a reference.,機台間或與參考值的系統差異。,Tool matching; Accuracy,offset,13 Tool-to-Tool Matching
+Deming regression,戴明迴歸,Line fit allowing error in both x and y; right for tool-vs-tool data.,x、y 皆有誤差時的迴歸法。,Tool matching; Slope,orthogonal regression,13 Tool-to-Tool Matching
+Bland–Altman,Bland–Altman 圖,Plot of difference vs mean of two methods to reveal bias and slope.,兩方法差值對平均值作圖。,Deming regression; Bias,Bland-Altman,13 Tool-to-Tool Matching
+Calibration,校正,Adjusting an instrument against known standards so results are traceable.,以已知標準調整儀器。,Traceability; Standard; Drift,,14 Calibration and Drift
+Traceability,追溯性,Unbroken chain of calibrations back to SI units via certified standards.,可經標準追溯至國際單位。,Calibration; SRM,traceable,14 Calibration and Drift
+SRM,標準參考物質,"Certified sample (e.g., SiO₂ on Si) with known thickness and uncertainty.",具認證值與不確定度的標準樣品。,Traceability; Calibration,Standard reference material; standard,14 Calibration and Drift
+Monitor wafer,監控片／參考片,Dedicated wafer measured routinely to check tool stability.,定期量測以確認機台穩定的晶圓。,Drift; AMC; Calibration,control wafer; reference wafer,14 Calibration and Drift
+AMC,氣態分子污染,Hydrocarbon/water adsorption that makes thin monitor films read thicker over time.,吸附使薄膜監控片讀值逐漸變厚。,Monitor wafer; Drift,Airborne molecular contamination,14 Calibration and Drift
+PM,預防保養,Scheduled maintenance; a frequent cause of step changes.,定期保養，常造成階躍變化。,Qualification; Step change,Preventive maintenance,14 Calibration and Drift
+Qualification,驗證／認證,Formal tests proving a tool or recipe is fit for production.,證明機台或配方可上線的正式測試。,PM; NPI,qual,19 NPI and Recipe Qualification
+Correlation coefficient,相關係數,r between −1 and 1 measuring linear association; not proof of cause.,衡量線性關聯，非因果證明。,Confounding; DOE,Pearson r; correlation,16 Process Correlation and DOE
+Confounding,混淆,Two factors changing together so their effects cannot be separated.,兩因子同時變化無法分離效應。,DOE; Randomization,,16 Process Correlation and DOE
+DOE,實驗設計,Planned variation of factors to measure effects and interactions efficiently.,有計畫地改變因子以量化效應。,Factorial design; Split lot,Design of experiments,16 Process Correlation and DOE
+Factorial design,因子設計,DOE testing all (or a fraction of) combinations of factor levels.,測試因子水準組合的實驗設計。,DOE; Interaction,full factorial; fractional factorial,16 Process Correlation and DOE
+Split lot,分批實驗,Lot divided into groups given different process conditions.,將一批晶圓分組給予不同條件。,DOE; Split tracking,split,16 Process Correlation and DOE
+Split tracking,分批追蹤驗證,Checking that metrology reports the intended process deltas with slope ≈ 1.,確認量測能正確反映刻意改變的差異。,Split lot; Sensitivity,,16 Process Correlation and DOE
+Randomization,隨機化,Running DOE conditions in random order to avoid time confounding.,隨機排序實驗以避免時間混淆。,Confounding; DOE,,16 Process Correlation and DOE
+RCA,根本原因分析,Structured search for the underlying cause of a problem.,系統性找出問題根本原因。,IS/IS-NOT; Fishbone; 5 Whys,Root cause analysis; root cause,17 Root Cause Framework
+IS/IS-NOT,是／不是分析,"Table comparing where a problem occurs and where it does not, to isolate cause.",比對問題發生與不發生處以縮小原因。,RCA,Kepner–Tregoe,17 Root Cause Framework
+Fishbone,魚骨圖,"Cause-and-effect brainstorming diagram (Man, Machine, Method, Material, Measurement, Environment).",因果分析的腦力激盪圖。,RCA; 5 Whys,Ishikawa; 6M,17 Root Cause Framework
+5 Whys,五個為什麼,Asking 'why' repeatedly to reach a systemic cause.,連續追問為什麼找出系統性原因。,RCA; 8D,five whys,17 Root Cause Framework
+8D,8D 問題解決法,"Formal problem-solving report: containment, root cause, corrective and preventive actions.",含圍堵、根因與矯正預防的正式報告。,RCA; OCAP,CAPA,17 Root Cause Framework
+Timeline overlay,時間軸疊圖,"Plotting data with all change events (PM, recipe, lot) as markers.",在趨勢圖上標註所有變更事件。,Step change; RCA,,17 Root Cause Framework
+FDC,故障偵測與分類,Equipment sensor data system used to correlate process conditions with results.,機台感測數據監控系統。,RCA; Correlation coefficient,Fault detection and classification,17 Root Cause Framework
+Commonality analysis,共通性分析,"Finding which tool, chamber or material all affected lots share.",找出異常批共同經過的機台或材料。,RCA; IS/IS-NOT,,17 Root Cause Framework
+Containment,圍堵措施,"Immediate action to stop bad material spreading (hold lots, stop chamber).",立即阻止不良擴散的行動。,OCAP; 8D,,20 Remote Fab Support
+NPI,新產品導入,Bringing a new product or process into manufacturing.,將新產品或製程導入量產。,Qualification; Recipe,New product introduction,19 NPI and Recipe Qualification
+OCAP,失控處置計畫,Predefined steps to take when a control chart signals.,管制圖異常時的預定處理步驟。,SPC; Containment,Out-of-control action plan,19 NPI and Recipe Qualification
+HVM,大量生產,"Full-scale production, where throughput and robustness dominate.",大規模量產階段。,Throughput; NPI,High-volume manufacturing,09 Recipe Development
+Throughput,產能／每小時片數,Wafers measured per hour; trades against sampling density.,每小時量測片數。,Site map; HVM,WPH,10 Sampling Wafer Maps and Uniformity
+Change control,變更管理,"Formal review and record of any recipe, model or library change.",配方或模型變更的正式審查流程。,Recipe; n/k library,,09 Recipe Development
+PI,製程整合,Team that owns the full process flow and device results.,負責整體製程流程與元件結果的團隊。,CTQ; Yield,Process integration,01 Role and Manufacturing Loop
+Yield,良率,Fraction of good dies or wafers.,合格晶粒或晶圓的比例。,CTQ; PI,,01 Role and Manufacturing Loop
+SWR,特殊工作需求,Site term for engineering/evaluation lots run outside normal production.,工程評估用的特殊批次需求。,Split lot; NPI,Special work request,26 Glossary
+MES,製造執行系統,"Fab software tracking lots, recipes and data.",追蹤批次與配方的工廠系統。,SPC; APC,Manufacturing execution system,26 Glossary
+SiO2,二氧化矽,Common dielectric; n ≈ 1.457 at 633 nm; stable optical reference.,常見介電層，折射率約 1.457。,Thermal oxide; Native oxide,SiO₂; silicon dioxide; oxide,08 Film Stack and Dispersion Models
+SiN,氮化矽,Dielectric with n ≈ 1.9–2.1; PECVD composition shifts n.,氮化矽介電層，折射率約 2.0。,PECVD; SiON,Si3N4; Si₃N₄; silicon nitride; nitride,08 Film Stack and Dispersion Models
+High-k,高介電常數材料,Gate/capacitor dielectrics such as HfO₂ with higher permittivity than SiO₂.,介電常數高於氧化矽的材料。,ALD; Interfacial layer,HfO2; HfO₂,08 Film Stack and Dispersion Models
+Poly-Si,多晶矽,"Polycrystalline silicon; optical model often an EMA of c-Si, a-Si and voids.",多晶矽，常用 EMA 模型描述。,EMA; a-Si,polysilicon; poly,08 Film Stack and Dispersion Models
+a-Si,非晶矽,Non-crystalline silicon; higher n and k than c-Si in the visible.,非晶態矽。,Poly-Si; Tauc–Lorentz,amorphous silicon,08 Film Stack and Dispersion Models
+TiN,氮化鈦,"Metallic barrier/electrode film; Drude-like optics, often measured by XRF.",金屬性阻障層，常以 XRF 量測。,Drude model; XRF; PVD,titanium nitride,07 XRR XRF FTIR Profilometry
+SiGe,矽鍺,Epitaxial alloy where Ge fraction and thickness can correlate in optical fits.,矽鍺磊晶，Ge 比例與厚度易相關。,Epitaxy; Parameter correlation,silicon germanium,02 Process Modules
+Gate oxide,閘極氧化層,Thin dielectric under the gate; capacitance C_ox = ε/t_ox.,閘極下方的薄介電層。,High-k; CTQ,Cox,01 Role and Manufacturing Loop

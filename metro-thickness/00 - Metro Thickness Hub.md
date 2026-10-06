@@ -63,6 +63,10 @@ PROCESS → FILM → SIGNAL → MODEL → THICKNESS → MAP → STATISTICS → S
 - `code/metro_tools.py`: run `python metro_tools.py` for the self-test.
 - `code/example_wafer_analysis.py`: generates `code/out/` (CSV + 3 charts).
 
+## Technical dictionary
+- `glossary/terms.json`: 207 terms (中文, EN/中 short definitions, related words), the source for the study guide's hover popups.
+- `glossary/eudic/MetroThickness.mdx`: custom Eudic (歐路詞典) dictionary; import steps in `glossary/README.md`.
+
 ## Final principle
 "I know how the tool works" → "…how the recipe converts signal to thickness" → "…whether the measurement is trustworthy" → "…how the map relates to process physics" → "…the likely root cause" → "I can recommend and verify corrective action."
 That is the difference between **operating a metrology tool** and being a **Metro Applications Engineer**.

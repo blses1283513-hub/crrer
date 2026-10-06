@@ -1,0 +1,207 @@
+Metrology
+CTQ
+Applications engineer
+APC
+R2R
+Feed-forward
+Excursion
+Film stack
+Substrate
+ALD
+GPC
+ALD window
+Self-limiting
+Precursor
+Purge
+Parasitic CVD
+Nucleation delay
+Seasoning
+CVD
+PECVD
+LPCVD
+Surface-reaction limited
+Mass-transport limited
+Arrhenius
+PVD
+Target life
+Epitaxy
+Deal–Grove
+Thermal oxide
+Etch rate
+Selectivity
+Endpoint
+Loading
+CMP
+Preston equation
+Removal rate
+Dishing
+Erosion
+WIWNU
+Photoresist
+Swing curve
+BARC
+CD
+Reflectometry
+Reflectance
+Fresnel coefficients
+Snell's law
+Thin-film interference
+Fringe
+Fringe order
+Airy formula
+Transfer matrix
+Ellipsometry
+Psi
+Delta
+s-polarization
+p-polarization
+Brewster angle
+AOI
+Mueller matrix
+Depolarization
+Refractive index
+Extinction coefficient
+Optical constants
+Dielectric function
+Absorption coefficient
+Penetration depth
+Anisotropy
+OCD
+RCWA
+Diffraction order
+Library
+SWA
+Pitch
+Identifiability
+Hybrid metrology
+XRR
+Kiessig fringes
+Critical angle
+Parratt recursion
+XRF
+Mass thickness
+FTIR
+Free-carrier absorption
+Profilometry
+AFM
+Step height
+CD-SEM
+TEM
+Sheet resistance
+Spot size
+Pad
+Dispersion model
+Cauchy
+Sellmeier
+Tauc–Lorentz
+Drude model
+Lorentz oscillator
+EMA
+Kramers–Kronig
+Band gap
+Interfacial layer
+Native oxide
+Roughness
+Multi-sample analysis
+n/k library
+Backside reflection
+Recipe
+Optical model
+Regression
+Local minimum
+Pattern recognition
+Sensitivity
+Jacobian
+Covariance
+Parameter correlation
+Residual
+Chi-square
+GOF
+Bound hit
+Model risk
+Reference metrology
+Site map
+49-point map
+Edge exclusion
+Wafer map
+Uniformity
+Half-range
+Dome
+Bowl
+Tilt
+Radial profile
+Azimuthal
+Zernike
+Edge roll-off
+SPC
+Control chart
+Control limit
+Specification limit
+Run rules
+False alarm
+EWMA
+CUSUM
+Cp
+Cpk
+Ppk
+Standard deviation
+Nested variance
+MAD
+Outlier
+Drift
+Step change
+MSA
+GR&R
+Repeatability
+Reproducibility
+Precision
+Accuracy
+P/T
+ndc
+ANOVA
+Guard band
+Measurement uncertainty
+Tool matching
+Bias
+Deming regression
+Bland–Altman
+Calibration
+Traceability
+SRM
+Monitor wafer
+AMC
+PM
+Qualification
+Correlation coefficient
+Confounding
+DOE
+Factorial design
+Split lot
+Split tracking
+Randomization
+RCA
+IS/IS-NOT
+Fishbone
+5 Whys
+8D
+Timeline overlay
+FDC
+Commonality analysis
+Containment
+NPI
+OCAP
+HVM
+Throughput
+Change control
+PI
+Yield
+SWR
+MES
+SiO2
+SiN
+High-k
+Poly-Si
+a-Si
+TiN
+SiGe
+Gate oxide
