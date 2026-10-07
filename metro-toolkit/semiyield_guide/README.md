@@ -15,6 +15,22 @@ explained wherever they appear: Yield Prediction inputs, SHAP bars, the trend ch
 > ⚠ The **Process Optimizer** page optimises a demonstration formula whose optimum is always the centre of the
 > bounds you enter. Its tooltips say so; use it to learn the Bayesian-optimisation workflow, not for conclusions.
 
+## Fixes applied at runtime (SemiYield's files stay unchanged)
+
+**1. Yield Prediction: negative R².** With SemiYield's default data the page showed R² = −1.47. Cause: the
+ensemble learns its stacking weights with an unconstrained Ridge regression on a small validation slice
+(last 15% of training rows). Yield is ≈ 0.999 for 99% of wafers, so that slice held only 2 low-yield wafers,
+and Ridge learned weights such as −0.11 / +1.76: every predicted yield drop was amplified ≈ 1.65×.
+`yield_fix.py` makes the weights non-negative and sum to 1 (they can no longer amplify), then refits the
+tree models on all training rows after the weights are chosen. The test set (newest 20% of wafers) is never
+used for training. Result on 8 random seeds: mean R² 0.18 → 0.80, none negative (default seed −1.47 → 0.79).
+A caption under the page title says the fix is active.
+
+**2. SPC: counters in the parameter list.** `lot_sequence` and `wafer_sequence` were the first options, so the
+page opened on a counter and flagged every point. They are now removed from the list (also typical counter
+columns in uploaded CSVs: names ending in `_sequence`, `_id`, `_index`), and the page opens on
+`gate_oxide_thickness`. A caption lists what was removed.
+
 ## Reliable USL / LSL on the SPC page
 
 SemiYield's own defaults are the 0.5 / 99.5 percentiles of the plotted data. Specs taken from the data always
@@ -28,7 +44,6 @@ You can still type your own spec.
 | Other process parameters | baseline (first 20% of rows = earliest lots) median ± 4·σ_short-term (moving range / 1.128) → Cp = 1.33 at baseline | implant dose 9.16e12 / 1.08e13 → Cpk 1.32 |
 | Smaller is better (deposition_unif, defect_density, wafer_map_std) | USL as above, LSL = 0 | deposition_unif 0 / 3.29 % |
 | Bigger is better (yield, wafer_map_mean) | LSL as above, USL = 1 | yield 0.9987 / 1 |
-| Counters (lot_sequence, wafer_sequence) | no spec: flagged "not a process parameter" | |
 
 For one-sided parameters only Cpk (the relevant side) is meaningful; Cp is not. Uploaded CSVs use the data rule
 for every parameter and assume rows are in time order.
@@ -61,7 +76,7 @@ $env:SEMIYIELD_DIR = "D:\tools\semiyield"
 * **Simulation → Oxidation:** hover the `?` by *Atmosphere*; move the mouse along the curve.
 * **Simulation → Implantation:** hover the dashed red line (background) and the dotted orange line (xj).
 * **Data Generator:** set Drift rate / Aging factor, click *Generate Dataset*.
-* **SPC Dashboard:** choose a real parameter (not `lot_sequence`, which is just a counter), then hover points
+* **SPC Dashboard:** it opens on gate_oxide_thickness with suggested USL/LSL; hover points
   (red = rule violation), the UCL/CL/LCL lines, and the `?` by Cpk / Ppk.
 * **Yield Prediction:** train the model, then hover the SHAP bars and the `?` by R² / RMSE / MAE.
 * **Process Optimizer:** run it and hover the convergence points; read the `?` by *Parameter Bounds*.

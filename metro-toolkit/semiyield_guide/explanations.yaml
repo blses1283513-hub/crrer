@@ -160,9 +160,8 @@ widgets:
     help: "**Data source 資料來源**：使用 Data Generator 產生的資料，或上傳自己的 CSV（至少 10 筆數值）。"
   - label: "Parameter to chart"
     help: |
-      **Parameter 管制參數**：要畫管制圖的欄位，例如 gate_oxide_thickness（閘極氧化層厚度）、poly_cd（線寬 CD）。
-      注意：清單第一項 **lot_sequence 只是批次序號**（一直遞增），不是製程參數，
-      畫出來每個點都會被判定異常；請改選真正的製程參數。
+      **Parameter 管制參數**：要畫管制圖的製程參數，例如 gate_oxide_thickness（閘極氧化層厚度）、poly_cd（線寬 CD）。
+      序號欄位（lot_sequence、wafer_sequence 等）已從清單移除：它們只是一直遞增的編號，不是製程參數。
   - label: "USL"
     help: |
       **USL 規格上限 (Upper Specification Limit)**。選好參數後，Metro 說明會自動填入可靠的建議值
@@ -249,8 +248,10 @@ widgets:
     help: "開始訓練集成模型，並計算 SHAP 特徵重要度（需要數十秒）。"
   - label: "R2"
     help: |
-      **R² 決定係數**：模型解釋了測試集良率變異的比例。1 = 完美，0 = 跟直接猜平均值一樣，
-      負值 = 比猜平均值還差。
+      **R² 決定係數**：模型解釋了測試集良率變異的比例。1 = 完美，0 = 跟直接猜平均值一樣，負值 = 比猜平均值還差。
+      測試集是**最新**的 20% 晶圓，模型從未看過。
+      Metro 修正：SemiYield 原本用很小的驗證集學集成權重（例如 −0.11 與 +1.76），會把預測的良率下降放大約 1.65 倍，
+      預設資料下 R² 為 −1.47。改成「非負、總和為 1」的權重並用全部訓練資料重訓後約為 0.8（8 個亂數種子平均 0.18 → 0.80）。
   - label: "RMSE"
     help: "**RMSE 均方根誤差**：預測良率與實際良率差距的典型大小（與良率同單位，0–1）。越小越好；對大誤差較敏感。"
   - label: "MAE"

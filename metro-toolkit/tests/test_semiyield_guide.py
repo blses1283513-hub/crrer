@@ -14,6 +14,7 @@ import yaml
 GUIDE = Path(__file__).resolve().parents[1] / "semiyield_guide"
 sys.path.insert(0, str(GUIDE))
 from spec_limits import baseline_stats, number_format, suggest  # noqa: E402
+from yield_fix import ConvexWeights, convex_weights  # noqa: E402
 RULES = yaml.safe_load((GUIDE / "explanations.yaml").read_text(encoding="utf-8"))
 
 
@@ -87,6 +88,46 @@ def test_baseline_and_number_format():
     assert fmt == "%.5f" and step == pytest.approx(1e-5)
 
 
+def test_convex_weights_never_amplify():
+    rng = np.random.default_rng(4)
+    truth = rng.normal(0, 1, 300)
+    stack = np.column_stack([truth + rng.normal(0, 0.3, 300), 0.5 * truth + rng.normal(0, 0.3, 300)])
+    w = convex_weights(stack, truth)
+    assert np.all(w >= 0) and w.sum() == pytest.approx(1.0)
+    assert ConvexWeights(w).predict(stack).std() <= stack.std(axis=0).max() + 1e-12
+    assert np.allclose(convex_weights(stack, np.zeros(300)), 0.5)  # no signal -> equal weights
+
+
+def _semiyield_path():
+    for c in (os.environ.get("SEMIYIELD_DIR"), GUIDE.parents[2] / "semiyield"):
+        if c and (Path(c) / "dashboard" / "app.py").exists():
+            return str(c)
+    return None
+
+
+@pytest.mark.skipif(_semiyield_path() is None or importlib.util.find_spec("sklearn") is None,
+                    reason="needs SemiYield and scikit-learn")
+def test_yield_fix_makes_r2_positive_on_default_data():
+    sys.path.insert(0, _semiyield_path())
+    from semiyield.datagen import FabDataGenerator
+    from semiyield.models import ensemble
+
+    import yield_fix
+
+    yield_fix.apply(ensemble.YieldEnsemble)
+    feats = ["gate_oxide_thickness", "poly_cd", "implant_dose", "anneal_temp", "metal_resistance",
+             "contact_resistance", "etch_rate", "deposition_unif", "defect_density"]
+    df = FabDataGenerator(seed=42, drift_rate=0.05, aging_factor=0.002).generate(n_lots=100, wafers_per_lot=25)
+    X, y = df[feats].values, df["yield"].values
+    n_test = int(len(X) * 0.2)
+    Xtr, Xte, ytr, yte = X[:-n_test], X[-n_test:], y[:-n_test], y[-n_test:]
+    val = int(len(Xtr) * 0.15)
+    m = ensemble.YieldEnsemble(n_estimators=200, lstm_epochs=30, random_state=42)
+    m.fit(Xtr[:-val], ytr[:-val], Xtr[-val:], ytr[-val:])
+    assert m.metro_fixed and np.all(m.meta.coef_ >= 0) and m.meta.coef_.sum() == pytest.approx(1.0)
+    assert m.score(Xte, yte)["R2"] > 0.5  # was -1.47 before the fix
+
+
 def test_every_simulation_and_spc_input_is_covered():
     labels = {w["label"] for w in RULES["widgets"]}
     for needed in ("Temperature (C)", "Atmosphere", "Ion species", "Energy (keV)", "Dose (cm^-2)", "Etch mode",
@@ -126,8 +167,14 @@ def test_launcher_attaches_tooltips_and_hover(monkeypatch):
     assert {"CL", "UCL", "LCL"} <= set(names)
     assert all(m.help for m in at.metric)
 
+    # counters are removed from the parameter list; the page opens on a real parameter
+    sb = [sb for sb in at.selectbox if sb.label == "Parameter to chart"][0]
+    assert "lot_sequence" not in sb.options and "wafer_sequence" not in sb.options
+    assert sb.value == "gate_oxide_thickness"
+    assert any("lot_sequence" in c.value and "移除" in c.value for c in at.caption)
+
     # suggested spec limits replace the percentile defaults
-    [sb for sb in at.selectbox if sb.label == "Parameter to chart"][0].set_value("gate_oxide_thickness").run()
+    sb.set_value("gate_oxide_thickness").run()
     usl = [n for n in at.number_input if n.label == "USL"][0]
     lsl = [n for n in at.number_input if n.label == "LSL"][0]
     assert (lsl.value, usl.value) == pytest.approx((7.6, 9.4))
@@ -144,6 +191,9 @@ def test_launcher_attaches_tooltips_and_hover(monkeypatch):
             if b.label in ("Train Ensemble Model", "Run Optimization"):
                 b.click().run()
         assert not at.exception, page
+        if page == "Yield Prediction":
+            assert float([m for m in at.metric if m.label == "R2"][0].value) > 0
+            assert any("Metro 修正" in c.value for c in at.caption)
         for kind in ("slider", "number_input", "selectbox", "metric", "button", "text_input"):
             assert all(w.help for w in getattr(at, kind)), (page, kind)
         for el in at.get("plotly_chart"):

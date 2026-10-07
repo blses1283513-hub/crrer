@@ -29,12 +29,12 @@ import streamlit as st
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
-from spec_limits import generator_targets, number_format, suggest  # noqa: E402
+from spec_limits import COUNTERS, generator_targets, number_format, suggest  # noqa: E402
 
 RULES_FILE = Path(os.environ.get("SEMIYIELD_GUIDE_FILE", HERE / "explanations.yaml"))
 WIDGETS = ("slider", "number_input", "selectbox", "radio", "metric", "button", "file_uploader",
-           "checkbox", "text_input", "subheader")
-QUIET = {"subheader"}  # never reported as "missing" (most headers need no tooltip)
+           "checkbox", "text_input", "subheader", "title")
+QUIET = {"subheader", "title"}  # never reported as "missing" (most headers need no tooltip)
 
 
 # --------------------------------------------------------------------------- #
@@ -80,7 +80,7 @@ def _arg(args, kwargs, pos, name):
 
 
 def _label(kind, args, kwargs):
-    return _arg(args, kwargs, 0, "body" if kind == "subheader" else "label")
+    return _arg(args, kwargs, 0, "body" if kind in ("subheader", "title") else "label")
 
 
 def _widget_help(kind: str, args, kwargs) -> str | None:
@@ -163,10 +163,49 @@ def _apply_spec(label: str, kwargs: dict):
     return sug
 
 
+def is_counter(name) -> bool:
+    """Row counters / IDs are not process parameters (also catches typical columns in uploaded CSVs)."""
+    n = str(name).lower()
+    return n in COUNTERS or n.endswith(("_sequence", "_id", "_index")) or n in ("index", "unnamed: 0", "id")
+
+
+def _drop_counters(args, kwargs):
+    """Remove counter columns from the SPC parameter list so the page opens on a real parameter."""
+    if "options" in kwargs:
+        options = list(kwargs["options"])
+    elif len(args) > 1:
+        options = list(args[1])
+    else:
+        return args, kwargs, []
+    keep = [o for o in options if not is_counter(o)]
+    if not keep or len(keep) == len(options):
+        return args, kwargs, []
+    removed = [o for o in options if is_counter(o)]
+    if "options" in kwargs:
+        kwargs["options"] = keep
+    else:
+        args = (args[0], keep, *args[2:])
+    return args, kwargs, removed
+
+
+def _apply_yield_fix() -> bool:
+    try:
+        from semiyield.models import ensemble  # noqa: PLC0415
+        from yield_fix import apply  # noqa: PLC0415
+    except Exception as exc:  # sklearn missing etc.: the page will report it itself
+        st._sy_cov["errors"].append(f"yield fix not applied: {type(exc).__name__}: {exc}")
+        return False
+    apply(ensemble.YieldEnsemble)
+    return True
+
+
 def _call(kind, orig, dg, args, kwargs):
     """Shared wrapper body for module-level (dg=None) and container (dg=self) calls."""
     label = _label(kind, args, kwargs)
     sug = None
+    removed = []
+    if kind == "selectbox" and label == "Parameter to chart":
+        args, kwargs, removed = _drop_counters(args, kwargs)
     if kind == "number_input" and label in ("USL", "LSL") and kwargs.get("help") is None:
         sug = _apply_spec(label, kwargs)
     if kwargs.get("help") is None:
@@ -179,11 +218,17 @@ def _call(kind, orig, dg, args, kwargs):
     result = orig(dg, *args, **kwargs) if dg is not None else orig(*args, **kwargs)
 
     target = dg if dg is not None else st
+    if kind == "title" and label == "Yield Prediction":
+        if _apply_yield_fix():
+            target.caption("Metro 修正已啟用：集成模型改用「非負、總和為 1」的權重，並在選定權重後用全部訓練資料重新訓練"
+                           "（測試集不變）。原本的權重會放大預測的良率下降，使 R² 變成負值。游標停在 R2 的 ? 看說明。")
     if label == "Parameter to chart" and kind == "selectbox":
         st._sy_ctx["spc_param"] = result
         note = feature_text(str(result))
         if note:
             target.caption(note)
+        if removed:
+            target.caption("已從清單移除序號欄位（不是製程參數）：" + "、".join(map(str, removed)))
     elif label == "Data source" and kind == "radio":
         st._sy_ctx["data_source"] = result
     elif label == "Upload process data CSV" and kind == "file_uploader":
