@@ -1,0 +1,74 @@
+# Thin-film material library and film-stack recipes.
+# Literature-backed materials (Si, SiO2, Si3N4, a-Si) are built in; entries here
+# override or extend them. Coefficients marked "typical" are placeholders:
+# replace them with the n/k files your metrology recipe actually uses.
+#
+# Supported models: constant | cauchy | sellmeier | tauc_lorentz | tabulated (CSV: wavelength_nm,n,k)
+
+wavelength_nm: { start: 250, stop: 1000, points: 301 }
+
+materials:
+  Al2O3: { model: cauchy, A: 1.632, B: 0.0058 }     # typical ALD Al2O3
+  HfO2:  { model: cauchy, A: 1.920, B: 0.0125 }     # typical ALD HfO2
+  ZrO2:  { model: cauchy, A: 2.060, B: 0.0160 }     # typical ALD ZrO2 (DRAM capacitor dielectric)
+  # my_film: { model: tabulated, file: my_film_nk.csv }
+
+# Stacks are listed top -> bottom; the last entry is the substrate.
+# fit: which layers float in the thickness fit. technique: reflectometry | se
+stacks:
+  thermal_oxide_100:
+    description: Thermal SiO2 monitor, mid-range thickness
+    layers: [{ material: SiO2, thickness_nm: 100.0 }]
+    substrate: Si
+    technique: reflectometry
+    fit: [{ layer: 0, bounds: [1, 1500] }]
+
+  gate_oxide_thin:
+    description: Thin oxide (< 5 nm) - reflectometry loses sensitivity, use SE
+    layers: [{ material: SiO2, thickness_nm: 3.0 }]
+    substrate: Si
+    technique: se
+    angles_deg: [65, 70, 75]
+    fit: [{ layer: 0, bounds: [0, 20] }]
+
+  highk_on_il:
+    description: ALD HfO2 on interfacial SiO2 (IL fixed from pre-measurement)
+    layers:
+      - { material: HfO2, thickness_nm: 3.0 }
+      - { material: SiO2, thickness_nm: 1.0 }
+    substrate: Si
+    technique: se
+    angles_deg: [65, 70, 75]
+    fit: [{ layer: 0, bounds: [0, 15] }]
+
+  nitride_on_oxide:
+    description: Si3N4 hard mask / spacer film on pad oxide (2-layer fit)
+    layers:
+      - { material: Si3N4, thickness_nm: 50.0 }
+      - { material: SiO2, thickness_nm: 10.0 }
+    substrate: Si
+    technique: se
+    angles_deg: [65, 70, 75]
+    fit: [{ layer: 0, bounds: [20, 100] }, { layer: 1, bounds: [2, 30] }]
+
+  ono:
+    description: Oxide-nitride-oxide stack
+    layers:
+      - { material: SiO2, thickness_nm: 5.0 }
+      - { material: Si3N4, thickness_nm: 10.0 }
+      - { material: SiO2, thickness_nm: 5.0 }
+    substrate: Si
+    technique: se
+    angles_deg: [65, 70, 75]
+    fit: [{ layer: 0, bounds: [1, 15] }, { layer: 1, bounds: [3, 25] }]
+
+  zaz_capacitor:
+    description: ZrO2/Al2O3/ZrO2 DRAM capacitor dielectric on a monitor wafer
+    layers:
+      - { material: ZrO2, thickness_nm: 2.5 }
+      - { material: Al2O3, thickness_nm: 0.5 }
+      - { material: ZrO2, thickness_nm: 2.5 }
+    substrate: Si
+    technique: se
+    angles_deg: [65, 70, 75]
+    fit: [{ layer: 0, bounds: [0.5, 8] }]

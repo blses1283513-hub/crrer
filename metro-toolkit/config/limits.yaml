@@ -1,0 +1,25 @@
+# Spec / control settings per measured parameter. Synthetic, illustrative values.
+spc:
+  sigma_multiplier: 3
+  western_electric_rules: [1, 2, 3, 4]
+
+msa:
+  grr_k: 6.0              # study variation multiplier (AIAG 4th ed. uses 6; older 5.15)
+  grr_accept_pct: 10.0    # %GRR / P/T < 10% acceptable
+  grr_marginal_pct: 30.0  # 10-30% conditionally acceptable
+  matching_offset_spec: 0.3   # nm, tool-to-tool mean-offset spec (equivalence margin)
+  matching_slope_tol: 0.02
+
+parameters:
+  ox_thickness_nm:
+    unit: nm
+    target: 100.0
+    lsl: 98.5
+    usl: 101.5
+    uniformity_max_pct: 1.5       # 1-sigma % within wafer
+  hk_thickness_nm:
+    unit: nm
+    target: 3.0
+    lsl: 2.85
+    usl: 3.15
+    uniformity_max_pct: 2.0

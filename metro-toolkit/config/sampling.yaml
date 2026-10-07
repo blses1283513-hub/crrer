@@ -1,0 +1,12 @@
+# Wafer sampling plans (polar rings). r_frac is a fraction of the measurable
+# radius R_eff = wafer_radius - edge_exclusion. phase_deg rotates the ring.
+wafer_diameter_mm: 300
+edge_exclusion_mm: 3
+
+plans:
+  "1":  [{ n: 1, r_frac: 0.0 }]
+  "5":  [{ n: 1, r_frac: 0.0 }, { n: 4, r_frac: 0.95, phase_deg: 0 }]
+  "9":  [{ n: 1, r_frac: 0.0 }, { n: 4, r_frac: 0.5, phase_deg: 45 }, { n: 4, r_frac: 0.95, phase_deg: 0 }]
+  "13": [{ n: 1, r_frac: 0.0 }, { n: 4, r_frac: 0.5, phase_deg: 45 }, { n: 8, r_frac: 0.95, phase_deg: 0 }]
+  "25": [{ n: 1, r_frac: 0.0 }, { n: 8, r_frac: 0.5, phase_deg: 0 }, { n: 16, r_frac: 1.0, phase_deg: 0 }]
+  "49": [{ n: 1, r_frac: 0.0 }, { n: 8, r_frac: 0.333, phase_deg: 0 }, { n: 16, r_frac: 0.667, phase_deg: 0 }, { n: 24, r_frac: 1.0, phase_deg: 0 }]

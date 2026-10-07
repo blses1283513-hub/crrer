@@ -1,0 +1,8 @@
+lot_id,wafer_id,chamber_id,kind,magnitude
+L0031,L0031.06,DEP01-B,shift,1.0
+L0031,L0031.18,DEP01-B,shift,1.0
+L0033,L0033.06,DEP01-B,shift,1.0
+L0033,L0033.18,DEP01-B,shift,1.0
+L0046,L0046.01,DEP02-A,bowl,-2.0
+L0046,L0046.13,DEP02-A,bowl,-2.0
+L0046,L0046.25,DEP02-A,bowl,-2.0

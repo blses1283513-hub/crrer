@@ -1,0 +1,21 @@
+# Never commit real fab data, recipes or tool exports: keep them outside the repo
+# and point METRO_DATA_PATH / METRO_CONFIG_PATH at them.
+data/*
+!data/sample/
+data/sample/*
+!data/sample/thickness_sites.csv
+!data/sample/thickness_excursions_truth.csv
+reports/
+*.xlsx
+*.parquet
+*.db
+.env
+
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+.streamlit/secrets.toml
+build/
+dist/
