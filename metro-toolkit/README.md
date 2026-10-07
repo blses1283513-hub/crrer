@@ -48,6 +48,9 @@ streamlit run src/metro_toolkit/dashboard/app.py
 
 A pre-generated report is in [`docs/example-report/report.md`](docs/example-report/report.md).
 
+Full step-by-step Windows instructions (including SemiYield and the other upstream tools):
+[`docs/SETUP_WINDOWS.md`](docs/SETUP_WINDOWS.md). Note: install with `pip install -e` (editable); config files are located relative to the source tree.
+
 ### Dashboard pages
 
 1. **Film stack & fit**: pick a stack from `films.yaml`, set the true thicknesses and noise, and watch the
