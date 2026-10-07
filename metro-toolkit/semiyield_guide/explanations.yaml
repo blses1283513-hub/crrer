@@ -1,0 +1,305 @@
+# Hover explanations for SemiYield's dashboard (Traditional Chinese + English term).
+# Edit freely, then restart the dashboard. Nothing in SemiYield itself is modified.
+#
+# widgets:  shown as the "?" tooltip next to an input or metric card.
+#   label     exact label used by SemiYield (a leading match is enough, e.g. "Temperature")
+#   min/max   (sliders) disambiguate the same label used on different tabs
+#   options   (selectbox) exact option list, to disambiguate the same label
+#   help      text; Streamlit renders basic Markdown
+# charts:   matched by the figure title (regex). Hover text is attached to the data points.
+#   hover     Plotly hovertemplate: %{x}, %{y:.2f} insert the point's values, <br> = new line
+#   lines     explanation for reference lines (hline/vline); matched by their annotation text
+#
+# Scope of this first version: Simulation, Data Generator inputs (feeds SPC), SPC Dashboard.
+# Other pages show generic "x / y" hover text until they get their own entries.
+
+widgets:
+  - label: "Navigation"
+    help: |
+      選擇頁面：**Simulation** 單一製程步驟的物理模型、**Data Generator** 產生合成晶圓廠資料、
+      **SPC Dashboard** 管制圖與製程能力、**Yield Prediction** 良率機器學習、
+      **Process Optimizer** 貝氏最佳化找製程窗口、**SPICE Export** 輸出電路模型。
+  - label: "Upload process data CSV"
+    help: "上傳自己的製程資料 CSV（至少一個數值欄位、10 筆以上資料）。**請勿上傳公司機密資料到公開環境。**"
+  # ------------------------------------------------------------------ Oxidation (Deal-Grove)
+  - label: "Temperature (C)"
+    min: 800
+    max: 1200
+    help: |
+      **Temperature 溫度（氧化）**：氧化爐管的溫度。
+      溫度越高，氧化速率常數越大（Arrhenius 關係），相同時間長出的 SiO₂ 越厚。
+      製程位置：閘極氧化層、墊氧化層、場氧化層的成長步驟。
+  - label: "Atmosphere"
+    options: ["dry", "wet"]
+    help: |
+      **Atmosphere 氧化氣氛**
+      - **dry 乾氧（O₂）**：成長慢、膜緻密、品質高，用於**閘極氧化層**。
+      - **wet 濕氧（H₂O 蒸氣）**：成長快、膜較疏鬆，用於**厚的隔離／場氧化層**。
+  - label: "Max time (min)"
+    help: |
+      **Max time 最長氧化時間**：模擬的氧化時間長度。
+      同時決定圖的 X 軸範圍，以及下方「Final Thickness」所使用的時間。
+  - label: "Initial oxide thickness (nm)"
+    help: |
+      **Initial oxide thickness 初始氧化層厚度**：氧化開始前已存在的氧化層，
+      例如自然氧化層（約 1–2 nm）或前一步驟留下的氧化層。
+      在 Deal-Grove 公式 x² + Ax = B(t + τ) 中對應時間偏移 τ。
+
+  # ------------------------------------------------------------------ Implantation
+  - label: "Ion species"
+    help: |
+      **Ion species 離子種類**
+      - **boron 硼 B**：p 型，質量輕、射程深，常用於 p 井與通道摻雜。
+      - **phosphorus 磷 P**：n 型，中等質量。
+      - **arsenic 砷 As**：n 型，較重、射程淺，常用於源／汲極。
+      - **antimony 銻 Sb**：n 型，最重、射程最淺，用於超淺接面或埋層。
+  - label: "Energy (keV)"
+    help: |
+      **Energy 植入能量**：離子被加速的能量。
+      能量越高，離子打得越深，濃度峰值（投影射程 Rp）越深、分布越寬（ΔRp 越大）。
+  - label: "Dose (cm^-2)"
+    help: |
+      **Dose 劑量 Φ**：單位面積植入的離子總數。
+      劑量決定濃度高低：峰值濃度 ≈ Φ / (√(2π)·ΔRp)。劑量加倍，整條曲線約抬高一倍。
+  - label: "Background doping (cm^-3)"
+    help: |
+      **Background doping 基板背景摻雜濃度**：晶圓原本的摻雜濃度。
+      植入濃度曲線下降到與它相等的深度，就是接面深度 xj（pn 接面位置）。
+  - label: "Distribution model"
+    help: |
+      **Distribution model 分布模型**
+      - **gaussian 高斯**：對稱的鐘形，簡單，適合粗估。
+      - **pearsoniv Pearson IV**：加入偏斜（skewness）與峰度（kurtosis），
+        能描述輕離子（如硼）往深處拖尾的真實形狀。
+
+  # ------------------------------------------------------------------ Etching (Langmuir-Hinshelwood)
+  - label: "Etch mode"
+    help: |
+      **Etch mode 蝕刻模式**
+      - **single 單一反應物**：速率只取決於一種蝕刻氣體的壓力。
+      - **two_reactant 雙反應物**：兩種氣體（第二種為 O₂）都吸附在表面並彼此反應
+        （Langmuir-Hinshelwood 機制），速率同時受兩者壓力影響。
+  - label: "Material"
+    options: ["SiO2", "Si", "Si3N4"]
+    help: |
+      **Material 被蝕刻的材料**：SiO₂（氧化矽）、Si（矽）、Si₃N₄（氮化矽）。
+      不同材料的反應常數不同，造成速率差異，也就是**選擇比**的來源。
+  - label: "Pressure (mTorr)"
+    help: |
+      **Pressure 蝕刻氣體壓力**：壓力越高，表面吸附的反應物越多，速率越快，
+      但會趨近飽和（R = k_s·KP / (1+KP)，表面被佔滿後不再增加）。
+  - label: "Temperature (C)"
+    min: 20
+    max: 400
+    help: |
+      **Temperature 蝕刻溫度**：晶圓／腔體溫度。
+      溫度越高，表面反應越容易越過活化能障礙，蝕刻速率越快（Arrhenius 關係）。
+  - label: "O2 pressure (mTorr)"
+    help: |
+      **O2 pressure 氧氣壓力**（僅雙反應物模式）：第二種反應物 O₂ 的壓力。
+      與蝕刻氣體在表面競爭／協同，改變整體蝕刻速率。
+
+  # ------------------------------------------------------------------ Deposition (CVD / PVD / ALD)
+  - label: "Process type"
+    help: |
+      **Process type 沉積製程**
+      - **LPCVD 低壓化學氣相沉積**：高溫、膜均勻、階梯覆蓋好。
+      - **PECVD 電漿輔助 CVD**：用電漿降低溫度，常用於後段（金屬層之後）。
+      - **ALD 原子層沉積**：每個循環長一層原子，厚度可精準控制，覆蓋近乎 100%。
+      - **PVD 物理氣相沉積（濺鍍）**：粒子直線射出，階梯覆蓋差，常用於金屬膜。
+  - label: "Material"
+    help: |
+      **Material 沉積材料**：可選項目隨製程類型改變
+      （例：ALD 可沉積 HfO₂、Al₂O₃、TiN；PVD 可沉積 Al、TiN、W）。
+  - label: "Temperature (C)"
+    min: 100
+    max: 900
+    help: |
+      **Temperature 沉積溫度**：基板溫度。
+      沉積速率隨溫度呈指數上升（R ∝ exp(−Ea/k_B·T)）。右圖的對數軸上近似一條直線。
+  - label: "Pressure (Torr)"
+    help: |
+      **Pressure 前驅物分壓**：反應氣體的壓力，速率與它成正比（R ∝ P）。
+      對 ALD 與 PVD 影響較小（由自限制反應或濺鍍功率主導）。
+  - label: "Time (min or cycles for ALD)"
+    help: |
+      **Time 沉積時間**：CVD／PVD 為分鐘；**ALD 則為循環數**。
+      厚度 = 速率 × 時間（ALD：每循環厚度 × 循環數）。
+  - label: "Feature aspect ratio"
+    help: |
+      **Feature aspect ratio 深寬比**：結構深度 ÷ 寬度。
+      深寬比越大，越難讓氣體到達溝槽底部，階梯覆蓋率越低（DRAM 電容孔洞是高深寬比的例子）。
+  - label: "Temperature delta for stress (K)"
+    help: |
+      **Temperature delta 溫差 ΔT**：沉積溫度到室溫的溫度變化（降溫為負值）。
+      用於熱應力：σ_thermal = E/(1−ν) · (α_膜 − α_基板) · ΔT。
+      總應力 = 本質應力 + 熱應力；正值為張應力、負值為壓應力。
+
+  # ------------------------------------------------------------------ Data Generator (feeds the SPC page)
+  - label: "Number of lots"
+    help: "**Number of lots 批數**：模擬幾個 lot。越多，SPC 圖的點越多、趨勢越明顯。"
+  - label: "Wafers per lot"
+    help: "**Wafers per lot 每批晶圓數**：一個 lot 的晶圓片數（實際廠內通常 25 片）。"
+  - label: "Drift rate"
+    help: |
+      **Drift rate 漂移率**：每個 lot 的製程平均值做隨機漫步時，每步標準差佔製程 σ 的比例
+      （0.05 = 5% σ／lot）。越大，lot 之間的平均值飄得越遠，SPC 越容易出現趨勢與異常。
+  - label: "Aging factor"
+    help: |
+      **Aging factor 老化因子**：機台每個 lot 劣化的比例（0.002 = 0.2%／lot）。
+      影響蝕刻速率與沉積均勻性，造成緩慢單向的漂移（類似兩次 PM 之間的變化）。
+  - label: "Random seed"
+    help: "**Random seed 亂數種子**：相同的種子會產生完全相同的資料，方便重現結果。"
+  - label: "Generate Dataset"
+    help: "產生合成的晶圓廠資料。完成後可到 **SPC Dashboard** 頁面畫管制圖。"
+
+  # ------------------------------------------------------------------ SPC
+  - label: "Data source"
+    help: "**Data source 資料來源**：使用 Data Generator 產生的資料，或上傳自己的 CSV（至少 10 筆數值）。"
+  - label: "Parameter to chart"
+    help: |
+      **Parameter 管制參數**：要畫管制圖的欄位，例如 gate_oxide_thickness（閘極氧化層厚度）、poly_cd（線寬 CD）。
+      注意：清單第一項 **lot_sequence 只是批次序號**（一直遞增），不是製程參數，
+      畫出來每個點都會被判定異常；請改選真正的製程參數。
+  - label: "USL"
+    help: |
+      **USL 規格上限 (Upper Specification Limit)**。
+      注意：預設值只是資料的 99.5 百分位，**不是真正的規格**，請改成你的規格值，
+      否則下方 Cp／Cpk 沒有意義。
+  - label: "LSL"
+    help: |
+      **LSL 規格下限 (Lower Specification Limit)**。
+      注意：預設值只是資料的 0.5 百分位，**不是真正的規格**，請改成你的規格值。
+
+  # ------------------------------------------------------------------ metric cards
+  - label: "Final Thickness"
+    help: "**Final Thickness 最終氧化層厚度**：在「Max time」時間結束時的氧化層厚度（Deal-Grove 模型）。"
+  - label: "Junction Depth"
+    help: |
+      **Junction Depth 接面深度 xj**：植入濃度降到與背景摻雜相等的深度，
+      即 pn 接面位置。N/A 表示劑量太低，植入濃度從未超過背景。
+  - label: "SiO2 etch rate"
+    help: "**SiO₂ 蝕刻速率**：目前壓力與溫度下，氧化矽每分鐘被蝕刻的厚度。"
+  - label: "Si etch rate"
+    help: "**Si 蝕刻速率**：目前壓力與溫度下，矽每分鐘被蝕刻的厚度。"
+  - label: "SiO2/Si selectivity"
+    help: |
+      **Selectivity 選擇比** = SiO₂ 蝕刻速率 ÷ Si 蝕刻速率。
+      比值越高，蝕刻氧化層時越不會傷到下方的矽（例如蝕刻接觸孔時停在矽表面）。
+  - label: "Deposited thickness"
+    help: "**Deposited thickness 沉積厚度** = 沉積速率 × 時間（ALD 為每循環厚度 × 循環數）。"
+  - label: "Step coverage"
+    help: |
+      **Step coverage 階梯覆蓋率**：溝槽側壁／底部的膜厚 ÷ 表面膜厚。
+      100% 為完全保形（ALD 接近）；PVD 因直線射出，覆蓋率低。
+  - label: "Non-uniformity (1s)"
+    help: |
+      **Non-uniformity 不均勻度（1σ）**：整片 300 mm 晶圓上膜厚的標準差 ÷ 平均值（%）。
+      越小越均勻；此為經驗模型的估計，不是量測值。
+  - label: "Film stress"
+    help: |
+      **Film stress 薄膜應力**（MPa）：本質應力 + 熱應力。
+      **正值＝張應力 (tensile)**，**負值＝壓應力 (compressive)**。應力過大會造成晶圓翹曲或膜層裂開。
+  - label: "Cp"
+    help: |
+      **Cp 製程能力**（只看變異）= (USL − LSL) ÷ (6σ_within)。
+      不考慮平均值有沒有偏離中心。σ_within 由相鄰點的移動全距估計（短期變異）。
+  - label: "Cpk"
+    help: |
+      **Cpk** 同時考慮變異與偏離中心 = min(USL − μ, μ − LSL) ÷ (3σ_within)。
+      常見要求：**≥ 1.33**；< 1.0 表示有明顯比例的產品會超出規格。
+  - label: "Pp"
+    help: "**Pp 製程績效**（只看變異）= (USL − LSL) ÷ (6σ_overall)。σ_overall 是全部資料的標準差（含長期漂移）。"
+  - label: "Ppk"
+    help: |
+      **Ppk** = min(USL − μ, μ − LSL) ÷ (3σ_overall)，用長期總變異。
+      若 Ppk 明顯低於 Cpk，代表製程在 lot 之間有漂移，短期看不出來。
+  - label: "Sigma level"
+    help: "**Sigma level**：平均值到最近規格界限的距離，以 σ_within 為單位。數值越大，離規格越遠、越安全。"
+
+charts:
+  # ------------------------------------------------------------------ Oxidation
+  - match: "^Oxide Growth"
+    traces:
+      - name: "Thickness"
+        hover: >-
+          <b>氧化層厚度 Oxide thickness</b><br>
+          時間 t = %{x:.1f} min → 厚度 x = <b>%{y:.2f} nm</b><br>
+          <i>先快後慢：初期受表面反應限制（近似線性），<br>
+          變厚後受氧氣穿過氧化層的擴散限制（近似拋物線）。</i><extra></extra>
+  - match: "^Growth Rate vs Time"
+    traces:
+      - name: "Growth rate"
+        hover: >-
+          <b>成長速率 Growth rate dx/dt</b><br>
+          時間 t = %{x:.1f} min → 速率 = <b>%{y:.3f} nm/min</b><br>
+          <i>氧化層越厚，氧氣越難到達 Si/SiO₂ 介面，速率越低。</i><extra></extra>
+
+  # ------------------------------------------------------------------ Implantation
+  - match: "implant at"
+    traces:
+      - name: "profile$"
+        hover: >-
+          <b>摻雜濃度 Dopant concentration</b><br>
+          深度 x = %{x:.1f} nm → N = <b>%{y:.2e} cm⁻³</b>（對數軸）<br>
+          <i>峰值位置 ≈ 投影射程 Rp；峰越寬代表 ΔRp 越大。</i><extra></extra>
+    lines:
+      - text: "^Background"
+        hover: >-
+          <b>背景摻雜 Background doping</b><br>
+          基板原本的濃度（%{y:.2e} cm⁻³）。<br>
+          <i>植入曲線與它相交的位置就是接面深度 xj。</i><extra></extra>
+      - text: "^xj="
+        hover: >-
+          <b>接面深度 Junction depth xj</b><br>
+          植入濃度 = 背景濃度的位置（x = %{x:.1f} nm）。<br>
+          <i>此深度以上為被植入的型態，以下回到基板型態（pn 接面）。</i><extra></extra>
+
+  # ------------------------------------------------------------------ Etching
+  - match: "etch rate vs temperature"
+    traces:
+      - name: "Etch rate vs T"
+        hover: >-
+          <b>蝕刻速率 Etch rate</b><br>
+          溫度 T = %{x:.0f} °C → R = <b>%{y:.1f} nm/min</b><br>
+          <i>溫度越高，表面反應越快（Arrhenius）。</i><extra></extra>
+  - match: "etch rate vs pressure"
+    traces:
+      - name: "Rate vs pressure"
+        hover: >-
+          <b>蝕刻速率 Etch rate</b><br>
+          壓力 P = %{x:.0f} mTorr → R = <b>%{y:.1f} nm/min</b><br>
+          <i>低壓區近似線性（表面覆蓋率低）；高壓區趨於飽和（表面被反應物佔滿）。</i><extra></extra>
+
+  # ------------------------------------------------------------------ Deposition
+  - match: "growth rate vs temperature"
+    traces:
+      - name: ".*"
+        hover: >-
+          <b>沉積速率 Deposition rate</b><br>
+          溫度 T = %{x:.0f} °C → R = <b>%{y:.3g} nm/min（ALD：nm/循環）</b>（對數軸）<br>
+          <i>對數軸上近似直線：斜率由活化能 Ea 決定，Ea 越大，對溫度越敏感。</i><extra></extra>
+
+  # ------------------------------------------------------------------ SPC
+  - match: "^I-MR Chart"
+    traces:
+      - name: ".*"
+        status_marker: true
+        hover: >-
+          <b>第 %{x} 個觀測值 Observation #%{x}</b><br>
+          量測值 = <b>%{y:.4g}</b><br>
+          狀態：%{customdata}<br>
+          <i>紅點＝違反 Western Electric 規則（如 1 點超出 3σ、連續 8 點同側），需要調查原因。</i><extra></extra>
+    lines:
+      - text: "^CL$"
+        hover: >-
+          <b>CL 中心線 (Center Line)</b> = %{y:.4g}<br>
+          <i>製程平均值。點應隨機分布在它的上下。</i><extra></extra>
+      - text: "^UCL$"
+        hover: >-
+          <b>UCL 管制上限 (Upper Control Limit)</b> = %{y:.4g}<br>
+          <i>CL + 3σ。由製程自己的變異算出，<b>不是規格</b>；超出代表製程出現特殊原因。</i><extra></extra>
+      - text: "^LCL$"
+        hover: >-
+          <b>LCL 管制下限 (Lower Control Limit)</b> = %{y:.4g}<br>
+          <i>CL − 3σ。由製程變異算出，<b>不是規格</b>。</i><extra></extra>

@@ -142,6 +142,9 @@ from semiyield.spc import ControlChart
 from semiyield.doe import ProcessWindowOptimizer
 ```
 
+To see hover explanations for SemiYield's parameters and charts, use the launcher in
+`metro-toolkit\semiyield_guide` (see its README).
+
 SemiYield is MIT-licensed. If you copy code from it into your own project, keep its copyright and license
 notice (see `NOTICE.md` in metro-toolkit for how this was done).
 

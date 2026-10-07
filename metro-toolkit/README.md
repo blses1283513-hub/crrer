@@ -80,6 +80,11 @@ Full step-by-step Windows instructions (including SemiYield and the other upstre
 sentences, one file per tool plus a combined file, in both Eudic import formats:
 [`docs/eudic/`](docs/eudic/README.md). Edit `docs/eudic/glossary.yaml` and run `python -m metro_toolkit.eudic` to rebuild.
 
+## SemiYield hover guide
+
+Hover explanations (Traditional Chinese + English term) for SemiYield's inputs, chart points, and SPC lines,
+added by a launcher so SemiYield stays unmodified: [`semiyield_guide/`](semiyield_guide/README.md).
+
 ## Standard data schema
 
 One row per measured site (see `schema.py`; `validate()` checks a file before analysis):
