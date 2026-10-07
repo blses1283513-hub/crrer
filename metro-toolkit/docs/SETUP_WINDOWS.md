@@ -72,6 +72,12 @@ pip install -e ".[dashboard,dev]"
 
 ### Using your own data
 
+Easiest: dashboard → **Data import** page (CSV / Excel / SECOM, automatic column matching, unit
+conversion to nm, check report, reusable mapping profiles). After `git pull`, rerun
+`pip install -e ".[dashboard,dev]"` once so Excel support (`openpyxl`) is installed.
+
+Manual alternative:
+
 Keep real data **outside** the repo and point to it with environment variables:
 
 ```powershell

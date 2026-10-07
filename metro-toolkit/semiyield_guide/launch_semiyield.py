@@ -29,9 +29,12 @@ import streamlit as st
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
-from spec_limits import COUNTERS, generator_targets, number_format, suggest  # noqa: E402
+from spec_limits import COUNTERS, SpecSuggestion, baseline_stats, generator_targets, number_format, suggest  # noqa: E402
 
 RULES_FILE = Path(os.environ.get("SEMIYIELD_GUIDE_FILE", HERE / "explanations.yaml"))
+IMPORT_DIR = Path(os.environ.get("METRO_IMPORT_PATH", HERE.parent / "data" / "imported"))
+YIELD_FEATURES = ("gate_oxide_thickness", "poly_cd", "implant_dose", "anneal_temp", "metal_resistance",
+                  "contact_resistance", "etch_rate", "deposition_unif", "defect_density")
 WIDGETS = ("slider", "number_input", "selectbox", "radio", "metric", "button", "file_uploader",
            "checkbox", "text_input", "subheader", "title")
 QUIET = {"subheader", "title"}  # never reported as "missing" (most headers need no tooltip)
@@ -132,6 +135,27 @@ def _spc_values(param: str):
     return df[param].to_numpy()
 
 
+def using_import() -> bool:
+    """True while SemiYield's data table is the dataset loaded from metro-toolkit's Data import."""
+    df = st.session_state.get("fab_df")
+    return df is not None and id(df) == st.session_state.get("metro_import_id")
+
+
+def _imported_spec(param: str, values):
+    rec = (st.session_state.get("metro_import_specs") or {}).get(param)
+    if not rec or (rec.get("lsl") is None and rec.get("usl") is None):
+        return None
+    _, sigma, _ = baseline_stats(values)
+    lsl, usl = rec.get("lsl"), rec.get("usl")
+    kind = "two-sided" if lsl is not None and usl is not None else ("upper-only" if usl is not None else "lower-only")
+    lsl = lsl if lsl is not None else 0.0
+    usl = usl if usl is not None else 1.0
+    return SpecSuggestion(param, float(lsl), float(usl), kind, "匯入資料中的規格",
+                          f"這份匯入資料本身帶有規格：LSL {lsl:.4g}、USL {usl:.4g}"
+                          + (f"、目標 {rec['target']:.4g}" if rec.get("target") is not None else "") + "。",
+                          center=rec.get("target"), sigma=sigma)
+
+
 def _spec_for_spc():
     ctx = st._sy_ctx
     param = ctx.get("spc_param")
@@ -141,8 +165,10 @@ def _spec_for_spc():
         values = _spc_values(param)
         if values is None:
             return None
-        targets = None if ctx.get("data_source") == "Upload CSV" else generator_targets()
-        ctx["spec"], ctx["spec_param"] = suggest(param, values, targets), param
+        external = ctx.get("data_source") == "Upload CSV" or using_import()
+        spec = _imported_spec(param, values) if using_import() else None
+        ctx["spec"] = spec or suggest(param, values, None if external else generator_targets())
+        ctx["spec_param"] = param
     return ctx["spec"]
 
 
@@ -188,6 +214,60 @@ def _drop_counters(args, kwargs):
     return args, kwargs, removed
 
 
+def _available_trend_params(args, kwargs):
+    """Data Generator trend chart lists fixed SemiYield names; keep only columns the imported data has."""
+    df = st.session_state.get("fab_df")
+    options = list(kwargs["options"]) if "options" in kwargs else list(args[1]) if len(args) > 1 else []
+    keep = [o for o in options if o in df.columns]
+    if not keep:
+        keep = [c for c in df.select_dtypes("number").columns if not is_counter(c)]
+    if "options" in kwargs:
+        kwargs["options"] = keep
+    else:
+        args = (args[0], keep, *args[2:])
+    return args, kwargs
+
+
+def _import_panel() -> None:
+    """Sidebar panel: load a dataset saved by metro-toolkit's Data import page into SemiYield."""
+    import json
+
+    import pandas as pd
+
+    files = sorted(IMPORT_DIR.glob("*_wafer.csv")) if IMPORT_DIR.exists() else []
+    active = st.session_state.get("metro_import") if using_import() else None
+    with st.expander("metro-toolkit 匯入資料 (your data)", expanded=bool(active)):
+        if not files:
+            st.caption(f"尚無匯入資料。到 metro-toolkit 的 **Data import** 頁面匯入後會出現在這裡（資料夾：{IMPORT_DIR}）。")
+            return
+        names = [f.name[: -len("_wafer.csv")] for f in files]
+        synthetic = "（SemiYield 產生的合成資料）"
+        options = [synthetic] + names
+        choice = st.selectbox("資料集", options, index=options.index(active) if active in options else 0,
+                              help="載入後，SemiYield 的 SPC Dashboard 與 Yield Prediction 會使用這份資料。")
+        if st.button("載入這份資料" if choice != synthetic else "改回合成資料"):
+            if choice == synthetic:
+                st.session_state.fab_df = None
+                for k in ("metro_import", "metro_import_id", "metro_import_specs"):
+                    st.session_state.pop(k, None)
+            else:
+                df = pd.read_csv(IMPORT_DIR / f"{choice}_wafer.csv")
+                spec_file = IMPORT_DIR / f"{choice}_specs.json"
+                st.session_state.fab_df = df
+                st.session_state.pop("fab_gen", None)  # SemiYield's synthetic wafer-map generator does not apply
+                st.session_state["metro_import"] = choice
+                st.session_state["metro_import_id"] = id(df)
+                st.session_state["metro_import_specs"] = (
+                    json.loads(spec_file.read_text(encoding="utf-8")) if spec_file.exists() else {})
+            st.rerun()
+        if active:
+            df = st.session_state.fab_df
+            st.success(f"使用中：{active}（{len(df)} 片晶圓、{df['lot_id'].nunique()} 批）")
+            feats = [c for c in YIELD_FEATURES if c in df.columns]
+            if "yield" not in df.columns or not feats:
+                st.caption("Yield Prediction 需要 `yield` 欄與至少一個 SemiYield 參數名稱；目前只能用 SPC。")
+
+
 def _apply_yield_fix() -> bool:
     try:
         from semiyield.models import ensemble  # noqa: PLC0415
@@ -206,6 +286,16 @@ def _call(kind, orig, dg, args, kwargs):
     removed = []
     if kind == "selectbox" and label == "Parameter to chart":
         args, kwargs, removed = _drop_counters(args, kwargs)
+    if kind == "selectbox" and label == "Parameter" and using_import():
+        args, kwargs = _available_trend_params(args, kwargs)
+    if kind == "button" and label == "Train Ensemble Model" and using_import():
+        df = st.session_state.get("fab_df")
+        feats = [c for c in YIELD_FEATURES if c in df.columns]
+        if "yield" not in df.columns or not feats:
+            kwargs["disabled"] = True
+            (dg if dg is not None else st).warning(
+                "匯入的資料缺少 Yield Prediction 需要的欄位：需要 `yield`，以及至少一個參數名稱："
+                + "、".join(YIELD_FEATURES) + "。請在 metro-toolkit 的 Data import 頁面把欄位改成這些名稱後重新匯入。")
     if kind == "number_input" and label in ("USL", "LSL") and kwargs.get("help") is None:
         sug = _apply_spec(label, kwargs)
     if kwargs.get("help") is None:
@@ -413,6 +503,7 @@ def main() -> None:
 
     cov = st._sy_cov
     with st.sidebar:
+        _import_panel()
         with st.expander("Metro 說明覆蓋率 (guide coverage)"):
             st.caption(f"SemiYield：{sy_dir}")
             st.write(f"圖表（已有專屬說明）：{len(cov['charts_matched'])}；一般 x/y 提示：{len(cov['charts_generic'])}")

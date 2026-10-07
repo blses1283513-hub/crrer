@@ -31,6 +31,18 @@ page opened on a counter and flagged every point. They are now removed from the 
 columns in uploaded CSVs: names ending in `_sequence`, `_id`, `_index`), and the page opens on
 `gate_oxide_thickness`. A caption lists what was removed.
 
+## Use your own imported data in SemiYield
+
+1. Import a file on metro-toolkit's **Data import** page and click 儲存並使用.
+2. In SemiYield (started with this launcher) open the sidebar panel **metro-toolkit 匯入資料**, choose the
+   dataset and click **載入這份資料**. SPC Dashboard and Yield Prediction now use it; **改回合成資料** switches back.
+   * Spec limits carried by the file (LSL / USL columns) are used first. Without them, the data-based
+     baseline rule is used. SemiYield's synthetic yield window is never applied to your data.
+   * Yield Prediction needs a column named `yield` and at least one of SemiYield's parameter names
+     (`gate_oxide_thickness`, `poly_cd`, …). Rename columns on the import page; otherwise the Train button
+     is disabled with an explanation.
+   * The launcher reads `metro-toolkit/data/imported` (or `METRO_IMPORT_PATH`).
+
 ## Reliable USL / LSL on the SPC page
 
 SemiYield's own defaults are the 0.5 / 99.5 percentiles of the plotted data. Specs taken from the data always

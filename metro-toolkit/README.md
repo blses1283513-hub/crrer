@@ -80,6 +80,23 @@ Full step-by-step Windows instructions (including SemiYield and the other upstre
 sentences, one file per tool plus a combined file, in both Eudic import formats:
 [`docs/eudic/`](docs/eudic/README.md). Edit `docs/eudic/glossary.yaml` and run `python -m metro_toolkit.eudic` to rebuild.
 
+## Import your own data
+
+Dashboard → **Data import** (first page). Works with CSV / TXT (any delimiter, UTF-8 or Big5/CP950),
+Excel, and UCI SECOM (`secom.data` + `secom_labels.data`).
+
+1. Upload the export. Two table shapes are detected: **long** (one row per measurement, ideally with site
+   X/Y → wafer maps) and **wide** (one row per wafer, one column per parameter → SPC, capability, yield).
+2. Columns are matched to the standard fields automatically (e.g. `Lot ID`, `LOT`, `批號` → lot_id;
+   `EQP` → tool_id; `X (mm)` → x; `Spec Low` → lsl). Confirm or change each one.
+3. Rename parameters, set units; Å and µm are converted to nm (spec limits too). Counter columns are excluded.
+4. A check report lists errors (fix before saving), warnings and what was cleaned up.
+5. **儲存並使用** saves the dataset and, optionally, the column mapping as a profile for the next export.
+   The sidebar *Data source* then switches every page to it. SemiYield's launcher can load it too.
+
+Saved data stays on this PC in `data/imported/` (git-ignored) or `METRO_IMPORT_PATH`. Code:
+`src/metro_toolkit/ingest/` (readers, mapping, convert, checks, store).
+
 ## SemiYield hover guide
 
 Hover explanations (Traditional Chinese + English term) for SemiYield's inputs, chart points, and SPC lines,

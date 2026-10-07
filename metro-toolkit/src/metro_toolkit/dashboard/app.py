@@ -18,7 +18,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # allow running wi
 
 from metro_toolkit import viz  # noqa: E402
 from metro_toolkit.analysis import process_capability, spc_by_group, wafer_summary  # noqa: E402
-from metro_toolkit.config import data_dir, load_stack, load_yaml, wavelengths  # noqa: E402
+from metro_toolkit.config import data_dir, import_dir, load_stack, load_yaml, wavelengths  # noqa: E402
 from metro_toolkit.datagen import ThicknessSimConfig, grr_study, matching_study, simulate_thickness  # noqa: E402
 from metro_toolkit.metrology.thinfilm import (  # noqa: E402
     ellipsometry,
@@ -29,6 +29,25 @@ from metro_toolkit.metrology.thinfilm import (  # noqa: E402
 )
 from metro_toolkit.metrology.thinfilm.studies import thickness_n_correlation, thickness_sensitivity  # noqa: E402
 from metro_toolkit.msa import fleet_matching, gauge_rr  # noqa: E402
+from metro_toolkit.ingest import (  # noqa: E402
+    FIELDS,
+    ImportSpec,
+    build_long,
+    detect_layout,
+    excel_sheets,
+    guess_mapping,
+    list_datasets,
+    list_profiles,
+    load_dataset,
+    load_profile,
+    parameter_table,
+    quality_report,
+    read_secom,
+    read_table,
+    save_dataset,
+    save_profile,
+)
+from metro_toolkit.ingest.mapping import LONG_ONLY  # noqa: E402
 from metro_toolkit.schema import validate  # noqa: E402
 from metro_toolkit.wafer import interpolate_map, radial_profile, uniformity_metrics, zernike_decompose  # noqa: E402
 
@@ -58,15 +77,33 @@ def sample_data() -> pd.DataFrame:
     return df
 
 
+SAMPLE = "合成範例資料 (synthetic sample)"
+UPLOAD = "上傳標準格式 CSV"
+
+
 def get_data() -> pd.DataFrame | None:
+    """Data source for the analysis pages: synthetic sample, an imported dataset, or a standard CSV."""
+    imported = list_datasets()
+    options = [SAMPLE] + [f"匯入：{n}" for n in imported] + [UPLOAD]
+    active = st.session_state.get("dataset")
+    index = options.index(f"匯入：{active}") if active and f"匯入：{active}" in options else 0
+    choice = st.sidebar.selectbox("資料來源 Data source", options, index=index,
+                                  help="在 **Data import** 頁面匯入自己的檔案後，會出現在這個清單。")
+    if choice == SAMPLE:
+        st.session_state.pop("dataset", None)
+        return sample_data()
+    if choice.startswith("匯入："):
+        name = choice.split("：", 1)[1]
+        st.session_state["dataset"] = name
+        return load_dataset(name)
     up = st.sidebar.file_uploader("Measurement CSV (standard schema)", type="csv")
     if up is None:
-        st.sidebar.caption("Using synthetic sample data.")
-        return sample_data()
+        st.sidebar.caption("請上傳已是標準欄位名稱的 CSV；其他格式請用 Data import 頁面。")
+        return None
     df = pd.read_csv(up)
     problems = validate(df)
     if problems:
-        st.error("Data problems:\n- " + "\n- ".join(problems))
+        st.error("Data problems:\n- " + "\n- ".join(problems) + "\n\n請改用 **Data import** 頁面對應欄位。")
         return None
     df["timestamp"] = pd.to_datetime(df["timestamp"])
     return df
@@ -75,6 +112,129 @@ def get_data() -> pd.DataFrame | None:
 # --------------------------------------------------------------------------- #
 # Pages                                                                       #
 # --------------------------------------------------------------------------- #
+
+
+def page_import():
+    st.header("Data import 資料匯入")
+    st.info(f"🔒 匯入的資料只會存在這台電腦：`{import_dir()}`（已排除在 git 之外，不會上傳 GitHub）。"
+            "公司資料請只在公司允許的電腦上使用。")
+    fmt = st.radio("檔案格式", ["CSV / Excel", "SECOM（secom.data + secom_labels.data）"], horizontal=True)
+    if fmt.startswith("CSV"):
+        up = st.file_uploader("上傳量測資料（CSV、TXT、Excel）", type=["csv", "txt", "tsv", "xlsx", "xlsm", "xls", "data"])
+        if up is None:
+            st.markdown(
+                "支援兩種表格：\n"
+                "- **每列一個量測值**（long）：要有 *量測項目* 與 *數值* 欄，最好有量測點座標 X/Y → 可畫晶圓圖\n"
+                "- **每列一片晶圓**（wide）：每個參數一欄，例如機台匯出的摘要表 → SPC、能力分析、良率\n\n"
+                "欄位名稱不必相同，下一步會自動猜測對應，你再確認。")
+            return
+        sheet = None
+        if up.name.lower().endswith((".xlsx", ".xlsm", ".xls")):
+            sheet = st.selectbox("工作表 Sheet", excel_sheets(up))
+        raw = read_table(up, up.name, sheet)
+        default_name = Path(up.name).stem
+    else:
+        c1, c2 = st.columns(2)
+        d = c1.file_uploader("secom.data", type=["data", "txt"])
+        lab = c2.file_uploader("secom_labels.data", type=["data", "txt"])
+        if d is None or lab is None:
+            st.markdown("UCI SECOM 是真實晶圓廠的公開資料（1567 筆 × 590 個感測器，含合格／失效標籤）。"
+                        "下載：https://archive.ics.uci.edu/dataset/179/secom ，解壓後上傳這兩個檔案。")
+            return
+        raw = read_secom(d, lab)
+        default_name = "secom"
+    st.caption(f"{len(raw)} 列 × {raw.shape[1]} 欄 · 文字編碼 {raw.attrs.get('encoding')} · 分隔符號 {raw.attrs.get('delimiter')}")
+    st.dataframe(raw.head(15), hide_index=True)
+
+    profiles = list_profiles()
+    prof = st.selectbox("套用已儲存的欄位對應設定（profile）", ["（自動判斷）"] + profiles,
+                        help="同一台機台或同一種匯出格式，第一次對應好並儲存，下次選它即可。")
+    saved = load_profile(prof) if prof != "（自動判斷）" else None
+    guess = {k: v for k, v in (saved.mapping if saved else guess_mapping(raw.columns)).items() if v in raw.columns}
+    layout0 = saved.layout if saved else detect_layout(guess)
+
+    st.subheader("1. 表格格式")
+    layout = st.radio("每一列代表什麼？", ["long", "wide"], index=0 if layout0 == "long" else 1, horizontal=True,
+                      format_func={"long": "一個量測值（long）", "wide": "一片晶圓（wide）"}.get)
+
+    st.subheader("2. 欄位對應")
+    st.caption("已自動猜測，請確認或修改。沒有的欄位選「（無）」。")
+    fields = [f for f in FIELDS if layout == "long" or f not in LONG_ONLY]
+    cols = st.columns(3)
+    mapping = {}
+    for i, f in enumerate(fields):
+        options = ["（無）"] + list(raw.columns)
+        cur = guess.get(f)
+        sel = cols[i % 3].selectbox(f"{f}（{FIELDS[f][0]}）", options, index=options.index(cur) if cur in options else 0,
+                                    key=f"map_{layout}_{f}")
+        if sel != "（無）":
+            mapping[f] = sel
+    used = list(mapping.values())
+    if len(used) != len(set(used)):
+        st.error("同一個欄位被對應到兩個項目，請修正。")
+        return
+    if layout == "long" and not {"parameter", "value", "wafer_id"} <= set(mapping):
+        st.warning("long 格式至少需要對應 **parameter（量測項目）**、**value（數值）**、**wafer_id（晶圓編號）**。")
+        return
+
+    st.subheader("3. 參數")
+    table = parameter_table(raw, mapping, layout)
+    if saved:
+        prev = {p["source"]: p for p in saved.parameters}
+        for i, r in table.iterrows():
+            if r["source"] in prev:
+                for k in ("name", "unit", "include"):
+                    table.at[i, k] = prev[r["source"]].get(k, r[k])
+    edited = st.data_editor(
+        table, hide_index=True, key=f"params_{layout}_{len(table)}",
+        column_config={
+            "source": st.column_config.TextColumn("原始名稱", disabled=True),
+            "name": st.column_config.TextColumn("名稱（可改名）"),
+            "unit": st.column_config.TextColumn("單位", help="長度單位寫 nm、Å（或 A）、µm（或 um）即可自動換算"),
+            "include": st.column_config.CheckboxColumn("匯入"),
+        })
+    to_nm = st.checkbox("長度單位（Å、µm）自動換算成 nm", value=saved.to_nm if saved else True)
+    st.caption("若要在 SemiYield 的 Yield Prediction 使用，請把良率欄位命名為 `yield`，製程參數可改名為 "
+               "`gate_oxide_thickness`、`poly_cd`、`implant_dose`、`anneal_temp`、`metal_resistance`、"
+               "`contact_resistance`、`etch_rate`、`deposition_unif`、`defect_density`。")
+
+    spec = ImportSpec(layout, mapping, edited.to_dict("records"), to_nm)
+    try:
+        long_df, notes = build_long(raw, spec)
+    except ValueError as exc:
+        st.error(str(exc))
+        return
+    rep = quality_report(long_df, notes)
+
+    st.subheader("4. 檢查報告")
+    sm = rep["summary"]
+    k = st.columns(5)
+    k[0].metric("資料列", f"{sm['rows']:,}")
+    k[1].metric("批 lots", sm["lots"])
+    k[2].metric("晶圓 wafers", sm["wafers"])
+    k[3].metric("參數", sm["parameters"])
+    k[4].metric("每片量測點", f"{sm['sites_per_wafer']:.0f}")
+    st.caption(f"時間範圍：{sm['time_span']}")
+    for issue in rep["issues"]:
+        {"error": st.error, "warning": st.warning, "info": st.info}[issue["level"]](issue["message"])
+    with st.expander("轉換後的標準表格（前 20 列）"):
+        st.dataframe(long_df.head(20), hide_index=True)
+
+    st.subheader("5. 儲存並使用")
+    has_error = any(i["level"] == "error" for i in rep["issues"])
+    c1, c2 = st.columns(2)
+    name = c1.text_input("資料集名稱", value=default_name)
+    keep_profile = c2.checkbox("同時儲存欄位對應設定（profile）", value=True)
+    profile_name = c2.text_input("設定名稱", value=prof if saved else default_name, disabled=not keep_profile)
+    if st.button("儲存並使用", type="primary", disabled=has_error):
+        paths = save_dataset(name, long_df)
+        if keep_profile:
+            save_profile(profile_name, spec)
+        st.session_state["dataset"] = Path(paths["long"]).stem
+        st.success(f"已儲存 `{paths['long'].name}`。左側「資料來源」已切換到這份資料，可到 Wafer map / SPC 頁面分析；"
+                   "SemiYield 的 launcher 也可以載入它。")
+    if has_error:
+        st.caption("請先修正紅色錯誤再儲存。")
 
 
 def page_stack():
@@ -158,6 +318,10 @@ def page_wafer(df):
     st.header("Wafer map & uniformity")
     if df is None:
         return
+    if "x" not in df or df["x"].isna().all():
+        st.info("這份資料沒有量測點座標（每片只有一個值），無法畫晶圓圖。請到 **SPC** 頁面分析。")
+        return
+    df = df[df["x"].notna() & df["y"].notna()]
     param = st.selectbox("Parameter", sorted(df.parameter.unique()))
     sub = df[df.parameter == param]
     wafers = wafer_summary(sub)
@@ -209,10 +373,15 @@ def page_spc(df):
     wafers = wafer_summary(sub)
     stat = st.radio("Statistic", ["mean", "nu_1sigma_pct", "range"], horizontal=True,
                     format_func={"mean": "wafer mean", "nu_1sigma_pct": "within-wafer 1σ %", "range": "range"}.get)
-    group = st.radio("Group by", [c for c in ("chamber_id", "tool_id", "metro_tool_id") if c in wafers], horizontal=True)
+    groups = [c for c in ("chamber_id", "tool_id", "metro_tool_id") if c in wafers]
+    if not groups:
+        wafers["all wafers"] = "all"
+        groups = ["all wafers"]
+    group = st.radio("Group by", groups, horizontal=True)
     ctype = st.radio("Chart", ["IMR", "EWMA", "CUSUM"], horizontal=True, key="chart_type")
     phase1 = st.slider("Phase I points (baseline for limits)", 5, 60, 20)
-    colors = viz.color_map(wafers[group])
+    colors = viz.color_map(wafers[group]) if wafers[group].nunique() <= len(viz.SERIES) else {
+        g: viz.SERIES[0] for g in wafers[group].unique()}
     charts = spc_by_group(wafers, group, stat, ctype, phase1)
     cols = st.columns(2)
     summary = []
@@ -233,8 +402,8 @@ def page_spc(df):
         cols[i % 2].plotly_chart(layout(fig, f"{g}  {ctype}", "time", stat, 320), width="stretch")
         summary.append({group: g, "points": len(ch.statistic), "violations": int(ooc.size), "CL": ch.cl, "σ short-term": ch.sigma})
     st.dataframe(pd.DataFrame(summary).style.format(precision=4), hide_index=True)
-    if stat == "mean" and {"lsl", "usl"} <= set(sub.columns):
-        lsl, usl = float(sub.lsl.iloc[0]), float(sub.usl.iloc[0])
+    if stat == "mean" and {"lsl", "usl"} <= set(sub.columns) and sub.lsl.notna().any() and sub.usl.notna().any():
+        lsl, usl = float(sub.lsl.dropna().median()), float(sub.usl.dropna().median())
         cap = [{group: g, **process_capability(gw["mean"], lsl, usl)} for g, gw in wafers.groupby(group)]
         st.subheader(f"Capability (LSL {lsl}, USL {usl})")
         st.dataframe(pd.DataFrame(cap).style.format(precision=3), hide_index=True)
@@ -315,6 +484,7 @@ def page_studies():
 
 
 PAGES = {
+    "Data import": lambda df: page_import(),
     "Film stack & fit": lambda df: page_stack(),
     "Wafer map": page_wafer,
     "SPC": page_spc,
@@ -323,7 +493,7 @@ PAGES = {
 }
 
 st.sidebar.title("metro-toolkit")
-st.sidebar.caption("Thin-film metrology analysis · synthetic data only")
+st.sidebar.caption("Thin-film metrology analysis · synthetic sample or your own imported data")
 choice = st.sidebar.radio("Page", list(PAGES))
 data = get_data() if choice in ("Wafer map", "SPC") else None
 PAGES[choice](data)

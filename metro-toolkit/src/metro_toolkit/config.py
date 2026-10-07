@@ -4,6 +4,7 @@ Environment variables (keep real data and recipes outside the repository):
     METRO_CONFIG_PATH   directory holding films.yaml / sampling.yaml / limits.yaml
     METRO_DATA_PATH     directory with measurement CSVs (default: data/sample)
     METRO_REPORT_PATH   output directory for generated reports (default: reports)
+    METRO_IMPORT_PATH   imported datasets + mapping profiles (default: data/imported, git-ignored)
 """
 
 from __future__ import annotations
@@ -23,6 +24,13 @@ def config_dir() -> Path:
 
 def data_dir() -> Path:
     return Path(os.environ.get("METRO_DATA_PATH", ROOT / "data" / "sample"))
+
+
+def import_dir() -> Path:
+    """Where imported datasets and mapping profiles are saved. Default data/imported (git-ignored)."""
+    path = Path(os.environ.get("METRO_IMPORT_PATH", ROOT / "data" / "imported"))
+    path.mkdir(parents=True, exist_ok=True)
+    return path
 
 
 def report_dir() -> Path:

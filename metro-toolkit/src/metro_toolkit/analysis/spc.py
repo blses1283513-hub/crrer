@@ -196,7 +196,7 @@ WAFER_KEYS = ["lot_id", "wafer_id", "tool_id", "chamber_id", "parameter"]
 def wafer_summary(df: pd.DataFrame, value: str = "value") -> pd.DataFrame:
     """Collapse site-level rows (standard schema) to one row per wafer."""
     keys = [k for k in WAFER_KEYS if k in df.columns]
-    g = df.groupby(keys, sort=False)
+    g = df.groupby(keys, sort=False, dropna=False)  # keep wafers whose tool/chamber is blank
     out = g.agg(
         timestamp=("timestamp", "min"),
         mean=(value, "mean"),
