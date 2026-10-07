@@ -206,3 +206,25 @@ a-Si,非晶矽,Non-crystalline silicon; higher n and k than c-Si in the visible.
 TiN,氮化鈦,"Metallic barrier/electrode film; Drude-like optics, often measured by XRF.",金屬性阻障層，常以 XRF 量測。,Drude model; XRF; PVD,titanium nitride,07 XRR XRF FTIR Profilometry
 SiGe,矽鍺,Epitaxial alloy where Ge fraction and thickness can correlate in optical fits.,矽鍺磊晶，Ge 比例與厚度易相關。,Epitaxy; Parameter correlation,silicon germanium,02 Process Modules
 Gate oxide,閘極氧化層,Thin dielectric under the gate; capacitance C_ox = ε/t_ox.,閘極下方的薄介電層。,High-k; CTQ,Cox,01 Role and Manufacturing Loop
+EOT,等效氧化層厚度,Thickness of SiO₂ that gives the same capacitance: EOT = 3.9·Σ t_i/κ_i.,換算成二氧化矽的等效厚度。,High-k; Storage capacitance; Gate oxide,Equivalent oxide thickness,08 Film Stack and Dispersion Models
+Storage capacitance,儲存電容,Capacitance of the DRAM cell capacitor; sets the read signal ΔV and retention.,DRAM cell 電容值，決定讀出訊號與資料保存。,EOT; Sense amplifier; Retention time,C_s; Cs; cell capacitance,01 Role and Manufacturing Loop
+ZAZ,ZrO₂/Al₂O₃/ZrO₂ 介電層,"DRAM capacitor dielectric stack: tetragonal ZrO₂ for high κ, thin Al₂O₃ to cut leakage.",高 κ 的 ZrO₂ 夾一層薄 Al₂O₃ 以降低漏電。,High-k; Leakage current density; ALD,ZrO2/Al2O3/ZrO2,08 Film Stack and Dispersion Models
+MIM capacitor,金屬-絕緣層-金屬電容,Capacitor with metal electrodes (TiN) on both sides of a high-k dielectric.,兩側為 TiN 電極的高介電電容。,TiN; ZAZ,MIM; metal-insulator-metal,08 Film Stack and Dispersion Models
+Step coverage,階梯覆蓋率／保形性,Ratio of film thickness at the bottom (or sidewall) of a deep feature to that at the top.,深孔底部與頂部膜厚的比值。,Aspect ratio; Penetration depth (ALD); ALD,conformality; bottom coverage,02 Process Modules
+Aspect ratio,深寬比,Depth divided by width of a feature; DRAM capacitor holes exceed 40:1.,結構深度除以寬度。,Step coverage; OCD,AR; high aspect ratio; HAR,02 Process Modules
+Penetration depth (ALD),穿透深度（ALD）,How deep a saturated ALD film reaches into a high-aspect-ratio feature; scales as √(exposure/GPC) in the Knudsen regime.,ALD 膜可完整覆蓋到的深度。,Step coverage; Knudsen diffusion; GPC,x_PD; saturation profile,02 Process Modules
+Knudsen diffusion,Knudsen 擴散,"Gas transport where molecules hit walls more often than each other, typical inside nanoscale holes.",分子撞壁多於互撞的氣體傳輸。,Penetration depth (ALD); Aspect ratio,Knudsen,02 Process Modules
+Leakage current density,漏電流密度,Current per unit area through a dielectric; DRAM capacitors target below 1e-7 A/cm² at 0.8 V.,單位面積穿過介電層的電流。,Poole–Frenkel; Retention time; EOT,leakage current,18 Excursion Case Studies
+Poole–Frenkel,Poole–Frenkel 傳導,Field-assisted emission of trapped electrons; a bulk leakage mechanism in high-k films.,電場協助陷阱電子跳出的漏電機制。,Leakage current density,Poole-Frenkel,18 Excursion Case Studies
+Retention time,資料保存時間,How long a DRAM cell keeps readable charge before refresh is needed.,cell 在需要更新前能保住資料的時間。,Refresh; Tail bits; Leakage current density,retention,18 Excursion Case Studies
+Refresh,更新,Periodic rewrite of every row; DDR5 uses 32 ms (≤85 °C) or 16 ms (85–95 °C).,定期重寫資料，DDR5 為 32／16 ms。,Retention time,tREF; refresh window,18 Excursion Case Studies
+Tail bits,尾端位元,The small population of cells with abnormally short retention; dominates fail bits.,保存時間特別短的少數 cell，主導失效。,Retention time; VRT,tail cells; weak cells,18 Excursion Case Studies
+Fail bit,失效位元,A cell that reads wrong under test; counted before redundancy repair.,測試時讀錯的位元（修補前）。,Tail bits; Yield,fail bits,18 Excursion Case Studies
+Sense amplifier,感測放大器,Circuit that amplifies the small bit-line signal ΔV to a full logic level.,把位元線的小訊號放大成邏輯準位。,Bit line; Storage capacitance,SA; sense amp,01 Role and Manufacturing Loop
+Bit line,位元線,Line that carries cell charge to the sense amplifier; its capacitance dilutes ΔV.,把 cell 電荷送到感測放大器的導線。,Sense amplifier; Word line,BL,01 Role and Manufacturing Loop
+Word line,字元線,Gate line that opens the access transistor; buried in silicon in modern DRAM.,開啟存取電晶體的閘極線。,Bit line; Gate oxide,WL; BWL; buried word line,01 Role and Manufacturing Loop
+GIDL,閘極引發汲極漏電,Band-to-band tunneling leakage near the gate edge; a main retention-tail mechanism.,閘極邊緣的能帶穿隧漏電。,Tail bits; VRT,Gate-induced drain leakage,18 Excursion Case Studies
+VRT,可變保存時間,Cells whose retention jumps between values as a defect trap switches states.,保存時間隨缺陷狀態跳動的 cell。,Tail bits; GIDL,Variable retention time,18 Excursion Case Studies
+Tetragonal phase,四方相,High-κ (about 38) crystal phase of ZrO₂; the monoclinic phase has κ near 20.,ZrO₂ 的高介電常數晶相。,High-k; Rietveld,tetragonal; t-ZrO2,08 Film Stack and Dispersion Models
+Rietveld,Rietveld 精修,Whole-pattern XRD fitting that quantifies phase fractions.,以全譜擬合 XRD 求各晶相比例。,Tetragonal phase,Rietveld refinement; XRD,07 XRR XRF FTIR Profilometry
+TiOx,氧化鈦介面層,Thin oxide formed on the TiN electrode during ozone-based ZrO₂ ALD.,O₃ ALD 時在 TiN 上形成的氧化層。,Interfacial layer; TiN; ZAZ,TiO2 interfacial layer,08 Film Stack and Dispersion Models

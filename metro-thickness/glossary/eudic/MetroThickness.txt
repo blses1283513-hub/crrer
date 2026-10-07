@@ -619,6 +619,72 @@ SiGe
 Gate oxide
 <div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">Gate oxide</span><span style="font-size:1.05em;margin-left:8px;color:#333">閘極氧化層</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: Cox</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>Thin dielectric under the gate; capacitance C_ox = ε/t_ox.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>閘極下方的薄介電層。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://High-k">High-k</a> · <a href="entry://CTQ">CTQ</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 01 Role and Manufacturing Loop</div></div>
 </>
+EOT
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">EOT</span><span style="font-size:1.05em;margin-left:8px;color:#333">等效氧化層厚度</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: Equivalent oxide thickness</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>Thickness of SiO₂ that gives the same capacitance: EOT = 3.9·Σ t_i/κ_i.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>換算成二氧化矽的等效厚度。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://High-k">High-k</a> · <a href="entry://Storage capacitance">Storage capacitance</a> · <a href="entry://Gate oxide">Gate oxide</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 08 Film Stack and Dispersion Models</div></div>
+</>
+Storage capacitance
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">Storage capacitance</span><span style="font-size:1.05em;margin-left:8px;color:#333">儲存電容</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: C_s, Cs, cell capacitance</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>Capacitance of the DRAM cell capacitor; sets the read signal ΔV and retention.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>DRAM cell 電容值，決定讀出訊號與資料保存。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://EOT">EOT</a> · <a href="entry://Sense amplifier">Sense amplifier</a> · <a href="entry://Retention time">Retention time</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 01 Role and Manufacturing Loop</div></div>
+</>
+ZAZ
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">ZAZ</span><span style="font-size:1.05em;margin-left:8px;color:#333">ZrO₂/Al₂O₃/ZrO₂ 介電層</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: ZrO2/Al2O3/ZrO2</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>DRAM capacitor dielectric stack: tetragonal ZrO₂ for high κ, thin Al₂O₃ to cut leakage.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>高 κ 的 ZrO₂ 夾一層薄 Al₂O₃ 以降低漏電。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://High-k">High-k</a> · <a href="entry://Leakage current density">Leakage current density</a> · <a href="entry://ALD">ALD</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 08 Film Stack and Dispersion Models</div></div>
+</>
+MIM capacitor
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">MIM capacitor</span><span style="font-size:1.05em;margin-left:8px;color:#333">金屬-絕緣層-金屬電容</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: MIM, metal-insulator-metal</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>Capacitor with metal electrodes (TiN) on both sides of a high-k dielectric.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>兩側為 TiN 電極的高介電電容。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://TiN">TiN</a> · <a href="entry://ZAZ">ZAZ</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 08 Film Stack and Dispersion Models</div></div>
+</>
+Step coverage
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">Step coverage</span><span style="font-size:1.05em;margin-left:8px;color:#333">階梯覆蓋率／保形性</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: conformality, bottom coverage</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>Ratio of film thickness at the bottom (or sidewall) of a deep feature to that at the top.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>深孔底部與頂部膜厚的比值。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://Aspect ratio">Aspect ratio</a> · <a href="entry://Penetration depth (ALD)">Penetration depth (ALD)</a> · <a href="entry://ALD">ALD</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 02 Process Modules</div></div>
+</>
+Aspect ratio
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">Aspect ratio</span><span style="font-size:1.05em;margin-left:8px;color:#333">深寬比</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: AR, high aspect ratio, HAR</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>Depth divided by width of a feature; DRAM capacitor holes exceed 40:1.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>結構深度除以寬度。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://Step coverage">Step coverage</a> · <a href="entry://OCD">OCD</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 02 Process Modules</div></div>
+</>
+Penetration depth (ALD)
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">Penetration depth (ALD)</span><span style="font-size:1.05em;margin-left:8px;color:#333">穿透深度（ALD）</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: x_PD, saturation profile</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>How deep a saturated ALD film reaches into a high-aspect-ratio feature; scales as √(exposure/GPC) in the Knudsen regime.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>ALD 膜可完整覆蓋到的深度。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://Step coverage">Step coverage</a> · <a href="entry://Knudsen diffusion">Knudsen diffusion</a> · <a href="entry://GPC">GPC</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 02 Process Modules</div></div>
+</>
+Knudsen diffusion
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">Knudsen diffusion</span><span style="font-size:1.05em;margin-left:8px;color:#333">Knudsen 擴散</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: Knudsen</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>Gas transport where molecules hit walls more often than each other, typical inside nanoscale holes.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>分子撞壁多於互撞的氣體傳輸。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://Penetration depth (ALD)">Penetration depth (ALD)</a> · <a href="entry://Aspect ratio">Aspect ratio</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 02 Process Modules</div></div>
+</>
+Leakage current density
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">Leakage current density</span><span style="font-size:1.05em;margin-left:8px;color:#333">漏電流密度</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: leakage current</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>Current per unit area through a dielectric; DRAM capacitors target below 1e-7 A/cm² at 0.8 V.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>單位面積穿過介電層的電流。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://Poole–Frenkel">Poole–Frenkel</a> · <a href="entry://Retention time">Retention time</a> · <a href="entry://EOT">EOT</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 18 Excursion Case Studies</div></div>
+</>
+Poole–Frenkel
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">Poole–Frenkel</span><span style="font-size:1.05em;margin-left:8px;color:#333">Poole–Frenkel 傳導</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: Poole-Frenkel</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>Field-assisted emission of trapped electrons; a bulk leakage mechanism in high-k films.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>電場協助陷阱電子跳出的漏電機制。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://Leakage current density">Leakage current density</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 18 Excursion Case Studies</div></div>
+</>
+Retention time
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">Retention time</span><span style="font-size:1.05em;margin-left:8px;color:#333">資料保存時間</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: retention</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>How long a DRAM cell keeps readable charge before refresh is needed.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>cell 在需要更新前能保住資料的時間。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://Refresh">Refresh</a> · <a href="entry://Tail bits">Tail bits</a> · <a href="entry://Leakage current density">Leakage current density</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 18 Excursion Case Studies</div></div>
+</>
+Refresh
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">Refresh</span><span style="font-size:1.05em;margin-left:8px;color:#333">更新</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: tREF, refresh window</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>Periodic rewrite of every row; DDR5 uses 32 ms (≤85 °C) or 16 ms (85–95 °C).</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>定期重寫資料，DDR5 為 32／16 ms。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://Retention time">Retention time</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 18 Excursion Case Studies</div></div>
+</>
+Tail bits
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">Tail bits</span><span style="font-size:1.05em;margin-left:8px;color:#333">尾端位元</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: tail cells, weak cells</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>The small population of cells with abnormally short retention; dominates fail bits.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>保存時間特別短的少數 cell，主導失效。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://Retention time">Retention time</a> · <a href="entry://VRT">VRT</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 18 Excursion Case Studies</div></div>
+</>
+Fail bit
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">Fail bit</span><span style="font-size:1.05em;margin-left:8px;color:#333">失效位元</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: fail bits</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>A cell that reads wrong under test; counted before redundancy repair.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>測試時讀錯的位元（修補前）。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://Tail bits">Tail bits</a> · <a href="entry://Yield">Yield</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 18 Excursion Case Studies</div></div>
+</>
+Sense amplifier
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">Sense amplifier</span><span style="font-size:1.05em;margin-left:8px;color:#333">感測放大器</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: SA, sense amp</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>Circuit that amplifies the small bit-line signal ΔV to a full logic level.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>把位元線的小訊號放大成邏輯準位。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://Bit line">Bit line</a> · <a href="entry://Storage capacitance">Storage capacitance</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 01 Role and Manufacturing Loop</div></div>
+</>
+Bit line
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">Bit line</span><span style="font-size:1.05em;margin-left:8px;color:#333">位元線</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: BL</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>Line that carries cell charge to the sense amplifier; its capacitance dilutes ΔV.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>把 cell 電荷送到感測放大器的導線。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://Sense amplifier">Sense amplifier</a> · <a href="entry://Word line">Word line</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 01 Role and Manufacturing Loop</div></div>
+</>
+Word line
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">Word line</span><span style="font-size:1.05em;margin-left:8px;color:#333">字元線</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: WL, BWL, buried word line</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>Gate line that opens the access transistor; buried in silicon in modern DRAM.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>開啟存取電晶體的閘極線。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://Bit line">Bit line</a> · <a href="entry://Gate oxide">Gate oxide</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 01 Role and Manufacturing Loop</div></div>
+</>
+GIDL
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">GIDL</span><span style="font-size:1.05em;margin-left:8px;color:#333">閘極引發汲極漏電</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: Gate-induced drain leakage</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>Band-to-band tunneling leakage near the gate edge; a main retention-tail mechanism.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>閘極邊緣的能帶穿隧漏電。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://Tail bits">Tail bits</a> · <a href="entry://VRT">VRT</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 18 Excursion Case Studies</div></div>
+</>
+VRT
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">VRT</span><span style="font-size:1.05em;margin-left:8px;color:#333">可變保存時間</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: Variable retention time</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>Cells whose retention jumps between values as a defect trap switches states.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>保存時間隨缺陷狀態跳動的 cell。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://Tail bits">Tail bits</a> · <a href="entry://GIDL">GIDL</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 18 Excursion Case Studies</div></div>
+</>
+Tetragonal phase
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">Tetragonal phase</span><span style="font-size:1.05em;margin-left:8px;color:#333">四方相</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: tetragonal, t-ZrO2</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>High-κ (about 38) crystal phase of ZrO₂; the monoclinic phase has κ near 20.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>ZrO₂ 的高介電常數晶相。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://High-k">High-k</a> · <a href="entry://Rietveld">Rietveld</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 08 Film Stack and Dispersion Models</div></div>
+</>
+Rietveld
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">Rietveld</span><span style="font-size:1.05em;margin-left:8px;color:#333">Rietveld 精修</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: Rietveld refinement, XRD</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>Whole-pattern XRD fitting that quantifies phase fractions.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>以全譜擬合 XRD 求各晶相比例。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://Tetragonal phase">Tetragonal phase</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 07 XRR XRF FTIR Profilometry</div></div>
+</>
+TiOx
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">TiOx</span><span style="font-size:1.05em;margin-left:8px;color:#333">氧化鈦介面層</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: TiO2 interfacial layer</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>Thin oxide formed on the TiN electrode during ozone-based ZrO₂ ALD.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>O₃ ALD 時在 TiN 上形成的氧化層。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://Interfacial layer">Interfacial layer</a> · <a href="entry://TiN">TiN</a> · <a href="entry://ZAZ">ZAZ</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 08 Film Stack and Dispersion Models</div></div>
+</>
 Metro
 @@@LINK=Metrology
 </>
@@ -1233,4 +1299,112 @@ silicon germanium
 </>
 Cox
 @@@LINK=Gate oxide
+</>
+Equivalent oxide thickness
+@@@LINK=EOT
+</>
+C_s
+@@@LINK=Storage capacitance
+</>
+Cs
+@@@LINK=Storage capacitance
+</>
+cell capacitance
+@@@LINK=Storage capacitance
+</>
+ZrO2/Al2O3/ZrO2
+@@@LINK=ZAZ
+</>
+MIM
+@@@LINK=MIM capacitor
+</>
+metal-insulator-metal
+@@@LINK=MIM capacitor
+</>
+conformality
+@@@LINK=Step coverage
+</>
+bottom coverage
+@@@LINK=Step coverage
+</>
+AR
+@@@LINK=Aspect ratio
+</>
+high aspect ratio
+@@@LINK=Aspect ratio
+</>
+HAR
+@@@LINK=Aspect ratio
+</>
+x_PD
+@@@LINK=Penetration depth (ALD)
+</>
+saturation profile
+@@@LINK=Penetration depth (ALD)
+</>
+Knudsen
+@@@LINK=Knudsen diffusion
+</>
+leakage current
+@@@LINK=Leakage current density
+</>
+Poole-Frenkel
+@@@LINK=Poole–Frenkel
+</>
+retention
+@@@LINK=Retention time
+</>
+tREF
+@@@LINK=Refresh
+</>
+refresh window
+@@@LINK=Refresh
+</>
+tail cells
+@@@LINK=Tail bits
+</>
+weak cells
+@@@LINK=Tail bits
+</>
+fail bits
+@@@LINK=Fail bit
+</>
+SA
+@@@LINK=Sense amplifier
+</>
+sense amp
+@@@LINK=Sense amplifier
+</>
+BL
+@@@LINK=Bit line
+</>
+WL
+@@@LINK=Word line
+</>
+BWL
+@@@LINK=Word line
+</>
+buried word line
+@@@LINK=Word line
+</>
+Gate-induced drain leakage
+@@@LINK=GIDL
+</>
+Variable retention time
+@@@LINK=VRT
+</>
+tetragonal
+@@@LINK=Tetragonal phase
+</>
+t-ZrO2
+@@@LINK=Tetragonal phase
+</>
+Rietveld refinement
+@@@LINK=Rietveld
+</>
+XRD
+@@@LINK=Rietveld
+</>
+TiO2 interfacial layer
+@@@LINK=TiOx
 </>

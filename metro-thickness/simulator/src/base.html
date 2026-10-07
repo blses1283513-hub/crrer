@@ -1,0 +1,1558 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>DRAM Metro Simulator</title>
+<style>/* DRAM Metro Simulator — design tokens (from DRAM Operation Atlas) + layout. */
+
+  :root{
+    --bg:#EFF1F3;
+    --surface:#FFFFFF;
+    --surface-2:#E4E7EB;
+    --surface-3:#F6F7F9;
+    --text:#14171C;
+    --text-dim:#59616E;
+    --text-faint:#858D9A;
+    --border:#CFD4DB;
+    --border-soft:#E2E6EA;
+    --accent:#2A5D7C;
+    --accent-soft:#2A5D7C14;
+
+    --elec:#2F6FB0;
+    --sig:#B5555B;
+    --leak:#C2622E;
+    --ok:#3F7A52;
+
+    --m-si:#C3C9D6;    --m-si-ln:#7A8397;
+    --m-ox:#8CC8D9;    --m-ox-ln:#3E7E93;
+    --m-nit:#A3C99B;   --m-nit-ln:#4F7D47;
+    --m-poly:#BCA6D8;  --m-poly-ln:#6E5596;
+    --m-met:#ADB3BD;   --m-met-ln:#6B727E;
+    --m-met2:#8E949E;
+    --m-hik:#E9C46A;   --m-hik-ln:#A8842A;
+    --m-cu:#E08E5A;    --m-cu-ln:#A85F2E;
+    --m-dop:#E39190;   --m-dop-ln:#A65150;
+
+    --shadow:0 1px 2px rgba(16,20,26,.05), 0 6px 20px rgba(16,20,26,.06);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme:dark;
+      --bg:#0F1216; --surface:#171B21; --surface-2:#1F242B; --surface-3:#13171C;
+      --text:#E6E9ED; --text-dim:#98A2B0; --text-faint:#6E7886;
+      --border:#2C333C; --border-soft:#242A32;
+      --accent:#6FB4D8; --accent-soft:#6FB4D81F;
+
+      --elec:#7FB6E8;
+      --sig:#E39190;
+      --leak:#E3A06A;
+      --ok:#77BC8E;
+
+      --m-si:#4A5364;    --m-si-ln:#8D97A8;
+      --m-ox:#3F7F94;    --m-ox-ln:#8FCEE0;
+      --m-nit:#4E7C47;   --m-nit-ln:#9FCB97;
+      --m-poly:#6B5194;  --m-poly-ln:#BFA9DB;
+      --m-met:#6A717D;   --m-met-ln:#B2B8C2;
+      --m-met2:#878E99;
+      --m-hik:#A8842A;   --m-hik-ln:#EBCA79;
+      --m-cu:#A25C2C;    --m-cu-ln:#E39A6A;
+      --m-dop:#A85455;   --m-dop-ln:#E79695;
+
+      --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 26px rgba(0,0,0,.42);
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme:dark;
+    --bg:#0F1216; --surface:#171B21; --surface-2:#1F242B; --surface-3:#13171C;
+    --text:#E6E9ED; --text-dim:#98A2B0; --text-faint:#6E7886;
+    --border:#2C333C; --border-soft:#242A32;
+    --accent:#6FB4D8; --accent-soft:#6FB4D81F;
+    --elec:#7FB6E8; --sig:#E39190; --leak:#E3A06A; --ok:#77BC8E;
+    --m-si:#4A5364;    --m-si-ln:#8D97A8;
+    --m-ox:#3F7F94;    --m-ox-ln:#8FCEE0;
+    --m-nit:#4E7C47;   --m-nit-ln:#9FCB97;
+    --m-poly:#6B5194;  --m-poly-ln:#BFA9DB;
+    --m-met:#6A717D;   --m-met-ln:#B2B8C2;
+    --m-met2:#878E99;
+    --m-hik:#A8842A;   --m-hik-ln:#EBCA79;
+    --m-cu:#A25C2C;    --m-cu-ln:#E39A6A;
+    --m-dop:#A85455;   --m-dop-ln:#E79695;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 26px rgba(0,0,0,.42);
+  }
+
+  
+  /* ---------- DRAM Metro Simulator layout (tokens above copied from DRAM Operation Atlas) ---------- */
+  :root{ --ff:'Microsoft JhengHei','PingFang TC','Noto Sans TC',-apple-system,'Segoe UI',sans-serif;
+         --fm:Consolas,'JetBrains Mono','Cascadia Mono',ui-monospace,monospace;
+         --good:var(--ok); --bad:var(--sig); }
+  *{box-sizing:border-box;}
+  body{margin:0;}
+  body{background:var(--bg);color:var(--text);font-family:var(--ff);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1200px;margin:0 auto;padding:0 16px;}
+  main.wrap{display:flex;flex-direction:column;gap:22px;padding-bottom:60px;}
+  h1,h2,h3{font-weight:700;line-height:1.3;}
+  .en{font-family:var(--fm);font-size:.72em;color:var(--text-faint);font-weight:400;}
+  .mono{font-family:var(--fm);}
+
+  #banner{position:sticky;top:env(safe-area-inset-top, 0px);z-index:30;background:color-mix(in srgb,var(--leak) 18%,var(--surface));border-bottom:1px solid var(--leak);
+    color:var(--text);padding:7px 16px;font-size:.86rem;text-align:center;font-weight:700;}
+  .masthead{padding-top:22px;padding-bottom:10px;}
+  .masthead h1{font-size:1.55rem;margin:0 0 6px;text-wrap:balance;}
+  .masthead .lede{margin:0 0 12px;color:var(--text-dim);max-width:78ch;font-size:.92rem;}
+  #controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+  select,button,input[type=number]{font:inherit;font-size:.85rem;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:3px;padding:5px 9px;}
+  button{cursor:pointer;}
+  button:hover{border-color:var(--accent);}
+  button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
+  button.on{background:var(--accent);color:var(--surface);border-color:var(--accent);}
+  .seg{display:inline-flex;border:1px solid var(--border);border-radius:3px;overflow:hidden;}
+  .seg button{border:none;border-radius:0;border-right:1px solid var(--border);}
+  .seg button:last-child{border-right:none;}
+  .note{font-size:.8rem;color:var(--text-faint);}
+
+  /* causal chain */
+  #chain{position:sticky;top:env(safe-area-inset-top, 0px);z-index:20;background:var(--surface-2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);box-shadow:var(--shadow);margin-bottom:18px;}
+  body.has-banner #chain{top:calc(36px + env(safe-area-inset-top, 0px));}
+  .chain{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:0;max-width:1200px;margin:0 auto;}
+  .cc{padding:7px 12px;border-left:1px solid var(--border);min-width:0;}
+  .cc:first-child{border-left:none;}
+  .cc .k{display:block;font-size:.68rem;color:var(--text-faint);letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .cc .v{font-family:var(--fm);font-size:.95rem;font-weight:700;white-space:nowrap;}
+  .cc .u{font-family:var(--fm);font-size:.7rem;color:var(--text-dim);margin-left:3px;}
+  .cc .d{display:block;font-family:var(--fm);font-size:.72rem;min-height:1em;}
+  .cc .d.bad{color:var(--bad);} .cc .d.good{color:var(--good);}
+  .cc.alarm{background:color-mix(in srgb,var(--sig) 14%,transparent);}
+  .cc.alarm .v{color:var(--sig);font-size:.8rem;white-space:normal;}
+
+  [hidden]{display:none !important;}
+  /* panels */
+  .panel{scroll-margin-top:96px;background:var(--surface);border:1px solid var(--border);border-radius:4px;box-shadow:var(--shadow);padding:18px 20px;}
+  .panel > h2{font-size:1.18rem;margin:0 0 4px;}
+  .panel > .sub{margin:0 0 14px;color:var(--text-dim);font-size:.88rem;max-width:90ch;}
+  .grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;}
+  .grid-m6{display:grid;grid-template-columns:minmax(0,260px) minmax(0,1fr);gap:18px;}
+  @media (max-width:900px){ .grid2,.grid-m6{grid-template-columns:minmax(0,1fr);} }
+  .card{background:var(--surface-3);border:1px solid var(--border-soft);border-radius:3px;padding:12px 14px;}
+  .card h3{font-size:.95rem;margin:0 0 8px;}
+  .card + .card{margin-top:12px;}
+  .warn{border-left:3px solid var(--sig);background:color-mix(in srgb,var(--sig) 9%,transparent);padding:8px 12px;border-radius:0 3px 3px 0;font-size:.85rem;margin:10px 0;}
+  .info{border-left:3px solid var(--accent);background:var(--accent-soft);padding:8px 12px;border-radius:0 3px 3px 0;font-size:.85rem;margin:10px 0;}
+  h4.grp{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);font-family:var(--fm);margin:4px 0 6px;font-weight:500;}
+
+  /* sliders */
+  .slider{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"lab num" "rng rng";gap:0 10px;padding:6px 0;border-bottom:1px dashed var(--border-soft);}
+  .slider .lab{grid-area:lab;font-size:.84rem;}
+  .slider .num{grid-area:num;font-family:var(--fm);font-size:.82rem;white-space:nowrap;}
+  .slider .unit{color:var(--text-faint);font-size:.75rem;}
+  .slider input[type=range]{grid-area:rng;width:100%;accent-color:var(--accent);margin:4px 0 0;}
+  .slider.ro{opacity:.8;grid-template-areas:"lab num";}
+  .slider.ro .lab::after{content:'（固定值）';font-size:.72rem;color:var(--text-faint);margin-left:4px;}
+  .badge{display:inline-block;font-size:.72rem;line-height:1;margin-left:2px;cursor:help;vertical-align:1px;}
+  .badge.t-derived{font-size:.64rem;border:1px solid var(--border);border-radius:2px;padding:1px 3px;color:var(--text-dim);font-family:var(--fm);}
+
+  /* readouts */
+  .kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;}
+  .kv > div{background:var(--surface-3);border:1px solid var(--border-soft);border-radius:3px;padding:7px 10px;}
+  .kv .k{display:block;font-size:.72rem;color:var(--text-faint);}
+  .kv .v{font-family:var(--fm);font-weight:700;font-size:.95rem;}
+  .kv .v2{display:block;font-family:var(--fm);font-size:.74rem;color:var(--sig);}
+  svg{display:block;width:100%;height:auto;}
+  .figcap{font-size:.8rem;color:var(--text-faint);margin:6px 0 0;}
+  details{margin-top:12px;}
+  details summary{cursor:pointer;font-size:.86rem;color:var(--accent);}
+  table.f{width:100%;border-collapse:collapse;font-size:.8rem;margin-top:8px;}
+  table.f td,table.f th{border-bottom:1px solid var(--border-soft);padding:5px 7px;text-align:left;vertical-align:top;}
+  table.f td.m{font-family:var(--fm);}
+
+  /* M6 */
+  .mlist{display:flex;flex-direction:column;gap:6px;}
+  .mlist button{text-align:left;display:flex;justify-content:space-between;gap:8px;align-items:center;padding:7px 10px;}
+  .mlist button .mz{font-size:.86rem;}
+  .chip{font-size:.66rem;border:1px solid currentColor;border-radius:2px;padding:1px 5px;white-space:nowrap;font-family:var(--fm);}
+  .chip.quant{color:var(--ok);} .chip.semi{color:var(--leak);} .chip.qual{color:var(--text-faint);}
+  .band{white-space:nowrap;display:inline-block;font-weight:700;padding:1px 6px;border-radius:2px;color:var(--surface);font-family:var(--fm);font-size:.78rem;}
+  .band.good{background:var(--ok);} .band.marginal{background:var(--leak);} .band.reject{background:var(--sig);} .band.na{background:var(--text-faint);}
+  .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:6px 0;}
+  .row label{font-size:.84rem;display:inline-flex;gap:6px;align-items:center;}
+  .row input[type=number]{width:96px;font-family:var(--fm);}
+  .scen{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
+
+  /* M2 */
+  .m2-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:18px;}
+  @media (max-width:900px){ .m2-grid{grid-template-columns:minmax(0,1fr);} }
+  .m2-tgt{cursor:pointer;}
+  @media (max-width:700px){ .svgscroll{overflow-x:auto;} .svgscroll svg{min-width:620px;} }
+  .m2-tgt.hl > *{stroke:var(--sig) !important;stroke-width:2.6 !important;}
+  ol.corr{margin:0;padding-left:20px;font-size:.84rem;display:flex;flex-direction:column;gap:6px;}
+  ol.corr .tc{font-family:var(--fm);font-size:.72rem;color:var(--text-faint);}
+  footer.panel p{font-size:.84rem;color:var(--text-dim);margin:6px 0;}
+  @media (prefers-reduced-motion: reduce){ *{animation:none !important;transition:none !important;} }
+</style>
+<div id="banner" hidden></div>
+<header class="wrap masthead">
+  <h1>DRAM Metro Simulator：量測偏移 → 電子 → fail bit</h1>
+  <p class="lede">一階物理模型＋製程變異層。預設值由公開資料推算（Micron 1β 級 16 Gb DDR5），每個參數標示來源等級（🟢 公開規格・🟡 Micron 逆向工程・🟠 他廠／通用文獻・🔴 查無公開資料）；所有數值可調。數量級示意，非任何公司規格。</p>
+  <div id="controls"></div>
+</header>
+<nav id="chain" aria-label="因果鏈"></nav>
+<main class="wrap">
+  <section id="m6" class="panel" aria-labelledby="h-m6"></section>
+  <section id="m2" class="panel" aria-labelledby="h-m2"></section>
+  <section id="m4" class="panel" aria-labelledby="h-m4"></section>
+  <section id="m5" class="panel" aria-labelledby="h-m5"></section>
+  <footer id="foot" class="panel"></footer>
+</main>
+<script>window.DMS_ARTIFACT = true;
+/* ---- params.js ---- */
+/* DRAM Metro Simulator — parameter data (spec §6). */
+(function (root) {
+  'use strict';
+  const DEFAULTS = {
+    // 6.1 structure & dielectric
+    cellArea_nm2: 1330, shape: 'cylinder', D_nm: 25, w_nm: 3, H_nm: 1200,
+    tZ_nm: 6.0, tA_nm: 0.5, kT: 38, kM: 20, kA: 9, fT: 0.90,
+    // 6.2 array, voltage, sensing
+    nCellPerBL: 1024, cCell_fF: 30 / 1024, CSA_fF: 5,
+    VDD: 1.1, VPP: 1.8, VARY: 0.9, VNWL: -0.3,
+    sigOff_mV: 8, noise_mV: 10, nGuard: 4,
+    // 6.3 access transistor & leakage
+    Vt: 0.68, S_mVdec: 76, sigVt0_mV: 25, fSub: 0.3, kCD_mVnm: 20, kTox_mVA: 15,
+    // 6.4 retention & temperature
+    tMain45_s: 40, sigM0: 0.5, fD: 1e-5, sigD: 1.0, anchorFrac: 1e-8,
+    rMain: 0.61, rTail: 0.535, T_C: 85, tREFmode: 'auto', tREF_ms: 32,
+    Nchip: 17179869184,
+    // 6.5 metrology (sObs = observed sigma, sMeas = gauge sigma, specHalf = half spec window)
+    tmuOn: true,
+    meas: {
+      capH:    { sObs: Math.hypot(12, 3),       sMeas: 3,        specHalf: 36 },
+      capD:    { sObs: Math.hypot(0.5, 0.1),    sMeas: 0.1,      specHalf: 1.0 },
+      tZ:      { sObs: Math.hypot(0.05, 0.015), sMeas: 0.015,    specHalf: 0.2 },
+      phase:   { sObs: Math.hypot(0.02, 0.01),  sMeas: 0.01,     specHalf: 0.05 },
+      tox:     { sObs: Math.hypot(0.5, 0.1),    sMeas: 0.1,      specHalf: 2 },
+      wlcd:    { sObs: Math.hypot(0.5, 0.1),    sMeas: 0.1,      specHalf: 1.0 },
+      overlay: { sObs: 0.4,                     sMeas: 0.32 / 3, specHalf: 2 },
+      contact: { sObs: 0,                       sMeas: 0,        specHalf: 0 },
+    },
+  };
+  const G = 'green', Y = 'yellow', O = 'orange', R = 'red';
+  const PARAM_DEFS = [
+    // structure & dielectric (spec §6.1)
+    { key: 'cellArea_nm2', group: 'struct', zh: 'cell 面積', en: 'cell area', unit: 'nm²', min: 900, max: 2100, step: 10, tier: Y, src: 'TechInsights：Micron 1β 0.00133 µm²（1α 1672、1z ≈2000）' },
+    { key: 'D_nm', group: 'struct', zh: '電容外徑', en: 'capacitor outer CD', unit: 'nm', min: 15, max: 35, step: 0.5, tier: R, src: '取六角節距約 0.64 倍（推算）；Micron 未公開' },
+    { key: 'w_nm', group: 'struct', zh: '電極壁厚', en: 'electrode wall', unit: 'nm', min: 1, max: 5, step: 0.1, tier: R, src: '示意' },
+    { key: 'H_nm', group: 'struct', zh: '電容高度', en: 'capacitor height', unit: 'nm', min: 600, max: 2500, step: 10, tier: O, src: '通用「≈1 µm」（SemiAnalysis、TechInsights 通用值）' },
+    { key: 'tZ_nm', group: 'struct', zh: 'ZrO₂ 厚度', en: 'ZrO₂ thickness', unit: 'nm', min: 4, max: 8, step: 0.05, tier: O, src: 'TechInsights（通用）：high-k 6–7 nm' },
+    { key: 'tA_nm', group: 'struct', zh: 'Al₂O₃ 厚度', en: 'Al₂O₃ thickness', unit: 'nm', min: 0, max: 1.5, step: 0.05, tier: R, src: '示意；ZAZ 最薄 5.2 nm（🟠）' },
+    { key: 'kT', group: 'struct', zh: 'κ 四方相 ZrO₂', en: 'κ tetragonal', unit: '', min: 28, max: 47, step: 0.5, tier: O, src: '薄膜量測 30–40，理論 46.6' },
+    { key: 'kM', group: 'struct', zh: 'κ 單斜相 ZrO₂', en: 'κ monoclinic', unit: '', min: 16, max: 24, step: 0.5, tier: O, src: '≈20' },
+    { key: 'kA', group: 'struct', zh: 'κ Al₂O₃', en: 'κ Al₂O₃', unit: '', min: 8, max: 10, step: 0.1, tier: O, src: '≈9' },
+    { key: 'fT', group: 'struct', zh: '四方相比例', en: 'tetragonal fraction', unit: '', min: 0, max: 1, step: 0.01, tier: R, src: '示意；對應 XRD／Rietveld 相比例' },
+    // array, voltage, sensing (spec §6.2)
+    { key: 'nCellPerBL', group: 'array', zh: '每條 BL cell 數', en: 'cells per bit line', unit: '', min: 256, max: 1024, step: 64, tier: O, src: '逆向工程：Micron 16 Gb 子陣列 1024 列' },
+    { key: 'cCell_fF', group: 'array', zh: '每 cell 的 BL 電容', en: 'BL cap per cell', unit: 'fF', min: 0.01, max: 0.08, step: 0.001, tier: R, src: '由 C_BL 35 fF（🟠 SemiAnalysis）扣 C_SA 後平均' },
+    { key: 'CSA_fF', group: 'array', zh: 'sense amp 負載', en: 'SA loading', unit: 'fF', min: 0, max: 15, step: 0.5, tier: R, src: '示意' },
+    { key: 'VDD', group: 'array', zh: 'V_DD', en: 'supply', unit: 'V', min: 1.1, max: 1.1, step: 0.01, tier: G, src: 'Micron DDR5 datasheet（1.067–1.166 V）', readonly: true },
+    { key: 'VPP', group: 'array', zh: 'V_PP（外部）', en: 'external VPP', unit: 'V', min: 1.8, max: 1.8, step: 0.01, tier: G, src: 'Micron DDR5 datasheet；片上字元線高位準未公開', readonly: true },
+    { key: 'VARY', group: 'array', zh: 'V_ARY 陣列電壓', en: 'array voltage', unit: 'V', min: 0.7, max: 1.1, step: 0.01, tier: R, src: '未公開；低電壓 BLSA 論文用 0.8–0.9 V（🟠）作情境值' },
+    { key: 'VNWL', group: 'array', zh: 'V_NWL 負字元線', en: 'negative WL', unit: 'V', min: -0.3, max: -0.3, step: 0.01, tier: O, src: '他廠專利；僅顯示', readonly: true },
+    { key: 'sigOff_mV', group: 'array', zh: 'SA offset σ', en: 'sense-amp offset σ', unit: 'mV', min: 2, max: 30, step: 0.5, tier: O, src: '有補償 3–12 mV；無補償 ≈24 mV（SK hynix 共同作者模型）' },
+    { key: 'noise_mV', group: 'array', zh: '雜訊', en: 'noise', unit: 'mV', min: 0, max: 30, step: 0.5, tier: R, src: '示意' },
+    { key: 'nGuard', group: 'array', zh: '感測保護帶', en: 'guard band', unit: 'σ', min: 2, max: 6, step: 0.5, tier: R, src: '示意' },
+    // transistor & leakage (spec §6.3)
+    { key: 'Vt', group: 'transistor', zh: 'V_t', en: 'threshold', unit: 'V', min: 0.68, max: 0.68, step: 0.01, tier: O, src: 'BCAT TCAD 0.65–0.7 V；僅顯示', readonly: true },
+    { key: 'S_mVdec', group: 'transistor', zh: '次臨界斜率 S', en: 'subthreshold swing', unit: 'mV/dec', min: 60, max: 100, step: 1, tier: O, src: 'BCAT TCAD 76 mV/dec' },
+    { key: 'sigVt0_mV', group: 'transistor', zh: 'σ_Vt 基底', en: 'σVt base', unit: 'mV', min: 5, max: 100, step: 1, tier: R, src: '現代值未公開；舊溝槽式文獻 38–100 mV' },
+    { key: 'fSub', group: 'transistor', zh: '次臨界漏電占比', en: 'subthreshold share', unit: '', min: 0, max: 1, step: 0.05, tier: R, src: '示意' },
+    { key: 'kCD_mVnm', group: 'transistor', zh: 'k_CD（WL CD→V_t）', en: 'Vt per WL CD', unit: 'mV/nm', min: 0, max: 60, step: 1, tier: R, src: '示意' },
+    { key: 'kTox_mVA', group: 'transistor', zh: 'k_tox（t_ox→V_t）', en: 'Vt per tox', unit: 'mV/Å', min: 0, max: 50, step: 1, tier: R, src: '示意' },
+    // retention & temperature (spec §6.4)
+    { key: 'tMain45_s', group: 'retention', zh: '主群體中位數（45 °C）', en: 'main median @45°C', unit: 's', min: 5, max: 200, step: 1, tier: O, src: 'Liu et al. ISCA 2013：主群體 >40 s' },
+    { key: 'sigM0', group: 'retention', zh: '主群體 σ（ln）', en: 'main σ(ln)', unit: '', min: 0.1, max: 1.5, step: 0.05, tier: R, src: '示意' },
+    { key: 'fD', group: 'retention', zh: '尾端占比', en: 'tail fraction', unit: '', min: 1e-7, max: 1e-3, step: 1e-7, tier: R, src: '示意，與錨點一起校準', log: true },
+    { key: 'sigD', group: 'retention', zh: '尾端 σ（ln）', en: 'tail σ(ln)', unit: '', min: 0.3, max: 2, step: 0.05, tier: R, src: '示意' },
+    { key: 'anchorFrac', group: 'retention', zh: '45 °C 下 <256 ms 的 cell 比例', en: 'weak-cell anchor', unit: '', min: 1e-10, max: 1e-6, step: 1e-10, tier: O, src: 'RAIDR：>10¹¹ 顆中 <1000 顆', log: true },
+    { key: 'rMain', group: 'retention', zh: '主群體每 +10 °C 乘數', en: 'main per +10°C', unit: '×', min: 0.3, max: 0.9, step: 0.005, tier: O, src: 'Liu 2013：−39%' },
+    { key: 'rTail', group: 'retention', zh: '尾端每 +10 °C 乘數', en: 'tail per +10°C', unit: '×', min: 0.3, max: 0.9, step: 0.005, tier: O, src: 'Liu 2013：−46.5%' },
+    { key: 'T_C', group: 'retention', zh: '操作溫度', en: 'temperature', unit: '°C', min: 25, max: 95, step: 1, tier: G, src: 'DDR5 一般溫度範圍 0–95 °C；>85 °C refresh 減半' },
+    { key: 'tREF_ms', group: 'retention', zh: 'refresh window（手動）', en: 'refresh window', unit: 'ms', min: 8, max: 128, step: 1, tier: G, src: 'Micron DDR5：≤85 °C 32 ms、85–95 °C 16 ms' },
+  ];
+
+  // refs: Atlas figure numbers and book pages, from 03-Crosslink-Map.md §2 and §4.
+  const MEASURANDS = {
+    capH: { zh: '電容高度（深度）', en: 'capacitor height', param: 'H_nm', unit: 'nm', mode: 'quant', platform: 'OCD scatterometry', reference: 'TEM 剖面', measures: '反射光譜；高度由幾何模型擬合得出，不是直接量到的長度', m2: 'cap', effect: 'A↓ → C_s↓ → ΔV↓、retention↓', refs: { atlas: [1, 3, 6], book: ['A p.51 Fig 2-32', 'A Fig 2-35(b)', 'B p.181 Fig 3.15(b)'] } },
+    capD: { zh: '電容外徑 CD', en: 'capacitor CD', param: 'D_nm', unit: 'nm', mode: 'quant', platform: 'CD-SEM／OCD', reference: 'TEM／CD-AFM', measures: '二次電子影像的邊緣；CD 由演算法的邊緣閾值定義', m2: 'cap', effect: 'A↓ → C_s↓；過細則有傾倒風險（定性）', refs: { atlas: [1, 6], book: ['A Fig 2-36', 'A Fig 2-37', 'B p.184 Fig 3.18'] } },
+    tZ: { zh: 'ZrO₂ 厚度', en: 'ZrO₂ thickness', param: 'tZ_nm', unit: 'nm', mode: 'quant', platform: 'XRR／橢圓偏光', reference: 'TEM／TEM-EELS', measures: 'X 光反射率振盪（Kiessig fringes）或偏振變化；厚度由模型擬合', m2: 'hik', effect: '厚 → EOT↑ → C_s↓；薄 → 漏電↑（v1 未模擬漏電）', refs: { atlas: [3, 6], book: ['B p.184', 'B p.187 Table 3.3'] } },
+    phase: { zh: 'high-k 四方相比例', en: 'tetragonal fraction', param: 'fT', unit: '', mode: 'quant', platform: 'XRD（Rietveld 精修）', reference: 'TEM 電子繞射', measures: '繞射峰位置與強度；相比例由 Rietveld 精修擬合——你的專長', m2: 'hik', effect: '四方相↓ → κ↓ → EOT↑ → C_s↓', refs: { atlas: [6], book: ['A p.58 Fig 2-38', 'B p.185 Fig 3.19', 'B p.188 Fig 3.20'] } },
+    tox: { zh: '閘極氧化層 t_ox', en: 'gate oxide', param: null, unit: 'Å', mode: 'semi', platform: '橢圓偏光', reference: 'TEM', measures: '偏振態變化；厚度由光學模型擬合', m2: 'gox', effect: 'σ_tox → σ_Vt → 主群體漏電變寬（影響極小：尾端主導）', refs: { atlas: [4], book: ['B Fig 3.21', 'B p.211 Fig 3.30'] } },
+    wlcd: { zh: '字元線 CD', en: 'word line CD', param: null, unit: 'nm', mode: 'semi', platform: 'CD-SEM／OCD', reference: 'CD-AFM／TEM', measures: '影像邊緣或光譜擬合', m2: 'bwl', effect: 'σ_CD → σ_Vt → 主群體漏電變寬（影響極小：尾端主導）', refs: { atlas: [4, 5], book: ['B Fig 3.21', 'B p.211 Fig 3.30', 'B Fig 3.22'] } },
+    overlay: { zh: '儲存節點接觸對位', en: 'SNC overlay', param: null, unit: 'nm', mode: 'qual', platform: 'overlay metrology（IBO／DBO）', reference: 'SEM 疊對', measures: '疊對標記的相對位移，不是元件本身', m2: 'snc', effect: '接觸面積↓ → 電阻↑ → 電荷分享不完全、漏電路徑（v1 僅文字說明）', refs: { atlas: [6], book: ['A Fig 2-35（附近本文）', 'B p.184 Fig 3.18'] } },
+    contact: { zh: '接觸開路／短路', en: 'contact open/short', param: null, unit: '', mode: 'qual', platform: 'e-beam voltage contrast', reference: '電性 WAT／FA', measures: '電子束充電造成的亮暗對比', m2: 'blc', effect: '失效簽名：整條 BL 或成對位元失效（v1 僅文字說明）', refs: { atlas: [1, 6], book: ['A p.48 Fig 2-30(c)'] } },
+  };
+
+  const PRESETS = [
+    { id: 'micron1b', name: 'Micron 1β 級 16 Gb DDR5（公開資料推算）', patch: {} },
+    { id: 'noOffComp', name: '無 offset 補償（σ_offset 24 mV）', patch: { sigOff_mV: 24 } },
+    { id: 'pillar', name: '實心柱電容（H 2100 nm）', patch: { shape: 'pillar', H_nm: 2100 } },
+  ];
+
+  const SCENARIOS = [
+    { id: 'newToolDepth', name: '新機台 OCD 電容深度讀值 −2%', desc: '若這是真實製程偏移，後果如下。但新機台先要懷疑的是機台本身：做完 tool-to-tool matching 之前，−2% 可能只是量測偏差，實際什麼都沒變。', patch: {}, drift: { key: 'capH', meanShift: -2, shiftUnit: '%', sigmaScale: 1 }, select: 'capH' },
+    { id: 'annealLow', name: 'high-k 退火不足：四方相比例 0.90 → 0.70', desc: '相比例下降讓 κ 下降、EOT 上升、C_s 下降，retention 尾端跟著左移。這是 XRD／Rietveld 直接能看到的量。', patch: {}, drift: { key: 'phase', meanShift: -0.20, shiftUnit: 'abs', sigmaScale: 1 }, select: 'phase' },
+    { id: 'hot95', name: '95 °C 仍用 32 ms refresh（未依規定減半）', desc: 'JEDEC 規定 85 °C 以上 refresh window 減半為 16 ms。不減半時，尾端 cell 大量越過窗口。', patch: { T_C: 95, tREFmode: 'manual', tREF_ms: 32 }, drift: null, select: 'capH' },
+    { id: 'badGauge', name: '新機台 OCD 精度差：σ_meas 3 → 10 nm', desc: '製程沒變，但量測雜訊變大，觀測到的 σ 跟著變大、Cpk 看起來變差。沒有扣除量測雜訊，就會去調一個其實沒問題的製程。', patch: {}, measPatch: { capH: { sObs: Math.hypot(12, 10), sMeas: 10, specHalf: 36 } }, drift: null, select: 'capH' },
+  ];
+
+  const api = { DEFAULTS, PARAM_DEFS, MEASURANDS, PRESETS, SCENARIOS };
+  root.DMS = root.DMS || {};
+  root.DMS.params = api;
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+
+/* ---- engine.js ---- */
+/* DRAM Metro Simulator — physics engine (pure functions, no DOM). Spec §5. */
+(function (root) {
+  'use strict';
+  const Q = 1.602176634e-19;     // C
+  const EPS0 = 8.8541878128e-12; // F/m
+  const LN10 = Math.LN10;
+
+  // Numerical Recipes erfcc: fractional error < 1.2e-7 for all x.
+  function erfc(x) {
+    const z = Math.abs(x);
+    const t = 1 / (1 + 0.5 * z);
+    const r = t * Math.exp(-z * z - 1.26551223 + t * (1.00002368 + t * (0.37409196 +
+      t * (0.09678418 + t * (-0.18628806 + t * (0.27886807 + t * (-1.13520398 +
+      t * (1.48851587 + t * (-0.82215223 + t * 0.17087277)))))))));
+    return x >= 0 ? r : 2 - r;
+  }
+  const Phi = (z) => 0.5 * erfc(-z / Math.SQRT2);
+
+  // Acklam's inverse normal CDF, relative error < 1.15e-9.
+  function normInv(p) {
+    if (!(p > 0 && p < 1)) return p <= 0 ? -Infinity : Infinity;
+    const a = [-3.969683028665376e+01, 2.209460984245205e+02, -2.759285104469687e+02,
+      1.383577518672690e+02, -3.066479806614716e+01, 2.506628277459239e+00];
+    const b = [-5.447609879822406e+01, 1.615858368580409e+02, -1.556989798598866e+02,
+      6.680131188771972e+01, -1.328068155288572e+01];
+    const c = [-7.784894002430293e-03, -3.223964580411365e-01, -2.400758277161838e+00,
+      -2.549732539343734e+00, 4.374664141464968e+00, 2.938163982698783e+00];
+    const d = [7.784695709041462e-03, 3.224671290700398e-01, 2.445134137142996e+00,
+      3.754408661907416e+00];
+    const lo = 0.02425;
+    if (p < lo) {
+      const q = Math.sqrt(-2 * Math.log(p));
+      return (((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) /
+        ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1);
+    }
+    if (p > 1 - lo) {
+      const q = Math.sqrt(-2 * Math.log(1 - p));
+      return -(((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) /
+        ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1);
+    }
+    const q = p - 0.5, r = q * q;
+    return (((((a[0] * r + a[1]) * r + a[2]) * r + a[3]) * r + a[4]) * r + a[5]) * q /
+      (((((b[0] * r + b[1]) * r + b[2]) * r + b[3]) * r + b[4]) * r + 1);
+  }
+
+  // ---- single cell (spec §5.1) ----
+  function capArea_nm2(p) {
+    if (p.shape === 'pillar') return Math.PI * p.D_nm * p.H_nm + Math.PI * p.D_nm ** 2 / 4;
+    const Di = Math.max(p.D_nm - 2 * p.w_nm, 0);
+    return Math.PI * (p.D_nm + Di) * p.H_nm + Math.PI * Di ** 2 / 4;
+  }
+  function dielectric(p) {
+    const kZ = p.fT * p.kT + (1 - p.fT) * p.kM;
+    const EOT_nm = 3.9 * (p.tZ_nm / kZ + p.tA_nm / p.kA);
+    return { kZ, EOT_nm };
+  }
+  function cellCap_fF(p) {
+    const { EOT_nm } = dielectric(p);
+    return EPS0 * 3.9 * capArea_nm2(p) * 1e-18 / (EOT_nm * 1e-9) * 1e15;
+  }
+  function cell(p) {
+    const { kZ, EOT_nm } = dielectric(p);
+    const Cs = cellCap_fF(p);
+    const CBL = p.nCellPerBL * p.cCell_fF + p.CSA_fF;
+    const dV = (p.VARY / 2) * Cs / (Cs + CBL);
+    const Vreq = (p.noise_mV + p.nGuard * p.sigOff_mV) / 1000;
+    const Vallow = p.VARY / 2 - Vreq * (Cs + CBL) / Cs;
+    return {
+      kZ, EOT_nm, A_nm2: capArea_nm2(p), Cs_fF: Cs, CBL_fF: CBL,
+      dV_mV: dV * 1000, Ne: Cs * 1e-15 * p.VARY / Q,
+      Vreq_mV: Vreq * 1000, Vallow_V: Vallow, designOK: Number.isFinite(Cs) && Cs > 0 && Vallow > 0,
+      F_nm: Math.sqrt(p.cellArea_nm2 / 6),
+      pitch_nm: Math.sqrt(2 * p.cellArea_nm2 / Math.sqrt(3)),
+      AR: p.H_nm / p.D_nm,
+    };
+  }
+  function heightForCs(p, targetCs, shape) {
+    let lo = 1, hi = 20000;
+    for (let i = 0; i < 80; i++) {
+      const mid = (lo + hi) / 2;
+      if (cellCap_fF({ ...p, shape, H_nm: mid }) < targetCs) lo = mid; else hi = mid;
+    }
+    return (lo + hi) / 2;
+  }
+
+  // ---- statistics (spec §5.2) ----
+  function refreshWindow_s(p) {
+    if (p.tREFmode === 'manual') return p.tREF_ms / 1000;
+    return p.T_C > 85 ? 0.016 : 0.032;
+  }
+  // Tail median at 45 C chosen so that the fraction of ALL cells with t_ret < 256 ms equals anchorFrac.
+  function tailMedian45(p) {
+    let within = p.anchorFrac / p.fD;
+    const anchorInvalid = !(within > 0 && within < 1);
+    within = Math.min(Math.max(within, 1e-15), 0.999);
+    return { t_s: 0.256 * Math.exp(-normInv(within) * p.sigD), anchorInvalid };
+  }
+  function procSigma(m, tmuOn) {
+    if (!tmuOn) return { s: m.sObs, warn: false };
+    if (m.sMeas >= m.sObs) return { s: m.sObs, warn: true };
+    return { s: Math.sqrt(m.sObs ** 2 - m.sMeas ** 2), warn: false };
+  }
+  function stats(p, c, refQV) {
+    const tREF = refreshWindow_s(p);
+    const k = (p.T_C - 45) / 10;
+    const sCD = procSigma(p.meas.wlcd, p.tmuOn).s;
+    const sTox = procSigma(p.meas.tox, p.tmuOn).s;
+    const sigVt = Math.sqrt(p.sigVt0_mV ** 2 + (p.kCD_mVnm * sCD) ** 2 + (p.kTox_mVA * sTox) ** 2);
+    const sigMain = Math.sqrt(p.sigM0 ** 2 + (p.fSub * LN10 * sigVt / p.S_mVdec) ** 2);
+    const tail = tailMedian45(p);
+    const qv = c.designOK ? (c.Cs_fF * c.Vallow_V) / refQV : 0;
+    const tMain = p.tMain45_s * Math.pow(p.rMain, k) * qv;
+    const tTail = tail.t_s * Math.pow(p.rTail, k) * qv;
+    let pMain = 1, pTail = 1;
+    if (c.designOK) {
+      pMain = Phi(Math.log(tREF / tMain) / sigMain);
+      pTail = Phi(Math.log(tREF / tTail) / p.sigD);
+    }
+    const failRetMain = p.Nchip * (1 - p.fD) * pMain;
+    const failRetTail = p.Nchip * p.fD * pTail;
+
+    const sH = procSigma(p.meas.capH, p.tmuOn).s;
+    const sD = procSigma(p.meas.capD, p.tmuOn).s;
+    const sTZ = procSigma(p.meas.tZ, p.tmuOn).s;
+    const dC = (key, h) => (cellCap_fF({ ...p, [key]: p[key] + h }) - cellCap_fF({ ...p, [key]: p[key] - h })) / (2 * h);
+    const sPh = procSigma(p.meas.phase, p.tmuOn).s;
+    const sigCs = Math.sqrt((dC('H_nm', 1) * sH) ** 2 + (dC('D_nm', 0.01) * sD) ** 2 + (dC('tZ_nm', 0.001) * sTZ) ** 2 +
+      (dC('fT', 0.001) * sPh) ** 2);
+    const dVdCs = (p.VARY / 2) * c.CBL_fF / (c.Cs_fF + c.CBL_fF) ** 2 * 1000; // mV per fF
+    const mu = c.dV_mV - p.noise_mV;
+    const sig = Math.sqrt((dVdCs * sigCs) ** 2 + p.sigOff_mV ** 2);
+    const pSense = Phi(-mu / sig);
+
+    const droopCell = c.designOK ? c.Vallow_V * Math.min(tREF / tMain, 1) : 0;
+    const droop = droopCell * c.Cs_fF / (c.Cs_fF + c.CBL_fF) * 1000;
+    const guard = p.nGuard * p.sigOff_mV;
+    return {
+      tREF_s: tREF, sigVt_mV: sigVt, sigMain, tTail45_s: tail.t_s, anchorInvalid: tail.anchorInvalid,
+      tMain_s: tMain, tTail_s: tTail,
+      pRet: (1 - p.fD) * pMain + p.fD * pTail, failRet: failRetMain + failRetTail, failRetMain, failRetTail,
+      sigCs_fF: sigCs, dVdCs_mVperfF: dVdCs, muMargin_mV: mu, sigMargin_mV: sig, pSense, failSense: p.Nchip * pSense,
+      waterfall: { dV: c.dV_mV, noise: p.noise_mV, guard, droop, remain: c.dV_mV - p.noise_mV - guard - droop },
+    };
+  }
+  function referenceQV(p) { const c = cell(p); return c.Cs_fF * c.Vallow_V; }
+  function compute(p, refQV) {
+    const c = cell(p);
+    const other = p.shape === 'pillar' ? 'cylinder' : 'pillar';
+    return { ...c, ...stats(p, c, refQV), otherShape: other, otherShapeH_nm: heightForCs(p, c.Cs_fF, other) };
+  }
+
+  // ---- metrology (spec §5.3) ----
+  function metrology(m, meanOffset) {
+    if (!(m.specHalf > 0)) return { pt: NaN, band: 'na', sigmaProcess: NaN, warn: false, cpkObserved: NaN, cpkProcess: NaN };
+    const pt = 6 * m.sMeas / (2 * m.specHalf);
+    const band = pt < 0.10 ? 'good' : pt <= 0.30 ? 'marginal' : 'reject';
+    const ps = procSigma(m, true);
+    const cpk = (s) => (m.specHalf - Math.abs(meanOffset || 0)) / (3 * s);
+    return { pt, band, sigmaProcess: ps.s, warn: ps.warn, cpkObserved: cpk(m.sObs), cpkProcess: cpk(ps.s) };
+  }
+  // defs (PARAM_DEFS) is optional; when given, the drifted parameter is clamped to its slider range.
+  function applyDrift(p, drift, measurands, defs) {
+    if (!drift || !drift.key) return p;
+    const md = measurands[drift.key];
+    if (!md || md.mode === 'qual') return p;
+    const q = { ...p, meas: { ...p.meas } };
+    if (md.mode === 'quant' && md.param && drift.meanShift) {
+      const v = q[md.param];
+      q[md.param] = drift.shiftUnit === '%' ? v * (1 + drift.meanShift / 100) : v + drift.meanShift;
+      const def = defs && defs.find((d) => d.key === md.param);
+      if (def) q[md.param] = Math.min(def.max, Math.max(def.min, q[md.param]));
+    }
+    const k = drift.sigmaScale == null ? 1 : drift.sigmaScale;
+    if (k !== 1) {
+      const m = q.meas[drift.key];
+      const sp = procSigma(m, true).s;
+      q.meas[drift.key] = { ...m, sObs: Math.hypot(k * sp, m.sMeas) };
+    }
+    return q;
+  }
+
+  const api = { Q, EPS0, LN10, erfc, Phi, normInv, capArea_nm2, dielectric, cellCap_fF, cell, heightForCs,
+    refreshWindow_s, tailMedian45, procSigma, stats, referenceQV, compute, metrology, applyDrift };
+  root.DMS = root.DMS || {};
+  root.DMS.engine = api;
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+
+/* ---- state.js ---- */
+/* DRAM Metro Simulator — single state object + compute + subscribe. */
+(function (root) {
+  'use strict';
+  const KEY = 'dms.myParams.v1';
+  const clone = (o) => JSON.parse(JSON.stringify(o));
+  let E, P, REF, st, subs = [];
+
+  function freshState() {
+    return { params: clone(P.DEFAULTS), drift: { key: null, meanShift: 0, shiftUnit: '%', sigmaScale: 1 },
+      selected: 'capH', presetId: 'micron1b', scenarioId: null };
+  }
+  function init() {
+    E = root.DMS.engine; P = root.DMS.params;
+    REF = E.referenceQV(P.DEFAULTS);
+    st = freshState(); subs = [];
+  }
+  function snapshot() {
+    const base = E.compute(st.params, REF);
+    const hasDrift = !!st.drift.key && (st.drift.meanShift !== 0 || st.drift.sigmaScale !== 1);
+    const driftedParams = hasDrift ? E.applyDrift(st.params, st.drift, P.MEASURANDS, P.PARAM_DEFS) : st.params;
+    const drifted = hasDrift ? E.compute(driftedParams, REF) : base;
+    return { ...st, base, drifted, driftedParams, hasDrift };
+  }
+  function notify() { const s = snapshot(); subs.forEach((fn) => fn(s)); }
+  function subscribe(fn) { subs.push(fn); fn(snapshot()); return () => { subs = subs.filter((f) => f !== fn); }; }
+  function get() { return st; }
+  function setParam(key, value) { st.params = { ...st.params, [key]: value }; if (key !== 'tmuOn') st.scenarioId = null; notify(); }
+  function setMeas(id, field, value) {
+    st.params = { ...st.params, meas: { ...st.params.meas, [id]: { ...st.params.meas[id], [field]: value } } };
+    st.scenarioId = null; notify();
+  }
+  const defaultUnit = (id) => (id === 'phase' ? 'abs' : '%');
+  // A drift without a key belongs to the measurand currently selected.
+  function setDrift(patch) {
+    const d = { ...st.drift, ...patch };
+    if (!d.key) { d.key = st.selected; if (!('shiftUnit' in patch)) d.shiftUnit = defaultUnit(st.selected); }
+    st.drift = d; st.scenarioId = null; notify();
+  }
+  function select(id) { st.selected = id; notify(); }
+  // Selecting a measurand also moves the (neutral) drift to it, in one notify.
+  function selectMeasurand(id) {
+    st.selected = id;
+    st.drift = { key: id, meanShift: 0, shiftUnit: defaultUnit(id), sigmaScale: 1 };
+    st.scenarioId = null; notify();
+  }
+  function applyPreset(id) {
+    const pr = P.PRESETS.find((p) => p.id === id); if (!pr) return;
+    st = freshState(); st.params = { ...st.params, ...clone(pr.patch) }; st.presetId = id; notify();
+  }
+  function applyScenario(id) {
+    const sc = P.SCENARIOS.find((s) => s.id === id); if (!sc) return;
+    const fresh = freshState();
+    st.params = { ...fresh.params, ...clone(sc.patch), meas: { ...fresh.params.meas, ...clone(sc.measPatch || {}) } };
+    st.drift = sc.drift ? { ...clone(sc.drift) } : fresh.drift;
+    st.selected = sc.select; st.scenarioId = id; st.presetId = 'micron1b'; notify();
+  }
+  function reset() { applyPreset('micron1b'); }
+  function exportJSON() { return JSON.stringify({ version: 1, params: st.params }, null, 2); }
+  const ENUMS = { shape: ['cylinder', 'pillar'], tREFmode: ['auto', 'manual'] };
+  const MEAS_FIELDS = ['sObs', 'sMeas', 'specHalf'];
+  const isObj = (o) => !!o && typeof o === 'object' && !Array.isArray(o);
+  const okNum = (v) => typeof v === 'number' && Number.isFinite(v);
+  // Whitelist DEFAULTS keys; numbers must be finite and inside the slider range. Returns params or null.
+  function validParams(src) {
+    if (!isObj(src)) return null;
+    const out = clone(P.DEFAULTS);
+    for (const [k, v] of Object.entries(src)) {
+      if (k === 'meas') continue;
+      if (!Object.prototype.hasOwnProperty.call(P.DEFAULTS, k)) continue;
+      const def = P.PARAM_DEFS.find((d) => d.key === k);
+      if (def) { if (!okNum(v) || v < def.min || v > def.max) return null; }
+      else if (ENUMS[k]) { if (!ENUMS[k].includes(v)) return null; }
+      else if (typeof P.DEFAULTS[k] === 'boolean') { if (typeof v !== 'boolean') return null; }
+      else if (!okNum(v) || v <= 0) return null;
+      out[k] = v;
+    }
+    if (src.meas !== undefined) {
+      if (!isObj(src.meas)) return null;
+      for (const [id, m] of Object.entries(src.meas)) {
+        if (!Object.prototype.hasOwnProperty.call(P.DEFAULTS.meas, id)) continue;
+        if (!isObj(m) || !MEAS_FIELDS.every((f) => okNum(m[f]) && m[f] >= 0)) return null;
+        out.meas[id] = { sObs: m.sObs, sMeas: m.sMeas, specHalf: m.specHalf };
+      }
+    }
+    return out;
+  }
+  function importJSON(text) {
+    let obj; try { obj = JSON.parse(text); } catch (e) { return false; }
+    if (!isObj(obj)) return false;
+    const params = validParams(obj.params);
+    if (!params) return false;
+    try { E.compute(params, REF); } catch (e) { return false; }
+    const fresh = freshState();
+    st = { ...fresh, params, presetId: 'mine' }; notify(); return true;
+  }
+  function saveMine() { try { root.localStorage.setItem(KEY, exportJSON()); return true; } catch (e) { return false; } }
+  function loadMine() {
+    let t = null; try { t = root.localStorage.getItem(KEY); } catch (e) { return false; }
+    return t ? importJSON(t) : false;
+  }
+  const api = { init, get, snapshot, subscribe, setParam, setMeas, setDrift, select, selectMeasurand, applyPreset, applyScenario, reset,
+    exportJSON, importJSON, saveMine, loadMine };
+  root.DMS = root.DMS || {};
+  root.DMS.state = api;
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+
+/* ---- ui.js ---- */
+/* DRAM Metro Simulator — shared UI helpers. */
+(function (root) {
+  'use strict';
+  const TIER = { green: ['🟢', '公開規格'], yellow: ['🟡', 'Micron 逆向工程／論文'], orange: ['🟠', '他廠／通用文獻'],
+    red: ['🔴', '查無公開資料（示意值）'], derived: ['推算', '由其他參數計算'] };
+  const SVGNS = 'http://www.w3.org/2000/svg';
+  function el(tag, attrs, ...kids) {
+    const n = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs || {})) {
+      if (k === 'class') n.className = v;
+      else if (k.startsWith('on')) n.addEventListener(k.slice(2), v);
+      else if (v !== false && v != null) n.setAttribute(k, v === true ? '' : v);
+    }
+    for (const c of kids.flat()) if (c != null) n.append(c.nodeType ? c : String(c));
+    return n;
+  }
+  function svg(tag, attrs, ...kids) {
+    const n = document.createElementNS(SVGNS, tag);
+    for (const [k, v] of Object.entries(attrs || {})) if (v != null) n.setAttribute(k, v);
+    for (const c of kids.flat()) if (c != null) n.append(c.nodeType ? c : String(c));
+    return n;
+  }
+  function badge(tier, src) {
+    const [icon, label] = TIER[tier] || TIER.red;
+    return el('span', { class: `badge t-${tier}`, title: `${label}：${src || ''}` }, icon);
+  }
+  function fmt(n, d = 2) { return Number.isFinite(n) ? n.toFixed(d) : '—'; }
+  function sci(n) {
+    if (!Number.isFinite(n)) return '—';
+    if (n === 0) return '0';
+    const a = Math.abs(n);
+    if (a >= 0.01 && a < 1e5) return a >= 100 ? Math.round(n).toLocaleString('en-US') : String(+n.toPrecision(3));
+    const e = Math.floor(Math.log10(a));
+    const sup = String(e).replace('-', '⁻').replace(/\d/g, (x) => '⁰¹²³⁴⁵⁶⁷⁸⁹'[x]);
+    return `${(n / 10 ** e).toFixed(2)}×10${sup}`;
+  }
+  function pct(a, b) { return Number.isFinite(a) && Number.isFinite(b) && b !== 0 ? ((a - b) / Math.abs(b)) * 100 : NaN; }
+  function slider(def, value, onInput) {
+    const toPos = (v) => (def.log ? Math.log10(v) : v);
+    const fromPos = (x) => (def.log ? 10 ** x : x);
+    const show = (v) => (def.log ? sci(v) : String(+(+v).toPrecision(4)));
+    const out = el('output', { class: 'val' }, show(value));
+    const input = el('input', { type: 'range', min: toPos(def.min), max: toPos(def.max),
+      step: def.log ? 0.01 : def.step, value: toPos(value), disabled: !!def.readonly, hidden: !!def.readonly, 'aria-label': `${def.zh} ${def.en}` });
+    input.addEventListener('input', () => {
+      const v = fromPos(+input.value);
+      out.textContent = show(v);
+      onInput(v);
+    });
+    const wrap = el('label', { class: 'slider' + (def.readonly ? ' ro' : '') },
+      el('span', { class: 'lab' }, def.zh, ' ', el('span', { class: 'en' }, def.en), ' ', badge(def.tier, def.src)),
+      input, el('span', { class: 'num' }, out, ' ', el('span', { class: 'unit' }, def.unit || '')));
+    wrap.sync = (v) => { input.value = toPos(v); out.textContent = show(v); };
+    return wrap;
+  }
+  const api = { el, svg, badge, fmt, sci, pct, slider, TIER };
+  root.DMS = root.DMS || {};
+  root.DMS.ui = api;
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+
+/* ---- chain-bar.js ---- */
+/* DRAM Metro Simulator — sticky causal chain: drift → C_s → e⁻ → ΔV → margin → fails. */
+(function (root) {
+  'use strict';
+  const CELLS = [
+    { id: 'drift', zh: '量測偏移', en: 'drift' },
+    { id: 'Cs', zh: '儲存電容 C_s', en: 'storage cap', key: 'Cs_fF', unit: 'fF', f: (u, v) => u.fmt(v, 2), worse: 'lower' },
+    { id: 'Ne', zh: '電子數', en: 'electrons', key: 'Ne', unit: 'e⁻', f: (u, v) => u.sci(v), worse: 'lower' },
+    { id: 'dV', zh: '感測訊號 ΔV', en: 'signal', key: 'dV_mV', unit: 'mV', f: (u, v) => u.fmt(v, 1), worse: 'lower' },
+    { id: 'mu', zh: '感測餘量 μ', en: 'margin', key: 'muMargin_mV', unit: 'mV', f: (u, v) => u.fmt(v, 1), worse: 'lower' },
+    { id: 'fs', zh: '感測失效', en: 'sensing fail', key: 'failSense', unit: 'bit/晶片', f: (u, v) => u.sci(v), worse: 'higher' },
+    { id: 'fr', zh: 'retention 失效', en: 'retention fail', key: 'failRet', unit: 'bit/晶片', f: (u, v) => u.sci(v), worse: 'higher' },
+  ];
+  function mount(sel) {
+    const host = document.querySelector(sel);
+    const { el, pct } = root.DMS.ui;
+    const P = root.DMS.params;
+    const nodes = {};
+    const bar = el('div', { class: 'chain', role: 'list' });
+    for (const c of CELLS) {
+      const v = el('span', { class: 'v' }), u = el('span', { class: 'u' }, c.unit || ''), d = el('span', { class: 'd' });
+      const cell = el('div', { class: 'cc', role: 'listitem', title: `${c.zh} ${c.en}` },
+        el('span', { class: 'k' }, c.zh), el('div', {}, v, u), d);
+      nodes[c.id] = { cell, v, d };
+      bar.append(cell);
+    }
+    const alarm = el('div', { class: 'cc alarm', role: 'listitem', hidden: true },
+      el('span', { class: 'k' }, '設計狀態'), el('span', { class: 'v' }, '設計不成立：V_req > ΔV'));
+    bar.append(alarm);
+    host.append(bar);
+
+    root.DMS.state.subscribe((s) => {
+      const u = root.DMS.ui;
+      const dr = s.drift;
+      if (s.hasDrift) {
+        const m = P.MEASURANDS[dr.key];
+        const parts = [];
+        if (dr.meanShift) parts.push(`${dr.meanShift > 0 ? '+' : ''}${+(+dr.meanShift).toPrecision(3)}${dr.shiftUnit === '%' ? '%' : ' ' + (m.unit || '')}`);
+        if (dr.sigmaScale !== 1) parts.push(`σ×${dr.sigmaScale}`);
+        nodes.drift.v.textContent = m.zh;
+        nodes.drift.d.textContent = parts.join('，');
+        nodes.drift.d.className = 'd';
+      } else {
+        nodes.drift.v.textContent = s.scenarioId ? '情境' : '無';
+        nodes.drift.d.textContent = s.scenarioId ? P.SCENARIOS.find((x) => x.id === s.scenarioId).name.slice(0, 14) + '…' : '';
+        nodes.drift.d.className = 'd';
+      }
+      for (const c of CELLS.slice(1)) {
+        const b = s.base[c.key], a = s.drifted[c.key];
+        nodes[c.id].v.textContent = c.f(u, s.hasDrift ? a : b);
+        if (s.hasDrift) {
+          const p = pct(a, b);
+          const worse = c.worse === 'lower' ? p < -0.05 : p > 0.05;
+          const better = c.worse === 'lower' ? p > 0.05 : p < -0.05;
+          nodes[c.id].d.textContent = Number.isFinite(p) ? `前 ${c.f(u, b)}（${p > 0 ? '+' : ''}${p.toFixed(1)}%）` : `前 ${c.f(u, b)}`;
+          nodes[c.id].d.className = 'd' + (worse ? ' bad' : better ? ' good' : '');
+        } else {
+          nodes[c.id].d.textContent = '';
+          nodes[c.id].d.className = 'd';
+        }
+      }
+      alarm.hidden = s.drifted.designOK;
+    });
+  }
+  const api = { mount };
+  root.DMS = root.DMS || {};
+  root.DMS.chainBar = api;
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+
+/* ---- m2-cell.js ---- */
+/* DRAM Metro Simulator — M2 cell cutaway & electron animation (spec §4 M2, §8). */
+(function (root) {
+  'use strict';
+  // oblique cutaway: x along BL, y into page (along WL), z up. Front face (y = 0) is the cross-section.
+  const OX = 40, OZ = 470;
+  const P = (x, y, z) => [OX + x + 0.5 * y, OZ - z - 0.3 * y];
+  const pts = (arr) => arr.map((q) => P(...q).map((v) => v.toFixed(1)).join(',')).join(' ');
+  const shade = (c, k) => `fill:color-mix(in srgb, ${c} ${k}%, ${k > 100 ? '#fff' : '#000'})`;
+
+  const CELLS = [70, 410];                 // capacitor / SNC axis x
+  const CAP = { z0: 215, z1: 385, r: 30, wall: 8, hik: 4, y: 25 };
+  const CORR = [
+    ['電容畫成挖進矽裡的深溝槽，在電晶體下方', 'Micron 用往上長的堆疊式圓柱電容（COB），在電晶體與 BL 上方；溝槽式是已停產的 IBM／Qimonda 路線', '旁白 12:09'],
+    ['存取電晶體是平面式，閘極架在通道上方', '埋入式字元線（BWL）＋鞍鰭，閘極埋在矽裡', '畫格 06'],
+    ['電子只從電晶體通道漏走', '那只是次臨界漏電；retention 尾端主要來自接面漏電與 GIDL', '旁白 12:09、21:55'],
+    ['電容另一端接地', '共同上電極偏壓在 V_ARY/2（本工具 0.45 V）', '畫格 09、10'],
+    ['以折疊式 bitline 當 DDR5 架構', '6F² cell 走開放式 bitline；折疊式是 8F² 世代', '旁白 32:02'],
+    ['DDR5 寫入時電容存約 1.4 V', '外部 1.8 V 是字元線升壓 V_PP 用；cell 存的電壓 ≤ V_ARY（本工具 0.9 V，🔴 示意）。待查證', '旁白 19:38'],
+    ['refresh 每 64 ms 一次', 'DDR5：32 ms（≤85 °C）、16 ms（85–95 °C）；64 ms 是 DDR4', '旁白 21:55'],
+  ];
+  const MARK = [[72, 150], [170, 405], [110, 395], [300, 72], [380, 292], [172, 262], [24, 40]];
+  // electron paths (3-D points), BL → storage node of the left cell
+  const FWD = [[240, 85, 152], [240, 85, 100], [200, 0, 88], [156, 0, 80], [156, 0, 24], [104, 0, 24], [104, 0, 80], [70, 0, 90], [70, 25, 100], [70, 25, 222]];
+  const LEAK = {
+    junction: { zh: '接面漏電 junction', tag: 'J', rate: 1.2, path: [[70, 0, 40], [70, 0, 86], [70, 25, 100], [70, 25, 222]] },
+    gidl: { zh: 'GIDL', tag: 'GIDL', rate: 0.8, path: [[108, 0, 76], [92, 0, 90], [70, 25, 100], [70, 25, 222]] },
+    sub: { zh: '次臨界 subthreshold', tag: 'Sub', rate: 0.5, path: FWD.slice(2) },
+    diel: { zh: '介電層穿隧 dielectric', tag: 'D', rate: 0.3, path: [[58, 25, 300], [44, 25, 300]] },
+    vrt: { zh: 'VRT（陷阱開關）', tag: 'VRT', rate: 2.5, path: [[44, 0, 52], [60, 0, 86], [70, 25, 100], [70, 25, 222]] },
+  };
+
+  // Leak mode ends once the storage node is fully discharged and no electron is still in flight.
+  const leakDone = (q, H, nParts) => q <= -H && nParts === 0;
+
+  function mount(sel) {
+    const host = document.querySelector(sel);
+    const u = root.DMS.ui, S = root.DMS.state, PR = root.DMS.params;
+    const reduced = !!(root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    const poly = (arr, fill, ln, extra) => u.svg('polygon', { points: pts(arr), style: `fill:${fill}`, stroke: ln, 'stroke-width': 0.8, ...(extra || {}) });
+    function prism(x0, x1, y0, y1, z0, z1, fill, ln) {
+      return [
+        poly([[x1, y0, z0], [x1, y1, z0], [x1, y1, z1], [x1, y0, z1]], fill, ln, { style: shade(fill, 78) }),
+        poly([[x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1]], fill, ln, { style: shade(fill, 88) }),
+        poly([[x0, y0, z0], [x1, y0, z0], [x1, y0, z1], [x0, y0, z1]], fill, ln),
+      ];
+    }
+    const front = (x0, x1, z0, z1, fill, ln) => poly([[x0, 0, z0], [x1, 0, z0], [x1, 0, z1], [x0, 0, z1]], fill, ln);
+    const topStripe = (x0, x1, y0, y1, z, fill, ln) => poly([[x0, y0, z], [x1, y0, z], [x1, y1, z], [x0, y1, z]], fill, ln);
+    const secRect = (x0, x1, z0, z1, fill, ln) => poly([[x0, CAP.y, z0], [x1, CAP.y, z0], [x1, CAP.y, z1], [x0, CAP.y, z1]], fill, ln);
+    const tgt = {};
+    const group = (id, ...kids) => {
+      const g = u.svg('g', { class: 'm2-tgt', 'data-t': id, role: 'button', tabindex: 0, 'aria-label': `選取 ${id}` }, ...kids.flat());
+      (tgt[id] = tgt[id] || []).push(g); return g;
+    };
+    const text = (x, y, s, o) => u.svg('text', { x, y, 'font-size': 11, fill: 'var(--text)', ...(o || {}) }, s);
+    const lead = (x1, y1, x2, y2) => u.svg('line', { x1, y1, x2, y2, stroke: 'var(--text-faint)', 'stroke-width': 0.8 });
+
+    // ---- static structure (painter order: back → front, low → high) ----
+    const svgEl = u.svg('svg', { viewBox: '0 0 760 520', role: 'img', 'aria-label': 'DRAM 1T1C cell 剖面：埋入式字元線、位元線在電晶體上方、圓柱電容在位元線上方、共同上電極 V_ARY/2' });
+    const st = u.svg('g');
+    st.append(...prism(0, 480, 0, 120, 0, 100, 'var(--m-si)', 'var(--m-si-ln)'));
+    // top face: active-area n+ patches, STI, WL caps running along y
+    st.append(topStripe(0, 30, 0, 120, 100, 'var(--m-ox)', 'var(--m-ox-ln)'), topStripe(450, 480, 0, 120, 100, 'var(--m-ox)', 'var(--m-ox-ln)'));
+    st.append(topStripe(30, 110, 0, 60, 100, 'var(--m-dop)', 'var(--m-dop-ln)'), topStripe(370, 450, 0, 60, 100, 'var(--m-dop)', 'var(--m-dop-ln)'),
+      topStripe(150, 330, 0, 100, 100, 'var(--m-dop)', 'var(--m-dop-ln)'));
+    const wlMetal = [];
+    for (const x0 of [110, 330]) {
+      st.append(topStripe(x0, x0 + 40, 0, 120, 100, 'var(--m-nit)', 'var(--m-nit-ln)'));
+      // front cut of the trench: gate-oxide liner, metal, nitride cap
+      st.append(group('gox', front(x0, x0 + 40, 30, 100, 'var(--m-ox)', 'var(--m-ox-ln)')));
+      const met = front(x0 + 4, x0 + 36, 34, 72, 'var(--m-met)', 'var(--m-met-ln)');
+      wlMetal.push(met);
+      st.append(group('bwl', met), front(x0 + 4, x0 + 36, 72, 100, 'var(--m-nit)', 'var(--m-nit-ln)'));
+      st.append(u.svg('path', { d: `M${P(x0 - 6, 0, 60)} L${P(x0 - 6, 0, 22)} L${P(x0 + 46, 0, 22)} L${P(x0 + 46, 0, 60)}`, fill: 'none', stroke: 'var(--m-si-ln)', 'stroke-dasharray': '3 3' }));
+    }
+    st.append(front(0, 30, 20, 100, 'var(--m-ox)', 'var(--m-ox-ln)'), front(450, 480, 20, 100, 'var(--m-ox)', 'var(--m-ox-ln)'),
+      front(30, 110, 78, 100, 'var(--m-dop)', 'var(--m-dop-ln)'), front(370, 450, 78, 100, 'var(--m-dop)', 'var(--m-dop-ln)'),
+      front(150, 330, 70, 100, 'var(--m-dop)', 'var(--m-dop-ln)'));
+    // back row: bit-line contact, bit line (runs along x behind the storage contacts)
+    st.append(group('blc', prism(220, 260, 70, 100, 100, 140, 'var(--m-poly)', 'var(--m-poly-ln)')));
+    st.append(group('bl', prism(0, 480, 70, 100, 140, 165, 'var(--m-cu)', 'var(--m-cu-ln)')));
+    // front row: storage-node contacts rise past the BL level
+    for (const cx of CELLS) st.append(group('snc', prism(cx - 20, cx + 20, 10, 40, 100, 215, 'var(--m-poly)', 'var(--m-poly-ln)')));
+    // capacitors, cut through their axis (y = 25): SN cup, high-k liner, top-electrode core
+    for (const cx of CELLS) {
+      const { z0, z1, r, wall, hik } = CAP;
+      st.append(group('cap', secRect(cx - r, cx - r + wall, z0, z1, 'var(--m-met)', 'var(--m-met-ln)'),
+        secRect(cx + r - wall, cx + r, z0, z1, 'var(--m-met)', 'var(--m-met-ln)'), secRect(cx - r, cx + r, z0, z0 + wall, 'var(--m-met)', 'var(--m-met-ln)')));
+      const i0 = cx - r + wall, i1 = cx + r - wall;
+      st.append(group('hik', secRect(i0, i0 + hik, z0 + wall, z1, 'var(--m-hik)', 'var(--m-hik-ln)'),
+        secRect(i1 - hik, i1, z0 + wall, z1, 'var(--m-hik)', 'var(--m-hik-ln)'), secRect(i0, i1, z0 + wall, z0 + wall + hik, 'var(--m-hik)', 'var(--m-hik-ln)')));
+      st.append(secRect(i0 + hik, i1 - hik, z0 + wall + hik, z1, 'var(--m-met)', 'var(--m-met-ln)'));
+    }
+    st.append(...prism(20, 460, 0, 110, 385, 410, 'var(--m-met)', 'var(--m-met-ln)'));
+    // labels (leaders audited against unrelated shapes: see plan Task 8 step 2)
+    st.append(text(280, 77, '共同上電極 plate = V_ARY/2', { 'text-anchor': 'middle', 'font-weight': 700 }),
+      text(596, 147, '圓柱電容 cylinder cap'), text(596, 163, 'COB：在 BL 上方', { fill: 'var(--text-dim)' }), lead(592, 143, 494, 143),
+      text(596, 196, 'high-k ZrO₂ 介電層'), lead(592, 192, 444, 192),
+      text(596, 290, '位元線 BL（沿 x）'), lead(592, 286, 572, 286),
+      text(596, 330, '儲存節點接觸 SNC'), lead(592, 326, 452, 326),
+      text(158, 330, 'BLC 位元線接觸'), lead(242, 322, 294, 322),
+      text(170, 503, '埋入式字元線 BWL', { 'text-anchor': 'middle' }), lead(170, 490, 170, 442),
+      text(372, 503, '閘極氧化層 gate ox', { 'text-anchor': 'middle' }), lead(372, 490, 372, 442),
+      text(470, 462, 'p-Si', { fill: 'var(--text-dim)' }),
+      text(596, 462, 'x：沿 BL　y：沿 WL（進紙面）', { 'font-size': 10, fill: 'var(--text-faint)' }),
+      text(596, 478, '電容以剖面顯示，未按比例', { 'font-size': 10, fill: 'var(--text-faint)' }),
+      text(596, 494, '實際高寬比 ≈ 48:1', { 'font-size': 10, fill: 'var(--text-faint)' }));
+    const leakLayer = u.svg('g'), dyn = u.svg('g', { 'aria-hidden': 'true' }), marks = u.svg('g', { 'aria-hidden': 'true' });
+    MARK.forEach(([x, y], i) => marks.append(u.svg('circle', { cx: x, cy: y, r: 9, fill: 'var(--sig)' }),
+      u.svg('text', { x, y: y + 4, 'text-anchor': 'middle', 'font-size': 11, 'font-weight': 700, fill: 'var(--surface)' }, String(i + 1))));
+    svgEl.append(st, leakLayer, dyn, marks);
+
+    // ---- controls ----
+    const status = u.el('p', { class: 'note', role: 'status', 'aria-live': 'polite' });
+    const counts = u.el('p', { class: 'note' });
+    const leakOn = { junction: true, gidl: true, sub: false, diel: false, vrt: false };
+    const leakBoxes = Object.entries(LEAK).map(([k, L]) => {
+      const cb = u.el('input', { type: 'checkbox', checked: leakOn[k] });
+      cb.addEventListener('change', () => { leakOn[k] = cb.checked; drawLeakMarks(); });
+      return u.el('label', {}, cb, L.zh);
+    });
+    const pauseBtn = u.el('button', { onclick: () => { anim.paused = !anim.paused; if (!anim.paused) kick(); syncBtns(); } }, '暫停');
+    const modeBtns = {};
+    const viewSeg = u.el('div', { class: 'seg', role: 'group', 'aria-label': '畫法' },
+      ...[['real', '真實結構'], ['video', '影片畫法 ⇄ 修正']].map(([k, lab]) => (modeBtns[k] = u.el('button', { onclick: () => setView(k) }, lab))));
+    const corrList = u.el('ol', { class: 'corr' }, ...CORR.map(([v, a, tc]) => u.el('li', {}, u.el('b', {}, '影片：'), v, u.el('br'), u.el('b', {}, '實際：'), a, ' ', u.el('span', { class: 'tc' }, tc))));
+    const corrBox = u.el('div', {}, u.el('h4', { class: 'grp' }, '影片與實際結構的 7 個差異'), corrList,
+      u.el('p', { class: 'note' }, '對照 video/branch-dram-study-notes.md §3。未使用任何影片畫面。'));
+    const physBox = u.el('div', { class: 'info' }, 'DRAM 的「1」不是「電容裝滿電子」。上電極固定在 V_ARY/2：存 1 時儲存節點被拉到 V_ARY，電子被抽走（紅色 +），上電極那側感應出等量電子；存 0 則相反。兩態的電荷差 = C_s·V_ARY = N_e。漏電一律讓電子流進儲存節點——所以會壞掉的是「1」。');
+    host.append(
+      u.el('h2', { id: 'h-m2' }, 'M2 cell 結構與電子運動 ', u.el('span', { class: 'en' }, 'cell & electron motion')),
+      u.el('p', { class: 'sub' }, '左邊 cell 存 1、右邊存 0。點選結構可在 M6 選取對應的量測項目；M6 選取的項目會在這裡以紅框標出。動畫速率是示意，不是實際時間尺度——實際保存時間見 M5。'),
+      u.el('div', { class: 'm2-grid' },
+        u.el('div', {}, u.el('div', { class: 'svgscroll' }, svgEl), counts, status),
+        u.el('div', {},
+          u.el('div', { class: 'row' },
+            u.el('button', { onclick: () => start('write') }, '寫入 1'), u.el('button', { onclick: () => start('read') }, '讀取（電荷分享）'),
+            u.el('button', { onclick: () => start('leak') }, '漏電'), pauseBtn, u.el('button', { onclick: () => step() }, '逐步')),
+          u.el('h4', { class: 'grp', style: 'margin-top:10px' }, '漏電路徑 leakage paths'), u.el('div', { class: 'row' }, ...leakBoxes),
+          u.el('div', { class: 'row', style: 'margin-top:10px' }, viewSeg), physBox, corrBox)));
+
+    for (const [id, gs] of Object.entries(tgt)) for (const g of gs) {
+      const m = Object.keys(PR.MEASURANDS).find((k) => PR.MEASURANDS[k].m2 === id);
+      if (!m) { g.removeAttribute('role'); g.removeAttribute('tabindex'); g.removeAttribute('aria-label'); g.classList.remove('m2-tgt'); continue; }
+      g.setAttribute('aria-label', `選取量測項目：${PR.MEASURANDS[m].zh}`);
+      const pickT = () => S.selectMeasurand(m);
+      g.addEventListener('click', pickT);
+      g.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pickT(); } });
+    }
+
+    // ---- animation state ----
+    const anim = { mode: null, q: 0, H: 19, scale: 1000, paused: false, parts: [], queue: [], timers: {}, last: 0, raf: 0, phase: '', t: 0, s: null, readBase: 0 };
+    const segs = (path3) => {
+      const p = path3.map((q) => P(...q)); const L = [0];
+      for (let i = 1; i < p.length; i++) L.push(L[i - 1] + Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]));
+      return { p, L, len: L.at(-1) };
+    };
+    const FW = segs(FWD), RV = segs(FWD.slice().reverse());
+    const LK = Object.fromEntries(Object.entries(LEAK).map(([k, L]) => [k, segs(L.path)]));
+    const at = (sg, d) => {
+      let i = 1; while (i < sg.L.length - 1 && sg.L[i] < d) i++;
+      const f = Math.min(1, (d - sg.L[i - 1]) / ((sg.L[i] - sg.L[i - 1]) || 1));
+      return [sg.p[i - 1][0] + f * (sg.p[i][0] - sg.p[i - 1][0]), sg.p[i - 1][1] + f * (sg.p[i][1] - sg.p[i - 1][1])];
+    };
+    const SPEED = 240;
+
+    function chargePos(cx, n, inner) {
+      const out = [], { z0, z1, r, wall, hik } = CAP, k = Math.ceil(n / 2), dz = (z1 - z0 - 24) / Math.max(k, 1);
+      const xs = inner ? [cx - r + wall + hik + 5, cx + r - wall - hik - 5] : [cx - r + wall / 2, cx + r - wall / 2];
+      for (let i = 0; i < n; i++) out.push(P(xs[i % 2], CAP.y, z0 + 14 + dz * Math.floor(i / 2)));
+      return out;
+    }
+    const elec = ([x, y]) => u.svg('circle', { cx: x.toFixed(1), cy: y.toFixed(1), r: 2.8, fill: 'var(--elec)' });
+    const plus = ([x, y]) => u.svg('text', { x: x.toFixed(1), y: (y + 3.5).toFixed(1), 'text-anchor': 'middle', 'font-size': 10, 'font-weight': 700, fill: 'var(--sig)' }, '+');
+    function drawCell(cx, q) {
+      const n = Math.abs(q), g = [];
+      const sn = chargePos(cx, n, false), pl = chargePos(cx, n, true);
+      if (q > 0) { sn.forEach((p) => g.push(plus(p))); pl.forEach((p) => g.push(elec(p))); }
+      else { sn.forEach((p) => g.push(elec(p))); pl.forEach((p) => g.push(plus(p))); }
+      return g;
+    }
+    function draw() {
+      const kids = [...drawCell(CELLS[0], anim.q), ...drawCell(CELLS[1], -anim.H)];
+      for (const pt of anim.parts) kids.push(u.svg('circle', { cx: pt.xy[0].toFixed(1), cy: pt.xy[1].toFixed(1), r: 3.4, fill: 'var(--elec)', stroke: 'var(--surface)', 'stroke-width': 1 }));
+      dyn.replaceChildren(...kids);
+      const wlOn = anim.mode === 'write' || anim.mode === 'read' || anim.mode === 'restore';
+      wlMetal[0].setAttribute('style', `fill:${wlOn ? 'var(--sig)' : 'var(--m-met)'}`);
+      const s = anim.s, dv = s ? s.dV_mV * anim.q / anim.H : 0;
+      counts.textContent = `1 點 = ${anim.scale.toLocaleString('en-US')} 顆電子。左 cell 儲存節點 ${anim.q > 0 ? '+' : ''}${anim.q} 點（滿格 ±${anim.H}，N_e/2 = ${s ? Math.round(s.Ne / 2).toLocaleString('en-US') : '—'} e⁻）。` +
+        (s ? `此時讀出訊號 ΔV ≈ ${dv.toFixed(1)} mV，門檻 ${s.Vreq_mV.toFixed(1)} mV。` : '');
+      status.textContent = anim.phase;
+    }
+    function drawLeakMarks() {
+      const kids = [];
+      if (anim.mode === 'leak') for (const [k, L] of Object.entries(LEAK)) if (leakOn[k]) {
+        const [x, y] = P(...L.path[0]);
+        kids.push(u.svg('circle', { cx: x, cy: y, r: 3, fill: 'none', stroke: 'var(--leak)', 'stroke-width': 1.4 }),
+          u.svg('text', { x: x - 5, y: y + 3.5, 'text-anchor': 'end', 'font-size': 9, 'font-family': 'var(--fm)', fill: 'var(--leak)' }, L.tag));
+      }
+      leakLayer.replaceChildren(...kids);
+    }
+    function spawn(sg, onEnd) { anim.parts.push({ sg, d: 0, xy: sg.p[0], onEnd }); }
+    function start(mode) {
+      anim.parts = []; anim.queue = []; anim.timers = {}; anim.t = 0;
+      const H = anim.H;
+      if (mode === 'write') {
+        if (anim.q >= H) { anim.q = -H; anim.phase = '先把左 cell 設成 0，示範完整的寫入 1。'; }
+        anim.mode = 'write';
+        const n = H - anim.q;
+        for (let i = 0; i < n; i++) anim.queue.push({ at: i * 0.07, fn: () => { anim.q += 1; spawn(RV, null); } });
+        anim.phase = `寫入 1：字元線開啟（紅），BL 被驅動到 V_ARY，電子從儲存節點經通道流向 BL（${n} 點）。寫入 1 也就是 refresh 的效果。`;
+      } else if (mode === 'read') {
+        const s = anim.s, r = s.Cs_fF / (s.Cs_fF + s.CBL_fF);
+        const qf = Math.round(anim.q * r), n = anim.q - qf;
+        anim.mode = 'read'; anim.readBase = anim.q;
+        for (let i = 0; i < Math.abs(n); i++) anim.queue.push({ at: i * 0.07, fn: () => (n > 0 ? spawn(FW, () => { anim.q -= 1; }) : (anim.q += 1, spawn(RV, null))) });
+        anim.phase = `讀取：BL 先預充到 V_ARY/2，字元線開啟後電荷分享。C_s/(C_s+C_BL) = ${r.toFixed(3)}，所以儲存節點的 ${Math.abs(n)} 點幾乎全部分給 BL，BL 只變化 ${(s.dV_mV * anim.q / anim.H).toFixed(1)} mV——讀取是破壞性的。`;
+      } else {
+        anim.mode = 'leak';
+        anim.phase = '漏電：每條打開的路徑都讓電子流進儲存節點，「1」的 + 逐漸被中和。';
+      }
+      drawLeakMarks();
+      if (reduced) { anim.paused = true; anim.phase += '（已偵測到「減少動態效果」：請按「逐步」前進。）'; }
+      else anim.paused = false;
+      syncBtns(); draw(); kick();
+    }
+    function advance(dt) {
+      anim.t += dt;
+      while (anim.queue.length && anim.queue[0].at <= anim.t) anim.queue.shift().fn();
+      if (anim.mode === 'leak') {
+        for (const [k, L] of Object.entries(LEAK)) {
+          if (!leakOn[k] || anim.q <= -anim.H) continue;
+          if (k === 'vrt' && (anim.t % 3.5) > 1.5) continue;
+          anim.timers[k] = (anim.timers[k] || 0) + dt * L.rate;
+          while (anim.timers[k] >= 1) { anim.timers[k] -= 1; spawn(LK[k], () => { if (anim.q > -anim.H) anim.q -= 1; }); }
+        }
+      }
+      for (const pt of anim.parts) { pt.d += SPEED * dt; pt.xy = at(pt.sg, Math.min(pt.d, pt.sg.len)); }
+      const done = anim.parts.filter((pt) => pt.d >= pt.sg.len);
+      anim.parts = anim.parts.filter((pt) => pt.d < pt.sg.len);
+      done.forEach((pt) => pt.onEnd && pt.onEnd());
+      const s = anim.s;
+      if (anim.mode === 'leak' && leakDone(anim.q, anim.H, anim.parts.length)) {
+        anim.mode = null;
+        anim.phase = '儲存節點已完全放電（等同存 0）。按「寫入 1」重新寫入——這就是 refresh 要趕在前面做的事。';
+      } else if (anim.mode === 'leak' && s) {
+        const dv = s.dV_mV * anim.q / anim.H;
+        if (dv <= 0) anim.phase = '儲存節點已漏到 V_ARY/2 以下：感測放大器會把它讀成 0——資料遺失。';
+        else if (dv < s.Vreq_mV) anim.phase = `讀出訊號剩 ${dv.toFixed(1)} mV，低於門檻 ${s.Vreq_mV.toFixed(1)} mV：這個 cell 已無法可靠讀出。refresh 必須在此之前發生（DDR5：32 ms／16 ms）。`;
+      }
+      if (!anim.queue.length && !anim.parts.length) {
+        if (anim.mode === 'read') {
+          anim.mode = 'restore';
+          const n = anim.readBase - anim.q;
+          for (let i = 0; i < Math.abs(n); i++) anim.queue.push({ at: anim.t + 0.6 + i * 0.07, fn: () => (n > 0 ? (anim.q += 1, spawn(RV, null)) : spawn(FW, () => { anim.q -= 1; })) });
+          anim.phase = '感測放大器把 BL 放大到全擺幅，再經同一路徑回寫（restore）儲存節點。';
+        } else if (anim.mode === 'write' || anim.mode === 'restore') {
+          anim.phase = anim.mode === 'write' ? '寫入完成：儲存節點 = V_ARY，字元線關閉。' : '回寫完成：資料恢復，字元線關閉。';
+          anim.mode = null;
+        }
+      }
+    }
+    function frame(ts) {
+      anim.raf = 0;
+      if (anim.paused || !anim.mode) { draw(); return; }
+      const dt = Math.min(0.05, (ts - (anim.last || ts)) / 1000); anim.last = ts;
+      advance(dt); draw();
+      if (anim.mode) kick(); else drawLeakMarks();
+    }
+    function kick() { if (!anim.raf && anim.mode && !anim.paused && !anim.offscreen) { anim.last = 0; anim.raf = root.requestAnimationFrame(frame); } }
+    function step() {
+      if (!anim.mode) return;
+      anim.paused = true; syncBtns();
+      for (let i = 0; i < 8; i++) advance(0.05);
+      draw(); if (!anim.mode) drawLeakMarks();
+    }
+    function syncBtns() { pauseBtn.textContent = anim.paused ? '繼續' : '暫停'; pauseBtn.classList.toggle('on', anim.paused); }
+    // pause the frame loop while the module is scrolled out of view
+    if (root.IntersectionObserver) {
+      new root.IntersectionObserver((es) => { anim.offscreen = !es[0].isIntersecting; if (!anim.offscreen) kick(); }).observe(svgEl);
+    }
+    let view = 'real';
+    function setView(k) {
+      view = k; marks.style.display = k === 'video' ? '' : 'none'; corrBox.hidden = k !== 'video';
+      for (const [kk, b] of Object.entries(modeBtns)) b.classList.toggle('on', kk === k);
+    }
+
+    S.subscribe((s) => {
+      anim.s = s.drifted;
+      const half = s.drifted.Ne / 2, scale = 1000 * Math.max(1, Math.ceil(half / 1000 / 30));
+      const H = Math.max(1, Math.round(half / scale));
+      if (H !== anim.H || scale !== anim.scale) { anim.q = Math.round((anim.q / anim.H) * H); anim.H = H; anim.scale = scale; }
+      for (const [id, gs] of Object.entries(tgt)) {
+        const on = PR.MEASURANDS[s.selected] && PR.MEASURANDS[s.selected].m2 === id;
+        gs.forEach((g) => g.classList.toggle('hl', !!on));
+      }
+      if (!anim.mode) draw();
+    });
+    anim.q = anim.H; anim.phase = '待機：左 cell 存 1、右 cell 存 0。';
+    setView('real'); syncBtns(); draw();
+  }
+  const api = { mount, leakDone };
+  root.DMS = root.DMS || {};
+  root.DMS.m2 = api;
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+
+/* ---- m4-margin.js ---- */
+/* DRAM Metro Simulator — M4 signal-margin simulator (spec §4 M4, §5.1). */
+(function (root) {
+  'use strict';
+  const FORMULAS = [
+    ['電容面積（雙面圓柱）', 'A = π(D + D_i)H + πD_i²/4，D_i = D − 2w', '案例 5'],
+    ['電容面積（實心柱）', 'A = πDH + πD²/4', '案例 5'],
+    ['ZrO₂ 有效介電常數', 'κ_Z = f_t·κ_t + (1−f_t)·κ_m', '案例 7'],
+    ['等效氧化層厚度', 'EOT = 3.9·(t_Z/κ_Z + t_A/κ_A)', '研究 03 #8'],
+    ['儲存電容', 'C_s = ε₀·3.9·A / EOT', 'A p.51'],
+    ['位元線電容', 'C_BL = N_cell·c_cell + C_SA', '影片 30:58、研究 03 #2'],
+    ['電子數', 'N_e = C_s·V_ARY / q', 'Atlas 圖 1'],
+    ['感測訊號', 'ΔV = (V_ARY/2)·C_s/(C_s+C_BL)', 'A p.51、Atlas 圖 3'],
+    ['感測需求', 'V_req = V_noise + n·σ_offset', '—'],
+    ['可容忍下垂', 'V_allow = V_ARY/2 − V_req·(C_s+C_BL)/C_s', '由 ΔV ≥ V_req 推得'],
+    ['剩餘餘量', 'ΔV − V_noise − n·σ_offset − 下垂(t_REF)·C_s/(C_s+C_BL)', 'Atlas 圖 3'],
+  ];
+  const OUT = [
+    ['Cs_fF', 'C_s 儲存電容', 'fF', 2], ['CBL_fF', 'C_BL 位元線電容', 'fF', 1], ['ratio', 'C_BL / C_s', '×', 2],
+    ['dV_mV', 'ΔV 感測訊號', 'mV', 1], ['Ne', '電子數', 'e⁻', 'sci'], ['EOT_nm', 'EOT', 'nm', 3],
+    ['kZ', 'κ_Z', '', 1], ['AR', '深寬比 AR', '', 0], ['F_nm', 'F（6F²）', 'nm', 1],
+    ['pitch_nm', '電容六角節距', 'nm', 1], ['Vallow', 'V_allow 可容忍下垂', 'mV', 0],
+  ];
+
+  function waterfall(u, r) {
+    const w = r.waterfall;
+    const levels = [0, w.dV, w.dV - w.noise, w.dV - w.noise - w.guard, w.remain];
+    const lo = Math.min(0, ...levels), hi = Math.max(10, ...levels);
+    const top = 34, bot = 222, span = (hi - lo) * 1.12 || 1;
+    const y = (v) => bot - ((v - lo) / span) * (bot - top);
+    const bars = [
+      ['ΔV', 0, w.dV, 'var(--accent)'],
+      ['−雜訊', w.dV, w.dV - w.noise, 'var(--sig)'],
+      ['−n·σ_offset', w.dV - w.noise, w.dV - w.noise - w.guard, 'var(--leak)'],
+      ['−下垂', w.dV - w.noise - w.guard, w.remain, 'var(--elec)'],
+      ['剩餘餘量', 0, w.remain, w.remain > 0 ? 'var(--ok)' : 'var(--sig)'],
+    ];
+    const g = u.svg('svg', { viewBox: '0 0 640 270', role: 'img',
+      'aria-label': `感測餘量瀑布圖：ΔV ${u.fmt(w.dV, 1)} mV，扣除雜訊 ${u.fmt(w.noise, 1)}、保護帶 ${u.fmt(w.guard, 1)}、下垂 ${u.fmt(w.droop, 2)}，剩餘 ${u.fmt(w.remain, 1)} mV` });
+    g.append(u.svg('line', { x1: 30, x2: 620, y1: y(0), y2: y(0), stroke: 'var(--text-dim)', 'stroke-width': 1.4 }));
+    bars.forEach(([lab, a, b, col], i) => {
+      const x = 40 + i * 118, ya = y(a), yb = y(b);
+      g.append(u.svg('rect', { x, y: Math.min(ya, yb), width: 84, height: Math.max(Math.abs(yb - ya), 1.5), fill: col, opacity: 0.88 }));
+      const val = i === 0 || i === 4 ? b : b - a;
+      g.append(u.svg('text', { x: x + 42, y: Math.min(ya, yb) - 7, 'text-anchor': 'middle', 'font-size': 12,
+        'font-family': 'var(--fm)', fill: 'var(--text)', 'font-weight': 700 }, `${val > 0 && i > 0 && i < 4 ? '+' : ''}${u.fmt(val, 1)}`));
+      g.append(u.svg('text', { x: x + 42, y: 250, 'text-anchor': 'middle', 'font-size': 12, fill: 'var(--text-dim)' }, lab));
+      if (i < 4) g.append(u.svg('line', { x1: x + 84, x2: x + 118, y1: yb, y2: yb, stroke: 'var(--text-faint)', 'stroke-dasharray': '3 3' }));
+    });
+    g.append(u.svg('text', { x: 30, y: 18, 'font-size': 11, fill: 'var(--text-faint)', 'font-family': 'var(--fm)' }, 'mV（中位數 cell，refresh 窗口結束時）'));
+    return g;
+  }
+
+  function waveform(u, r, p) {
+    const V = p.VARY, dV = r.dV_mV / 1000;
+    const X = (t) => 50 + t * 560, Y = (v) => 176 - (v / V) * 146;
+    const bl = [[0, V / 2], [0.35, V / 2], [0.4, V / 2 + dV], [0.6, V / 2 + dV], [0.7, V], [1, V]];
+    const blb = [[0, V / 2], [0.6, V / 2], [0.7, 0], [1, 0]];
+    const d = (pts) => 'M' + pts.map(([t, v]) => `${X(t).toFixed(1)},${Y(v).toFixed(1)}`).join(' L');
+    const g = u.svg('svg', { viewBox: '0 0 640 214', role: 'img',
+      'aria-label': `位元線電荷分享波形：預充到 V_ARY/2，開字元線後上升 ${u.fmt(r.dV_mV, 1)} mV，感測放大後推到滿擺幅` });
+    [[V, 'V_ARY'], [V / 2, 'V_ARY/2'], [0, '0']].forEach(([v, lab]) => {
+      g.append(u.svg('line', { x1: 50, x2: 610, y1: Y(v), y2: Y(v), stroke: 'var(--border)', 'stroke-dasharray': '4 4' }));
+      g.append(u.svg('text', { x: 44, y: Y(v) + 4, 'text-anchor': 'end', 'font-size': 11, 'font-family': 'var(--fm)', fill: 'var(--text-faint)' }, lab));
+    });
+    [[0.35, '開 WL'], [0.6, 'SA 啟動']].forEach(([t, lab]) => {
+      g.append(u.svg('line', { x1: X(t), x2: X(t), y1: 22, y2: 180, stroke: 'var(--text-faint)', 'stroke-dasharray': '2 3' }));
+      g.append(u.svg('text', { x: X(t) + 4, y: 20, 'font-size': 11, fill: 'var(--text-dim)' }, lab));
+    });
+    g.append(u.svg('path', { d: d(blb), fill: 'none', stroke: 'var(--accent)', 'stroke-width': 2.4 }));
+    g.append(u.svg('path', { d: d(bl), fill: 'none', stroke: 'var(--sig)', 'stroke-width': 2.6 }));
+    g.append(u.svg('text', { x: 612, y: Y(V) + 4, 'font-size': 11, fill: 'var(--sig)', 'font-weight': 700 }, 'BL'));
+    g.append(u.svg('text', { x: 612, y: Y(0) + 4, 'font-size': 11, fill: 'var(--accent)', 'font-weight': 700 }, 'BLB'));
+    g.append(u.svg('text', { x: X(0.5), y: Y(V / 2 + dV) - 8, 'text-anchor': 'middle', 'font-size': 12, 'font-weight': 700,
+      fill: 'var(--text)', 'font-family': 'var(--fm)' }, `ΔV = ${u.fmt(r.dV_mV, 1)} mV`));
+    g.append(u.svg('text', { x: 330, y: 206, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--text-faint)' },
+      '讀「1」：電荷分享讓 BL 上升 ΔV，sense amp 再把 BL 推到 V_ARY、BLB 推到 0（時間軸為示意）'));
+    return g;
+  }
+
+  function mount(sel) {
+    const host = document.querySelector(sel);
+    const u = root.DMS.ui, S = root.DMS.state, P = root.DMS.params;
+    const defs = P.PARAM_DEFS;
+    const sliders = {};
+    const mk = (group) => defs.filter((d) => d.group === group).map((d) => {
+      const s = u.slider(d, S.get().params[d.key], (v) => S.setParam(d.key, d.step >= 1 && !d.log ? Math.round(v) : v));
+      sliders[d.key] = s; return s;
+    });
+
+    const segBtns = {};
+    const seg = u.el('div', { class: 'seg', role: 'group', 'aria-label': '電容形狀' },
+      ...[['cylinder', '雙面圓柱 cylinder'], ['pillar', '實心柱 pillar']].map(([k, lab]) =>
+        (segBtns[k] = u.el('button', { onclick: () => S.setParam('shape', k) }, lab))));
+    const shapeNote = u.el('p', { class: 'note' });
+    const kv = u.el('div', { class: 'kv' });
+    const kvNodes = {};
+    for (const [k, lab, unit] of OUT) {
+      const v = u.el('span', { class: 'v' }), v2 = u.el('span', { class: 'v2' });
+      kvNodes[k] = { v, v2 };
+      kv.append(u.el('div', {}, u.el('span', { class: 'k' }, `${lab}${unit ? `（${unit}）` : ''}`), v, v2));
+    }
+    const wfBox = u.el('div'), wvBox = u.el('div');
+    const warn = u.el('div', { class: 'warn', hidden: true });
+
+    host.append(
+      u.el('h2', { id: 'h-m4' }, 'M4 訊號餘量模擬器 ', u.el('span', { class: 'en' }, 'signal margin')),
+      u.el('p', { class: 'sub' }, '電容幾何與介電層決定 C_s；位元線決定 C_BL；兩者的比值決定 ΔV。再扣掉雜訊、sense amp offset 保護帶與漏電下垂，剩下的就是感測餘量——整個製程控制都在保護這個數字。'),
+      u.el('div', { class: 'row' }, u.el('span', { class: 'note' }, '電容形狀 ', u.badge('red', 'Micron 未公開；圓柱在公開高度（≈1 µm）下才能達到公開 C_s')), seg),
+      shapeNote, warn,
+      u.el('div', { class: 'grid2' },
+        u.el('div', {}, u.el('h4', { class: 'grp' }, '結構與介電層 structure & dielectric'), ...mk('struct')),
+        u.el('div', {}, u.el('h4', { class: 'grp' }, '陣列、電壓與感測 array · voltage · sensing'), ...mk('array'))),
+      u.el('h4', { class: 'grp', style: 'margin-top:16px' }, '結果 results（下方紅字為漂移後）'), kv,
+      u.el('div', { class: 'grid2', style: 'margin-top:14px' },
+        u.el('div', {}, u.el('h4', { class: 'grp' }, '感測餘量瀑布圖 margin waterfall'), wfBox),
+        u.el('div', {}, u.el('h4', { class: 'grp' }, '位元線電荷分享 BL charge sharing'), wvBox)),
+      u.el('details', {}, u.el('summary', {}, '公式與出處 formulas'),
+        u.el('table', { class: 'f' }, u.el('tbody', {}, ...FORMULAS.map(([a, b, c]) =>
+          u.el('tr', {}, u.el('td', {}, a), u.el('td', { class: 'm' }, b), u.el('td', {}, c)))))));
+
+    S.subscribe((s) => {
+      for (const [k, sl] of Object.entries(sliders)) {
+        if (!sl.contains(document.activeElement)) sl.sync(s.params[k]);
+      }
+      for (const [k, b] of Object.entries(segBtns)) b.classList.toggle('on', s.params.shape === k);
+      const r = s.drifted, b = s.base, p = s.driftedParams;
+      const val = (res, k) => (k === 'ratio' ? res.CBL_fF / res.Cs_fF : k === 'Vallow' ? res.Vallow_V * 1000 : res[k]);
+      for (const [k, , , d] of OUT) {
+        const f = (x) => (d === 'sci' ? u.sci(x) : u.fmt(x, d));
+        kvNodes[k].v.textContent = f(val(b, k));
+        kvNodes[k].v2.textContent = s.hasDrift ? `→ ${f(val(r, k))}` : '';
+      }
+      const other = r.otherShape === 'pillar' ? '實心柱' : '雙面圓柱';
+      shapeNote.textContent = `達到同樣 C_s（${u.fmt(r.Cs_fF, 2)} fF），${other}需要 H ≈ ${Math.round(r.otherShapeH_nm)} nm（深寬比 ≈ ${Math.round(r.otherShapeH_nm / p.D_nm)}）；目前 ${Math.round(p.H_nm)} nm（深寬比 ${Math.round(r.AR)}）。`;
+      warn.hidden = r.designOK;
+      warn.textContent = r.designOK ? '' : `設計不成立：感測需求 V_req = ${u.fmt(r.Vreq_mV, 0)} mV 大於訊號 ΔV = ${u.fmt(r.dV_mV, 1)} mV。所有 cell 都無法在 refresh 窗口內被可靠讀出。`;
+      wfBox.replaceChildren(waterfall(u, r));
+      wvBox.replaceChildren(waveform(u, r, p));
+    });
+  }
+  const api = { mount };
+  root.DMS = root.DMS || {};
+  root.DMS.m4 = api;
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+
+/* ---- m5-retention.js ---- */
+/* DRAM Metro Simulator — M5 variation & retention (spec §4 M5, §5.2). */
+(function (root) {
+  'use strict';
+  const SQ2PI = Math.sqrt(2 * Math.PI);
+
+  // per-decade density of log-normal population with median tMed and ln-sigma sig, weighted by w
+  function dens(x10, tMed, sig, w) {
+    const z = (x10 * Math.LN10 - Math.log(tMed)) / sig;
+    return w * Math.LN10 * Math.exp(-0.5 * z * z) / (sig * SQ2PI);
+  }
+
+  function retentionPlot(u, s, logY) {
+    const W = 680, x0 = 64, x1 = 650, yTop = 26, yBot = 248;
+    const X = (x10) => x0 + ((x10 + 3) / 6) * (x1 - x0);
+    const g = u.svg('svg', { viewBox: `0 0 ${W} 300`, role: 'img',
+      'aria-label': `retention 分布：主群體中位數 ${u.fmt(s.drifted.tMain_s, 2)} s，尾端中位數 ${u.fmt(s.drifted.tTail_s, 3)} s，refresh 窗口 ${u.fmt(s.drifted.tREF_s * 1000, 0)} ms` });
+    const series = (r, p) => {
+      const pts = [];
+      for (let i = 0; i <= 240; i++) {
+        const x10 = -3 + (6 * i) / 240;
+        pts.push([x10, dens(x10, r.tMain_s, r.sigMain, 1 - p.fD), dens(x10, r.tTail_s, p.sigD, p.fD)]);
+      }
+      return pts;
+    };
+    const base = series(s.base, s.params);
+    const drift = s.hasDrift ? series(s.drifted, s.driftedParams) : null;
+    const all = base.flatMap((q) => [q[1], q[2]]);
+    const yMaxLin = Math.max(...all) * 1.1 || 1;
+    const Y = logY
+      ? (v) => { const l = Math.log10(Math.max(v, 1e-13)); return yBot - ((Math.max(l, -12) + 12) / 13) * (yBot - yTop); }
+      : (v) => yBot - (v / yMaxLin) * (yBot - yTop);
+    // axes
+    g.append(u.svg('line', { x1: x0, x2: x1, y1: yBot, y2: yBot, stroke: 'var(--text-dim)' }));
+    for (let d = -3; d <= 3; d++) {
+      g.append(u.svg('line', { x1: X(d), x2: X(d), y1: yBot, y2: yBot + 5, stroke: 'var(--text-dim)' }));
+      const lab = d < 0 ? `${10 ** (3 + d)} ms` : `${10 ** d} s`;
+      g.append(u.svg('text', { x: X(d), y: yBot + 18, 'text-anchor': 'middle', 'font-size': 11, 'font-family': 'var(--fm)', fill: 'var(--text-faint)' }, lab));
+    }
+    g.append(u.svg('text', { x: (x0 + x1) / 2, y: 292, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--text-dim)' }, 'retention time（對數軸）'));
+    if (logY) {
+      for (const e of [0, -3, -6, -9, -12]) {
+        g.append(u.svg('line', { x1: x0, x2: x1, y1: Y(10 ** e), y2: Y(10 ** e), stroke: 'var(--border-soft)', 'stroke-dasharray': '3 4' }));
+        g.append(u.svg('text', { x: x0 - 6, y: Y(10 ** e) + 4, 'text-anchor': 'end', 'font-size': 10, 'font-family': 'var(--fm)', fill: 'var(--text-faint)' }, `1e${e}`));
+      }
+    }
+    g.append(u.svg('text', { x: 14, y: 140, 'font-size': 11, fill: 'var(--text-dim)', transform: 'rotate(-90 14 140)', 'text-anchor': 'middle' }, logY ? 'cell 比例／十倍（對數）' : 'cell 比例／十倍（線性）'));
+    const path = (pts, idx) => 'M' + pts.map((q) => `${X(q[0]).toFixed(1)},${Y(q[idx]).toFixed(1)}`).join(' L');
+    // shaded tail below tREF
+    const tr10 = Math.log10(s.drifted.tREF_s);
+    const src = drift || base;
+    const shade = src.filter((q) => q[0] <= tr10);
+    if (shade.length > 1) {
+      const d = 'M' + X(shade[0][0]) + ',' + yBot + ' L' + shade.map((q) => `${X(q[0]).toFixed(1)},${Y(Math.max(q[1], q[2])).toFixed(1)}`).join(' L') + ` L${X(shade.at(-1)[0]).toFixed(1)},${yBot} Z`;
+      g.append(u.svg('path', { d, fill: 'var(--sig)', opacity: 0.25 }));
+    }
+    g.append(u.svg('path', { d: path(base, 1), fill: 'none', stroke: 'var(--accent)', 'stroke-width': 2.2 }));
+    g.append(u.svg('path', { d: path(base, 2), fill: 'none', stroke: 'var(--leak)', 'stroke-width': 2.2 }));
+    if (drift) {
+      g.append(u.svg('path', { d: path(drift, 1), fill: 'none', stroke: 'var(--accent)', 'stroke-width': 1.6, 'stroke-dasharray': '6 4' }));
+      g.append(u.svg('path', { d: path(drift, 2), fill: 'none', stroke: 'var(--sig)', 'stroke-width': 1.8, 'stroke-dasharray': '6 4' }));
+    }
+    g.append(u.svg('line', { x1: X(tr10), x2: X(tr10), y1: yTop - 6, y2: yBot, stroke: 'var(--sig)', 'stroke-width': 2, 'stroke-dasharray': '6 4' }));
+    g.append(u.svg('text', { x: X(tr10) + 5, y: yTop + 4, 'font-size': 11, fill: 'var(--sig)', 'font-weight': 700 }, `refresh ${u.fmt(s.drifted.tREF_s * 1000, 0)} ms`));
+    g.append(u.svg('text', { x: x1 - 4, y: yTop + 4, 'text-anchor': 'end', 'font-size': 11, fill: 'var(--accent)' }, '— 主群體 main'));
+    g.append(u.svg('text', { x: x1 - 4, y: yTop + 20, 'text-anchor': 'end', 'font-size': 11, fill: 'var(--leak)' }, '— 尾端 tail'));
+    if (drift) g.append(u.svg('text', { x: x1 - 4, y: yTop + 36, 'text-anchor': 'end', 'font-size': 11, fill: 'var(--sig)' }, '--- 漂移後 drifted'));
+    return g;
+  }
+
+  function marginPlot(u, r) {
+    const mu = r.muMargin_mV, sg = r.sigMargin_mV;
+    const lo = Math.min(-sg, mu - 4 * sg), hi = mu + 4.5 * sg;
+    const x0 = 50, x1 = 640, yTop = 22, yBot = 160;
+    const X = (v) => x0 + ((v - lo) / (hi - lo)) * (x1 - x0);
+    const pk = 1 / (sg * SQ2PI);
+    const Y = (v) => yBot - (v / pk) * (yBot - yTop);
+    const g = u.svg('svg', { viewBox: '0 0 680 200', role: 'img',
+      'aria-label': `感測餘量分布：平均 ${u.fmt(mu, 1)} mV，標準差 ${u.fmt(sg, 1)} mV，餘量小於零的機率 ${u.sci(r.pSense)}` });
+    const pts = [];
+    for (let i = 0; i <= 200; i++) { const v = lo + ((hi - lo) * i) / 200; pts.push([v, Math.exp(-0.5 * ((v - mu) / sg) ** 2) / (sg * SQ2PI)]); }
+    const neg = pts.filter((q) => q[0] <= 0);
+    if (neg.length > 1) {
+      g.append(u.svg('path', { d: `M${X(neg[0][0])},${yBot} L` + neg.map((q) => `${X(q[0]).toFixed(1)},${Y(q[1]).toFixed(1)}`).join(' L') + ` L${X(neg.at(-1)[0])},${yBot} Z`, fill: 'var(--sig)', opacity: 0.35 }));
+    }
+    g.append(u.svg('path', { d: 'M' + pts.map((q) => `${X(q[0]).toFixed(1)},${Y(q[1]).toFixed(1)}`).join(' L'), fill: 'none', stroke: 'var(--ok)', 'stroke-width': 2.2 }));
+    g.append(u.svg('line', { x1: x0, x2: x1, y1: yBot, y2: yBot, stroke: 'var(--text-dim)' }));
+    g.append(u.svg('line', { x1: X(0), x2: X(0), y1: yTop, y2: yBot, stroke: 'var(--sig)', 'stroke-width': 2, 'stroke-dasharray': '5 4' }));
+    g.append(u.svg('text', { x: X(0) + 5, y: yTop + 10, 'font-size': 11, fill: 'var(--sig)', 'font-weight': 700 }, '0 mV：讀錯'));
+    g.append(u.svg('text', { x: X(mu), y: yBot + 16, 'text-anchor': 'middle', 'font-size': 11, 'font-family': 'var(--fm)', fill: 'var(--text-dim)' }, `μ = ${u.fmt(mu, 1)} mV`));
+    g.append(u.svg('text', { x: 340, y: 194, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--text-faint)' },
+      `σ = √[(∂ΔV/∂C_s·σ_Cs)² + σ_offset²] = ${u.fmt(sg, 2)} mV　P(餘量<0) = ${u.sci(r.pSense)}`));
+    return g;
+  }
+
+  function mount(sel) {
+    const host = document.querySelector(sel);
+    const u = root.DMS.ui, S = root.DMS.state, P = root.DMS.params;
+    let logY = true;
+    const sliders = {};
+    const mk = (group) => P.PARAM_DEFS.filter((d) => d.group === group && d.key !== 'tREF_ms').map((d) => {
+      const s = u.slider(d, S.get().params[d.key], (v) => S.setParam(d.key, d.step >= 1 && !d.log ? Math.round(v) : v));
+      sliders[d.key] = s; return s;
+    });
+    const tDef = P.PARAM_DEFS.find((d) => d.key === 'tREF_ms');
+    const tSl = u.slider(tDef, S.get().params.tREF_ms, (v) => S.setParam('tREF_ms', Math.round(v)));
+    sliders.tREF_ms = tSl;
+    const modeBtns = {};
+    const modeSeg = u.el('div', { class: 'seg', role: 'group', 'aria-label': 'refresh 模式' },
+      ...[['auto', '自動（依溫度）'], ['manual', '手動']].map(([k, lab]) => (modeBtns[k] = u.el('button', { onclick: () => S.setParam('tREFmode', k) }, lab))));
+    const yBtns = {};
+    const ySeg = u.el('div', { class: 'seg', role: 'group', 'aria-label': '縱軸' },
+      ...[[true, '對數'], [false, '線性']].map(([k, lab]) => (yBtns[k] = u.el('button', { onclick: () => { logY = k; render(last); } }, lab))));
+    const plotBox = u.el('div'), marginBox = u.el('div');
+    const linNote = u.el('div', { class: 'info', hidden: true }, '線性座標下尾端完全看不見——但 fail bit 幾乎全部來自那裡。這正是 tail bit 難管的原因：看平均值、看線性直方圖都會漏掉它。');
+    const anchorWarn = u.el('div', { class: 'warn', hidden: true }, '尾端占比小於 45 °C 錨點比例，尾端中位數已夾限。請提高尾端占比或降低錨點比例。');
+    const semiNote = u.el('div', { class: 'info' });
+    const kv = u.el('div', { class: 'kv' });
+    const OUT = [['sigVt_mV', 'σ_Vt', 'mV', 1], ['sigMain', 'σ_main（ln）', '', 3], ['tMain_s', '主群體中位數 t(T)', 's', 'sci'],
+      ['tTail_s', '尾端中位數 t(T)', 's', 'sci'], ['tREF', 'refresh 窗口', 'ms', 0], ['pRet', 'P_ret', '', 'sci'],
+      ['failRetMain', 'retention fail：主群體', 'bit', 'sci'], ['failRetTail', 'retention fail：尾端', 'bit', 'sci'],
+      ['failRet', 'retention fail 合計', 'bit/晶片', 'sci'], ['pSense', 'P(餘量<0)', '', 'sci'], ['failSense', '感測 fail', 'bit/晶片', 'sci']];
+    const nodes = {};
+    for (const [k, lab, unit] of OUT) {
+      const v = u.el('span', { class: 'v' }), v2 = u.el('span', { class: 'v2' });
+      nodes[k] = { v, v2 }; kv.append(u.el('div', {}, u.el('span', { class: 'k' }, `${lab}${unit ? `（${unit}）` : ''}`), v, v2));
+    }
+    host.append(
+      u.el('h2', { id: 'h-m5' }, 'M5 變異與 retention ', u.el('span', { class: 'en' }, 'variation & retention')),
+      u.el('p', { class: 'sub' }, 'retention 以 45 °C 的文獻量測為錨點，再依 C_s·V_allow 與溫度縮放。refresh 窗口依 DDR5 規格：≤85 °C 為 32 ms，85–95 °C 自動減半為 16 ms。fail bit 為修補前數量；實際晶片以備援列／行修補（A Fig 2-42）。'),
+      anchorWarn,
+      u.el('div', { class: 'grid2' },
+        u.el('div', {}, u.el('h4', { class: 'grp' }, '存取電晶體與漏電 transistor & leakage'), ...mk('transistor'), semiNote),
+        u.el('div', {}, u.el('h4', { class: 'grp' }, 'retention 與溫度 retention & temperature'), ...mk('retention'),
+          u.el('div', { class: 'row' }, u.el('span', { class: 'note' }, 'refresh 模式'), modeSeg), tSl)),
+      u.el('div', { class: 'grid2', style: 'margin-top:14px' },
+        u.el('div', {}, u.el('div', { class: 'row' }, u.el('h4', { class: 'grp', style: 'margin:0' }, 'retention 分布 distribution'), u.el('span', { class: 'note' }, '縱軸'), ySeg),
+          linNote, plotBox),
+        u.el('div', {}, u.el('h4', { class: 'grp', style: 'margin:10px 0 6px' }, '感測餘量分布 sensing margin distribution'), marginBox)),
+      u.el('h4', { class: 'grp', style: 'margin-top:14px' }, '結果 results（下方紅字為漂移後）'), kv,
+      u.el('details', {}, u.el('summary', {}, '刻意不模擬 not modelled'),
+        u.el('p', { class: 'note' }, 'GIDL 電場模型、VRT、row hammer、寄生電阻與 RC、κ 的溫度相依、備援修補、耦合雜訊的空間分布。')));
+
+    let last = null;
+    function render(s) {
+      last = s;
+      for (const [k, sl] of Object.entries(sliders)) if (!sl.contains(document.activeElement)) sl.sync(s.params[k]);
+      const auto = s.params.tREFmode !== 'manual';
+      for (const [k, b] of Object.entries(modeBtns)) b.classList.toggle('on', s.params.tREFmode === k);
+      const tIn = tSl.querySelector('input');
+      tIn.disabled = auto; tIn.hidden = auto;
+      tSl.classList.toggle('ro', auto);
+      tSl.sync(auto ? Math.round(s.drifted.tREF_s * 1000) : s.params.tREF_ms);
+      for (const [k, b] of Object.entries(yBtns)) b.classList.toggle('on', String(logY) === k);
+      linNote.hidden = logY;
+      anchorWarn.hidden = !s.drifted.anchorInvalid;
+      plotBox.replaceChildren(retentionPlot(u, s, logY));
+      marginBox.replaceChildren(marginPlot(u, s.drifted));
+      const val = (r, k) => (k === 'tREF' ? r.tREF_s * 1000 : r[k]);
+      for (const [k, , , d] of OUT) {
+        const f = (x) => (d === 'sci' ? u.sci(x) : u.fmt(x, d));
+        nodes[k].v.textContent = f(val(s.base, k));
+        nodes[k].v2.textContent = s.hasDrift ? `→ ${f(val(s.drifted, k))}` : '';
+      }
+      const share = s.base.failRet > 0 ? s.base.failRetMain / s.base.failRet : 0;
+      semiNote.textContent = `主群體貢獻 fail bit 的比例：${u.sci(share * 100)}%。在這組參數下主群體離 refresh 窗口很遠，所以 σ_Vt（來自 WL CD、t_ox 變異）對 fail bit 的影響極小——retention 由尾端主導。`;
+    }
+    S.subscribe(render);
+  }
+  const api = { mount };
+  root.DMS = root.DMS || {};
+  root.DMS.m5 = api;
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+
+/* ---- m6-metrology.js ---- */
+/* DRAM Metro Simulator — M6 metrology drift hub (spec §4 M6, §5.3). */
+(function (root) {
+  'use strict';
+  const MODE = { quant: '定量', semi: '半定量', qual: '定性' };
+  const BAND = { good: '良好', marginal: '勉強', reject: '不可接受', na: '—' };
+  const ATLAS = 'DRAM Operation Atlas.html';
+  const cpkText = (v) => (v === Infinity ? 'σ = 0（無上限）' : Number.isFinite(v) ? v.toFixed(2) : '—');
+
+  function mount(sel) {
+    const host = document.querySelector(sel);
+    const u = root.DMS.ui, S = root.DMS.state, P = root.DMS.params, E = root.DMS.engine;
+    const ids = Object.keys(P.MEASURANDS);
+    const defaultUnit = (id) => (id === 'phase' ? 'abs' : '%');
+    const pick = (id) => S.selectMeasurand(id);
+
+    // left: measurand list
+    const listBtns = {};
+    const list = u.el('div', { class: 'mlist', role: 'group', 'aria-label': '量測項目' }, ...ids.map((id) => {
+      const m = P.MEASURANDS[id];
+      return (listBtns[id] = u.el('button', { onclick: () => pick(id) },
+        u.el('span', { class: 'mz' }, m.zh, ' ', u.el('span', { class: 'en' }, m.en)),
+        u.el('span', { class: `chip ${m.mode}` }, MODE[m.mode])));
+    }));
+
+    // right: info card
+    const title = u.el('h3'), infoKv = u.el('div', { class: 'kv' });
+    const refsRow = u.el('p', { class: 'note refs' });
+    const info = u.el('div', { class: 'card' }, title, infoKv, refsRow);
+
+    // drift card
+    const shiftIn = u.el('input', { type: 'number', step: 0.1, 'aria-label': '平均值偏移' });
+    shiftIn.addEventListener('change', () => { const v = +shiftIn.value; S.setDrift({ meanShift: Number.isFinite(v) ? v : 0 }); });
+    const unitBtns = {};
+    const unitSeg = u.el('div', { class: 'seg', role: 'group', 'aria-label': '偏移單位' },
+      ...['%', 'abs'].map((k) => (unitBtns[k] = u.el('button', { onclick: () => S.setDrift({ shiftUnit: k }) }, k === '%' ? '%' : '絕對值'))));
+    const unitLab = u.el('span', { class: 'note' });
+    const shiftRow = u.el('div', { class: 'row' }, u.el('label', {}, '平均值偏移 mean shift', shiftIn), unitSeg, unitLab);
+    const sigIn = u.el('input', { type: 'range', min: 0.5, max: 3, step: 0.1, 'aria-label': '製程 σ 倍率' });
+    const sigOut = u.el('output', { class: 'val' });
+    sigIn.addEventListener('input', () => { sigOut.textContent = `×${(+sigIn.value).toFixed(1)}`; S.setDrift({ sigmaScale: +sigIn.value }); });
+    const sigRow = u.el('div', { class: 'row' }, u.el('label', {}, '製程 σ 倍率 σ scale', sigIn), sigOut);
+    const semiNote = u.el('div', { class: 'info' });
+    const qualNote = u.el('div', { class: 'info' });
+    const driftCard = u.el('div', { class: 'card' }, u.el('h3', {}, '讓它漂移 drift'), shiftRow, sigRow, semiNote, qualNote);
+
+    // metrology card
+    const mIn = {};
+    const numIn = (field, lab) => {
+      const i = u.el('input', { type: 'number', step: 0.1, min: 0, 'aria-label': lab });
+      i.addEventListener('change', () => { const v = +i.value; if (Number.isFinite(v) && v >= 0) S.setMeas(S.get().selected, field, v); });
+      mIn[field] = i; return u.el('label', {}, lab, i);
+    };
+    const mUnit = u.el('span', { class: 'note' });
+    const tmuBtns = {};
+    const tmuSeg = u.el('div', { class: 'seg', role: 'group', 'aria-label': 'TMU 扣除' },
+      ...[[true, '開'], [false, '關']].map(([k, lab]) => (tmuBtns[k] = u.el('button', { onclick: () => S.setParam('tmuOn', k) }, lab))));
+    const mOut = {};
+    const mKv = u.el('div', { class: 'kv' }, ...[['pt', 'P/T 比'], ['sp', 'σ_process = √(σ_obs² − σ_meas²)'], ['co', 'Cpk（觀測 σ）'], ['cp', 'Cpk（製程 σ）'], ['gap', 'Cpk 差距']]
+      .map(([k, lab]) => { mOut[k] = u.el('span', { class: 'v' }); return u.el('div', {}, u.el('span', { class: 'k' }, lab), mOut[k]); }));
+    const mWarn = u.el('div', { class: 'warn', hidden: true }, 'σ_meas ≥ σ_obs：量測雜訊已大於或等於整體觀測變異，無法扣除，σ_process 暫以 σ_obs 代替。先檢查量測系統（gauge R&R）。');
+    const mDriftNote = u.el('p', { class: 'note' });
+    const metroCard = u.el('div', { class: 'card' },
+      u.el('h3', {}, '量測能力 gauge capability ', u.el('span', { class: 'en' }, 'P/T · TMU · Cpk')),
+      u.el('div', { class: 'row' }, numIn('sObs', 'σ_obs'), numIn('sMeas', 'σ_meas'), numIn('specHalf', '規格半寬'), mUnit),
+      mKv, mWarn, mDriftNote,
+      u.el('div', { class: 'row' }, u.el('span', { class: 'note' }, 'TMU 扣除'), tmuSeg,
+        u.el('span', { class: 'note' }, '開：用 σ_process 進入 M5；關：直接用觀測 σ（高估變異）')),
+      u.el('p', { class: 'note' }, 'P/T = 6σ_meas ／（USL − LSL）。<10% 良好、10–30% 勉強、>30% 不可接受。Cpk = （規格半寬 − |平均偏移|）／3σ。'));
+    const noMetro = u.el('div', { class: 'card' }, u.el('h3', {}, '量測能力'), u.el('p', { class: 'note' }, '這一項是有／無的判斷（通過或失效），沒有連續的規格窗口，所以不計算 P/T 與 Cpk。'));
+
+    // scenarios
+    const scBtns = {};
+    const scDesc = u.el('div', { class: 'card', hidden: true });
+    const scRow = u.el('div', { class: 'scen' }, ...P.SCENARIOS.map((sc) => (scBtns[sc.id] = u.el('button', { onclick: () => S.applyScenario(sc.id) }, sc.name))));
+
+    host.append(
+      u.el('h2', { id: 'h-m6' }, 'M6 量測漂移傳遞 ', u.el('span', { class: 'en' }, 'metrology drift')),
+      u.el('p', { class: 'sub' }, '從一個量測項目出發：選一項、讓它漂移，看漂移經過 C_s、ΔV、感測餘量與 retention 傳到 fail bit。上方的鏈條即時顯示每一環的變化；M4、M5 同步更新。'),
+      u.el('h4', { class: 'grp' }, '情境 scenarios'), scRow, scDesc,
+      u.el('div', { class: 'grid-m6', style: 'margin-top:14px' }, list, u.el('div', {}, info, driftCard, metroCard, noMetro)));
+
+    function render(s) {
+      const id = s.selected, m = P.MEASURANDS[id], mine = s.drift.key === id;
+      for (const k of ids) listBtns[k].classList.toggle('on', k === id);
+      for (const sc of P.SCENARIOS) scBtns[sc.id].classList.toggle('on', s.scenarioId === sc.id);
+      const sc = P.SCENARIOS.find((x) => x.id === s.scenarioId);
+      scDesc.hidden = !sc;
+      if (sc) scDesc.replaceChildren(u.el('h3', {}, sc.name), u.el('p', { class: 'note' }, sc.desc));
+
+      title.replaceChildren(m.zh, ' ', u.el('span', { class: 'en' }, m.en), ' ', u.el('span', { class: `chip ${m.mode}` }, MODE[m.mode]));
+      infoKv.replaceChildren(...[['主量測平台 platform', m.platform], ['參考量測 reference', m.reference], ['機台實際量到的是', m.measures], ['電性後果 effect', m.effect]]
+        .map(([k, v]) => u.el('div', {}, u.el('span', { class: 'k' }, k), u.el('span', {}, v))));
+      const figs = m.refs.atlas.map((n) => `圖 ${n}`).join('・');
+      refsRow.replaceChildren('延伸閱讀：',
+        root.DMS_ARTIFACT ? `圖冊 ${figs}` : u.el('a', { href: `../../${encodeURI(ATLAS)}`, target: '_blank', rel: 'noopener' }, `圖冊 ${figs}`),
+        '　書頁 ', ...m.refs.book.flatMap((b, i) => [i ? '、' : '', u.el('span', { class: 'mono' }, b)]));
+
+      // drift inputs
+      shiftRow.hidden = m.mode !== 'quant';
+      sigRow.hidden = m.mode === 'qual';
+      if (document.activeElement !== shiftIn) shiftIn.value = mine ? s.drift.meanShift : 0;
+      shiftIn.step = mine && s.drift.shiftUnit === 'abs' && id === 'phase' ? 0.01 : 0.1;
+      for (const [k, b] of Object.entries(unitBtns)) b.classList.toggle('on', (mine ? s.drift.shiftUnit : defaultUnit(id)) === k);
+      unitLab.textContent = m.unit ? `絕對值單位：${m.unit}` : '絕對值單位：比例（0–1）';
+      const k = mine ? s.drift.sigmaScale : 1;
+      if (document.activeElement !== sigIn) sigIn.value = k;
+      sigOut.textContent = `×${(+k).toFixed(1)}`;
+      semiNote.hidden = m.mode !== 'semi';
+      if (m.mode === 'semi') {
+        const d = s.drifted.failRet - s.base.failRet;
+        semiNote.textContent = `半定量：只接受 σ 放大。retention fail 變化 Δ = ${d >= 0 ? '+' : ''}${u.sci(d)} bit/晶片。在預設參數下影響極小——retention 由尾端主導。`;
+      }
+      qualNote.hidden = m.mode !== 'qual';
+      qualNote.textContent = `定性：v1 不做數值傳遞。失效模式：${m.effect}`;
+
+      // metrology
+      const hasSpec = id !== 'contact';
+      metroCard.hidden = !hasSpec; noMetro.hidden = hasSpec;
+      if (hasSpec) {
+        const base = s.params.meas[id];
+        for (const f of ['sObs', 'sMeas', 'specHalf']) if (document.activeElement !== mIn[f]) mIn[f].value = +(+base[f]).toPrecision(4);
+        mUnit.textContent = m.unit ? `單位：${m.unit}` : '單位：比例';
+        const eff = s.hasDrift && mine ? s.driftedParams.meas[id] : base;
+        let off = 0;
+        if (s.hasDrift && mine && m.mode === 'quant' && m.param) off = s.driftedParams[m.param] - s.params[m.param];
+        const r = E.metrology(eff, off);
+        mOut.pt.replaceChildren(`${u.fmt(r.pt * 100, 1)}% `, u.el('span', { class: `band ${r.band}` }, BAND[r.band]));
+        mOut.sp.textContent = `${u.fmt(r.sigmaProcess, 2)} ${m.unit}`;
+        mOut.co.textContent = cpkText(r.cpkObserved);
+        mOut.cp.textContent = cpkText(r.cpkProcess);
+        const gap = u.pct(r.cpkProcess, r.cpkObserved);
+        mOut.gap.textContent = Number.isFinite(gap) ? `${gap >= 0 ? '+' : ''}${u.fmt(gap, 1)}%` : '—';
+        mWarn.hidden = !r.warn;
+        mDriftNote.textContent = s.hasDrift && mine ? `含漂移：平均偏移 ${u.fmt(off, 3)} ${m.unit}，σ_obs ${u.fmt(eff.sObs, 2)}。` : '';
+        for (const [kk, b] of Object.entries(tmuBtns)) b.classList.toggle('on', String(!!s.params.tmuOn) === kk);
+      }
+    }
+    S.subscribe(render);
+  }
+  const api = { mount, cpkText };
+  root.DMS = root.DMS || {};
+  root.DMS.m6 = api;
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+
+/* ---- main.js ---- */
+/* DRAM Metro Simulator — bootstrap: controls, module mounting, footer. */
+(function (root) {
+  'use strict';
+  function controls(host) {
+    const { el } = root.DMS.ui;
+    const P = root.DMS.params, S = root.DMS.state;
+    const note = el('span', { class: 'note', role: 'status' });
+    const sel = el('select', { 'aria-label': '參數組 preset', onchange: () => S.applyPreset(sel.value) },
+      ...P.PRESETS.map((p) => el('option', { value: p.id }, p.name)),
+      el('option', { value: 'mine', disabled: true }, '我的參數'));
+    host.append(el('label', { class: 'note' }, '參數組 ', sel), el('button', { onclick: () => S.reset() }, '重設為預設'));
+    host.append(note);
+    S.subscribe((s) => { sel.value = s.presetId === 'mine' ? 'mine' : s.presetId; });
+  }
+  function footer(host) {
+    const { el } = root.DMS.ui;
+    host.append(
+      el('h2', {}, '來源、邊界與說明'),
+      el('p', {}, '來源等級：🟢 公開規格（JEDEC／Micron datasheet）・🟡 Micron 專屬逆向工程或論文・🟠 他廠或通用文獻・🔴 查無公開資料（示意值）・推算＝由其他參數計算。滑過徽章可看出處。'),
+      el('p', {}, '刻意不模擬：GIDL 電場模型、VRT、row hammer、寄生電阻與 RC、κ 的溫度相依、備援修補、耦合雜訊的空間分布。fail bit 皆為修補前數量。'),
+      el('p', {}, '研究原始紀錄：tool/research/01-public-spec.md、02-micron-structure.md、03-device-literature.md。設計文件：docs/superpowers/specs/2026-09-23-dram-metro-simulator-design.md。'),
+      el('p', {}, '動畫場景重建自 Branch Education〈How does Computer Memory Work?〉的主題，依 Micron 實際結構與 DDR5 規格修正；未使用任何影片畫面。'));
+  }
+  function start() {
+    const D = root.DMS;
+    D.state.init();
+    if (root.DMS_ARTIFACT) {
+      const b = document.getElementById('banner');
+      b.textContent = 'Artifact 版：只含公開示意值，請勿輸入公司資料';
+      b.hidden = false; document.body.classList.add('has-banner');
+    }
+    controls(document.getElementById('controls'));
+    D.chainBar.mount('#chain');
+    for (const [k, sel] of [['m6', '#m6'], ['m2', '#m2'], ['m4', '#m4'], ['m5', '#m5']]) {
+      if (D[k]) D[k].mount(sel); else document.querySelector(sel).hidden = true;
+    }
+    footer(document.getElementById('foot'));
+  }
+  if (typeof document !== 'undefined') {
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+  }
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+</script>
+
+</body></html>

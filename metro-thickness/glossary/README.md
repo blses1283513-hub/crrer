@@ -7,14 +7,14 @@ created: 2026-10-06
 
 ← [[00 - Metro Thickness Hub]] · short glossary: [[26 Glossary]]
 
-`terms.json` is the single source: 207 thin-film metrology terms, each with an English term, aliases, Chinese name, a one-line English definition, a one-line Chinese definition, related words and the note that explains it. It feeds two outputs:
+`terms.json` is the single source: 229 thin-film metrology terms, each with an English term, aliases, Chinese name, a one-line English definition, a one-line Chinese definition, related words and the note that explains it. It feeds two outputs:
 
 1. **Hover popups in the study guide** (the published web page).
 2. **Eudic files** in `eudic/`, rebuilt with `python build_eudic.py` (needs `pip install mdict-utils`).
 
 | File | Use |
 |---|---|
-| `eudic/MetroThickness.mdx` | Custom MDict dictionary: 207 entries + 205 alias redirects (e.g. "SE" → Ellipsometry). Related words are clickable links between entries. |
+| `eudic/MetroThickness.mdx` | Custom MDict dictionary: 229 entries + 241 alias redirects (e.g. "SE" → Ellipsometry). Related words are clickable links between entries. |
 | `eudic/metro-terms-wordlist.txt` | One headword per line, for Eudic's vocabulary book (生詞本) review. |
 | `eudic/metro-terms.csv` | Full table (UTF-8 with BOM, opens in Excel); also usable for Anki or other flashcard apps. |
 | `eudic/MetroThickness.txt` | MDX source text, for inspection or re-packing. |

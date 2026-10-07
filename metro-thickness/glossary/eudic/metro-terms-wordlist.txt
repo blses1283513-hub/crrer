@@ -205,3 +205,25 @@ a-Si
 TiN
 SiGe
 Gate oxide
+EOT
+Storage capacitance
+ZAZ
+MIM capacitor
+Step coverage
+Aspect ratio
+Penetration depth (ALD)
+Knudsen diffusion
+Leakage current density
+Poole–Frenkel
+Retention time
+Refresh
+Tail bits
+Fail bit
+Sense amplifier
+Bit line
+Word line
+GIDL
+VRT
+Tetragonal phase
+Rietveld
+TiOx
