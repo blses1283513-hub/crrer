@@ -7,9 +7,31 @@ Adds explanations to SemiYield's dashboard without changing SemiYield:
   (UCL / CL / LCL, background doping, junction depth xj) explain themselves when you hover them.
 * Text is Traditional Chinese with the English term, so it matches the Eudic study files.
 
-**Covered in this version:** Simulation (oxidation, implantation, etching, deposition), the Data Generator inputs
-(needed to feed SPC), and the SPC Dashboard (I-MR chart, Cp/Cpk/Pp/Ppk). Other pages still run normally; their
-charts get a generic "x / y" hover until they get their own entries in `explanations.yaml`.
+**Covered:** all six pages (Simulation, Data Generator, SPC Dashboard, Yield Prediction, Process Optimizer,
+SPICE Export): every input, metric card and button, the section headers that need context (SHAP, process
+window, BSIM parameters), and every chart. Process-parameter names (`gate_oxide_thickness`, `poly_cd`, ...) are
+explained wherever they appear: Yield Prediction inputs, SHAP bars, the trend chart, under the SPC selector.
+
+> ⚠ The **Process Optimizer** page optimises a demonstration formula whose optimum is always the centre of the
+> bounds you enter. Its tooltips say so; use it to learn the Bayesian-optimisation workflow, not for conclusions.
+
+## Reliable USL / LSL on the SPC page
+
+SemiYield's own defaults are the 0.5 / 99.5 percentiles of the plotted data. Specs taken from the data always
+fit around the data, so Cp comes out ≈ 0.9 whether the process is good or bad. The launcher replaces them with
+a suggested value (`spec_limits.py`, hybrid method). The method is shown under the boxes; hover `?` for the numbers.
+You can still type your own spec.
+
+| Parameter type | Rule | Example (default generated data) |
+|---|---|---|
+| Has a yield window in SemiYield's yield model (gate_oxide_thickness, poly_cd, contact_resistance) | nominal target ± 3σ, where its parametric yield starts to fall | gate oxide 7.6 / 9.4 nm → Cpk 0.87 |
+| Other process parameters | baseline (first 20% of rows = earliest lots) median ± 4·σ_short-term (moving range / 1.128) → Cp = 1.33 at baseline | implant dose 9.16e12 / 1.08e13 → Cpk 1.32 |
+| Smaller is better (deposition_unif, defect_density, wafer_map_std) | USL as above, LSL = 0 | deposition_unif 0 / 3.29 % |
+| Bigger is better (yield, wafer_map_mean) | LSL as above, USL = 1 | yield 0.9987 / 1 |
+| Counters (lot_sequence, wafer_sequence) | no spec: flagged "not a process parameter" | |
+
+For one-sided parameters only Cpk (the relevant side) is meaningful; Cp is not. Uploaded CSVs use the data rule
+for every parameter and assume rows are in time order.
 
 ## Run it (Windows, using SemiYield's environment)
 
@@ -41,6 +63,9 @@ $env:SEMIYIELD_DIR = "D:\tools\semiyield"
 * **Data Generator:** set Drift rate / Aging factor, click *Generate Dataset*.
 * **SPC Dashboard:** choose a real parameter (not `lot_sequence`, which is just a counter), then hover points
   (red = rule violation), the UCL/CL/LCL lines, and the `?` by Cpk / Ppk.
+* **Yield Prediction:** train the model, then hover the SHAP bars and the `?` by R² / RMSE / MAE.
+* **Process Optimizer:** run it and hover the convergence points; read the `?` by *Parameter Bounds*.
+* **SPICE Export:** hover `?` by *Computed SPICE Parameters* for VTH0, U0, K1, CDSC, RDSW.
 * Sidebar → *Metro 說明覆蓋率*: lists inputs that still have no explanation.
 
 ## Editing or adding explanations
