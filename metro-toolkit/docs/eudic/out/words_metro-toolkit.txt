@@ -1,0 +1,129 @@
+accuracy
+ambient medium
+amorphous silicon
+analysis of variance
+angle of incidence
+applications engineer
+aspect ratio
+atomic layer deposition
+attribution
+average run length
+band gap
+Bland-Altman plot
+bowl
+Brewster angle
+capacitor dielectric
+Cauchy model
+center-to-edge
+chamber
+chamber matching
+contour plot
+control chart
+control limits
+Cpk
+critical dimension
+CUSUM chart
+dashboard
+Deming regression
+deposition rate
+design of experiments
+dispersion model
+drift
+dynamic repeatability
+edge exclusion
+edge roll-off
+editable install
+environment variable
+equivalence test
+EWMA chart
+excursion
+extinction coefficient
+false alarm
+film stack
+film thickness
+floated parameter
+Fresnel coefficients
+gate oxide
+gauge R&R
+global search
+goodness of fit
+ground truth
+hard mask
+high-k dielectric
+individuals and moving range chart
+interfacial layer
+interference fringe
+interpolation
+Kramers-Kronig relations
+least squares
+license
+local minimum
+long format
+long-term stability
+lot
+measurement site
+measurement system analysis
+metrology
+model-based fitting
+monitor wafer
+non-uniformity
+notch
+number of distinct categories
+offset
+ONO stack
+optical constants
+out of control
+overlay
+parameter correlation
+Phase I
+polarization
+Ppk
+precision
+precision-to-tolerance ratio
+preventive maintenance
+process capability
+process step
+Psi and Delta
+radial profile
+recipe
+recipe release
+reduced chi-square
+reference wafer
+reflectance
+reflectometry
+refractive index
+repeatability
+reproducibility
+residual
+response surface
+root cause analysis
+sampling plan
+schema
+Sellmeier equation
+sensitivity
+short-term sigma
+silicon dioxide
+silicon nitride
+slot
+spatial signature
+specification limits
+spectroscopic ellipsometry
+standard error
+statistical process control
+substrate
+synthetic data
+Tauc-Lorentz model
+thin film
+tilt
+tool matching
+transfer matrix method
+underlayer
+unit test
+variance component
+virtual environment
+wafer map
+wafer-to-wafer variation
+Western Electric rules
+within-wafer uniformity
+Xbar-R chart
+Zernike polynomials

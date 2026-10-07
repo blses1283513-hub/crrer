@@ -1,0 +1,134 @@
+activation energy@<b>activation energy</b>　<span style="color:#1c5cab">活化能</span><br>Arrhenius 關係中決定溫度敏感度的參數。<br><i>A higher activation energy makes the rate more sensitive to temperature.</i><br>活化能越高，速率對溫度越敏感。<br><span style="color:#898781;font-size:smaller">semiyield</span>
+amorphous silicon@<b>amorphous silicon</b>　<span style="color:#1c5cab">非晶矽（a-Si）</span><br>無長程有序的矽，吸收比結晶矽強。<br><i>Amorphous silicon absorbs strongly in the blue part of the spectrum.</i><br>非晶矽在光譜的藍光區有很強的吸收。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield</span>
+aspect ratio@<b>aspect ratio</b>　<span style="color:#1c5cab">深寬比</span><br>結構深度與寬度之比。<br><i>Step coverage falls as the aspect ratio increases.</i><br>深寬比越大，階梯覆蓋率越低。<br><span style="color:#898781;font-size:smaller">semiyield, metro-toolkit</span>
+atomic layer deposition@<b>atomic layer deposition</b>　<span style="color:#1c5cab">原子層沉積（ALD）</span><br>以自我限制反應逐層沉積，厚度以循環數控制，覆蓋性極佳。<br><i>Atomic layer deposition adds about 0.1 nm per cycle.</i><br>原子層沉積每個循環約增加 0.1 nm。<br><span style="color:#898781;font-size:smaller">semiyield, metro-toolkit, sem-toolkit</span>
+attribution@<b>attribution</b>　<span style="color:#1c5cab">出處標示</span><br>使用他人 MIT 等授權程式碼時保留版權與授權聲明。<br><i>The adapted SPC module keeps SemiYield&#x27;s attribution in NOTICE.md.</i><br>改寫的 SPC 模組在 NOTICE.md 中保留 SemiYield 的出處標示。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield</span>
+Bayesian optimization@<b>Bayesian optimization</b>　<span style="color:#1c5cab">貝氏最佳化</span><br>以代理模型與取樣策略，用少量實驗找到最佳條件。<br><i>Bayesian optimization suggests the next recipe to try.</i><br>貝氏最佳化會建議下一組要嘗試的 recipe。<br><span style="color:#898781;font-size:smaller">semiyield</span>
+center point@<b>center point</b>　<span style="color:#1c5cab">中心點</span><br>因子皆在中間水準的實驗，用於檢查曲率與估計誤差。<br><i>Center points reveal curvature that a two-level design would miss.</i><br>中心點能發現二水準設計會漏掉的曲率。<br><span style="color:#898781;font-size:smaller">sem-toolkit, semiyield</span>
+chemical mechanical polishing@<b>chemical mechanical polishing</b>　<span style="color:#1c5cab">化學機械研磨（CMP）</span><br>以研磨液與研磨墊平坦化表面。<br><i>Chemical mechanical polishing removes less material at the wafer edge.</i><br>化學機械研磨在晶圓邊緣移除的材料較少。<br><span style="color:#898781;font-size:smaller">waferlens, semiyield</span>
+chemical vapor deposition@<b>chemical vapor deposition</b>　<span style="color:#1c5cab">化學氣相沉積（CVD）</span><br>以氣體前驅物反應沉積薄膜。<br><i>Chemical vapor deposition rate rises exponentially with temperature.</i><br>化學氣相沉積速率隨溫度呈指數上升。<br><span style="color:#898781;font-size:smaller">semiyield, sem-toolkit, waferlens</span>
+control chart@<b>control chart</b>　<span style="color:#1c5cab">管制圖</span><br>依時間序列繪製量測值與管制界限的圖。<br><i>Each chamber gets its own control chart and baseline.</i><br>每個腔體都有自己的管制圖與基準。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, waferlens</span>
+control limits@<b>control limits</b>　<span style="color:#1c5cab">管制界限（UCL／LCL）</span><br>由製程本身變異算出的界限，與規格界限不同。<br><i>Control limits come from the process, not from the specification.</i><br>管制界限來自製程本身，而不是規格。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, waferlens</span>
+Cpk@<b>Cpk</b>　<span style="color:#1c5cab">製程能力指標 Cpk</span><br>考慮偏離中心的短期能力指標；≥ 1.33 常為最低要求。<br><i>Chamber DEP01-B has the lowest Cpk because its mean is off target.</i><br>DEP01-B 腔的 Cpk 最低，因為它的平均值偏離目標。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield</span>
+CUSUM chart@<b>CUSUM chart</b>　<span style="color:#1c5cab">累積和管制圖（CUSUM）</span><br>累積偏離目標的量，適合偵測小偏移。<br><i>The CUSUM chart crosses the decision interval after a small sustained drift.</i><br>在小幅持續漂移之後，CUSUM 管制圖超出決策區間。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield</span>
+dashboard@<b>dashboard</b>　<span style="color:#1c5cab">儀表板</span><br>互動式網頁，集中呈現圖表與指標。<br><i>Open the dashboard with streamlit run.</i><br>用 streamlit run 開啟儀表板。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, waferlens, sem-toolkit</span>
+defect density@<b>defect density</b>　<span style="color:#1c5cab">缺陷密度（D0）</span><br>單位面積的致命缺陷數，常用 defects/cm²。<br><i>A higher defect density at the edge lowers edge-die yield.</i><br>邊緣較高的缺陷密度降低了邊緣晶粒的良率。<br><span style="color:#898781;font-size:smaller">semiyield, waferlens</span>
+deposition rate@<b>deposition rate</b>　<span style="color:#1c5cab">沉積速率</span><br>單位時間沉積的厚度，nm/min。<br><i>The optimal recipe reaches a deposition rate of 62 nm per minute.</i><br>最佳 recipe 達到每分鐘 62 nm 的沉積速率。<br><span style="color:#898781;font-size:smaller">semiyield, sem-toolkit, metro-toolkit</span>
+design of experiments@<b>design of experiments</b>　<span style="color:#1c5cab">實驗設計（DOE）</span><br>有系統地改變因子，以最少實驗找出因子效應。<br><i>Design of experiments links recipe parameters to thickness and uniformity.</i><br>實驗設計把 recipe 參數與膜厚、均勻性連結起來。<br><span style="color:#898781;font-size:smaller">semiyield, sem-toolkit, metro-toolkit</span>
+die@<b>die</b>　<span style="color:#1c5cab">晶粒</span><br>晶圓上切割後的單一晶片。<br><i>Each die on the wafer map is coloured by its sort bin.</i><br>晶圓圖上的每顆晶粒依照其電測分類著色。<br><span style="color:#898781;font-size:smaller">semiyield, waferlens, sem-toolkit</span>
+drift@<b>drift</b>　<span style="color:#1c5cab">漂移</span><br>隨時間緩慢變化的趨勢，如腔體老化。<br><i>Deposition rate drifts down with chamber age and resets at PM.</i><br>沉積速率隨腔體使用時間往下漂移，PM 後重置。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, waferlens</span>
+editable install@<b>editable install</b>　<span style="color:#1c5cab">可編輯安裝（pip install -e）</span><br>套件直接指向原始碼，修改後立即生效。<br><i>An editable install is required so the config folder can be found.</i><br>需要可編輯安裝，程式才能找到 config 資料夾。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield</span>
+ensemble model@<b>ensemble model</b>　<span style="color:#1c5cab">集成模型</span><br>結合多個機器學習模型以提高預測準確度。<br><i>The ensemble model combines gradient boosting and a neural network.</i><br>集成模型結合了梯度提升與神經網路。<br><span style="color:#898781;font-size:smaller">semiyield</span>
+etching@<b>etching</b>　<span style="color:#1c5cab">蝕刻</span><br>以化學或電漿去除材料形成圖形。<br><i>Etching selectivity determines how much of the mask survives.</i><br>蝕刻選擇比決定遮罩能保留多少。<br><span style="color:#898781;font-size:smaller">semiyield, waferlens</span>
+EWMA chart@<b>EWMA chart</b>　<span style="color:#1c5cab">指數加權移動平均管制圖（EWMA）</span><br>對小幅持續偏移比傳統管制圖更靈敏。<br><i>The EWMA chart detects a one-sigma shift much faster than rule 1.</i><br>EWMA 管制圖偵測一個標準差偏移的速度比法則一快得多。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield</span>
+expected improvement@<b>expected improvement</b>　<span style="color:#1c5cab">期望改善量（EI）</span><br>貝氏最佳化中選下一個實驗點的準則。<br><i>Expected improvement balances exploring new regions and refining good ones.</i><br>期望改善量在探索新區域與精修好區域之間取得平衡。<br><span style="color:#898781;font-size:smaller">semiyield</span>
+explainability@<b>explainability</b>　<span style="color:#1c5cab">可解釋性</span><br>說明模型為何做出某預測，如 SHAP 值。<br><i>SHAP explainability ranks which process parameters drive yield.</i><br>SHAP 可解釋性排出哪些製程參數影響良率最大。<br><span style="color:#898781;font-size:smaller">semiyield, sem-toolkit</span>
+film stress@<b>film stress</b>　<span style="color:#1c5cab">薄膜應力</span><br>薄膜內的張應力或壓應力，會造成晶圓翹曲。<br><i>Film stress combines intrinsic stress and thermal mismatch.</i><br>薄膜應力包含本質應力與熱膨脹不匹配。<br><span style="color:#898781;font-size:smaller">semiyield, sem-toolkit</span>
+film thickness@<b>film thickness</b>　<span style="color:#1c5cab">膜厚</span><br>最常見的薄膜量測參數，單位多為 nm 或 Å。<br><i>Film thickness is fitted at 49 sites to build the wafer map.</i><br>在 49 個量測點擬合膜厚，以建立晶圓圖。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, waferlens, sem-toolkit</span>
+full factorial design@<b>full factorial design</b>　<span style="color:#1c5cab">全因子設計</span><br>所有因子所有水準組合都做實驗；2⁴ 為 16 組。<br><i>A 2-to-the-4 full factorial design with four center points needs 20 runs.</i><br>2⁴ 全因子設計加四個中心點需要 20 次實驗。<br><span style="color:#898781;font-size:smaller">sem-toolkit, semiyield</span>
+gate oxide@<b>gate oxide</b>　<span style="color:#1c5cab">閘極氧化層</span><br>電晶體閘極下的薄氧化層，常只有數奈米。<br><i>A gate oxide of 1.8 nm is measured with multi-angle SE.</i><br>1.8 nm 的閘極氧化層用多角度 SE 量測。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, sem-toolkit</span>
+Gaussian process@<b>Gaussian process</b>　<span style="color:#1c5cab">高斯過程</span><br>可同時給出預測值與不確定度的代理模型。<br><i>The Gaussian process predicts both the response and its uncertainty.</i><br>高斯過程同時預測響應值與其不確定度。<br><span style="color:#898781;font-size:smaller">semiyield</span>
+high-k dielectric@<b>high-k dielectric</b>　<span style="color:#1c5cab">高介電常數介電質（high-k）</span><br>如 HfO2、ZrO2，用於閘極或 DRAM 電容。<br><i>The high-k dielectric is floated while the interfacial layer stays fixed.</i><br>高介電常數介電質設為浮動，介面層保持固定。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield</span>
+individuals and moving range chart@<b>individuals and moving range chart</b>　<span style="color:#1c5cab">個別值-移動全距管制圖（I-MR）</span><br>每次一個數據點時使用的管制圖。<br><i>The wafer mean is plotted on an individuals and moving range chart.</i><br>晶圓平均值繪在個別值-移動全距管制圖上。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield</span>
+ion implantation@<b>ion implantation</b>　<span style="color:#1c5cab">離子植入</span><br>以加速離子將摻雜物打入矽中。<br><i>Ion implantation dose is set in ions per square centimetre.</i><br>離子植入劑量以每平方公分的離子數設定。<br><span style="color:#898781;font-size:smaller">semiyield, waferlens</span>
+Latin hypercube sampling@<b>Latin hypercube sampling</b>　<span style="color:#1c5cab">拉丁超立方抽樣</span><br>讓樣本均勻散佈於多維空間的抽樣法。<br><i>The first ten runs use Latin hypercube sampling.</i><br>前十次實驗使用拉丁超立方抽樣。<br><span style="color:#898781;font-size:smaller">semiyield</span>
+license@<b>license</b>　<span style="color:#1c5cab">授權條款</span><br>規定他人可否使用、修改、散布程式碼；沒有授權即保留所有權利。<br><i>Without a license file you may read the code but not reuse it.</i><br>沒有授權檔時，你可以閱讀程式碼，但不能重複使用。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, waferlens, sem-toolkit</span>
+lot@<b>lot</b>　<span style="color:#1c5cab">批（lot）</span><br>一起流動的一組晶圓，通常 25 片。<br><i>Five wafers per lot are sampled for metrology.</i><br>每批抽五片晶圓做量測。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, waferlens</span>
+non-uniformity@<b>non-uniformity</b>　<span style="color:#1c5cab">不均勻度（NU）</span><br>常見定義：1σ/mean、range/mean、(max−min)/(2·mean)。<br><i>Always state which non-uniformity definition a report uses.</i><br>報告中一定要說明使用哪一種不均勻度定義。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, sem-toolkit</span>
+out of control@<b>out of control</b>　<span style="color:#1c5cab">失控（超出管制）</span><br>觸發管制圖規則的狀態，需調查原因。<br><i>An out-of-control point puts the chamber on hold.</i><br>一個失控點會讓腔體被暫停（hold）。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, waferlens</span>
+PECVD@<b>PECVD</b>　<span style="color:#1c5cab">電漿輔助化學氣相沉積</span><br>以電漿降低反應溫度的 CVD。<br><i>PECVD nitride is deposited at 250 to 350 degrees Celsius.</i><br>PECVD 氮化矽在攝氏 250 到 350 度之間沉積。<br><span style="color:#898781;font-size:smaller">semiyield, sem-toolkit</span>
+physical vapor deposition@<b>physical vapor deposition</b>　<span style="color:#1c5cab">物理氣相沉積（PVD）</span><br>以濺鍍等物理方式沉積金屬，方向性強。<br><i>Physical vapor deposition has poor step coverage in deep trenches.</i><br>物理氣相沉積在深溝槽中的階梯覆蓋率很差。<br><span style="color:#898781;font-size:smaller">semiyield, waferlens</span>
+Ppk@<b>Ppk</b>　<span style="color:#1c5cab">製程績效指標 Ppk</span><br>以整體（長期）標準差計算的能力指標。<br><i>Ppk is lower than Cpk when the process drifts between PMs.</i><br>製程在兩次 PM 之間漂移時，Ppk 會低於 Cpk。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield</span>
+precursor@<b>precursor</b>　<span style="color:#1c5cab">前驅物</span><br>CVD/ALD 中提供元素的反應氣體，如 SiH4、TMA。<br><i>SiH4 is the silicon precursor for PECVD nitride.</i><br>SiH4 是 PECVD 氮化矽的矽前驅物。<br><span style="color:#898781;font-size:smaller">sem-toolkit, semiyield</span>
+process capability@<b>process capability</b>　<span style="color:#1c5cab">製程能力</span><br>製程變異相對於規格寬度的能力，以 Cp/Cpk 表示。<br><i>Process capability is only meaningful for a process in control.</i><br>只有在製程受控時，製程能力才有意義。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield</span>
+process simulation@<b>process simulation</b>　<span style="color:#1c5cab">製程模擬</span><br>以物理模型預測氧化、沉積、蝕刻、植入的結果。<br><i>Process simulation predicts oxide thickness from time and temperature.</i><br>製程模擬由時間與溫度預測氧化層厚度。<br><span style="color:#898781;font-size:smaller">semiyield</span>
+process window@<b>process window</b>　<span style="color:#1c5cab">製程窗口</span><br>所有輸出都符合規格的參數範圍。<br><i>The process window shrinks when the uniformity spec is tightened.</i><br>均勻性規格收緊時，製程窗口會縮小。<br><span style="color:#898781;font-size:smaller">semiyield, sem-toolkit</span>
+refractive index@<b>refractive index</b>　<span style="color:#1c5cab">折射率（n）</span><br>光在材料中速度的倒數比；SiO2 約 1.46，Si3N4 約 2.0。<br><i>A refractive index shift often signals a change in film composition.</i><br>折射率偏移常代表薄膜組成發生變化。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, sem-toolkit</span>
+response surface@<b>response surface</b>　<span style="color:#1c5cab">反應曲面</span><br>以二次模型描述輸出隨因子變化的曲面。<br><i>The response surface shows deposition rate rising with RF power.</i><br>反應曲面顯示沉積速率隨射頻功率上升。<br><span style="color:#898781;font-size:smaller">sem-toolkit, semiyield, metro-toolkit</span>
+RF power@<b>RF power</b>　<span style="color:#1c5cab">射頻功率</span><br>電漿製程中供給的射頻功率，影響沉積與蝕刻速率。<br><i>Raising RF power increases PECVD deposition rate.</i><br>提高射頻功率會增加 PECVD 沉積速率。<br><span style="color:#898781;font-size:smaller">sem-toolkit, semiyield, waferlens</span>
+short-term sigma@<b>short-term sigma</b>　<span style="color:#1c5cab">短期標準差</span><br>由移動全距或子群內變異估計，不含漂移。<br><i>EWMA limits use short-term sigma so drift cannot widen them.</i><br>EWMA 界限使用短期標準差，因此漂移不會把界限撐寬。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield</span>
+silicon dioxide@<b>silicon dioxide</b>　<span style="color:#1c5cab">二氧化矽（SiO2）</span><br>最常見的介電質薄膜，可熱成長或沉積。<br><i>Thermal silicon dioxide is the classic metrology reference film.</i><br>熱成長二氧化矽是經典的量測參考膜。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, sem-toolkit</span>
+silicon nitride@<b>silicon nitride</b>　<span style="color:#1c5cab">氮化矽（Si3N4）</span><br>常作硬遮罩、間隙壁、保護層，n 約 2.0。<br><i>Silicon nitride on pad oxide is fitted as a two-layer model.</i><br>墊氧化層上的氮化矽用兩層模型擬合。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, sem-toolkit</span>
+specification limits@<b>specification limits</b>　<span style="color:#1c5cab">規格界限（USL／LSL）</span><br>客戶或設計要求的上下限。<br><i>The specification limits are 98.5 and 101.5 nm.</i><br>規格界限為 98.5 與 101.5 nm。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, waferlens</span>
+SPICE netlist@<b>SPICE netlist</b>　<span style="color:#1c5cab">SPICE 網表</span><br>描述電路元件與連接的文字檔，用於電路模擬。<br><i>Extracted device parameters are exported as a SPICE netlist.</i><br>萃取的元件參數匯出為 SPICE 網表。<br><span style="color:#898781;font-size:smaller">semiyield</span>
+statistical process control@<b>statistical process control</b>　<span style="color:#1c5cab">統計製程管制（SPC）</span><br>以統計方法監控製程是否處於管制狀態。<br><i>Statistical process control flags the shift within four wafers.</i><br>統計製程管制在四片之內就偵測到偏移。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, waferlens, sem-toolkit</span>
+step coverage@<b>step coverage</b>　<span style="color:#1c5cab">階梯覆蓋率</span><br>溝槽側壁或底部膜厚與表面膜厚之比。<br><i>ALD keeps step coverage near 100 percent even at high aspect ratio.</i><br>即使在高深寬比下，ALD 的階梯覆蓋率仍接近 100%。<br><span style="color:#898781;font-size:smaller">semiyield</span>
+synthetic data@<b>synthetic data</b>　<span style="color:#1c5cab">合成資料</span><br>以模擬產生、已知真值的資料，用於練習與驗證。<br><i>Synthetic data lets you score detection against a known truth.</i><br>合成資料讓你能以已知真值評估偵測效果。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, waferlens</span>
+technology node@<b>technology node</b>　<span style="color:#1c5cab">技術節點</span><br>製程世代，如 28 nm、1-gamma。<br><i>Metrology targets are scaled for each technology node.</i><br>量測目標值會依技術節點縮放。<br><span style="color:#898781;font-size:smaller">waferlens, semiyield</span>
+thermal oxidation@<b>thermal oxidation</b>　<span style="color:#1c5cab">熱氧化</span><br>在高溫氧氣或水氣中成長 SiO2；常用 Deal-Grove 模型。<br><i>Thermal oxidation follows the Deal-Grove linear-parabolic model.</i><br>熱氧化遵循 Deal-Grove 線性-拋物線模型。<br><span style="color:#898781;font-size:smaller">semiyield</span>
+thin film@<b>thin film</b>　<span style="color:#1c5cab">薄膜</span><br>厚度從次奈米到微米的沉積或成長層，如氧化層、氮化矽、high-k。<br><i>Each thin film in the stack is modelled with its own thickness and dispersion law.</i><br>堆疊中的每一層薄膜都用各自的厚度與色散模型來描述。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, sem-toolkit</span>
+unit test@<b>unit test</b>　<span style="color:#1c5cab">單元測試</span><br>自動檢查程式小單元是否正確。<br><i>Unit tests compare the optics against analytic limits.</i><br>單元測試把光學計算與解析極限做比對。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, waferlens</span>
+virtual environment@<b>virtual environment</b>　<span style="color:#1c5cab">虛擬環境</span><br>專案專用的 Python 套件環境，避免版本衝突。<br><i>Activate the virtual environment before installing the toolkit.</i><br>安裝工具箱之前先啟用虛擬環境。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield</span>
+wafer map@<b>wafer map</b>　<span style="color:#1c5cab">晶圓圖</span><br>量測值或良率在晶圓上的空間分布圖。<br><i>The wafer map shows a thinner ring near the edge.</i><br>晶圓圖顯示靠近邊緣有一圈較薄。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, waferlens, sem-toolkit</span>
+Western Electric rules@<b>Western Electric rules</b>　<span style="color:#1c5cab">西方電氣法則（WE rules）</span><br>判斷管制圖異常的規則，如一點超出 3σ、連續 8 點在同一側。<br><i>Western Electric rule 4 caught eight points in a row below the centre line.</i><br>西方電氣法則第 4 條抓到連續八點低於中心線。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, waferlens</span>
+within-wafer uniformity@<b>within-wafer uniformity</b>　<span style="color:#1c5cab">片內均勻性</span><br>同一片晶圓上量測值的變異，常以 1σ% 表示。<br><i>Within-wafer uniformity is charted alongside the wafer mean.</i><br>片內均勻性與晶圓平均值一起繪製管制圖。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, sem-toolkit</span>
+Xbar-R chart@<b>Xbar-R chart</b>　<span style="color:#1c5cab">平均值-全距管制圖</span><br>以子群平均與全距監控製程，子群大小 2–10。<br><i>The Xbar-R chart groups five consecutive wafers into one subgroup.</i><br>平均值-全距管制圖把連續五片晶圓分成一個子群。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield</span>
+yield@<b>yield</b>　<span style="color:#1c5cab">良率</span><br>合格晶粒佔總晶粒的比例。<br><i>Weekly yield dropped after the recipe change.</i><br>Recipe 變更後每週良率下降。<br><span style="color:#898781;font-size:smaller">semiyield, waferlens, sem-toolkit</span>
+yield model@<b>yield model</b>　<span style="color:#1c5cab">良率模型</span><br>由缺陷密度與晶粒面積預測良率，如 Murphy、Poisson 模型。<br><i>The Murphy yield model links defect density to die yield.</i><br>Murphy 良率模型把缺陷密度與晶粒良率連結起來。<br><span style="color:#898781;font-size:smaller">semiyield</span>
+活化能@→ <b>activation energy</b>
+非晶矽@→ <b>amorphous silicon</b>
+深寬比@→ <b>aspect ratio</b>
+原子層沉積@→ <b>atomic layer deposition</b>
+出處標示@→ <b>attribution</b>
+貝氏最佳化@→ <b>Bayesian optimization</b>
+中心點@→ <b>center point</b>
+化學機械研磨@→ <b>chemical mechanical polishing</b>
+化學氣相沉積@→ <b>chemical vapor deposition</b>
+管制圖@→ <b>control chart</b>
+管制界限@→ <b>control limits</b>
+製程能力指標 Cpk@→ <b>Cpk</b>
+累積和管制圖@→ <b>CUSUM chart</b>
+儀表板@→ <b>dashboard</b>
+缺陷密度@→ <b>defect density</b>
+沉積速率@→ <b>deposition rate</b>
+實驗設計@→ <b>design of experiments</b>
+晶粒@→ <b>die</b>
+漂移@→ <b>drift</b>
+可編輯安裝@→ <b>editable install</b>
+集成模型@→ <b>ensemble model</b>
+蝕刻@→ <b>etching</b>
+指數加權移動平均管制圖@→ <b>EWMA chart</b>
+期望改善量@→ <b>expected improvement</b>
+可解釋性@→ <b>explainability</b>
+薄膜應力@→ <b>film stress</b>
+膜厚@→ <b>film thickness</b>
+全因子設計@→ <b>full factorial design</b>
+閘極氧化層@→ <b>gate oxide</b>
+高斯過程@→ <b>Gaussian process</b>
+高介電常數介電質@→ <b>high-k dielectric</b>
+個別值-移動全距管制圖@→ <b>individuals and moving range chart</b>
+離子植入@→ <b>ion implantation</b>
+拉丁超立方抽樣@→ <b>Latin hypercube sampling</b>
+授權條款@→ <b>license</b>
+批@→ <b>lot</b>
+不均勻度@→ <b>non-uniformity</b>
+失控@→ <b>out of control</b>
+電漿輔助化學氣相沉積@→ <b>PECVD</b>
+物理氣相沉積@→ <b>physical vapor deposition</b>
+製程績效指標 Ppk@→ <b>Ppk</b>
+前驅物@→ <b>precursor</b>
+製程能力@→ <b>process capability</b>
+製程模擬@→ <b>process simulation</b>
+製程窗口@→ <b>process window</b>
+折射率@→ <b>refractive index</b>
+反應曲面@→ <b>response surface</b>
+射頻功率@→ <b>RF power</b>
+短期標準差@→ <b>short-term sigma</b>
+二氧化矽@→ <b>silicon dioxide</b>
+氮化矽@→ <b>silicon nitride</b>
+規格界限@→ <b>specification limits</b>
+SPICE 網表@→ <b>SPICE netlist</b>
+統計製程管制@→ <b>statistical process control</b>
+階梯覆蓋率@→ <b>step coverage</b>
+合成資料@→ <b>synthetic data</b>
+技術節點@→ <b>technology node</b>
+熱氧化@→ <b>thermal oxidation</b>
+薄膜@→ <b>thin film</b>
+單元測試@→ <b>unit test</b>
+虛擬環境@→ <b>virtual environment</b>
+晶圓圖@→ <b>wafer map</b>
+西方電氣法則@→ <b>Western Electric rules</b>
+片內均勻性@→ <b>within-wafer uniformity</b>
+平均值-全距管制圖@→ <b>Xbar-R chart</b>
+良率@→ <b>yield</b>
+良率模型@→ <b>yield model</b>

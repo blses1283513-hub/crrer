@@ -1,0 +1,69 @@
+chamber
+chamber matching
+chemical mechanical polishing
+chemical vapor deposition
+commonality analysis
+container
+control chart
+control limits
+critical dimension
+dashboard
+data pipeline
+database migration
+defect density
+defect pattern
+die
+dishing
+drift
+environment variable
+etching
+excursion
+fault detection and classification
+film thickness
+ground truth
+hold
+Hotelling T-squared
+ion implantation
+license
+long format
+lot
+measurement site
+offset
+orchestration
+out of control
+overlay
+Phase I
+physical vapor deposition
+preventive maintenance
+process route
+process step
+queue time
+radial profile
+recipe
+rework
+RF power
+root cause analysis
+sampling plan
+schema
+scrap
+scratch
+sensor
+sheet resistance
+sidewall angle
+slot
+sort bin
+spatial signature
+specification limits
+split lot
+star schema
+statistical process control
+synthetic data
+technology node
+time-series database
+trench depth
+unit test
+wafer genealogy
+wafer map
+wafer-to-wafer variation
+Western Electric rules
+yield

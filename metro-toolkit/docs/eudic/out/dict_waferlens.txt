@@ -1,0 +1,138 @@
+chamber@<b>chamber</b>　<span style="color:#1c5cab">腔體</span><br>機台中實際進行製程的反應室；一台機台可有多個腔體。<br><i>Wafers alternate between chamber A and chamber B.</i><br>晶圓輪流進入 A 腔與 B 腔。<br><span style="color:#898781;font-size:smaller">metro-toolkit, waferlens</span>
+chamber matching@<b>chamber matching</b>　<span style="color:#1c5cab">腔體匹配</span><br>確認同一機台不同腔體的製程結果一致。<br><i>Chamber matching revealed a 0.4 nm offset on chamber B.</i><br>腔體匹配發現 B 腔有 0.4 nm 的偏移。<br><span style="color:#898781;font-size:smaller">metro-toolkit, waferlens</span>
+chemical mechanical polishing@<b>chemical mechanical polishing</b>　<span style="color:#1c5cab">化學機械研磨（CMP）</span><br>以研磨液與研磨墊平坦化表面。<br><i>Chemical mechanical polishing removes less material at the wafer edge.</i><br>化學機械研磨在晶圓邊緣移除的材料較少。<br><span style="color:#898781;font-size:smaller">waferlens, semiyield</span>
+chemical vapor deposition@<b>chemical vapor deposition</b>　<span style="color:#1c5cab">化學氣相沉積（CVD）</span><br>以氣體前驅物反應沉積薄膜。<br><i>Chemical vapor deposition rate rises exponentially with temperature.</i><br>化學氣相沉積速率隨溫度呈指數上升。<br><span style="color:#898781;font-size:smaller">semiyield, sem-toolkit, waferlens</span>
+commonality analysis@<b>commonality analysis</b>　<span style="color:#1c5cab">共通性分析</span><br>找出低良率晶圓共同經過的機台或腔體。<br><i>Commonality analysis points to the chamber shared by most failing wafers.</i><br>共通性分析指向大多數失效晶圓共同經過的腔體。<br><span style="color:#898781;font-size:smaller">waferlens</span>
+container@<b>container</b>　<span style="color:#1c5cab">容器（Docker）</span><br>打包好的執行環境，如資料庫服務。<br><i>The database runs in a Docker container on port 5432.</i><br>資料庫在 5432 埠的 Docker 容器中執行。<br><span style="color:#898781;font-size:smaller">waferlens</span>
+control chart@<b>control chart</b>　<span style="color:#1c5cab">管制圖</span><br>依時間序列繪製量測值與管制界限的圖。<br><i>Each chamber gets its own control chart and baseline.</i><br>每個腔體都有自己的管制圖與基準。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, waferlens</span>
+control limits@<b>control limits</b>　<span style="color:#1c5cab">管制界限（UCL／LCL）</span><br>由製程本身變異算出的界限，與規格界限不同。<br><i>Control limits come from the process, not from the specification.</i><br>管制界限來自製程本身，而不是規格。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, waferlens</span>
+critical dimension@<b>critical dimension</b>　<span style="color:#1c5cab">關鍵尺寸（CD）</span><br>圖形中最重要的線寬或孔徑。<br><i>Critical dimension after etch is slightly smaller than after litho.</i><br>蝕刻後的關鍵尺寸比微影後稍小。<br><span style="color:#898781;font-size:smaller">waferlens, metro-toolkit</span>
+dashboard@<b>dashboard</b>　<span style="color:#1c5cab">儀表板</span><br>互動式網頁，集中呈現圖表與指標。<br><i>Open the dashboard with streamlit run.</i><br>用 streamlit run 開啟儀表板。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, waferlens, sem-toolkit</span>
+data pipeline@<b>data pipeline</b>　<span style="color:#1c5cab">資料管線</span><br>資料從產生、驗證、載入到分析的自動化流程。<br><i>The data pipeline simulates, validates, and loads six months of fab data.</i><br>資料管線模擬、驗證並載入六個月的晶圓廠資料。<br><span style="color:#898781;font-size:smaller">waferlens</span>
+database migration@<b>database migration</b>　<span style="color:#1c5cab">資料庫遷移</span><br>以版本化腳本建立或修改資料表結構（如 Alembic）。<br><i>Run the database migration before loading any data.</i><br>載入任何資料之前，先執行資料庫遷移。<br><span style="color:#898781;font-size:smaller">waferlens</span>
+defect density@<b>defect density</b>　<span style="color:#1c5cab">缺陷密度（D0）</span><br>單位面積的致命缺陷數，常用 defects/cm²。<br><i>A higher defect density at the edge lowers edge-die yield.</i><br>邊緣較高的缺陷密度降低了邊緣晶粒的良率。<br><span style="color:#898781;font-size:smaller">semiyield, waferlens</span>
+defect pattern@<b>defect pattern</b>　<span style="color:#1c5cab">缺陷圖樣</span><br>晶圓圖上失效晶粒的空間分布型態，如 Center、Edge-Ring、Scratch。<br><i>An edge-ring defect pattern often points to deposition edge effects.</i><br>邊緣環狀缺陷圖樣常指向沉積的邊緣效應。<br><span style="color:#898781;font-size:smaller">sem-toolkit, waferlens</span>
+die@<b>die</b>　<span style="color:#1c5cab">晶粒</span><br>晶圓上切割後的單一晶片。<br><i>Each die on the wafer map is coloured by its sort bin.</i><br>晶圓圖上的每顆晶粒依照其電測分類著色。<br><span style="color:#898781;font-size:smaller">semiyield, waferlens, sem-toolkit</span>
+dishing@<b>dishing</b>　<span style="color:#1c5cab">碟化</span><br>CMP 後寬圖形中央凹陷的現象。<br><i>Dishing increases when oxide thickness after CMP is low.</i><br>CMP 後氧化層較薄時，碟化會增加。<br><span style="color:#898781;font-size:smaller">waferlens</span>
+drift@<b>drift</b>　<span style="color:#1c5cab">漂移</span><br>隨時間緩慢變化的趨勢，如腔體老化。<br><i>Deposition rate drifts down with chamber age and resets at PM.</i><br>沉積速率隨腔體使用時間往下漂移，PM 後重置。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, waferlens</span>
+environment variable@<b>environment variable</b>　<span style="color:#1c5cab">環境變數</span><br>作業系統層級的設定，用來指定資料與設定檔路徑。<br><i>Point METRO_DATA_PATH to a folder outside the repository.</i><br>把 METRO_DATA_PATH 指向儲存庫以外的資料夾。<br><span style="color:#898781;font-size:smaller">metro-toolkit, waferlens</span>
+etching@<b>etching</b>　<span style="color:#1c5cab">蝕刻</span><br>以化學或電漿去除材料形成圖形。<br><i>Etching selectivity determines how much of the mask survives.</i><br>蝕刻選擇比決定遮罩能保留多少。<br><span style="color:#898781;font-size:smaller">semiyield, waferlens</span>
+excursion@<b>excursion</b>　<span style="color:#1c5cab">製程異常（偏移事件）</span><br>製程突然偏離正常狀態的事件，需快速偵測並找出原因。<br><i>The injected excursion is logged in a ground-truth table.</i><br>注入的製程異常會記錄在真值表中。<br><span style="color:#898781;font-size:smaller">metro-toolkit, waferlens</span>
+fault detection and classification@<b>fault detection and classification</b>　<span style="color:#1c5cab">故障偵測與分類（FDC）</span><br>以機台感測器資料即時偵測異常並分類。<br><i>Fault detection and classification uses hundreds of sensor readings per wafer.</i><br>故障偵測與分類每片晶圓使用數百個感測器讀值。<br><span style="color:#898781;font-size:smaller">waferlens, sem-toolkit</span>
+film thickness@<b>film thickness</b>　<span style="color:#1c5cab">膜厚</span><br>最常見的薄膜量測參數，單位多為 nm 或 Å。<br><i>Film thickness is fitted at 49 sites to build the wafer map.</i><br>在 49 個量測點擬合膜厚，以建立晶圓圖。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, waferlens, sem-toolkit</span>
+ground truth@<b>ground truth</b>　<span style="color:#1c5cab">真值（標準答案）</span><br>已知正確的結果，用來評估演算法。<br><i>The simulator logs ground truth for every excursion it injects.</i><br>模擬器會記錄每個注入異常的真值。<br><span style="color:#898781;font-size:smaller">metro-toolkit, waferlens</span>
+hold@<b>hold</b>　<span style="color:#1c5cab">暫停（hold）</span><br>因異常把 lot 或機台暫停，待工程判定。<br><i>The lot went on hold after two points violated rule 2.</i><br>兩點違反法則 2 之後，這批被暫停。<br><span style="color:#898781;font-size:smaller">waferlens</span>
+Hotelling T-squared@<b>Hotelling T-squared</b>　<span style="color:#1c5cab">Hotelling T² 統計量</span><br>多變量管制統計量，同時監控多個相關參數。<br><i>Hotelling T-squared watches thickness and refractive index together.</i><br>Hotelling T² 同時監控膜厚與折射率。<br><span style="color:#898781;font-size:smaller">waferlens</span>
+ion implantation@<b>ion implantation</b>　<span style="color:#1c5cab">離子植入</span><br>以加速離子將摻雜物打入矽中。<br><i>Ion implantation dose is set in ions per square centimetre.</i><br>離子植入劑量以每平方公分的離子數設定。<br><span style="color:#898781;font-size:smaller">semiyield, waferlens</span>
+license@<b>license</b>　<span style="color:#1c5cab">授權條款</span><br>規定他人可否使用、修改、散布程式碼；沒有授權即保留所有權利。<br><i>Without a license file you may read the code but not reuse it.</i><br>沒有授權檔時，你可以閱讀程式碼，但不能重複使用。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, waferlens, sem-toolkit</span>
+long format@<b>long format</b>　<span style="color:#1c5cab">長表格格式</span><br>每列一筆量測（一個量測點），方便各模組共用。<br><i>All measurements are converted to long format with one row per site.</i><br>所有量測都轉成每個量測點一列的長表格格式。<br><span style="color:#898781;font-size:smaller">metro-toolkit, waferlens</span>
+lot@<b>lot</b>　<span style="color:#1c5cab">批（lot）</span><br>一起流動的一組晶圓，通常 25 片。<br><i>Five wafers per lot are sampled for metrology.</i><br>每批抽五片晶圓做量測。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, waferlens</span>
+measurement site@<b>measurement site</b>　<span style="color:#1c5cab">量測點</span><br>晶圓上一個量測位置，以 (x, y) 座標表示。<br><i>Each measurement site is stored as one row in the long-format table.</i><br>每一個量測點在長表格中存成一列。<br><span style="color:#898781;font-size:smaller">metro-toolkit, waferlens</span>
+offset@<b>offset</b>　<span style="color:#1c5cab">偏移量</span><br>兩台機台或腔體之間的平均差異。<br><i>The mean offset of 0.10 nm is inside the 0.3 nm matching spec.</i><br>0.10 nm 的平均偏移量在 0.3 nm 的匹配規格內。<br><span style="color:#898781;font-size:smaller">metro-toolkit, waferlens</span>
+orchestration@<b>orchestration</b>　<span style="color:#1c5cab">流程編排</span><br>自動排程與串接多個資料處理工作（如 Dagster）。<br><i>Orchestration runs simulate, load, and transform as one job.</i><br>流程編排把模擬、載入與轉換當成一個工作執行。<br><span style="color:#898781;font-size:smaller">waferlens</span>
+out of control@<b>out of control</b>　<span style="color:#1c5cab">失控（超出管制）</span><br>觸發管制圖規則的狀態，需調查原因。<br><i>An out-of-control point puts the chamber on hold.</i><br>一個失控點會讓腔體被暫停（hold）。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, waferlens</span>
+overlay@<b>overlay</b>　<span style="color:#1c5cab">疊對</span><br>上下兩層圖形之間的對準誤差。<br><i>Overlay x and y are correlated in the simulated litho step.</i><br>在模擬的微影站中，疊對的 x 與 y 彼此相關。<br><span style="color:#898781;font-size:smaller">waferlens, metro-toolkit</span>
+Phase I@<b>Phase I</b>　<span style="color:#1c5cab">第一階段（建立基準）</span><br>用穩定期資料計算管制界限的階段。<br><i>Limits are computed from the first twenty wafers in Phase I.</i><br>管制界限由第一階段的前二十片晶圓計算。<br><span style="color:#898781;font-size:smaller">metro-toolkit, waferlens</span>
+physical vapor deposition@<b>physical vapor deposition</b>　<span style="color:#1c5cab">物理氣相沉積（PVD）</span><br>以濺鍍等物理方式沉積金屬，方向性強。<br><i>Physical vapor deposition has poor step coverage in deep trenches.</i><br>物理氣相沉積在深溝槽中的階梯覆蓋率很差。<br><span style="color:#898781;font-size:smaller">semiyield, waferlens</span>
+preventive maintenance@<b>preventive maintenance</b>　<span style="color:#1c5cab">預防保養（PM）</span><br>定期保養機台；常造成製程參數重置。<br><i>Thickness shows a saw-tooth pattern between preventive maintenance events.</i><br>膜厚在兩次預防保養之間呈現鋸齒狀變化。<br><span style="color:#898781;font-size:smaller">metro-toolkit, waferlens</span>
+process route@<b>process route</b>　<span style="color:#1c5cab">製程流程（route）</span><br>產品依序經過的所有製程步驟。<br><i>Every product runs its own version of the process route.</i><br>每個產品都跑自己版本的製程流程。<br><span style="color:#898781;font-size:smaller">waferlens</span>
+process step@<b>process step</b>　<span style="color:#1c5cab">製程站點（步驟）</span><br>製程流程中的一個步驟，例如 poly_dep、sti_cmp。<br><i>Metrology is attached to the process step it follows.</i><br>量測資料掛在它之後的製程站點上。<br><span style="color:#898781;font-size:smaller">metro-toolkit, waferlens</span>
+queue time@<b>queue time</b>　<span style="color:#1c5cab">等候時間（Q-time）</span><br>晶圓在兩站之間等待的時間，過長可能影響品質。<br><i>Queue time between steps follows an exponential distribution in the simulator.</i><br>模擬器中站與站之間的等候時間服從指數分布。<br><span style="color:#898781;font-size:smaller">waferlens</span>
+radial profile@<b>radial profile</b>　<span style="color:#1c5cab">徑向分布</span><br>量測值隨半徑變化的曲線。<br><i>The radial profile drops sharply beyond 130 mm.</i><br>徑向分布在 130 mm 以外急遽下降。<br><span style="color:#898781;font-size:smaller">metro-toolkit, waferlens</span>
+recipe@<b>recipe</b>　<span style="color:#1c5cab">Recipe（配方／程式）</span><br>機台執行的參數設定；量測 recipe 含膜層模型與取樣計畫。<br><i>The metrology recipe stores the stack model, fit settings, and sampling plan.</i><br>量測 recipe 儲存膜層模型、擬合設定與取樣計畫。<br><span style="color:#898781;font-size:smaller">metro-toolkit, waferlens</span>
+rework@<b>rework</b>　<span style="color:#1c5cab">重工</span><br>不合格（多為微影）時去除後重做。<br><i>Litho rework adds a two-hour delay to the lot.</i><br>微影重工會讓這批延遲兩小時。<br><span style="color:#898781;font-size:smaller">waferlens</span>
+RF power@<b>RF power</b>　<span style="color:#1c5cab">射頻功率</span><br>電漿製程中供給的射頻功率，影響沉積與蝕刻速率。<br><i>Raising RF power increases PECVD deposition rate.</i><br>提高射頻功率會增加 PECVD 沉積速率。<br><span style="color:#898781;font-size:smaller">sem-toolkit, semiyield, waferlens</span>
+root cause analysis@<b>root cause analysis</b>　<span style="color:#1c5cab">根本原因分析</span><br>找出異常真正來源的分析過程。<br><i>Root cause analysis traced the yield loss to one etch chamber.</i><br>根本原因分析把良率損失追溯到一個蝕刻腔體。<br><span style="color:#898781;font-size:smaller">metro-toolkit, waferlens</span>
+sampling plan@<b>sampling plan</b>　<span style="color:#1c5cab">取樣計畫</span><br>每片量哪些點、每批量幾片的規定。<br><i>The 49-point sampling plan uses three rings around a centre site.</i><br>49 點取樣計畫在中心點外圍佈三圈。<br><span style="color:#898781;font-size:smaller">metro-toolkit, waferlens</span>
+schema@<b>schema</b>　<span style="color:#1c5cab">資料結構定義（schema）</span><br>欄位名稱、型別與關聯的規定。<br><i>Map your fab export to the standard schema once, in a loader.</i><br>在一個載入程式中，把廠內匯出資料一次對應到標準 schema。<br><span style="color:#898781;font-size:smaller">metro-toolkit, waferlens</span>
+scrap@<b>scrap</b>　<span style="color:#1c5cab">報廢</span><br>晶圓無法修復而被丟棄。<br><i>A scrapped wafer disappears from all later process steps.</i><br>報廢的晶圓不會出現在之後的任何製程站點。<br><span style="color:#898781;font-size:smaller">waferlens</span>
+scratch@<b>scratch</b>　<span style="color:#1c5cab">刮傷</span><br>線狀缺陷圖樣，多與晶圓搬運或 CMP 有關。<br><i>A scratch pattern runs in a straight line across several dies.</i><br>刮傷圖樣以直線橫跨數顆晶粒。<br><span style="color:#898781;font-size:smaller">sem-toolkit, waferlens</span>
+sensor@<b>sensor</b>　<span style="color:#1c5cab">感測器（機台參數）</span><br>機台回報的製程參數，如 RF 功率、壓力、溫度。<br><i>The tool&#x27;s primary sensor couples into the first metrology parameter.</i><br>機台的主要感測器參數會影響第一個量測參數。<br><span style="color:#898781;font-size:smaller">waferlens, sem-toolkit</span>
+sheet resistance@<b>sheet resistance</b>　<span style="color:#1c5cab">片電阻</span><br>薄導電層的電阻，單位 Ω/□。<br><i>Sheet resistance is measured after the source-drain anneal.</i><br>片電阻在源汲極退火之後量測。<br><span style="color:#898781;font-size:smaller">waferlens</span>
+sidewall angle@<b>sidewall angle</b>　<span style="color:#1c5cab">側壁角</span><br>蝕刻輪廓側壁與水平面的夾角。<br><i>A sidewall angle of 88 degrees is the gate etch target.</i><br>閘極蝕刻的目標側壁角為 88 度。<br><span style="color:#898781;font-size:smaller">waferlens</span>
+slot@<b>slot</b>　<span style="color:#1c5cab">槽位</span><br>晶圓在晶舟或 FOUP 中的位置編號（1–25）。<br><i>Odd and even slots go to different chambers.</i><br>奇數與偶數槽位進入不同的腔體。<br><span style="color:#898781;font-size:smaller">metro-toolkit, waferlens</span>
+sort bin@<b>sort bin</b>　<span style="color:#1c5cab">電測分類（bin）</span><br>晶圓電性測試後依失效類型給的分類代碼。<br><i>Leakage failures are reported in sort bin 3.</i><br>漏電失效歸在電測分類 bin 3。<br><span style="color:#898781;font-size:smaller">waferlens, sem-toolkit</span>
+spatial signature@<b>spatial signature</b>　<span style="color:#1c5cab">空間特徵（signature）</span><br>晶圓圖的典型形狀，可追溯到製程或機台原因。<br><i>Each chamber leaves its own spatial signature on the wafer.</i><br>每個腔體都會在晶圓上留下自己的空間特徵。<br><span style="color:#898781;font-size:smaller">metro-toolkit, waferlens, sem-toolkit</span>
+specification limits@<b>specification limits</b>　<span style="color:#1c5cab">規格界限（USL／LSL）</span><br>客戶或設計要求的上下限。<br><i>The specification limits are 98.5 and 101.5 nm.</i><br>規格界限為 98.5 與 101.5 nm。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, waferlens</span>
+split lot@<b>split lot</b>　<span style="color:#1c5cab">分批（split）</span><br>一批晶圓被拆成子批，常用於實驗。<br><i>In a split lot, slots 13 to 25 become a child lot.</i><br>分批時，槽位 13 到 25 變成子批。<br><span style="color:#898781;font-size:smaller">waferlens</span>
+star schema@<b>star schema</b>　<span style="color:#1c5cab">星型綱要</span><br>以事實表為中心、周圍連接維度表的資料倉儲結構。<br><i>The star schema separates measurement facts from tool dimensions.</i><br>星型綱要把量測事實與機台維度分開。<br><span style="color:#898781;font-size:smaller">waferlens</span>
+statistical process control@<b>statistical process control</b>　<span style="color:#1c5cab">統計製程管制（SPC）</span><br>以統計方法監控製程是否處於管制狀態。<br><i>Statistical process control flags the shift within four wafers.</i><br>統計製程管制在四片之內就偵測到偏移。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, waferlens, sem-toolkit</span>
+synthetic data@<b>synthetic data</b>　<span style="color:#1c5cab">合成資料</span><br>以模擬產生、已知真值的資料，用於練習與驗證。<br><i>Synthetic data lets you score detection against a known truth.</i><br>合成資料讓你能以已知真值評估偵測效果。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, waferlens</span>
+technology node@<b>technology node</b>　<span style="color:#1c5cab">技術節點</span><br>製程世代，如 28 nm、1-gamma。<br><i>Metrology targets are scaled for each technology node.</i><br>量測目標值會依技術節點縮放。<br><span style="color:#898781;font-size:smaller">waferlens, semiyield</span>
+time-series database@<b>time-series database</b>　<span style="color:#1c5cab">時間序列資料庫</span><br>專為時間戳記資料優化的資料庫，如 TimescaleDB。<br><i>Sensor data is stored in a time-series database.</i><br>感測器資料存放在時間序列資料庫中。<br><span style="color:#898781;font-size:smaller">waferlens</span>
+trench depth@<b>trench depth</b>　<span style="color:#1c5cab">溝槽深度</span><br>蝕刻溝槽的深度，例如 STI。<br><i>Trench depth is shallower at the edge in the STI etch.</i><br>在 STI 蝕刻中，邊緣的溝槽深度較淺。<br><span style="color:#898781;font-size:smaller">waferlens</span>
+unit test@<b>unit test</b>　<span style="color:#1c5cab">單元測試</span><br>自動檢查程式小單元是否正確。<br><i>Unit tests compare the optics against analytic limits.</i><br>單元測試把光學計算與解析極限做比對。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, waferlens</span>
+wafer genealogy@<b>wafer genealogy</b>　<span style="color:#1c5cab">晶圓履歷</span><br>每片晶圓經過哪些機台、腔體、時間的完整紀錄。<br><i>Chamber-level wafer genealogy makes commonality analysis possible.</i><br>腔體層級的晶圓履歷讓共通性分析成為可能。<br><span style="color:#898781;font-size:smaller">waferlens</span>
+wafer map@<b>wafer map</b>　<span style="color:#1c5cab">晶圓圖</span><br>量測值或良率在晶圓上的空間分布圖。<br><i>The wafer map shows a thinner ring near the edge.</i><br>晶圓圖顯示靠近邊緣有一圈較薄。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, waferlens, sem-toolkit</span>
+wafer-to-wafer variation@<b>wafer-to-wafer variation</b>　<span style="color:#1c5cab">片間變異</span><br>不同晶圓平均值之間的變異。<br><i>Wafer-to-wafer variation is larger than site noise in this chamber.</i><br>這個腔體的片間變異大於量測點雜訊。<br><span style="color:#898781;font-size:smaller">metro-toolkit, waferlens</span>
+Western Electric rules@<b>Western Electric rules</b>　<span style="color:#1c5cab">西方電氣法則（WE rules）</span><br>判斷管制圖異常的規則，如一點超出 3σ、連續 8 點在同一側。<br><i>Western Electric rule 4 caught eight points in a row below the centre line.</i><br>西方電氣法則第 4 條抓到連續八點低於中心線。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, waferlens</span>
+yield@<b>yield</b>　<span style="color:#1c5cab">良率</span><br>合格晶粒佔總晶粒的比例。<br><i>Weekly yield dropped after the recipe change.</i><br>Recipe 變更後每週良率下降。<br><span style="color:#898781;font-size:smaller">semiyield, waferlens, sem-toolkit</span>
+腔體@→ <b>chamber</b>
+腔體匹配@→ <b>chamber matching</b>
+化學機械研磨@→ <b>chemical mechanical polishing</b>
+化學氣相沉積@→ <b>chemical vapor deposition</b>
+共通性分析@→ <b>commonality analysis</b>
+容器@→ <b>container</b>
+管制圖@→ <b>control chart</b>
+管制界限@→ <b>control limits</b>
+關鍵尺寸@→ <b>critical dimension</b>
+儀表板@→ <b>dashboard</b>
+資料管線@→ <b>data pipeline</b>
+資料庫遷移@→ <b>database migration</b>
+缺陷密度@→ <b>defect density</b>
+缺陷圖樣@→ <b>defect pattern</b>
+晶粒@→ <b>die</b>
+碟化@→ <b>dishing</b>
+漂移@→ <b>drift</b>
+環境變數@→ <b>environment variable</b>
+蝕刻@→ <b>etching</b>
+製程異常@→ <b>excursion</b>
+故障偵測與分類@→ <b>fault detection and classification</b>
+膜厚@→ <b>film thickness</b>
+真值@→ <b>ground truth</b>
+暫停@→ <b>hold</b>
+Hotelling T² 統計量@→ <b>Hotelling T-squared</b>
+離子植入@→ <b>ion implantation</b>
+授權條款@→ <b>license</b>
+長表格格式@→ <b>long format</b>
+批@→ <b>lot</b>
+量測點@→ <b>measurement site</b>
+偏移量@→ <b>offset</b>
+流程編排@→ <b>orchestration</b>
+失控@→ <b>out of control</b>
+疊對@→ <b>overlay</b>
+第一階段@→ <b>Phase I</b>
+物理氣相沉積@→ <b>physical vapor deposition</b>
+預防保養@→ <b>preventive maintenance</b>
+製程流程@→ <b>process route</b>
+製程站點@→ <b>process step</b>
+等候時間@→ <b>queue time</b>
+徑向分布@→ <b>radial profile</b>
+Recipe@→ <b>recipe</b>
+重工@→ <b>rework</b>
+射頻功率@→ <b>RF power</b>
+根本原因分析@→ <b>root cause analysis</b>
+取樣計畫@→ <b>sampling plan</b>
+資料結構定義@→ <b>schema</b>
+報廢@→ <b>scrap</b>
+刮傷@→ <b>scratch</b>
+感測器@→ <b>sensor</b>
+片電阻@→ <b>sheet resistance</b>
+側壁角@→ <b>sidewall angle</b>
+槽位@→ <b>slot</b>
+電測分類@→ <b>sort bin</b>
+空間特徵@→ <b>spatial signature</b>
+規格界限@→ <b>specification limits</b>
+分批@→ <b>split lot</b>
+星型綱要@→ <b>star schema</b>
+統計製程管制@→ <b>statistical process control</b>
+合成資料@→ <b>synthetic data</b>
+技術節點@→ <b>technology node</b>
+時間序列資料庫@→ <b>time-series database</b>
+溝槽深度@→ <b>trench depth</b>
+單元測試@→ <b>unit test</b>
+晶圓履歷@→ <b>wafer genealogy</b>
+晶圓圖@→ <b>wafer map</b>
+片間變異@→ <b>wafer-to-wafer variation</b>
+西方電氣法則@→ <b>Western Electric rules</b>
+良率@→ <b>yield</b>

@@ -1,0 +1,58 @@
+ambient medium
+angle of incidence
+atomic layer deposition
+center point
+chemical vapor deposition
+class imbalance
+confusion matrix
+contour plot
+convolutional neural network
+dashboard
+defect pattern
+deposition rate
+design of experiments
+desirability function
+die
+diffusion barrier
+edge exclusion
+explainability
+extinction coefficient
+fault detection and classification
+feature selection
+film stress
+film thickness
+full factorial design
+gate oxide
+Grad-CAM
+license
+local minimum
+metrology
+non-uniformity
+optical constants
+oversampling
+passivation layer
+PECVD
+polarization
+precursor
+process window
+Psi and Delta
+random forest
+reflectance
+reflectometry
+refractive index
+response surface
+RF power
+scratch
+sensor
+silicon dioxide
+silicon nitride
+sort bin
+spatial signature
+spectroscopic ellipsometry
+statistical process control
+substrate
+thin film
+transfer matrix method
+wafer map
+within-wafer uniformity
+yield

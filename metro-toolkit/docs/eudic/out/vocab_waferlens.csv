@@ -1,0 +1,69 @@
+chamber,腔體｜機台中實際進行製程的反應室；一台機台可有多個腔體。｜例：Wafers alternate between chamber A and chamber B.｜譯：晶圓輪流進入 A 腔與 B 腔。
+chamber matching,腔體匹配｜確認同一機台不同腔體的製程結果一致。｜例：Chamber matching revealed a 0.4 nm offset on chamber B.｜譯：腔體匹配發現 B 腔有 0.4 nm 的偏移。
+chemical mechanical polishing,化學機械研磨（CMP）｜以研磨液與研磨墊平坦化表面。｜例：Chemical mechanical polishing removes less material at the wafer edge.｜譯：化學機械研磨在晶圓邊緣移除的材料較少。
+chemical vapor deposition,化學氣相沉積（CVD）｜以氣體前驅物反應沉積薄膜。｜例：Chemical vapor deposition rate rises exponentially with temperature.｜譯：化學氣相沉積速率隨溫度呈指數上升。
+commonality analysis,共通性分析｜找出低良率晶圓共同經過的機台或腔體。｜例：Commonality analysis points to the chamber shared by most failing wafers.｜譯：共通性分析指向大多數失效晶圓共同經過的腔體。
+container,容器（Docker）｜打包好的執行環境，如資料庫服務。｜例：The database runs in a Docker container on port 5432.｜譯：資料庫在 5432 埠的 Docker 容器中執行。
+control chart,管制圖｜依時間序列繪製量測值與管制界限的圖。｜例：Each chamber gets its own control chart and baseline.｜譯：每個腔體都有自己的管制圖與基準。
+control limits,"管制界限（UCL／LCL）｜由製程本身變異算出的界限，與規格界限不同。｜例：Control limits come from the process, not from the specification.｜譯：管制界限來自製程本身，而不是規格。"
+critical dimension,關鍵尺寸（CD）｜圖形中最重要的線寬或孔徑。｜例：Critical dimension after etch is slightly smaller than after litho.｜譯：蝕刻後的關鍵尺寸比微影後稍小。
+dashboard,儀表板｜互動式網頁，集中呈現圖表與指標。｜例：Open the dashboard with streamlit run.｜譯：用 streamlit run 開啟儀表板。
+data pipeline,"資料管線｜資料從產生、驗證、載入到分析的自動化流程。｜例：The data pipeline simulates, validates, and loads six months of fab data.｜譯：資料管線模擬、驗證並載入六個月的晶圓廠資料。"
+database migration,資料庫遷移｜以版本化腳本建立或修改資料表結構（如 Alembic）。｜例：Run the database migration before loading any data.｜譯：載入任何資料之前，先執行資料庫遷移。
+defect density,缺陷密度（D0）｜單位面積的致命缺陷數，常用 defects/cm²。｜例：A higher defect density at the edge lowers edge-die yield.｜譯：邊緣較高的缺陷密度降低了邊緣晶粒的良率。
+defect pattern,缺陷圖樣｜晶圓圖上失效晶粒的空間分布型態，如 Center、Edge-Ring、Scratch。｜例：An edge-ring defect pattern often points to deposition edge effects.｜譯：邊緣環狀缺陷圖樣常指向沉積的邊緣效應。
+die,晶粒｜晶圓上切割後的單一晶片。｜例：Each die on the wafer map is coloured by its sort bin.｜譯：晶圓圖上的每顆晶粒依照其電測分類著色。
+dishing,碟化｜CMP 後寬圖形中央凹陷的現象。｜例：Dishing increases when oxide thickness after CMP is low.｜譯：CMP 後氧化層較薄時，碟化會增加。
+drift,漂移｜隨時間緩慢變化的趨勢，如腔體老化。｜例：Deposition rate drifts down with chamber age and resets at PM.｜譯：沉積速率隨腔體使用時間往下漂移，PM 後重置。
+environment variable,環境變數｜作業系統層級的設定，用來指定資料與設定檔路徑。｜例：Point METRO_DATA_PATH to a folder outside the repository.｜譯：把 METRO_DATA_PATH 指向儲存庫以外的資料夾。
+etching,蝕刻｜以化學或電漿去除材料形成圖形。｜例：Etching selectivity determines how much of the mask survives.｜譯：蝕刻選擇比決定遮罩能保留多少。
+excursion,製程異常（偏移事件）｜製程突然偏離正常狀態的事件，需快速偵測並找出原因。｜例：The injected excursion is logged in a ground-truth table.｜譯：注入的製程異常會記錄在真值表中。
+fault detection and classification,故障偵測與分類（FDC）｜以機台感測器資料即時偵測異常並分類。｜例：Fault detection and classification uses hundreds of sensor readings per wafer.｜譯：故障偵測與分類每片晶圓使用數百個感測器讀值。
+film thickness,膜厚｜最常見的薄膜量測參數，單位多為 nm 或 Å。｜例：Film thickness is fitted at 49 sites to build the wafer map.｜譯：在 49 個量測點擬合膜厚，以建立晶圓圖。
+ground truth,真值（標準答案）｜已知正確的結果，用來評估演算法。｜例：The simulator logs ground truth for every excursion it injects.｜譯：模擬器會記錄每個注入異常的真值。
+hold,暫停（hold）｜因異常把 lot 或機台暫停，待工程判定。｜例：The lot went on hold after two points violated rule 2.｜譯：兩點違反法則 2 之後，這批被暫停。
+Hotelling T-squared,Hotelling T² 統計量｜多變量管制統計量，同時監控多個相關參數。｜例：Hotelling T-squared watches thickness and refractive index together.｜譯：Hotelling T² 同時監控膜厚與折射率。
+ion implantation,離子植入｜以加速離子將摻雜物打入矽中。｜例：Ion implantation dose is set in ions per square centimetre.｜譯：離子植入劑量以每平方公分的離子數設定。
+license,授權條款｜規定他人可否使用、修改、散布程式碼；沒有授權即保留所有權利。｜例：Without a license file you may read the code but not reuse it.｜譯：沒有授權檔時，你可以閱讀程式碼，但不能重複使用。
+long format,長表格格式｜每列一筆量測（一個量測點），方便各模組共用。｜例：All measurements are converted to long format with one row per site.｜譯：所有量測都轉成每個量測點一列的長表格格式。
+lot,批（lot）｜一起流動的一組晶圓，通常 25 片。｜例：Five wafers per lot are sampled for metrology.｜譯：每批抽五片晶圓做量測。
+measurement site,"量測點｜晶圓上一個量測位置，以 (x, y) 座標表示。｜例：Each measurement site is stored as one row in the long-format table.｜譯：每一個量測點在長表格中存成一列。"
+offset,偏移量｜兩台機台或腔體之間的平均差異。｜例：The mean offset of 0.10 nm is inside the 0.3 nm matching spec.｜譯：0.10 nm 的平均偏移量在 0.3 nm 的匹配規格內。
+orchestration,"流程編排｜自動排程與串接多個資料處理工作（如 Dagster）。｜例：Orchestration runs simulate, load, and transform as one job.｜譯：流程編排把模擬、載入與轉換當成一個工作執行。"
+out of control,失控（超出管制）｜觸發管制圖規則的狀態，需調查原因。｜例：An out-of-control point puts the chamber on hold.｜譯：一個失控點會讓腔體被暫停（hold）。
+overlay,疊對｜上下兩層圖形之間的對準誤差。｜例：Overlay x and y are correlated in the simulated litho step.｜譯：在模擬的微影站中，疊對的 x 與 y 彼此相關。
+Phase I,第一階段（建立基準）｜用穩定期資料計算管制界限的階段。｜例：Limits are computed from the first twenty wafers in Phase I.｜譯：管制界限由第一階段的前二十片晶圓計算。
+physical vapor deposition,物理氣相沉積（PVD）｜以濺鍍等物理方式沉積金屬，方向性強。｜例：Physical vapor deposition has poor step coverage in deep trenches.｜譯：物理氣相沉積在深溝槽中的階梯覆蓋率很差。
+preventive maintenance,預防保養（PM）｜定期保養機台；常造成製程參數重置。｜例：Thickness shows a saw-tooth pattern between preventive maintenance events.｜譯：膜厚在兩次預防保養之間呈現鋸齒狀變化。
+process route,製程流程（route）｜產品依序經過的所有製程步驟。｜例：Every product runs its own version of the process route.｜譯：每個產品都跑自己版本的製程流程。
+process step,製程站點（步驟）｜製程流程中的一個步驟，例如 poly_dep、sti_cmp。｜例：Metrology is attached to the process step it follows.｜譯：量測資料掛在它之後的製程站點上。
+queue time,等候時間（Q-time）｜晶圓在兩站之間等待的時間，過長可能影響品質。｜例：Queue time between steps follows an exponential distribution in the simulator.｜譯：模擬器中站與站之間的等候時間服從指數分布。
+radial profile,徑向分布｜量測值隨半徑變化的曲線。｜例：The radial profile drops sharply beyond 130 mm.｜譯：徑向分布在 130 mm 以外急遽下降。
+recipe,"Recipe（配方／程式）｜機台執行的參數設定；量測 recipe 含膜層模型與取樣計畫。｜例：The metrology recipe stores the stack model, fit settings, and sampling plan.｜譯：量測 recipe 儲存膜層模型、擬合設定與取樣計畫。"
+rework,重工｜不合格（多為微影）時去除後重做。｜例：Litho rework adds a two-hour delay to the lot.｜譯：微影重工會讓這批延遲兩小時。
+RF power,射頻功率｜電漿製程中供給的射頻功率，影響沉積與蝕刻速率。｜例：Raising RF power increases PECVD deposition rate.｜譯：提高射頻功率會增加 PECVD 沉積速率。
+root cause analysis,根本原因分析｜找出異常真正來源的分析過程。｜例：Root cause analysis traced the yield loss to one etch chamber.｜譯：根本原因分析把良率損失追溯到一個蝕刻腔體。
+sampling plan,取樣計畫｜每片量哪些點、每批量幾片的規定。｜例：The 49-point sampling plan uses three rings around a centre site.｜譯：49 點取樣計畫在中心點外圍佈三圈。
+schema,"資料結構定義（schema）｜欄位名稱、型別與關聯的規定。｜例：Map your fab export to the standard schema once, in a loader.｜譯：在一個載入程式中，把廠內匯出資料一次對應到標準 schema。"
+scrap,報廢｜晶圓無法修復而被丟棄。｜例：A scrapped wafer disappears from all later process steps.｜譯：報廢的晶圓不會出現在之後的任何製程站點。
+scratch,刮傷｜線狀缺陷圖樣，多與晶圓搬運或 CMP 有關。｜例：A scratch pattern runs in a straight line across several dies.｜譯：刮傷圖樣以直線橫跨數顆晶粒。
+sensor,感測器（機台參數）｜機台回報的製程參數，如 RF 功率、壓力、溫度。｜例：The tool's primary sensor couples into the first metrology parameter.｜譯：機台的主要感測器參數會影響第一個量測參數。
+sheet resistance,片電阻｜薄導電層的電阻，單位 Ω/□。｜例：Sheet resistance is measured after the source-drain anneal.｜譯：片電阻在源汲極退火之後量測。
+sidewall angle,側壁角｜蝕刻輪廓側壁與水平面的夾角。｜例：A sidewall angle of 88 degrees is the gate etch target.｜譯：閘極蝕刻的目標側壁角為 88 度。
+slot,槽位｜晶圓在晶舟或 FOUP 中的位置編號（1–25）。｜例：Odd and even slots go to different chambers.｜譯：奇數與偶數槽位進入不同的腔體。
+sort bin,電測分類（bin）｜晶圓電性測試後依失效類型給的分類代碼。｜例：Leakage failures are reported in sort bin 3.｜譯：漏電失效歸在電測分類 bin 3。
+spatial signature,空間特徵（signature）｜晶圓圖的典型形狀，可追溯到製程或機台原因。｜例：Each chamber leaves its own spatial signature on the wafer.｜譯：每個腔體都會在晶圓上留下自己的空間特徵。
+specification limits,規格界限（USL／LSL）｜客戶或設計要求的上下限。｜例：The specification limits are 98.5 and 101.5 nm.｜譯：規格界限為 98.5 與 101.5 nm。
+split lot,"分批（split）｜一批晶圓被拆成子批，常用於實驗。｜例：In a split lot, slots 13 to 25 become a child lot.｜譯：分批時，槽位 13 到 25 變成子批。"
+star schema,星型綱要｜以事實表為中心、周圍連接維度表的資料倉儲結構。｜例：The star schema separates measurement facts from tool dimensions.｜譯：星型綱要把量測事實與機台維度分開。
+statistical process control,統計製程管制（SPC）｜以統計方法監控製程是否處於管制狀態。｜例：Statistical process control flags the shift within four wafers.｜譯：統計製程管制在四片之內就偵測到偏移。
+synthetic data,合成資料｜以模擬產生、已知真值的資料，用於練習與驗證。｜例：Synthetic data lets you score detection against a known truth.｜譯：合成資料讓你能以已知真值評估偵測效果。
+technology node,技術節點｜製程世代，如 28 nm、1-gamma。｜例：Metrology targets are scaled for each technology node.｜譯：量測目標值會依技術節點縮放。
+time-series database,時間序列資料庫｜專為時間戳記資料優化的資料庫，如 TimescaleDB。｜例：Sensor data is stored in a time-series database.｜譯：感測器資料存放在時間序列資料庫中。
+trench depth,溝槽深度｜蝕刻溝槽的深度，例如 STI。｜例：Trench depth is shallower at the edge in the STI etch.｜譯：在 STI 蝕刻中，邊緣的溝槽深度較淺。
+unit test,單元測試｜自動檢查程式小單元是否正確。｜例：Unit tests compare the optics against analytic limits.｜譯：單元測試把光學計算與解析極限做比對。
+wafer genealogy,晶圓履歷｜每片晶圓經過哪些機台、腔體、時間的完整紀錄。｜例：Chamber-level wafer genealogy makes commonality analysis possible.｜譯：腔體層級的晶圓履歷讓共通性分析成為可能。
+wafer map,晶圓圖｜量測值或良率在晶圓上的空間分布圖。｜例：The wafer map shows a thinner ring near the edge.｜譯：晶圓圖顯示靠近邊緣有一圈較薄。
+wafer-to-wafer variation,片間變異｜不同晶圓平均值之間的變異。｜例：Wafer-to-wafer variation is larger than site noise in this chamber.｜譯：這個腔體的片間變異大於量測點雜訊。
+Western Electric rules,西方電氣法則（WE rules）｜判斷管制圖異常的規則，如一點超出 3σ、連續 8 點在同一側。｜例：Western Electric rule 4 caught eight points in a row below the centre line.｜譯：西方電氣法則第 4 條抓到連續八點低於中心線。
+yield,良率｜合格晶粒佔總晶粒的比例。｜例：Weekly yield dropped after the recipe change.｜譯：Recipe 變更後每週良率下降。

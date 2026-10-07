@@ -1,0 +1,67 @@
+activation energy
+amorphous silicon
+aspect ratio
+atomic layer deposition
+attribution
+Bayesian optimization
+center point
+chemical mechanical polishing
+chemical vapor deposition
+control chart
+control limits
+Cpk
+CUSUM chart
+dashboard
+defect density
+deposition rate
+design of experiments
+die
+drift
+editable install
+ensemble model
+etching
+EWMA chart
+expected improvement
+explainability
+film stress
+film thickness
+full factorial design
+gate oxide
+Gaussian process
+high-k dielectric
+individuals and moving range chart
+ion implantation
+Latin hypercube sampling
+license
+lot
+non-uniformity
+out of control
+PECVD
+physical vapor deposition
+Ppk
+precursor
+process capability
+process simulation
+process window
+refractive index
+response surface
+RF power
+short-term sigma
+silicon dioxide
+silicon nitride
+specification limits
+SPICE netlist
+statistical process control
+step coverage
+synthetic data
+technology node
+thermal oxidation
+thin film
+unit test
+virtual environment
+wafer map
+Western Electric rules
+within-wafer uniformity
+Xbar-R chart
+yield
+yield model

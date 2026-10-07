@@ -1,0 +1,67 @@
+activation energy,活化能｜Arrhenius 關係中決定溫度敏感度的參數。｜例：A higher activation energy makes the rate more sensitive to temperature.｜譯：活化能越高，速率對溫度越敏感。
+amorphous silicon,非晶矽（a-Si）｜無長程有序的矽，吸收比結晶矽強。｜例：Amorphous silicon absorbs strongly in the blue part of the spectrum.｜譯：非晶矽在光譜的藍光區有很強的吸收。
+aspect ratio,深寬比｜結構深度與寬度之比。｜例：Step coverage falls as the aspect ratio increases.｜譯：深寬比越大，階梯覆蓋率越低。
+atomic layer deposition,原子層沉積（ALD）｜以自我限制反應逐層沉積，厚度以循環數控制，覆蓋性極佳。｜例：Atomic layer deposition adds about 0.1 nm per cycle.｜譯：原子層沉積每個循環約增加 0.1 nm。
+attribution,出處標示｜使用他人 MIT 等授權程式碼時保留版權與授權聲明。｜例：The adapted SPC module keeps SemiYield's attribution in NOTICE.md.｜譯：改寫的 SPC 模組在 NOTICE.md 中保留 SemiYield 的出處標示。
+Bayesian optimization,貝氏最佳化｜以代理模型與取樣策略，用少量實驗找到最佳條件。｜例：Bayesian optimization suggests the next recipe to try.｜譯：貝氏最佳化會建議下一組要嘗試的 recipe。
+center point,中心點｜因子皆在中間水準的實驗，用於檢查曲率與估計誤差。｜例：Center points reveal curvature that a two-level design would miss.｜譯：中心點能發現二水準設計會漏掉的曲率。
+chemical mechanical polishing,化學機械研磨（CMP）｜以研磨液與研磨墊平坦化表面。｜例：Chemical mechanical polishing removes less material at the wafer edge.｜譯：化學機械研磨在晶圓邊緣移除的材料較少。
+chemical vapor deposition,化學氣相沉積（CVD）｜以氣體前驅物反應沉積薄膜。｜例：Chemical vapor deposition rate rises exponentially with temperature.｜譯：化學氣相沉積速率隨溫度呈指數上升。
+control chart,管制圖｜依時間序列繪製量測值與管制界限的圖。｜例：Each chamber gets its own control chart and baseline.｜譯：每個腔體都有自己的管制圖與基準。
+control limits,"管制界限（UCL／LCL）｜由製程本身變異算出的界限，與規格界限不同。｜例：Control limits come from the process, not from the specification.｜譯：管制界限來自製程本身，而不是規格。"
+Cpk,製程能力指標 Cpk｜考慮偏離中心的短期能力指標；≥ 1.33 常為最低要求。｜例：Chamber DEP01-B has the lowest Cpk because its mean is off target.｜譯：DEP01-B 腔的 Cpk 最低，因為它的平均值偏離目標。
+CUSUM chart,累積和管制圖（CUSUM）｜累積偏離目標的量，適合偵測小偏移。｜例：The CUSUM chart crosses the decision interval after a small sustained drift.｜譯：在小幅持續漂移之後，CUSUM 管制圖超出決策區間。
+dashboard,儀表板｜互動式網頁，集中呈現圖表與指標。｜例：Open the dashboard with streamlit run.｜譯：用 streamlit run 開啟儀表板。
+defect density,缺陷密度（D0）｜單位面積的致命缺陷數，常用 defects/cm²。｜例：A higher defect density at the edge lowers edge-die yield.｜譯：邊緣較高的缺陷密度降低了邊緣晶粒的良率。
+deposition rate,沉積速率｜單位時間沉積的厚度，nm/min。｜例：The optimal recipe reaches a deposition rate of 62 nm per minute.｜譯：最佳 recipe 達到每分鐘 62 nm 的沉積速率。
+design of experiments,實驗設計（DOE）｜有系統地改變因子，以最少實驗找出因子效應。｜例：Design of experiments links recipe parameters to thickness and uniformity.｜譯：實驗設計把 recipe 參數與膜厚、均勻性連結起來。
+die,晶粒｜晶圓上切割後的單一晶片。｜例：Each die on the wafer map is coloured by its sort bin.｜譯：晶圓圖上的每顆晶粒依照其電測分類著色。
+drift,漂移｜隨時間緩慢變化的趨勢，如腔體老化。｜例：Deposition rate drifts down with chamber age and resets at PM.｜譯：沉積速率隨腔體使用時間往下漂移，PM 後重置。
+editable install,可編輯安裝（pip install -e）｜套件直接指向原始碼，修改後立即生效。｜例：An editable install is required so the config folder can be found.｜譯：需要可編輯安裝，程式才能找到 config 資料夾。
+ensemble model,集成模型｜結合多個機器學習模型以提高預測準確度。｜例：The ensemble model combines gradient boosting and a neural network.｜譯：集成模型結合了梯度提升與神經網路。
+etching,蝕刻｜以化學或電漿去除材料形成圖形。｜例：Etching selectivity determines how much of the mask survives.｜譯：蝕刻選擇比決定遮罩能保留多少。
+EWMA chart,指數加權移動平均管制圖（EWMA）｜對小幅持續偏移比傳統管制圖更靈敏。｜例：The EWMA chart detects a one-sigma shift much faster than rule 1.｜譯：EWMA 管制圖偵測一個標準差偏移的速度比法則一快得多。
+expected improvement,期望改善量（EI）｜貝氏最佳化中選下一個實驗點的準則。｜例：Expected improvement balances exploring new regions and refining good ones.｜譯：期望改善量在探索新區域與精修好區域之間取得平衡。
+explainability,可解釋性｜說明模型為何做出某預測，如 SHAP 值。｜例：SHAP explainability ranks which process parameters drive yield.｜譯：SHAP 可解釋性排出哪些製程參數影響良率最大。
+film stress,薄膜應力｜薄膜內的張應力或壓應力，會造成晶圓翹曲。｜例：Film stress combines intrinsic stress and thermal mismatch.｜譯：薄膜應力包含本質應力與熱膨脹不匹配。
+film thickness,膜厚｜最常見的薄膜量測參數，單位多為 nm 或 Å。｜例：Film thickness is fitted at 49 sites to build the wafer map.｜譯：在 49 個量測點擬合膜厚，以建立晶圓圖。
+full factorial design,全因子設計｜所有因子所有水準組合都做實驗；2⁴ 為 16 組。｜例：A 2-to-the-4 full factorial design with four center points needs 20 runs.｜譯：2⁴ 全因子設計加四個中心點需要 20 次實驗。
+gate oxide,閘極氧化層｜電晶體閘極下的薄氧化層，常只有數奈米。｜例：A gate oxide of 1.8 nm is measured with multi-angle SE.｜譯：1.8 nm 的閘極氧化層用多角度 SE 量測。
+Gaussian process,高斯過程｜可同時給出預測值與不確定度的代理模型。｜例：The Gaussian process predicts both the response and its uncertainty.｜譯：高斯過程同時預測響應值與其不確定度。
+high-k dielectric,高介電常數介電質（high-k）｜如 HfO2、ZrO2，用於閘極或 DRAM 電容。｜例：The high-k dielectric is floated while the interfacial layer stays fixed.｜譯：高介電常數介電質設為浮動，介面層保持固定。
+individuals and moving range chart,個別值-移動全距管制圖（I-MR）｜每次一個數據點時使用的管制圖。｜例：The wafer mean is plotted on an individuals and moving range chart.｜譯：晶圓平均值繪在個別值-移動全距管制圖上。
+ion implantation,離子植入｜以加速離子將摻雜物打入矽中。｜例：Ion implantation dose is set in ions per square centimetre.｜譯：離子植入劑量以每平方公分的離子數設定。
+Latin hypercube sampling,拉丁超立方抽樣｜讓樣本均勻散佈於多維空間的抽樣法。｜例：The first ten runs use Latin hypercube sampling.｜譯：前十次實驗使用拉丁超立方抽樣。
+license,授權條款｜規定他人可否使用、修改、散布程式碼；沒有授權即保留所有權利。｜例：Without a license file you may read the code but not reuse it.｜譯：沒有授權檔時，你可以閱讀程式碼，但不能重複使用。
+lot,批（lot）｜一起流動的一組晶圓，通常 25 片。｜例：Five wafers per lot are sampled for metrology.｜譯：每批抽五片晶圓做量測。
+non-uniformity,不均勻度（NU）｜常見定義：1σ/mean、range/mean、(max−min)/(2·mean)。｜例：Always state which non-uniformity definition a report uses.｜譯：報告中一定要說明使用哪一種不均勻度定義。
+out of control,失控（超出管制）｜觸發管制圖規則的狀態，需調查原因。｜例：An out-of-control point puts the chamber on hold.｜譯：一個失控點會讓腔體被暫停（hold）。
+PECVD,電漿輔助化學氣相沉積｜以電漿降低反應溫度的 CVD。｜例：PECVD nitride is deposited at 250 to 350 degrees Celsius.｜譯：PECVD 氮化矽在攝氏 250 到 350 度之間沉積。
+physical vapor deposition,物理氣相沉積（PVD）｜以濺鍍等物理方式沉積金屬，方向性強。｜例：Physical vapor deposition has poor step coverage in deep trenches.｜譯：物理氣相沉積在深溝槽中的階梯覆蓋率很差。
+Ppk,製程績效指標 Ppk｜以整體（長期）標準差計算的能力指標。｜例：Ppk is lower than Cpk when the process drifts between PMs.｜譯：製程在兩次 PM 之間漂移時，Ppk 會低於 Cpk。
+precursor,前驅物｜CVD/ALD 中提供元素的反應氣體，如 SiH4、TMA。｜例：SiH4 is the silicon precursor for PECVD nitride.｜譯：SiH4 是 PECVD 氮化矽的矽前驅物。
+process capability,製程能力｜製程變異相對於規格寬度的能力，以 Cp/Cpk 表示。｜例：Process capability is only meaningful for a process in control.｜譯：只有在製程受控時，製程能力才有意義。
+process simulation,製程模擬｜以物理模型預測氧化、沉積、蝕刻、植入的結果。｜例：Process simulation predicts oxide thickness from time and temperature.｜譯：製程模擬由時間與溫度預測氧化層厚度。
+process window,製程窗口｜所有輸出都符合規格的參數範圍。｜例：The process window shrinks when the uniformity spec is tightened.｜譯：均勻性規格收緊時，製程窗口會縮小。
+refractive index,折射率（n）｜光在材料中速度的倒數比；SiO2 約 1.46，Si3N4 約 2.0。｜例：A refractive index shift often signals a change in film composition.｜譯：折射率偏移常代表薄膜組成發生變化。
+response surface,反應曲面｜以二次模型描述輸出隨因子變化的曲面。｜例：The response surface shows deposition rate rising with RF power.｜譯：反應曲面顯示沉積速率隨射頻功率上升。
+RF power,射頻功率｜電漿製程中供給的射頻功率，影響沉積與蝕刻速率。｜例：Raising RF power increases PECVD deposition rate.｜譯：提高射頻功率會增加 PECVD 沉積速率。
+short-term sigma,短期標準差｜由移動全距或子群內變異估計，不含漂移。｜例：EWMA limits use short-term sigma so drift cannot widen them.｜譯：EWMA 界限使用短期標準差，因此漂移不會把界限撐寬。
+silicon dioxide,二氧化矽（SiO2）｜最常見的介電質薄膜，可熱成長或沉積。｜例：Thermal silicon dioxide is the classic metrology reference film.｜譯：熱成長二氧化矽是經典的量測參考膜。
+silicon nitride,氮化矽（Si3N4）｜常作硬遮罩、間隙壁、保護層，n 約 2.0。｜例：Silicon nitride on pad oxide is fitted as a two-layer model.｜譯：墊氧化層上的氮化矽用兩層模型擬合。
+specification limits,規格界限（USL／LSL）｜客戶或設計要求的上下限。｜例：The specification limits are 98.5 and 101.5 nm.｜譯：規格界限為 98.5 與 101.5 nm。
+SPICE netlist,SPICE 網表｜描述電路元件與連接的文字檔，用於電路模擬。｜例：Extracted device parameters are exported as a SPICE netlist.｜譯：萃取的元件參數匯出為 SPICE 網表。
+statistical process control,統計製程管制（SPC）｜以統計方法監控製程是否處於管制狀態。｜例：Statistical process control flags the shift within four wafers.｜譯：統計製程管制在四片之內就偵測到偏移。
+step coverage,階梯覆蓋率｜溝槽側壁或底部膜厚與表面膜厚之比。｜例：ALD keeps step coverage near 100 percent even at high aspect ratio.｜譯：即使在高深寬比下，ALD 的階梯覆蓋率仍接近 100%。
+synthetic data,合成資料｜以模擬產生、已知真值的資料，用於練習與驗證。｜例：Synthetic data lets you score detection against a known truth.｜譯：合成資料讓你能以已知真值評估偵測效果。
+technology node,技術節點｜製程世代，如 28 nm、1-gamma。｜例：Metrology targets are scaled for each technology node.｜譯：量測目標值會依技術節點縮放。
+thermal oxidation,熱氧化｜在高溫氧氣或水氣中成長 SiO2；常用 Deal-Grove 模型。｜例：Thermal oxidation follows the Deal-Grove linear-parabolic model.｜譯：熱氧化遵循 Deal-Grove 線性-拋物線模型。
+thin film,薄膜｜厚度從次奈米到微米的沉積或成長層，如氧化層、氮化矽、high-k。｜例：Each thin film in the stack is modelled with its own thickness and dispersion law.｜譯：堆疊中的每一層薄膜都用各自的厚度與色散模型來描述。
+unit test,單元測試｜自動檢查程式小單元是否正確。｜例：Unit tests compare the optics against analytic limits.｜譯：單元測試把光學計算與解析極限做比對。
+virtual environment,虛擬環境｜專案專用的 Python 套件環境，避免版本衝突。｜例：Activate the virtual environment before installing the toolkit.｜譯：安裝工具箱之前先啟用虛擬環境。
+wafer map,晶圓圖｜量測值或良率在晶圓上的空間分布圖。｜例：The wafer map shows a thinner ring near the edge.｜譯：晶圓圖顯示靠近邊緣有一圈較薄。
+Western Electric rules,西方電氣法則（WE rules）｜判斷管制圖異常的規則，如一點超出 3σ、連續 8 點在同一側。｜例：Western Electric rule 4 caught eight points in a row below the centre line.｜譯：西方電氣法則第 4 條抓到連續八點低於中心線。
+within-wafer uniformity,片內均勻性｜同一片晶圓上量測值的變異，常以 1σ% 表示。｜例：Within-wafer uniformity is charted alongside the wafer mean.｜譯：片內均勻性與晶圓平均值一起繪製管制圖。
+Xbar-R chart,平均值-全距管制圖｜以子群平均與全距監控製程，子群大小 2–10。｜例：The Xbar-R chart groups five consecutive wafers into one subgroup.｜譯：平均值-全距管制圖把連續五片晶圓分成一個子群。
+yield,良率｜合格晶粒佔總晶粒的比例。｜例：Weekly yield dropped after the recipe change.｜譯：Recipe 變更後每週良率下降。
+yield model,良率模型｜由缺陷密度與晶粒面積預測良率，如 Murphy、Poisson 模型。｜例：The Murphy yield model links defect density to die yield.｜譯：Murphy 良率模型把缺陷密度與晶粒良率連結起來。

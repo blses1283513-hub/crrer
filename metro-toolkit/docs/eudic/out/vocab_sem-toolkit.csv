@@ -1,0 +1,58 @@
+ambient medium,環境介質｜光入射前所在的介質，一般為空氣（n = 1）。｜例：Setting the ambient medium to n = 1.5 instead of air shifts every reflectance curve.｜譯：把環境介質設成 n = 1.5 而不是空氣，會讓每一條反射率曲線都偏移。
+angle of incidence,入射角｜入射光與表面法線的夾角；SE 常用 65°–75°。｜例：Using several angles of incidence reduces correlation between fitted parameters.｜譯：使用多個入射角可以降低擬合參數之間的相關性。
+atomic layer deposition,原子層沉積（ALD）｜以自我限制反應逐層沉積，厚度以循環數控制，覆蓋性極佳。｜例：Atomic layer deposition adds about 0.1 nm per cycle.｜譯：原子層沉積每個循環約增加 0.1 nm。
+center point,中心點｜因子皆在中間水準的實驗，用於檢查曲率與估計誤差。｜例：Center points reveal curvature that a two-level design would miss.｜譯：中心點能發現二水準設計會漏掉的曲率。
+chemical vapor deposition,化學氣相沉積（CVD）｜以氣體前驅物反應沉積薄膜。｜例：Chemical vapor deposition rate rises exponentially with temperature.｜譯：化學氣相沉積速率隨溫度呈指數上升。
+class imbalance,類別不平衡｜某一類樣本遠少於其他類，如失效晶圓只佔少數。｜例：SECOM has a 14 to 1 class imbalance between pass and fail.｜譯：SECOM 的合格與失效之間有 14 比 1 的類別不平衡。
+confusion matrix,混淆矩陣｜列出實際類別與預測類別對照的表格。｜例：The confusion matrix shows Loc and Edge-Loc are often confused.｜譯：混淆矩陣顯示 Loc 與 Edge-Loc 常被混淆。
+contour plot,等高線圖｜以等值線或色階呈現二維分布。｜例：The contour plot uses a single blue scale for thickness.｜譯：等高線圖用單一藍色色階表示膜厚。
+convolutional neural network,卷積神經網路（CNN）｜擅長影像辨識的深度學習模型。｜例：A convolutional neural network classifies wafer-map defect patterns.｜譯：卷積神經網路對晶圓圖缺陷圖樣進行分類。
+dashboard,儀表板｜互動式網頁，集中呈現圖表與指標。｜例：Open the dashboard with streamlit run.｜譯：用 streamlit run 開啟儀表板。
+defect pattern,缺陷圖樣｜晶圓圖上失效晶粒的空間分布型態，如 Center、Edge-Ring、Scratch。｜例：An edge-ring defect pattern often points to deposition edge effects.｜譯：邊緣環狀缺陷圖樣常指向沉積的邊緣效應。
+deposition rate,沉積速率｜單位時間沉積的厚度，nm/min。｜例：The optimal recipe reaches a deposition rate of 62 nm per minute.｜譯：最佳 recipe 達到每分鐘 62 nm 的沉積速率。
+design of experiments,實驗設計（DOE）｜有系統地改變因子，以最少實驗找出因子效應。｜例：Design of experiments links recipe parameters to thickness and uniformity.｜譯：實驗設計把 recipe 參數與膜厚、均勻性連結起來。
+desirability function,滿意度函數｜把多個響應合併成單一 0–1 分數，以進行多目標最佳化。｜例：The desirability function trades deposition rate against film stress.｜譯：滿意度函數在沉積速率與薄膜應力之間取捨。
+die,晶粒｜晶圓上切割後的單一晶片。｜例：Each die on the wafer map is coloured by its sort bin.｜譯：晶圓圖上的每顆晶粒依照其電測分類著色。
+diffusion barrier,擴散阻障層｜防止金屬擴散進介電質的薄層，如 TiN。｜例：TiN acts as a diffusion barrier under tungsten.｜譯：TiN 在鎢下方作為擴散阻障層。
+edge exclusion,邊緣排除｜晶圓最外圈不量測的寬度，常為 2–3 mm。｜例：With 3 mm edge exclusion the outer ring sits at 147 mm radius.｜譯：邊緣排除 3 mm 時，最外圈位於半徑 147 mm。
+explainability,可解釋性｜說明模型為何做出某預測，如 SHAP 值。｜例：SHAP explainability ranks which process parameters drive yield.｜譯：SHAP 可解釋性排出哪些製程參數影響良率最大。
+extinction coefficient,消光係數（k）｜複數折射率的虛部，代表材料吸收光的強弱。｜例：Silicon has a large extinction coefficient in the ultraviolet.｜譯：矽在紫外光區有很大的消光係數。
+fault detection and classification,故障偵測與分類（FDC）｜以機台感測器資料即時偵測異常並分類。｜例：Fault detection and classification uses hundreds of sensor readings per wafer.｜譯：故障偵測與分類每片晶圓使用數百個感測器讀值。
+feature selection,特徵選擇｜去除無資訊或缺值過多的變數。｜例：Feature selection kept 442 of the 591 sensors.｜譯：特徵選擇保留了 591 個感測器中的 442 個。
+film stress,薄膜應力｜薄膜內的張應力或壓應力，會造成晶圓翹曲。｜例：Film stress combines intrinsic stress and thermal mismatch.｜譯：薄膜應力包含本質應力與熱膨脹不匹配。
+film thickness,膜厚｜最常見的薄膜量測參數，單位多為 nm 或 Å。｜例：Film thickness is fitted at 49 sites to build the wafer map.｜譯：在 49 個量測點擬合膜厚，以建立晶圓圖。
+full factorial design,全因子設計｜所有因子所有水準組合都做實驗；2⁴ 為 16 組。｜例：A 2-to-the-4 full factorial design with four center points needs 20 runs.｜譯：2⁴ 全因子設計加四個中心點需要 20 次實驗。
+gate oxide,閘極氧化層｜電晶體閘極下的薄氧化層，常只有數奈米。｜例：A gate oxide of 1.8 nm is measured with multi-angle SE.｜譯：1.8 nm 的閘極氧化層用多角度 SE 量測。
+Grad-CAM,Grad-CAM（梯度加權類別活化圖）｜顯示 CNN 判斷時關注影像哪個區域。｜例：Grad-CAM confirms the model looks at the wafer edge for edge-ring maps.｜譯：Grad-CAM 確認模型在判斷邊緣環圖樣時看的是晶圓邊緣。
+license,授權條款｜規定他人可否使用、修改、散布程式碼；沒有授權即保留所有權利。｜例：Without a license file you may read the code but not reuse it.｜譯：沒有授權檔時，你可以閱讀程式碼，但不能重複使用。
+local minimum,局部極小值｜擬合誤差的假最低點，會給出看似合理但錯誤的膜厚。｜例：A local fit started at 530 nm stopped in a local minimum at 538.7 nm.｜譯：從 530 nm 開始的局部擬合停在 538.7 nm 的局部極小值。
+metrology,量測（計量）｜以量測確認製程結果是否符合規格的工程領域；Metro 即 metrology 的簡稱。｜例：Metrology confirms that every deposition step lands on target before the lot moves on.｜譯：量測確認每一道沉積步驟都達到目標值，lot 才能往下一站走。
+non-uniformity,不均勻度（NU）｜常見定義：1σ/mean、range/mean、(max−min)/(2·mean)。｜例：Always state which non-uniformity definition a report uses.｜譯：報告中一定要說明使用哪一種不均勻度定義。
+optical constants,"光學常數（n, k）｜材料的折射率與消光係數，隨波長而變。｜例：Replace the typical optical constants with the values your recipe actually uses.｜譯：請把典型的光學常數換成你 recipe 實際使用的數值。"
+oversampling,"過採樣（如 SMOTE）｜合成或複製少數類樣本以平衡資料。｜例：Oversampling is applied to the training set only, never to the test set.｜譯：過採樣只用在訓練集，絕不用在測試集。"
+passivation layer,保護層（鈍化層）｜保護元件免受濕氣與污染的最上層薄膜。｜例：Silicon nitride is a common passivation layer.｜譯：氮化矽是常見的保護層。
+PECVD,電漿輔助化學氣相沉積｜以電漿降低反應溫度的 CVD。｜例：PECVD nitride is deposited at 250 to 350 degrees Celsius.｜譯：PECVD 氮化矽在攝氏 250 到 350 度之間沉積。
+polarization,偏振｜光電場振動方向；s 偏振垂直入射面，p 偏振平行入射面。｜例：Ellipsometry needs both s and p polarization at the same angle.｜譯：橢圓偏光術需要同一角度下的 s 與 p 兩種偏振。
+precursor,前驅物｜CVD/ALD 中提供元素的反應氣體，如 SiH4、TMA。｜例：SiH4 is the silicon precursor for PECVD nitride.｜譯：SiH4 是 PECVD 氮化矽的矽前驅物。
+process window,製程窗口｜所有輸出都符合規格的參數範圍。｜例：The process window shrinks when the uniformity spec is tightened.｜譯：均勻性規格收緊時，製程窗口會縮小。
+Psi and Delta,Ψ 與 Δ（橢偏參數）｜ρ = rp/rs = tanΨ·e^{iΔ}；Ψ 為振幅比，Δ 為相位差。｜例：Psi and Delta are measured at three angles and fitted together.｜譯：在三個角度量測 Ψ 與 Δ，並一起擬合。
+random forest,隨機森林｜由多棵決策樹投票的分類／迴歸模型。｜例：A random forest classifies wafers as pass or fail from sensor data.｜譯：隨機森林以感測器資料把晶圓分為合格或失效。
+reflectance,反射率｜反射光強與入射光強之比，介於 0 與 1 之間。｜例：Bare silicon has a reflectance of about 0.35 at 633 nm.｜譯：裸矽在 633 nm 的反射率約為 0.35。
+reflectometry,反射光譜量測｜量測反射率隨波長變化來推算膜厚，常為正向入射。｜例：Normal-incidence reflectometry loses sensitivity on oxides thinner than a few nanometres.｜譯：正向入射的反射光譜量測在數奈米以下的氧化層會失去靈敏度。
+refractive index,折射率（n）｜光在材料中速度的倒數比；SiO2 約 1.46，Si3N4 約 2.0。｜例：A refractive index shift often signals a change in film composition.｜譯：折射率偏移常代表薄膜組成發生變化。
+response surface,反應曲面｜以二次模型描述輸出隨因子變化的曲面。｜例：The response surface shows deposition rate rising with RF power.｜譯：反應曲面顯示沉積速率隨射頻功率上升。
+RF power,射頻功率｜電漿製程中供給的射頻功率，影響沉積與蝕刻速率。｜例：Raising RF power increases PECVD deposition rate.｜譯：提高射頻功率會增加 PECVD 沉積速率。
+scratch,刮傷｜線狀缺陷圖樣，多與晶圓搬運或 CMP 有關。｜例：A scratch pattern runs in a straight line across several dies.｜譯：刮傷圖樣以直線橫跨數顆晶粒。
+sensor,感測器（機台參數）｜機台回報的製程參數，如 RF 功率、壓力、溫度。｜例：The tool's primary sensor couples into the first metrology parameter.｜譯：機台的主要感測器參數會影響第一個量測參數。
+silicon dioxide,二氧化矽（SiO2）｜最常見的介電質薄膜，可熱成長或沉積。｜例：Thermal silicon dioxide is the classic metrology reference film.｜譯：熱成長二氧化矽是經典的量測參考膜。
+silicon nitride,氮化矽（Si3N4）｜常作硬遮罩、間隙壁、保護層，n 約 2.0。｜例：Silicon nitride on pad oxide is fitted as a two-layer model.｜譯：墊氧化層上的氮化矽用兩層模型擬合。
+sort bin,電測分類（bin）｜晶圓電性測試後依失效類型給的分類代碼。｜例：Leakage failures are reported in sort bin 3.｜譯：漏電失效歸在電測分類 bin 3。
+spatial signature,空間特徵（signature）｜晶圓圖的典型形狀，可追溯到製程或機台原因。｜例：Each chamber leaves its own spatial signature on the wafer.｜譯：每個腔體都會在晶圓上留下自己的空間特徵。
+spectroscopic ellipsometry,光譜式橢圓偏光術（SE）｜量測反射光偏振態的變化（Ψ、Δ），對極薄膜最靈敏。｜例：Spectroscopic ellipsometry resolves sub-angstrom changes in a 2 nm gate oxide.｜譯：光譜式橢圓偏光術可以分辨 2 nm 閘極氧化層中小於 1 埃的變化。
+statistical process control,統計製程管制（SPC）｜以統計方法監控製程是否處於管制狀態。｜例：Statistical process control flags the shift within four wafers.｜譯：統計製程管制在四片之內就偵測到偏移。
+substrate,基板｜薄膜下方視為半無限厚的材料，量測監控片通常為矽基板。｜例：Light that reaches the substrate is either reflected back or absorbed.｜譯：到達基板的光不是被反射回來就是被吸收。
+thin film,薄膜｜厚度從次奈米到微米的沉積或成長層，如氧化層、氮化矽、high-k。｜例：Each thin film in the stack is modelled with its own thickness and dispersion law.｜譯：堆疊中的每一層薄膜都用各自的厚度與色散模型來描述。
+transfer matrix method,傳輸矩陣法（TMM）｜以每層 2×2 矩陣相乘計算多層膜光學響應的方法。｜例：The transfer matrix method handles any number of planar layers.｜譯：傳輸矩陣法可以處理任意層數的平面膜層。
+wafer map,晶圓圖｜量測值或良率在晶圓上的空間分布圖。｜例：The wafer map shows a thinner ring near the edge.｜譯：晶圓圖顯示靠近邊緣有一圈較薄。
+within-wafer uniformity,片內均勻性｜同一片晶圓上量測值的變異，常以 1σ% 表示。｜例：Within-wafer uniformity is charted alongside the wafer mean.｜譯：片內均勻性與晶圓平均值一起繪製管制圖。
+yield,良率｜合格晶粒佔總晶粒的比例。｜例：Weekly yield dropped after the recipe change.｜譯：Recipe 變更後每週良率下降。

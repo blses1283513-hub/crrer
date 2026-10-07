@@ -74,6 +74,12 @@ Full step-by-step Windows instructions (including SemiYield and the other upstre
 5. **Chart uniformity, not just the mean.** A −2 nm bowl excursion is invisible on the wafer-mean chart and
    obvious on the within-wafer 1σ % chart.
 
+## Vocabulary study files (Eudic 歐路詞典)
+
+191 metrology / fab / statistics terms with Traditional Chinese translations, explanations and example
+sentences, one file per tool plus a combined file, in both Eudic import formats:
+[`docs/eudic/`](docs/eudic/README.md). Edit `docs/eudic/glossary.yaml` and run `python -m metro_toolkit.eudic` to rebuild.
+
 ## Standard data schema
 
 One row per measured site (see `schema.py`; `validate()` checks a file before analysis):
