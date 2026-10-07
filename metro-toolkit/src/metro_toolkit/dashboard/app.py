@@ -20,6 +20,8 @@ from metro_toolkit import viz  # noqa: E402
 from metro_toolkit.analysis import process_capability, spc_by_group, wafer_summary  # noqa: E402
 from metro_toolkit.config import data_dir, import_dir, load_stack, load_yaml, wavelengths  # noqa: E402
 from metro_toolkit.datagen import ThicknessSimConfig, grr_study, matching_study, simulate_thickness  # noqa: E402
+from metro_toolkit.datagen.answer_key import compare_drivers, score_detection, spc_flags  # noqa: E402
+from metro_toolkit.datagen.fab import load_fab_config, load_truth, save_fab, simulate_fab  # noqa: E402
 from metro_toolkit.metrology.thinfilm import (  # noqa: E402
     ellipsometry,
     fit,
@@ -482,9 +484,143 @@ def page_studies():
                         width="stretch")
         st.dataframe(c.style.format(precision=4), hide_index=True)
 
+SCENARIO_TEXT = {
+    "baseline": "正常生產：只有自然變異（chamber 差異、PM 之間的漂移、隨機缺陷）",
+    "chamber_shift": "某個 chamber 突然偏移",
+    "slow_drift": "某個 chamber 慢慢漂移",
+    "metrology_offset": "某台量測機台有偏差（只影響量測值，不影響產品）",
+    "particle_event": "微粒事件：缺陷暴增並有空間圖樣",
+    "edge_bowl": "某個 chamber 的晶圓內分布改變（邊緣與中心差變大）",
+    "recipe_change": "某站 recipe 改變，影響所有機台並傳到下一站",
+    "mixed": "多個事件同時存在（綜合練習）",
+}
+CAUSE_LABEL = {".": "pass", "D": "defect", "G": "gate_ox_thk", "K": "hk_thk", "T": "tin_thk", "C": "wl_cd_etch",
+               "I": "ild_thk"}
+CAUSE_COLOR = {".": viz.GRID, **{c: viz.SERIES[i] for i, c in enumerate("DGKTCI")}}  # fixed: colour follows the cause
+
+
+def page_fab():
+    st.header("Fab simulator 模擬晶圓廠")
+    st.caption("產生行為接近真實晶圓廠的資料，並保留「答案」。先用 Wafer map / SPC 頁面自己找問題，再回來對答案、打分數。")
+    cfg = load_fab_config()
+    c1, c2, c3 = st.columns([2, 1, 1])
+    scenario = c1.selectbox("情境 Scenario", list(cfg["scenarios"]), index=list(cfg["scenarios"]).index("mixed"),
+                            format_func=lambda k: f"{k} — {SCENARIO_TEXT.get(k, '')}")
+    lots = c2.slider("批數 lots", 20, 120, int(cfg["n_lots"]), 5, help="每批 25 片；每批量測 5 片")
+    seed = c3.number_input("亂數種子 seed", value=int(cfg["seed"]), step=1)
+    c4, c5 = st.columns([2, 1])
+    name = c4.text_input("資料集名稱", value=f"sim_{scenario}")
+    sy = c5.checkbox("用 SemiYield 欄位名稱", value=False,
+                     help="把 gate_ox_thk → gate_oxide_thickness、wl_cd_etch → poly_cd、rs_ohm_sq → metal_resistance，"
+                          "讓 SemiYield 的 Yield Prediction 可以直接使用。")
+    if st.button("產生並儲存", type="primary"):
+        with st.spinner("模擬中…"):
+            res = simulate_fab(cfg, scenario, lots, int(seed))
+            paths = save_fab(res, name, semiyield_names=sy)
+        st.session_state["dataset"] = paths["long"].stem
+        st.success(f"已產生 {len(res.wafers)} 片晶圓並存成資料集 `{paths['long'].stem}`；左側資料來源已切換。"
+                   "現在可以到 Wafer map / SPC 頁面找問題。")
+
+    sims = [d for d in list_datasets() if load_truth(d) is not None]
+    if not sims:
+        st.info("還沒有模擬資料。選擇情境後按「產生並儲存」。")
+        return
+    active = st.session_state.get("dataset")
+    pick = st.selectbox("檢視的模擬資料", sims, index=sims.index(active) if active in sims else 0)
+    truth = load_truth(pick)
+    w = truth["wafers"]
+    long_df = load_dataset(pick)
+
+    k = st.columns(5)
+    k[0].metric("晶圓", f"{len(w):,}")
+    k[1].metric("批", w["lot_id"].nunique())
+    k[2].metric("平均良率", f"{100 * w['yield'].mean():.1f} %")
+    k[3].metric("良率標準差", f"{100 * w['yield'].std():.1f} %")
+    k[4].metric("注入事件", len(truth["events"]), help="細節在最下方「看答案」")
+
+    lot_y = w.groupby("lot_index")["yield"].mean().reset_index()
+    fig = go.Figure(go.Scatter(x=lot_y["lot_index"], y=100 * lot_y["yield"], mode="lines+markers",
+                               line=dict(color=viz.SERIES[0], width=1.5), marker=dict(size=5),
+                               hovertemplate="lot %{x}<br>平均良率 %{y:.1f}%<extra></extra>"))
+    st.plotly_chart(layout(fig, "每批平均良率（所有晶圓都有電測與良率）", "lot", "yield (%)", 300), width="stretch")
+
+    st.subheader("晶圓圖 Die map")
+    order = w.sort_values("yield")["wafer_id"].tolist()
+    wid = st.selectbox("晶圓（良率最低的在前）", order)
+    m = truth["dies"].set_index("wafer_id").loc[wid, "map"]
+    gx, gy = np.array(truth["grid"]["x"]), np.array(truth["grid"]["y"])
+    codes = np.array(list(m))
+    fig = go.Figure()
+    present = [c for c in CAUSE_LABEL if (codes == c).any()]
+    for c in present:
+        sel = codes == c
+        color = CAUSE_COLOR[c]
+        fig.add_scatter(x=gx[sel], y=gy[sel], mode="markers", name=f"{CAUSE_LABEL[c]} ({sel.sum()})",
+                        marker=dict(symbol="square", size=9, color=color),
+                        hovertemplate=f"{CAUSE_LABEL[c]}<br>x %{{x:.0f}} mm, y %{{y:.0f}} mm<extra></extra>")
+    r = truth["grid"]["r_eff"] + 3
+    fig.add_shape(type="circle", x0=-r, y0=-r, x1=r, y1=r, line=dict(color=viz.AXIS))
+    row = w.set_index("wafer_id").loc[wid]
+    fig = layout(fig, f"{wid}  良率 {100 * row['yield']:.1f}%  · 缺陷圖樣：{row['defect_pattern']}", "x (mm)", "y (mm)", 520)
+    fig.update_yaxes(scaleanchor="x", scaleratio=1)
+    st.plotly_chart(fig, width="stretch")
+
+    st.subheader("偵測打分數 Score my detection")
+    st.caption("用你選的管制圖設定跑一次 SPC（每個參數、每個 chamber 分開），再和答案比對。")
+    c1, c2, c3, c4 = st.columns(4)
+    chart = c1.radio("管制圖", ["IMR", "EWMA", "CUSUM"], horizontal=True, key="fab_chart")
+    rules = c2.multiselect("WE 規則", [1, 2, 3, 4], default=[1, 2], key="fab_rules")
+    stats = c3.multiselect("統計量", ["mean", "nu_1sigma_pct"], default=["mean", "nu_1sigma_pct"], key="fab_stats",
+                           format_func={"mean": "晶圓平均", "nu_1sigma_pct": "片內 1σ %"}.get)
+    phase1 = c4.slider("Phase I 點數", 8, 40, 20, key="fab_phase1")
+    if st.button("計算分數"):
+        flags = spc_flags(long_df, chart, tuple(rules) or (1,), tuple(stats) or ("mean",), phase1)
+        table, summ = score_detection(flags, truth["events"], long_df)
+        st.session_state["fab_score"] = (pick, table, summ)
+    if st.session_state.get("fab_score") and st.session_state["fab_score"][0] == pick:
+        _, table, summ = st.session_state["fab_score"]
+        k = st.columns(4)
+        k[0].metric("抓到的事件", f"{summ['detected']} / {summ['observable']}",
+                    help="可觀測 = 至少有一片受影響的晶圓被量測到")
+        k[1].metric("中位延遲", "—" if summ["median_delay_wafers"] is None else f"{summ['median_delay_wafers']:.0f} 片",
+                    help="事件開始後，第幾片被量測到的受影響晶圓才被標記（0 = 第一片就抓到）")
+        k[2].metric("誤警報率", f"{summ['false_alarm_rate_pct']:.1f} %",
+                    help="被標記、但不屬於任何注入事件的點。注意：PM 之間的自然漂移也會被標記，它是真實製程行為但不是注入事件。")
+        k[3].metric("被標記的點", summ["flagged_points"])
+        with st.expander("看每個事件的結果（會顯示答案）"):
+            st.dataframe(table.drop(columns=["affects_product"]).round(2), hide_index=True)
+
+    with st.expander("看答案 Answer key"):
+        ev = truth["events"].drop(columns=["wafer_ids"]).copy()
+        ev["yield_impact"] = (100 * ev["yield_impact"]).round(2)
+        st.markdown("**注入的事件**（yield_impact = 與「同一批晶圓、同樣亂數但沒有事件」相比的良率差，%）")
+        st.dataframe(ev.rename(columns={"yield_impact": "yield_impact_%"}), hide_index=True)
+        drv = truth["drivers"]
+        fig = go.Figure(go.Bar(x=drv["yield_loss_pct"], y=drv["cause"], orientation="h", marker_color=viz.SERIES[0],
+                               hovertemplate="%{y}: 平均損失 %{x:.2f}% 良率<extra></extra>"))
+        fig.update_yaxes(autorange="reversed")
+        st.plotly_chart(layout(fig, "真正的良率損失來源（拿來和 SHAP / 相關性排名比對）", "平均良率損失 (%)", "", 300),
+                        width="stretch")
+        st.caption("缺陷圖樣：" + "、".join(f"{k} {v}" for k, v in w["defect_pattern"].value_counts().items()))
+        back = {b: a for a, b in (truth.get("renamed") or {}).items()}
+        wt = long_df.assign(parameter=long_df["parameter"].replace(back)).pivot_table(
+            index="wafer_id", columns="parameter", values="value", aggfunc="mean")
+        causes = [c for c in drv["cause"] if c in wt.columns and c != "yield"]
+        if "yield" in wt.columns and causes:
+            corr = wt[causes + ["yield"]].corr(method="spearman")["yield"].drop("yield").abs().sort_values(ascending=False)
+            cmp = compare_drivers(list(corr.index), drv)
+            st.markdown(
+                f"**簡單相關性排名 vs 真正原因**：相關性排名 {' > '.join(corr.index)}；"
+                f"真正原因 {' > '.join(cmp['truth'])}。第一名{'相同' if cmp['top1_match'] else '不同'}"
+                + (f"，排名相關 ρ = {cmp['spearman']:.2f}" if cmp["spearman"] is not None else "")
+                + "。相關性只看量測過的晶圓與晶圓平均值，可能漏掉只在部分晶粒發生的問題。")
+        if truth.get("semiyield_names"):
+            st.caption("此資料集使用 SemiYield 欄位名稱：" + "、".join(f"{a} → {b}" for a, b in truth["renamed"].items()))
+
 
 PAGES = {
     "Data import": lambda df: page_import(),
+    "Fab simulator": lambda df: page_fab(),
     "Film stack & fit": lambda df: page_stack(),
     "Wafer map": page_wafer,
     "SPC": page_spc,

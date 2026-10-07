@@ -97,6 +97,33 @@ Excel, and UCI SECOM (`secom.data` + `secom_labels.data`).
 Saved data stays on this PC in `data/imported/` (git-ignored) or `METRO_IMPORT_PATH`. Code:
 `src/metro_toolkit/ingest/` (readers, mapping, convert, checks, store).
 
+## Fab simulator with an answer key
+
+Dashboard → **Fab simulator**, or `python -m metro_toolkit.datagen.fab --scenario mixed`. Settings and
+scenarios: `config/fab_sim.yaml`; code: `datagen/fab.py`, `datagen/answer_key.py`.
+
+* **Realistic behaviour:** a DRAM-style route (pad oxide, gate oxide, ALD high-k, TiN, word-line litho/etch CD,
+  ILD CMP) on tools and chambers with offsets, drift between PMs and per-chamber spatial signatures. Metrology
+  sees 5 of 25 wafers at 9/13 sites through two metrology tools. E-test (Vt, Rs) and yield exist for every wafer.
+* **Yield die by die:** ~620 dies of 1 cm²; a die fails if its local value leaves a step's device window or it
+  catches a clustered killer defect (negative binomial; random / scratch / cluster / edge-ring patterns).
+  Baseline yield ≈ 90% (sd ≈ 7%), with losses from defects, etched CD, high-k, gate oxide and ILD.
+* **Scenarios:** baseline, chamber_shift, slow_drift, metrology_offset (measurement only), particle_event,
+  edge_bowl, recipe_change (propagates litho → etch CD), mixed.
+* **Answer key:** every event with its wafers and its **true yield impact**: each wafer is also simulated without
+  events using identical random draws, so the difference is exact. Plus true yield loss by cause and die maps.
+* **Score my detection:** run SPC with your chart/rule choices and compare with the key: events detected, how
+  many measured wafers late, false-alarm rate, and events that sampling never saw.
+* Saved like an imported dataset, so the Wafer map / SPC pages and the SemiYield launcher can use it
+  (tick *SemiYield names* to make Yield Prediction work).
+
+Lessons it makes measurable (default seed, mixed scenario): all 5 events are caught with I-MR + WE 1/2, but the
+slow drift only after ~46 measured wafers (try EWMA); the edge-bowl change is caught by the within-wafer σ %
+chart, not the mean chart; the metrology offset is flagged although its yield impact is exactly 0 (gauge, not
+process); a simple correlation ranking puts TiN thickness above gate oxide although TiN causes no yield loss.
+Even the true defect density explains only ~10–35% of wafer-yield variance, because much loss is random at
+die level, so expect modest R² from any yield model.
+
 ## SemiYield hover guide
 
 Hover explanations (Traditional Chinese + English term) for SemiYield's inputs, chart points, and SPC lines,

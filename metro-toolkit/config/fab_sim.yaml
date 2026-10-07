@@ -1,0 +1,160 @@
+# Realistic synthetic fab for practice with an answer key (metro_toolkit.datagen.fab).
+# Generic DRAM-style route built from public textbook knowledge only. All numbers are illustrative.
+#
+# Physics chain per wafer and step:
+#   wafer mean  = target + chamber offset + drift (since last PM) + events + wafer noise
+#   local value = wafer mean + spatial signature (bowl / tilt / edge roll-off, per chamber) + local noise
+#   measured    = local value + metrology-tool offset + metrology noise   (only on sampled wafers & sites)
+# Yield: every die is checked against each step's device window (parametric fail) and for killer
+# defects (clustered, negative binomial). Electrical test (e-test) and yield exist for every wafer.
+
+seed: 7
+n_lots: 60
+wafers_per_lot: 25
+measured_slots: [1, 6, 13, 18, 25]   # metrology sampling: 5 of 25 wafers (odd/even slots -> both chambers)
+start: "2026-09-01 06:00"
+hours_between_lots: 3.0
+product: DRAM-DEMO
+wafer_radius_mm: 150
+edge_exclusion_mm: 3
+die_mm: [10.0, 10.0]                 # 1 cm² die -> ~600 gross dies on a 300 mm wafer
+metro_tools: {FT01: 0.0, FT02: 0.0}  # metrology tools and their (normally zero) offsets, alternate per lot
+metro_noise_ratio: 0.4               # metrology repeatability as a fraction of the step's local noise
+
+defects:
+  d0_per_cm2: 0.07                   # killer-defect density
+  cluster_alpha: 2.0                 # negative-binomial clustering (smaller = more clustered wafers)
+  inspection_step: TIN_DEP           # inline inspection reports defect_density on measured wafers
+
+# device windows: a die whose local value is outside [lo, hi] fails (parametric yield loss).
+# spec: metrology spec limits (default = window). code: letter used in the die map.
+steps:
+  - name: PAD_OX
+    parameter: pad_ox_thk
+    unit: nm
+    target: 10.0
+    sigma_wafer: 0.08
+    sigma_local: 0.05
+    tools: {FUR01: 2, FUR02: 2}
+    chamber_offset_sigma: 0.06
+    drift_per_lot: 0.0
+    signature: {bowl: 0.10, tilt: 0.02, edge_roll: -0.03}
+    plan: "9"
+    window: null                     # no direct effect on yield
+    spec: [9.6, 10.4]
+    code: P
+  - name: GATE_OX
+    parameter: gate_ox_thk
+    unit: nm
+    target: 3.00
+    sigma_wafer: 0.012
+    sigma_local: 0.010
+    tools: {RTP01: 2, RTP02: 2}
+    chamber_offset_sigma: 0.010
+    drift_per_lot: 0.0008            # per lot since PM
+    pm_every_lots: 30
+    signature: {bowl: 0.020, tilt: 0.005, edge_roll: -0.015}
+    plan: "13"
+    window: [2.935, 3.065]
+    code: G
+  - name: CAP_HK
+    parameter: hk_thk
+    unit: nm
+    target: 5.00
+    sigma_wafer: 0.025
+    sigma_local: 0.020
+    tools: {ALD01: 2, ALD02: 2}
+    chamber_offset_sigma: 0.020
+    drift_per_lot: 0.0010
+    pm_every_lots: 25
+    signature: {bowl: -0.030, tilt: 0.010, edge_roll: -0.050}
+    plan: "13"
+    window: [4.90, 5.10]
+    code: K
+  - name: TIN_DEP
+    parameter: tin_thk
+    unit: nm
+    target: 10.0
+    sigma_wafer: 0.10
+    sigma_local: 0.06
+    tools: {CVD01: 2, CVD02: 2}
+    chamber_offset_sigma: 0.08
+    drift_per_lot: -0.004
+    pm_every_lots: 30
+    signature: {bowl: -0.15, tilt: 0.04, edge_roll: -0.10}
+    plan: "9"
+    window: [9.0, 11.0]
+    code: T
+  - name: WL_LITHO
+    parameter: wl_cd_litho
+    unit: nm
+    target: 22.0
+    sigma_wafer: 0.15
+    sigma_local: 0.12
+    tools: {SCN01: 1, SCN02: 1}
+    chamber_offset_sigma: 0.10
+    drift_per_lot: 0.0
+    signature: {bowl: 0.10, tilt: 0.05, edge_roll: 0.08}
+    plan: "13"
+    window: null                     # litho CD matters only through the etched CD
+    spec: [21.0, 23.0]
+    code: L
+  - name: WL_ETCH
+    parameter: wl_cd_etch
+    unit: nm
+    target: 18.0                     # etched CD = litho CD - etch bias (+ own variation)
+    from_step: WL_LITHO
+    sigma_wafer: 0.12
+    sigma_local: 0.12
+    tools: {ETC01: 3, ETC02: 3}
+    chamber_offset_sigma: 0.12
+    drift_per_lot: 0.003
+    pm_every_lots: 20
+    signature: {bowl: 0.20, tilt: 0.05, edge_roll: -0.15}
+    plan: "13"
+    window: [17.25, 18.75]
+    code: C
+  - name: ILD_CMP
+    parameter: ild_thk
+    unit: nm
+    target: 300.0
+    sigma_wafer: 2.0
+    sigma_local: 1.5
+    tools: {CMP01: 2, CMP02: 2}
+    chamber_offset_sigma: 1.5
+    drift_per_lot: 0.05
+    pm_every_lots: 30
+    signature: {bowl: 4.0, tilt: 1.0, edge_roll: 6.0}
+    plan: "13"
+    window: [290.0, 312.0]
+    code: I
+
+# electrical test (every wafer): illustrative linear / 1/t relations
+etest:
+  vt_mv: {base: 450.0, from: gate_ox_thk, slope_per_unit: 400.0, at: 3.00, noise: 3.0, unit: mV}  # ~40 mV per Å
+  rs_ohm_sq: {rho_uohm_cm: 100.0, from: tin_thk, noise_frac: 0.01, unit: ohm/sq}                 # Rs = rho / t
+
+# Scenarios: events injected into the run, all written to the answer key.
+#   type: shift (step mean, one chamber/tool) | drift (ramp per lot) | bowl (signature change)
+#         recipe (all tools of a step) | metro_offset (measurement only, no physical change)
+#         defects (killer-defect density x magnitude, with a spatial pattern)
+scenarios:
+  baseline: []
+  chamber_shift:
+    - {type: shift, step: GATE_OX, where: RTP02-B, start_lot: 30, n_lots: 8, magnitude: 0.025}
+  slow_drift:
+    - {type: drift, step: CAP_HK, where: ALD01-A, start_lot: 20, n_lots: 30, magnitude: 0.003}
+  metrology_offset:
+    - {type: metro_offset, step: GATE_OX, where: FT02, start_lot: 25, n_lots: 35, magnitude: 0.030}
+  particle_event:
+    - {type: defects, step: TIN_DEP, where: CVD02, start_lot: 40, n_lots: 4, magnitude: 6.0, pattern: edge_ring}
+  edge_bowl:
+    - {type: bowl, step: WL_ETCH, where: ETC01-C, start_lot: 18, n_lots: 12, magnitude: 1.2}
+  recipe_change:
+    - {type: recipe, step: WL_LITHO, where: all, start_lot: 45, n_lots: 15, magnitude: 0.35}
+  mixed:
+    - {type: shift, step: GATE_OX, where: RTP02-B, start_lot: 30, n_lots: 8, magnitude: 0.025}
+    - {type: drift, step: CAP_HK, where: ALD01-A, start_lot: 12, n_lots: 30, magnitude: 0.003}
+    - {type: metro_offset, step: GATE_OX, where: FT02, start_lot: 42, n_lots: 18, magnitude: 0.030}
+    - {type: defects, step: TIN_DEP, where: CVD02, start_lot: 50, n_lots: 4, magnitude: 6.0, pattern: edge_ring}
+    - {type: bowl, step: WL_ETCH, where: ETC01-C, start_lot: 18, n_lots: 10, magnitude: 1.2}

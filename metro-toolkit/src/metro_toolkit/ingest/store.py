@@ -39,7 +39,9 @@ def save_dataset(name: str, long_df: pd.DataFrame, folder: Path | None = None) -
 
 def list_datasets(folder: Path | None = None) -> list[str]:
     folder = folder or import_dir()
-    return sorted(p.stem for p in folder.glob("*.csv") if not p.stem.endswith("_wafer"))
+    # a dataset is <name>.csv with its <name>_wafer.csv companion (answer-key files are not datasets)
+    return sorted(p.stem for p in folder.glob("*.csv")
+                  if not p.stem.endswith("_wafer") and (folder / f"{p.stem}_wafer.csv").exists())
 
 
 def load_dataset(name: str, folder: Path | None = None) -> pd.DataFrame:
