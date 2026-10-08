@@ -1,0 +1,17 @@
+const T = require('../src/thick-engine.js'); const P = require('../src/proc-engine.js');
+const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); if (!c) process.exitCode = 1; };
+ok(Math.abs(P.swingPeriod() - 56.76) < 0.01, `swing period ${P.swingPeriod().toFixed(2)} nm`);
+const rs = []; for (let t = 150; t <= 300; t += 5) rs.push([t, P.resistR(t, 0), P.resistR(t, 35)]);
+const amp = (k) => Math.max(...rs.map((r) => r[k])) - Math.min(...rs.map((r) => r[k]));
+console.log(`   R swing no BARC ${amp(1).toFixed(3)}  with 35 nm BARC ${amp(2).toFixed(3)}`);
+ok(amp(2) < amp(1) / 2, 'BARC suppresses swing');
+ok(Math.abs(P.roughR(0.92, 0, 480) - 0.92) < 1e-12 && Math.abs(P.roughR(0.92, 10, 480) - 0.92 * Math.exp(-((4 * Math.PI * 10 / 480) ** 2))) < 1e-12, `roughness R(10 nm) ${P.roughR(0.92, 10, 480).toFixed(3)}`);
+const rsq = P.polyRs(1e20, 100); console.log(`   poly Rs 1e20, 100 nm, mu 30: ${rsq.toFixed(1)} ohm/sq`);
+ok(Math.abs(P.young(72.8, 0) - 0) < 1e-9 && Math.abs(P.young(0, 0) - 90) < 1e-9, 'Young equation limits');
+const p = { mode: 'etch', t0: 100, rr: 1, time: 115, over: 0, sel: 10, stop0: 50, dome: 4, edge: 0, density: 0.5, matched: true, sPre: 0.3, sPost: 0.3, other: 0 };
+const sites = T.polarSites([1, 8, 16, 24]); const rows = P.removalMap(p, sites, 3);
+const st = P.rateStats(rows, p, P.removalMap(p, T.polarSites([1, 4, 8]), 5));
+console.log('   etch', JSON.stringify(Object.fromEntries(Object.entries(st).map(([k, v]) => [k, +(+v).toFixed(3)]))));
+const p2 = { ...p, time: 80 }; const st2 = P.rateStats(P.removalMap(p2, sites, 3), p2, P.removalMap(p2, T.polarSites([1, 4, 8]), 5));
+ok(Math.abs(st2.rate - 1) < 0.02, `partial etch rate ${st2.rate.toFixed(3)} (matched) vs unmatched ${st2.unmatched.toFixed(3)}, unif ${st2.unif.toFixed(2)}%`);
+const b = P.resistBudget({ t: 200, film: 120, erFilm: 2, selR: 3, over: 0.2 }); console.log('   resist budget', JSON.stringify(b));

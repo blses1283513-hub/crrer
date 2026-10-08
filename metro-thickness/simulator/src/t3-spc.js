@@ -86,8 +86,7 @@
       u.el('div', { class: 'grid2', style: 'margin-top:12px' },
         u.el('div', {}, u.el('h4', { class: 'grp' }, 'Gauge R&R（10 片 × 3 機台 × 3 次）'), grrBox),
         u.el('div', {}, u.el('h4', { class: 'grp' }, '機台匹配 matching（8 片參考片）'), matchBox)),
-      u.el('div', { class: 'grid2', style: 'margin-top:12px' }, deltaCard, u.el('div', {})));
-    drawDelta();
+      u.el('p', { class: 'note' }, '蝕刻／CMP／濕製程的前後差值、速率與選擇比已移到 ', u.el('a', { href: '#t10' }, 'T10 →')));
 
     let lastKey = '';
     function render(s) {

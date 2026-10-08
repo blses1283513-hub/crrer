@@ -254,3 +254,16 @@ Wafer bow
 Thermal stress
 FFT thickness
 Michelson interferometer
+Resist thickness
+Resist budget
+Etch uniformity
+Polish rate
+Test wafer
+BPSG
+Film density
+Reflectivity
+Contact angle
+Young equation
+Wet clean
+Queue time
+Site-matched

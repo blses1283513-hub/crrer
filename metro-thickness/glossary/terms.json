@@ -3611,5 +3611,192 @@
 "FFT thickness"
 ],
 "note": "07 XRR XRF FTIR Profilometry"
+},
+{
+"term": "Resist thickness",
+"alt": [
+"photoresist thickness"
+],
+"zh": "光阻厚度",
+"en": "Coated resist thickness; sets the swing-curve position and whether enough resist survives dry etch.",
+"zhdef": "塗佈後的光阻厚度，決定擺動與蝕刻預算。",
+"rel": [
+"Swing curve",
+"Resist budget",
+"BARC"
+],
+"note": "02 Process Modules"
+},
+{
+"term": "Resist budget",
+"alt": [
+"etch budget"
+],
+"zh": "光阻蝕刻預算",
+"en": "Resist left after dry etch = thickness − (film ER / selectivity) × etch time; must stay above a margin.",
+"zhdef": "蝕刻後剩下的光阻厚度。",
+"rel": [
+"Resist thickness",
+"Selectivity"
+],
+"note": "02 Process Modules"
+},
+{
+"term": "Etch uniformity",
+"alt": [
+"rate uniformity"
+],
+"zh": "蝕刻均勻性",
+"en": "Spread of the removal rate across the wafer, from site-matched pre/post maps.",
+"zhdef": "晶圓上各點蝕刻速率的分散程度。",
+"rel": [
+"Etch rate",
+"Selectivity"
+],
+"note": "18 Excursion Case Studies"
+},
+{
+"term": "Polish rate",
+"alt": [
+"CMP removal rate"
+],
+"zh": "研磨速率",
+"en": "CMP thickness removed per unit time, from pre/post film thickness.",
+"zhdef": "CMP 單位時間移除的厚度。",
+"rel": [
+"Removal rate",
+"Erosion",
+"Selectivity"
+],
+"note": "02 Process Modules"
+},
+{
+"term": "Test wafer",
+"alt": [
+"TW",
+"monitor",
+"flat test wafer"
+],
+"zh": "測試片（監控片）",
+"en": "Blanket wafer measured instead of product; its thickness differs from product features but can be correlated.",
+"zhdef": "代替產品量測的平坦晶圓，需與產品相關。",
+"rel": [
+"Monitor wafer",
+"Step coverage"
+],
+"note": "10 Sampling Wafer Maps and Uniformity"
+},
+{
+"term": "BPSG",
+"alt": [
+"borophosphosilicate glass"
+],
+"zh": "硼磷矽玻璃",
+"en": "Doped CVD oxide; B and P content (wt%) set reflow temperature and wet etch rate, measured by FTIR or XRF.",
+"zhdef": "摻硼磷的氧化層，摻雜量決定回流與蝕刻速率。",
+"rel": [
+"FTIR",
+"Etch rate"
+],
+"note": "02 Process Modules"
+},
+{
+"term": "Film density",
+"alt": [
+"density"
+],
+"zh": "膜密度",
+"en": "Mass per volume of a film (XRR critical angle); a drift signals that the deposition process changed.",
+"zhdef": "膜的密度，偏移代表沉積製程改變。",
+"rel": [
+"XRR",
+"Critical angle",
+"Mass thickness"
+],
+"note": "07 XRR XRF FTIR Profilometry"
+},
+{
+"term": "Reflectivity",
+"alt": [
+"surface reflectivity"
+],
+"zh": "反射率（表面）",
+"en": "Specular reflectance of a metal film; drops as exp(−(4πσ/λ)²) with surface roughness σ.",
+"zhdef": "金屬表面鏡面反射，隨粗糙度下降。",
+"rel": [
+"Roughness",
+"PVD"
+],
+"note": "07 XRR XRF FTIR Profilometry"
+},
+{
+"term": "Contact angle",
+"alt": [
+"water contact angle"
+],
+"zh": "接觸角",
+"en": "Angle of a water drop on the surface; low = hydrophilic (oxide), high = hydrophobic (HF-last Si).",
+"zhdef": "水滴在表面的夾角，判斷親疏水。",
+"rel": [
+"Young equation",
+"Wet clean"
+],
+"note": "02 Process Modules"
+},
+{
+"term": "Young equation",
+"alt": [
+"Young's equation"
+],
+"zh": "Young 方程",
+"en": "cos θ = (γ_sv − γ_sl)/γ_lv relates contact angle to surface energies.",
+"zhdef": "接觸角與表面能的關係式。",
+"rel": [
+"Contact angle"
+],
+"note": "02 Process Modules"
+},
+{
+"term": "Wet clean",
+"alt": [
+"wet process",
+"wet etch"
+],
+"zh": "濕式清洗／濕蝕刻",
+"en": "Chemical removal of particles, residues or films while minimizing damage to other layers.",
+"zhdef": "以化學液移除粒子、殘留或膜。",
+"rel": [
+"Contact angle",
+"Selectivity"
+],
+"note": "02 Process Modules"
+},
+{
+"term": "Queue time",
+"alt": [
+"Q-time"
+],
+"zh": "等待時間",
+"en": "Time between process steps; surfaces pick up contamination or oxide while waiting.",
+"zhdef": "製程之間的等待時間，表面會被污染。",
+"rel": [
+"Contact angle",
+"AMC"
+],
+"note": "02 Process Modules"
+},
+{
+"term": "Site-matched",
+"alt": [
+"site matching"
+],
+"zh": "前後同點量測",
+"en": "Measuring the same sites before and after a process so the difference cancels incoming non-uniformity.",
+"zhdef": "前後量同一批點，抵消來料不均。",
+"rel": [
+"Etch rate",
+"Etch uniformity"
+],
+"note": "18 Excursion Case Studies"
 }
 ]

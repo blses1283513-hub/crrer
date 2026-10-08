@@ -184,9 +184,9 @@
     const rough = 0.25 + 0.35 * f.fT; // crystallised ZrO2 roughens (Park 2025) 🔴 magnitude
     const L = [];
     if (f.amc > 0) L.push({ mat: 'CHx', d: f.amc, sigTop: 0.2 });
-    L.push({ mat: 'ZrO2', d: f.tZ / 2, sigTop: rough });
+    L.push({ mat: 'ZrO2', d: f.tZ / 2, sigTop: rough, rhoScale: f.rhoZ || 1 });
     if (!opts || !opts.noAl) L.push({ mat: 'Al2O3', d: f.tA, sigTop: 0.25 });
-    L.push({ mat: 'ZrO2', d: opts && opts.noAl ? f.tZ / 2 + f.tA : f.tZ / 2, sigTop: 0.25 });
+    L.push({ mat: 'ZrO2', d: opts && opts.noAl ? f.tZ / 2 + f.tA : f.tZ / 2, sigTop: 0.25, rhoScale: f.rhoZ || 1 });
     if (f.tIL > 0) L.push({ mat: 'TiOx', d: f.tIL, sigTop: 0.25 });
     return L;
   }
@@ -260,7 +260,7 @@
   const THICK_DEFAULTS = {
     gpc0: 0.09,
     ald: { dN: 0, gpc: 0.09, T: 275, purge: 1.0, dome: 0, tilt: 0, edge: 0, exposure: 1.0 },
-    film: { tIL: 0.5, amc: 0 },
+    film: { tIL: 0.5, amc: 0, rhoZ: 1 },
     metro: { modelBias: 0, toolBias: 0, apcOn: false },
     leak: { J0: 3e-10, t0: 7.0, dec: 0.25, wA: 2 },
     xpd0: 70,

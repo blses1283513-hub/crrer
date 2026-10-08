@@ -16,6 +16,7 @@
       { key: 'tA_nm', zh: 'Al₂O₃ 夾層', en: 'Al₂O₃ insert', unit: 'nm', min: 0, max: 1.5, step: 0.05, tier: R, src: '示意；ZAZ 結構', set: (v) => S.setParam('tA_nm', v), get: (s) => s.params.tA_nm },
       { key: 'fT', zh: '四方相比例（真實膜）', en: 'tetragonal fraction', unit: '', min: 0, max: 1, step: 0.01, tier: O, src: '晶化後 n 上升（Yoon 2011）；n 的變化幅度為示意', set: (v) => S.setParam('fT', v), get: (s) => s.params.fT },
       { key: 'tIL', zh: 'TiOx 介面層（真實）', en: 'TiOx interfacial layer', unit: 'nm', min: 0, max: 1.5, step: 0.05, tier: O, src: 'O₃ 製程在 TiN 上形成較厚 TiOx（Jang 2024）；數值示意', set: (v) => S.setThick({ film: { tIL: v } }), get: (s) => s.thick.film.tIL },
+      { key: 'rhoZ', zh: 'ZrO₂ 密度（相對開發基準）', en: 'film density', unit: '×', min: 0.85, max: 1.05, step: 0.005, tier: R, src: '示意：沉積條件改變（溫度、O₃、前驅物）使膜變疏或變密', set: (v) => S.setThick({ film: { rhoZ: v } }), get: (s) => s.thick.film.rhoZ ?? 1 },
       { key: 'amc', zh: '監控片表面吸附層', en: 'AMC on monitor', unit: 'nm', min: 0, max: 0.6, step: 0.01, tier: R, src: '示意；有機物／水氣吸附，見書 §17', set: (v) => S.setThick({ film: { amc: v } }), get: (s) => s.thick.film.amc },
     ];
     const filmBox = u.el('div', {}, u.el('h4', { class: 'grp' }, '真實的膜 true film（監控片）'), ...film.map((f) => (sl[f.key] = V.knob(f, f.get(S.snapshot()), (v) => f.set(v)))));
@@ -75,7 +76,7 @@
     // ---- compute ----
     let last = null, lastKey = '', timer = 0, result = null;
     const NOISE = { psi: 0.01, delta: 0.02 };
-    function truthOf(s) { const d = s.designParams; return { tZ: d.tZ_nm, tA: d.tA_nm, tIL: s.thick.film.tIL, fT: d.fT, amc: s.thick.film.amc }; }
+    function truthOf(s) { const d = s.designParams; return { tZ: d.tZ_nm, tA: d.tA_nm, tIL: s.thick.film.tIL, fT: d.fT, amc: s.thick.film.amc, rhoZ: s.thick.film.rhoZ ?? 1 }; }
     function cfgOf(s) { return { includeIL: s.t1.includeIL, ilFixed: 0.5, floatTA: s.t1.floatTA, floatN: s.t1.floatN, libFT: s.t1.libFT, tAfixed: s.params.tA_nm }; }
     function compute(s) {
       const truth = truthOf(s), cfg = cfgOf(s), nz = { psi: NOISE.psi * s.t1.noise, delta: NOISE.delta * s.t1.noise };
@@ -161,8 +162,9 @@
       const diff = seTot - xrrTot;
       D.t1Last = { bias: result.m.sys.x[0] - truth.tZ, sd: result.m.sd[0], chi: result.m.sys.chi2nu, slope: result.slope, seXrr: diff, gof: result.gof };
       document.dispatchEvent(new CustomEvent('dms:results'));
-      xrrKv.replaceChildren(V.kvGrid([['XRR 總厚 total', `${xrrTot.toFixed(2)} nm`], ['SE 模型總厚', `${seTot.toFixed(2)} nm`], ['差距 SE − XRR', `${diff >= 0 ? '+' : ''}${diff.toFixed(2)} nm`, Math.abs(diff) > 0.15 ? 'badtxt' : 'goodtxt']]),
-        u.el('p', { class: 'note' }, 'XRR 讀值以「真實總厚 + 0.03 nm 雜訊」模擬（條紋週期近乎與模型無關）；曲線本身由 Parratt 遞迴計算。'));
+      const rhoNow = 5.68 * (truth.rhoZ || 1) + R.n() * 0.03;
+      xrrKv.replaceChildren(V.kvGrid([['XRR ZrO₂ 密度', `${rhoNow.toFixed(2)} g/cm³`, Math.abs(rhoNow / 5.68 - 1) > 0.02 ? 'badtxt' : 'goodtxt'], ['XRR 總厚 total', `${xrrTot.toFixed(2)} nm`], ['SE 模型總厚', `${seTot.toFixed(2)} nm`], ['差距 SE − XRR', `${diff >= 0 ? '+' : ''}${diff.toFixed(2)} nm`, Math.abs(diff) > 0.15 ? 'badtxt' : 'goodtxt']]),
+        u.el('p', { class: 'note' }, 'XRR 讀值以「真實總厚 + 0.03 nm 雜訊」模擬（條紋週期近乎與模型無關）；曲線本身由 Parratt 遞迴計算。密度由臨界角（∝√密度）得到：CVD／ALD 的密度用來確認沉積製程沒有偏離開發時的狀態——密度掉 2% 以上，厚度可能還在規格內，但膜已經變了（濕蝕刻速率、漏電、κ 都會跟著變）。'));
     }
     S.subscribe(render);
   }

@@ -47,8 +47,9 @@ html = patch(
     html,
     '<main class="wrap">\n  <section id="m6"',
     '<main class="wrap">\n'
-    '  <nav class="jump" aria-label="模組"><a href="#t4">T4 異常判讀</a><a href="#t5">T5 SLAM 標記</a><a href="#t1">T1 光學量測</a><a href="#t1b">T1b 厚度範圍・n k</a><a href="#t2">T2 ALD 晶圓圖</a>'
-    '<a href="#t3">T3 SPC・量具・匹配</a><a href="#t9">T9 應力</a><a href="#t8">T8 蝕刻・OCD</a><a href="#t6">T6 CD-SEM</a><a href="#t7">T7 疊對</a><a href="#npi">NPI 驗證</a><a href="#m6">M6 漂移傳遞</a><a href="#m2">M2 cell</a><a href="#m4">M4 餘量</a><a href="#m5">M5 retention</a></nav>\n'
+    '  <nav class="jump" aria-label="模組"><a href="#p0">P0 製程地圖</a><a href="#t4">T4 異常判讀</a><a href="#t5">T5 SLAM 標記</a><a href="#t1">T1 光學量測</a><a href="#t1b">T1b 厚度範圍・n k</a><a href="#t2">T2 ALD 晶圓圖</a>'
+    '<a href="#t3">T3 SPC・量具・匹配</a><a href="#t9">T9 應力</a><a href="#t11">T11 光阻</a><a href="#t10">T10 前後量測</a><a href="#t8">T8 蝕刻・OCD</a><a href="#t6">T6 CD-SEM</a><a href="#t7">T7 疊對</a><a href="#npi">NPI 驗證</a><a href="#m6">M6 漂移傳遞</a><a href="#m2">M2 cell</a><a href="#m4">M4 餘量</a><a href="#m5">M5 retention</a></nav>\n'
+    '  <section id="p0" class="panel" aria-labelledby="h-p0"></section>\n'
     '  <section id="t4" class="panel" aria-labelledby="h-t4"></section>\n'
     '  <section id="t5" class="panel" aria-labelledby="h-t5"></section>\n'
     '  <section id="t1" class="panel" aria-labelledby="h-t1"></section>\n'
@@ -56,6 +57,8 @@ html = patch(
     '  <section id="t2" class="panel" aria-labelledby="h-t2"></section>\n'
     '  <section id="t3" class="panel" aria-labelledby="h-t3"></section>\n'
     '  <section id="t9" class="panel" aria-labelledby="h-t9"></section>\n'
+    '  <section id="t11" class="panel" aria-labelledby="h-t11"></section>\n'
+    '  <section id="t10" class="panel" aria-labelledby="h-t10"></section>\n'
     '  <section id="t8" class="panel" aria-labelledby="h-t8"></section>\n'
     '  <section id="t6" class="panel" aria-labelledby="h-t6"></section>\n'
     '  <section id="t7" class="panel" aria-labelledby="h-t7"></section>\n'
@@ -96,7 +99,10 @@ html = patch(
     "        stress: { film: 'pesin', s: -300, tf: 100, ts: 775, pre: 10, usePre: true },\n"
     "        ov: { Tx: 1, Ty: -0.5, Mwx: 0.03, Mwy: 0.03, Rw: 0.02, Mfx: 0.3, Mfy: -0.2, Rf: 0.1, noise: 0.6, tis: 0.3, useStress: false, tis180: false },\n"
     "        sem: { topCD: 30, h: 60, swa: 87, beam: 2, frames: 16, thr: 50, scans: 1, hole: false, mat: 'resist' },\n"
-    "        ocd: { time: 1, bias: 1, poly: 0, hm: 0, floatSWA: true, modelHM: true, trueSWAoff: 0 } } };",
+    "        ocd: { time: 1, bias: 1, poly: 0, hm: 0, floatSWA: true, modelHM: true, trueSWAoff: 0 },\n"
+    "        pp: { mode: 'etch', t0: 100, rr: 1, timeF: 1.15, sel: 10, dome: 3, edge: 0, inDome: 1.5, density: 0.5, other: 0.005, sPre: 0.3, sPost: 0.3, matched: true },\n"
+    "        resist: { t: 220, barc: 35, film: 150, erFilm: 2, selR: 3, over: 0.2, margin: 30 },\n"
+    "        proc: { area: 'cvd', rough: 3, surf: 'hf', hours: 0, B: 4, P: 4, N: 1e20, tp: 100 } } };",
     "freshState",
 )
 html = patch(
@@ -189,7 +195,7 @@ html = patch(
     html,
     "    D.chainBar.mount('#chain');\n    for (const [k, sel] of [['m6', '#m6'], ['m2', '#m2'], ['m4', '#m4'], ['m5', '#m5']]) {",
     "    D.chainBar.mount('#chain');\n    if (D.thickChain) D.thickChain.mount('#chain');\n"
-    "    for (const [k, sel] of [['t4', '#t4'], ['t5', '#t5'], ['t1', '#t1'], ['t1b', '#t1b'], ['t2', '#t2'], ['t3', '#t3'], ['t9', '#t9'], ['t8', '#t8'], ['t6', '#t6'], ['t7', '#t7'], ['npi', '#npi'], ['m6', '#m6'], ['m2', '#m2'], ['m4', '#m4'], ['m5', '#m5']]) {",
+    "    for (const [k, sel] of [['p0', '#p0'], ['t4', '#t4'], ['t5', '#t5'], ['t1', '#t1'], ['t1b', '#t1b'], ['t2', '#t2'], ['t3', '#t3'], ['t9', '#t9'], ['t11', '#t11'], ['t10', '#t10'], ['t8', '#t8'], ['t6', '#t6'], ['t7', '#t7'], ['npi', '#npi'], ['m6', '#m6'], ['m2', '#m2'], ['m4', '#m4'], ['m5', '#m5']]) {",
     "mount",
 )
 html = patch(
@@ -213,7 +219,7 @@ css = (SRC / "thick.css").read_text(encoding="utf-8")
 html = patch(html, "  @media (prefers-reduced-motion: reduce){ *{animation:none !important;transition:none !important;} }\n</style>",
              "  @media (prefers-reduced-motion: reduce){ *{animation:none !important;transition:none !important;} }\n" + css + "\n</style>", "css")
 
-modules = ["thick-engine.js", "ext-engine.js", "thick-ui.js", "t1-optics.js", "t1b-range.js", "t2-map.js", "t3-spc.js", "t4-triage.js", "t5-slam.js", "t6-cdsem.js", "t7-overlay.js", "t8-ocd.js", "t9-stress.js", "npi.js", "terms.js"]
+modules = ["thick-engine.js", "ext-engine.js", "proc-engine.js", "thick-ui.js", "t1-optics.js", "t1b-range.js", "t2-map.js", "t3-spc.js", "t4-triage.js", "t5-slam.js", "t6-cdsem.js", "t7-overlay.js", "t8-ocd.js", "t9-stress.js", "t10-prepost.js", "t11-resist.js", "p0-map.js", "npi.js", "terms.js"]
 js = "\n".join(f"/* ---- {m} ---- */\n" + (SRC / m).read_text(encoding="utf-8") for m in modules)
 # thick-engine must load before state.init runs (state reads DMS.thick); insert all modules before main.js
 html = patch(html, "/* ---- main.js ---- */", js + "\n/* ---- main.js ---- */", "modules")

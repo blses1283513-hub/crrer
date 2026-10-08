@@ -255,3 +255,16 @@ Wafer bow,晶圓翹曲,Out-of-plane deflection of the wafer centre; bow ≈ D²/
 Thermal stress,熱應力,Stress from different thermal expansion of film and substrate after cooling: M_f(α_f − α_s)ΔT.,膜與基板熱膨脹差造成的應力。,Film stress; Stoney equation,thermal mismatch,03 Metrology Technology Map
 FFT thickness,FFT 厚度法,Thick-film thickness from the Fourier transform of reflectance vs wavenumber; peak at optical path 2nt.,對波數光譜做 FFT 求厚度。,Reflectometry; FTIR; Fringe,fringe FFT,04 Reflectometry
 Michelson interferometer,Michelson 干涉儀,Two-arm interferometer at the heart of FTIR spectrometers; used for thick films and epi.,FTIR 的核心干涉儀，用於厚膜與磊晶。,FTIR; FFT thickness,Michelson,07 XRR XRF FTIR Profilometry
+Resist thickness,光阻厚度,Coated resist thickness; sets the swing-curve position and whether enough resist survives dry etch.,塗佈後的光阻厚度，決定擺動與蝕刻預算。,Swing curve; Resist budget; BARC,photoresist thickness,02 Process Modules
+Resist budget,光阻蝕刻預算,Resist left after dry etch = thickness − (film ER / selectivity) × etch time; must stay above a margin.,蝕刻後剩下的光阻厚度。,Resist thickness; Selectivity,etch budget,02 Process Modules
+Etch uniformity,蝕刻均勻性,"Spread of the removal rate across the wafer, from site-matched pre/post maps.",晶圓上各點蝕刻速率的分散程度。,Etch rate; Selectivity,rate uniformity,18 Excursion Case Studies
+Polish rate,研磨速率,"CMP thickness removed per unit time, from pre/post film thickness.",CMP 單位時間移除的厚度。,Removal rate; Erosion; Selectivity,CMP removal rate,02 Process Modules
+Test wafer,測試片（監控片）,Blanket wafer measured instead of product; its thickness differs from product features but can be correlated.,代替產品量測的平坦晶圓，需與產品相關。,Monitor wafer; Step coverage,TW; monitor; flat test wafer,10 Sampling Wafer Maps and Uniformity
+BPSG,硼磷矽玻璃,"Doped CVD oxide; B and P content (wt%) set reflow temperature and wet etch rate, measured by FTIR or XRF.",摻硼磷的氧化層，摻雜量決定回流與蝕刻速率。,FTIR; Etch rate,borophosphosilicate glass,02 Process Modules
+Film density,膜密度,Mass per volume of a film (XRR critical angle); a drift signals that the deposition process changed.,膜的密度，偏移代表沉積製程改變。,XRR; Critical angle; Mass thickness,density,07 XRR XRF FTIR Profilometry
+Reflectivity,反射率（表面）,Specular reflectance of a metal film; drops as exp(−(4πσ/λ)²) with surface roughness σ.,金屬表面鏡面反射，隨粗糙度下降。,Roughness; PVD,surface reflectivity,07 XRR XRF FTIR Profilometry
+Contact angle,接觸角,"Angle of a water drop on the surface; low = hydrophilic (oxide), high = hydrophobic (HF-last Si).",水滴在表面的夾角，判斷親疏水。,Young equation; Wet clean,water contact angle,02 Process Modules
+Young equation,Young 方程,cos θ = (γ_sv − γ_sl)/γ_lv relates contact angle to surface energies.,接觸角與表面能的關係式。,Contact angle,Young's equation,02 Process Modules
+Wet clean,濕式清洗／濕蝕刻,"Chemical removal of particles, residues or films while minimizing damage to other layers.",以化學液移除粒子、殘留或膜。,Contact angle; Selectivity,wet process; wet etch,02 Process Modules
+Queue time,等待時間,Time between process steps; surfaces pick up contamination or oxide while waiting.,製程之間的等待時間，表面會被污染。,Contact angle; AMC,Q-time,02 Process Modules
+Site-matched,前後同點量測,Measuring the same sites before and after a process so the difference cancels incoming non-uniformity.,前後量同一批點，抵消來料不均。,Etch rate; Etch uniformity,site matching,18 Excursion Case Studies
