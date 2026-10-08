@@ -1,0 +1,60 @@
+# Controls of the Case study page.
+
+params:
+  case.domain:
+    zh: |
+      **範圍 Domain**：只從某一類工作抽案例（SPC、晶圓圖、膜厚擬合、MSA、量測技術評估、DOE、良率事件），或「全部」隨機。
+      想加強某個弱項時固定範圍；模擬真實值班時用「全部」，因為現場不會先告訴你是哪一類問題。
+    en: |
+      **Domain**: draw cases from one area of the job only (SPC, wafer map, film fit, MSA, technique choice, DOE, yield events), or from all of them.
+      Fix the domain to drill a weak spot; use "all" to simulate a real shift, where nobody tells you in advance what kind of problem it is.
+  case.level:
+    zh: |
+      **難度 Level**
+      - **基礎 basic**：訊號大、線索清楚，適合先學判斷流程。
+      - **中級 intermediate**：訊號較小，有時交接內容會說「量測已確認」，第一步處置就要跟著改。
+      - **進階 advanced**：訊號接近雜訊、線索較少，需要從圖上自己找證據；也會出現「看起來嚴重其實不用處理」的情況。
+      隨機：每次抽一種難度。
+    en: |
+      **Level**
+      - **basic**: large signal and clear clues; good for learning the decision flow.
+      - **intermediate**: smaller signals; sometimes the handover says metrology was already verified, and then the right first action changes.
+      - **advanced**: signals close to the noise and fewer clues, so you must find the evidence on the charts yourself; also includes situations that look serious but need no action.
+      Random picks a level each time.
+  case.new:
+    zh: |
+      **🎲 隨機案例**：依範圍與難度抽一個案例：案例類型、機台／chamber、事件大小、發生時間與雜訊都是隨機的，但物理與統計都合理，而且一定有一個正確答案。
+      每個案例都有編號，可以之後用編號重練同一題。
+    en: |
+      **🎲 Random case**: draws a case for the chosen domain and level. Case type, tool / chamber, event size, timing and noise are random, but the physics and statistics stay realistic and there is always one correct answer.
+      Every case has an ID so you can replay exactly the same case later.
+  case.replay:
+    zh: "**案例編號 Case ID**：格式「案例類型-難度-種子」，例如 spc_chamber_shift-I-04217（B 基礎／I 中級／A 進階）。同一個編號永遠產生同一個案例，可以重練或分享給同事一起練。"
+    en: "**Case ID**: format \"case type-level-seed\", e.g. spc_chamber_shift-I-04217 (B basic / I intermediate / A advanced). The same ID always regenerates the same case, so you can replay it or share it with a colleague."
+  case.q_cause:
+    zh: "**根本原因**：根據交接內容與圖上的證據，選最可能的原因。先問「影響範圍」：一個 chamber 還是全部？只有平均值還是形狀？只有量測值還是良率也變？這通常就能分出製程、機台或量測問題。"
+    en: "**Root cause**: pick the most likely cause from the handover and the evidence. Start with the scope: one chamber or all of them? The mean or the shape? Only the readings, or yield too? That usually separates process, tool and metrology problems."
+  case.q_action:
+    zh: "**第一步處置**：你現在第一件要做的事。OCAP 的原則是先確認量測，再動製程；但如果交接已經說量測確認過，就直接進入下一步。不要過度反應：單點、在規格內的趨勢，通常不需要停機。"
+    en: "**First action**: the first thing you would do now. The OCAP principle is to verify the measurement before touching the process, but if the handover says it was already verified, go to the next step. Do not over-react: a single point or an in-spec trend usually needs no tool-down."
+  case.q_decision:
+    zh: "**產品／結論處置**：受影響的產品或結果要怎麼辦（hold、放行、重測後放行、調 target、recipe 不能發行…）。報廢幾乎不會是第一個決定，disposition 由 PIE／PE 依資料決定。"
+    en: "**Disposition / decision**: what happens to the affected product or result (hold, release, release after re-measurement, re-target, recipe not ready…). Scrap is almost never the first decision; PIE / PE disposition on data."
+  case.q_notify:
+    zh: "**要通知誰**：選需要知道並採取行動的角色。通知太少會延誤處理，通知太多會造成噪音、降低大家對警報的信任。單點、已確認的偶發事件通常只要記在 e-log，不需升級。"
+    en: "**Who to notify**: pick the roles that need to know and act. Too few delays the response; too many creates noise and erodes trust in alerts. A single, verified one-off usually goes in the e-log only, with no escalation."
+  case.message:
+    zh: "**你的訊息**：寫給指定角色的一則訊息（像 Teams／郵件／交接）。好訊息要具體：哪台、從什麼時候、多大、你的判斷、你要對方做什麼、你已經做了什麼。送出後會和範例比對要點。"
+    en: "**Your message**: one message to the named role (as in chat / email / handover). A good message is specific: which tool, since when, how big, your judgement, what you need from them, and what you have already done. After submitting it is checked against the key points of a model message."
+  case.submit:
+    zh: "**送出**：計分（原因 40、第一步 25、處置 20、通知 15 分；通知依重疊比例給分），並顯示標準答案、理由、範例訊息與每張圖的完整讀圖說明。"
+    en: "**Submit**: scores your answers (cause 40, first action 25, disposition 20, notify 15, with partial credit for overlap) and shows the model answers, the reasoning, model messages and the full reading of every chart."
+  case.score:
+    zh: "**總分**：原因 40 + 第一步 25 + 處置 20 + 通知 15。訊息不計分，但會列出涵蓋了哪些要點。分數是練習的回饋，不代表真實工作的唯一正確做法。"
+    en: "**Score**: cause 40 + first action 25 + disposition 20 + notify 15. The message is not scored, but the key points it covers are listed. The score is practice feedback, not the only right way to handle real work."
+  case.save:
+    zh: "**存到練習紀錄**：把這題的報告（Markdown）存到這台電腦的 data/cases/（不會上傳 GitHub），並記錄分數，在「我的練習紀錄」看平均分數與各類別表現。"
+    en: "**Save to my study log**: saves this case's report (Markdown) to data/cases/ on this PC (never uploaded to GitHub) and logs the score, so \"My study log\" can show your average and how you do per domain."
+  case.download:
+    zh: "**下載報告**：下載這題的 Markdown 報告（狀況、你的答案與標準答案、理由、訊息與要點），可以貼到筆記或和同事討論。"
+    en: "**Download report**: downloads this case's Markdown report (situation, your answers vs the model answers, reasoning, messages and key points) for your notes or to discuss with colleagues."

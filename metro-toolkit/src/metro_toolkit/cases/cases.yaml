@@ -1,0 +1,690 @@
+# Case study library (metro_toolkit.cases). Synthetic practice situations; generic fab practice, no company data.
+#
+# pools      answer options shared by many cases (id -> zh / en)
+# cases      one entry per case type:
+#   domain          page the case belongs to
+#   title / brief   the situation as you would hear it at a shift handover ({placeholders} come from generators.py)
+#   cause / action / decision   correct option ids (a generator may override them, e.g. when the brief says the
+#                               measurement was already verified); *_options = choices shown (shuffled)
+#   notify          roles that should be told (empty = e-log only, no escalation)
+#   message_role    the role you write the free-text message to; model_message = a good example
+#   keypoints       what a good message contains; any = words/values that count as covering the point
+#   explanation     why the model answers are right
+
+pools:
+  causes:
+    C_CHAMBER_SHIFT: {zh: "單一 chamber 的製程突然偏移（零件更換、PM、腔體條件或警報之後）", en: "A sudden process shift on one chamber (after a part swap, PM, chamber condition change or alarm)"}
+    C_DRIFT: {zh: "消耗品老化造成的慢漂移，接近 PM 週期", en: "Slow drift from consumable wear, approaching the PM cycle"}
+    C_METRO_OFFSET: {zh: "量測機台本身有偏差（是量測問題，不是製程）", en: "An offset in the metrology tool itself (a measurement problem, not the process)"}
+    C_RECIPE_ALL: {zh: "製程 recipe 或進料改變，所有 chamber 一起偏", en: "A process recipe or incoming-material change moving all chambers together"}
+    C_SHAPE: {zh: "片內分布（形狀）改變，但平均值沒變", en: "The within-wafer shape changed while the mean did not"}
+    C_OFF_TARGET: {zh: "製程穩定但偏離規格中心（target 設定問題）", en: "A stable process centred away from the spec centre (a targeting issue)"}
+    C_RANDOM: {zh: "偶發的單點（機率或量測瞬間異常），沒有持續的特殊原因", en: "An isolated point (chance or a momentary measurement glitch) with no sustained special cause"}
+    C_EDGE_RING: {zh: "邊緣環／focus ring 磨耗（接近壽命）", en: "Edge / focus ring wear near end of life"}
+    C_HEATER_TILT: {zh: "加熱器分區、氣流或晶圓放置偏一側（傾斜）", en: "Heater zone, gas flow or wafer placement off to one side (tilt)"}
+    C_SITE_OUTLIER: {zh: "單一量測點異常（微粒、pattern recognition、對焦），不是製程形狀", en: "A single bad site (particle, pattern recognition, focus), not a process shape"}
+    C_SHOWERHEAD: {zh: "PM 時硬體重裝或間距改變（中心對邊緣的碗形）", en: "Hardware re-installed or spacing changed at the PM (a centre-to-edge bowl)"}
+    C_FIXED_LAYER: {zh: "量測 recipe 中固定的底層厚度與實際不符（模型偏差）", en: "The underlayer thickness fixed in the metrology recipe no longer matches reality (model bias)"}
+    C_CORR: {zh: "recipe 同時浮動高度相關的參數（超薄膜的厚度與 n）", en: "The recipe floats strongly correlated parameters (thickness and n of an ultra-thin film)"}
+    C_NOISE_TOOL: {zh: "量測機台訊號雜訊變大（例如光源老化）", en: "Higher signal noise on the metrology tool (e.g. lamp ageing)"}
+    C_WRONG_DISP: {zh: "色散模型（n,k）選錯", en: "The wrong dispersion model (n,k)"}
+    C_REPEAT: {zh: "量測機台重複性差（對焦、光源、stage、量測點大小）", en: "Poor repeatability of the metrology tool (focus, lamp, stage, spot size)"}
+    C_REPRO: {zh: "量測機台之間不一致（calibration 或 recipe 不同）", en: "Tool-to-tool differences (calibration or recipe mismatch)"}
+    C_PART_RANGE: {zh: "研究晶圓的範圍太窄，%GRR 被高估", en: "The study wafers span too little range, inflating %GRR"}
+    C_OFFSET: {zh: "機台間的固定偏差（offset）", en: "A fixed tool-to-tool offset"}
+    C_SLOPE: {zh: "機台間的比例偏差（斜率：越厚差越多）", en: "A proportional tool-to-tool bias (slope: grows with thickness)"}
+    C_TECH_REFL: {zh: "反射儀在這個厚度精度不足（P/T 太高），需要改用 SE", en: "Reflectometry lacks precision at this thickness (P/T too high); SE is needed"}
+    C_TECH_OK: {zh: "現有反射儀精度足夠（P/T 遠低於 10%）", en: "The existing reflectometry is precise enough (P/T well below 10 %)"}
+    C_SPEC_WRONG: {zh: "規格訂得不合理，應該放寬", en: "The spec is unreasonable and should be widened"}
+    C_CURVATURE: {zh: "2 水準設計看不到彎曲，模型缺少平方項", en: "A 2-level design cannot see curvature; the model lacks squared terms"}
+    C_EDGE: {zh: "真正的最佳點在實驗範圍外（最佳點落在邊界）", en: "The true optimum lies outside the tested range (the optimum sits on the edge)"}
+    C_NOISE_DOE: {zh: "實驗雜訊太大、重複不足，效應被雜訊淹沒", en: "Too much experimental noise and too few replicates; the effects drown in noise"}
+    C_ALIAS: {zh: "部分因子設計的混淆，把效應歸錯因子", en: "Aliasing in a fractional design attributed an effect to the wrong factor"}
+    C_PARTICLE: {zh: "某台沉積機台的微粒事件（外圈環狀缺陷）", en: "A particle event on one deposition tool (edge-ring defects)"}
+  actions:
+    A_VERIFY: {zh: "先確認量測：同片重測（同機台＋參考機台）、查 GOF 與量測機台的監控片", en: "Verify the measurement first: re-measure the wafer (same and reference tool), check GOF and the metrology monitor wafer"}
+    A_HOLD_INHIBIT: {zh: "hold 受影響 lot、inhibit 該 chamber，請 EE 檢查，修復後跑 qual 再放行", en: "Hold the affected lots, inhibit the chamber, have EE check it and run qual after the fix"}
+    A_RECORD: {zh: "記錄在 e-log／SPC 註解，持續監控，不停機", en: "Record it in the e-log / SPC comment and keep monitoring; no tool-down"}
+    A_RETARGET: {zh: "和 PE 討論調整 target，走變更管理", en: "Discuss re-targeting with PE through change control"}
+    A_PM: {zh: "確認 PM／消耗品時程，提前安排 PM；在 PM 前提高抽樣並用 EWMA 追蹤", en: "Check the PM / consumable schedule and pull the PM in; raise sampling and track with EWMA until then"}
+    A_REGROUP: {zh: "依量測機台分組重看 SPC，用黃金片比對各量測機台", en: "Re-plot the SPC by metrology tool and compare the metrology tools on a golden wafer"}
+    A_WAFERMAP: {zh: "先看該 chamber 的晶圓圖確認形狀，再請 EE 檢查對應硬體", en: "Look at that chamber's wafer maps to confirm the shape, then ask EE to check the matching hardware"}
+    A_EE_HW: {zh: "請 EE 檢查對應硬體（edge ring、加熱器、噴頭、水平），hold 該 chamber 後續 lot", en: "Ask EE to check the matching hardware (edge ring, heater, showerhead, levelling) and hold that chamber's next lots"}
+    A_FIX_RECIPE: {zh: "修正量測 recipe（更新／feed-forward 底層值、固定 n），重新驗證後再發行", en: "Fix the metrology recipe (update / feed-forward the underlayer, fix n) and re-validate before release"}
+    A_TOOL_FIX: {zh: "檢查並修正量測機台硬體（對焦、光源、stage），修好後重做 GR&R", en: "Check and fix the metrology tool hardware (focus, lamp, stage), then redo the GR&R"}
+    A_MATCH: {zh: "用黃金片比對各量測機台的 recipe 與 calibration，修正後重做 matching", en: "Compare recipe and calibration across the metrology tools on a golden wafer, fix, then redo matching"}
+    A_CALIBRATE: {zh: "該機台先停量這個 recipe，重新 calibration；期間改用參考機台", en: "Take the tool off this recipe and recalibrate it; use the reference tool meanwhile"}
+    A_RESELECT: {zh: "重選涵蓋製程範圍的研究晶圓，並以 P/T 判斷量測能力", en: "Re-select study wafers that span the process range, and judge capability by P/T"}
+    A_CHANGE_TECH: {zh: "改用 SE（橢偏儀）量測，重新驗證 GR&R 後發行", en: "Move the measurement to SE (ellipsometry) and re-validate the GR&R before release"}
+    A_KEEP_TECH: {zh: "維持反射儀，做 GR&R 確認後發行", en: "Keep reflectometry, confirm with a GR&R and release"}
+    A_AUGMENT: {zh: "補做實驗：加軸點擴成 CCD，或往最佳點方向移動範圍", en: "Run more experiments: add axial points (CCD) or move the range toward the optimum"}
+    A_REPLICATE: {zh: "加重複與中心點、先確認量測 GR&R，降低雜訊後再分析", en: "Add replicates and centre points and check the measurement GR&R; reduce noise before analysing again"}
+    A_RELEASE_RECIPE: {zh: "用目前模型的建議值直接發行新配方", en: "Release the new recipe straight from the current model"}
+    A_FA: {zh: "hold 受影響 lot，拉片給 RDA 做 review／SEM，並對沉積機台做 commonality", en: "Hold the affected lots, pull wafers for RDA review / SEM, and run commonality on the deposition tools"}
+  decisions:
+    D_HOLD: {zh: "受影響 lot hold，等 PIE／PE 做 disposition", en: "Hold the affected lots pending disposition by PIE / PE"}
+    D_RELEASE: {zh: "產品照常放行，不需要 hold", en: "Release product as normal; no hold"}
+    D_RELEASE_WATCH: {zh: "規格內的產品照常放行；該 chamber 提前 PM 並加強監控", en: "Release in-spec product; pull the chamber's PM in and monitor more closely"}
+    D_REMEASURE_RELEASE: {zh: "在參考機台重測確認後放行（產品本身沒問題）", en: "Release after re-measuring on the reference tool (the product itself is fine)"}
+    D_RETARGET: {zh: "繼續生產，排定 target 調整（變更管理）", en: "Keep running and schedule the re-target (change control)"}
+    D_RECIPE_FIX: {zh: "量測值有偏差：修正 recipe 前，不要依這些數值調製程或判退產品", en: "The readings are biased: do not adjust the process or reject product on them until the recipe is fixed"}
+    D_RECIPE_NOT_READY: {zh: "量測 recipe 還不能發行，修正後重新驗證", en: "The metrology recipe is not ready to release; fix it and re-validate"}
+    D_RECIPE_OK: {zh: "量測 recipe 可以進入驗證／發行", en: "The metrology recipe can go to validation / release"}
+    D_GAUGE_NOT_OK: {zh: "量測系統不合格：暫停用於 SPC／放行判定，修正後重做 GR&R", en: "The gauge is not acceptable: stop using it for SPC / release decisions; fix it and redo the GR&R"}
+    D_GAUGE_OK: {zh: "量測系統可用（以 P/T 判斷），%GRR 偏高是研究晶圓選得太窄", en: "The gauge is usable (judged by P/T); the high %GRR comes from too narrow a set of study wafers"}
+    D_ROUTE_REF: {zh: "該機台停量此 recipe，產品改到參考機台；已量測的 lot 標記複核", en: "Stop this recipe on the tool, route product to the reference tool, and flag lots already measured for review"}
+    D_MODEL_NOT_READY: {zh: "這個 DOE 還不能用來定配方，先補實驗", en: "This DOE cannot set the recipe yet; run more experiments first"}
+    D_RELEASE_PROCESS: {zh: "用模型的最佳點直接進入確認實驗與 qual", en: "Take the model's optimum straight to confirmation runs and qual"}
+    D_SCRAP: {zh: "受影響晶圓全部報廢", en: "Scrap all affected wafers"}
+
+domains:
+  film: {zh: "Film stack & fit 膜厚擬合", en: "Film stack & fit"}
+  wafer: {zh: "Wafer map 晶圓圖", en: "Wafer map"}
+  spc: {zh: "SPC 管制圖", en: "SPC"}
+  msa: {zh: "MSA 量測系統分析", en: "MSA"}
+  study: {zh: "Recipe studies 量測技術評估", en: "Recipe studies"}
+  doe: {zh: "DOE / recipe 實驗設計", en: "DOE / recipe"}
+  fab: {zh: "Fab simulator 良率事件", en: "Fab simulator"}
+
+cases:
+  # ---------------------------------------------------------------- SPC
+  spc_chamber_shift:
+    domain: spc
+    title: {zh: "單一 chamber 偏移", en: "One chamber shifted"}
+    brief:
+      zh: "【夜班交接 23:40】{param}（{unit}）的 SPC 在 {chamber} 從 {start_wafer}（{start_time}）開始持續偏離中心線，產線問這台能不能繼續跑。{verified} 規格 {lsl}–{usl} {unit}。"
+      en: "[Night-shift handover 23:40] SPC for {param} ({unit}) on {chamber} has stayed away from the centre line since {start_wafer} ({start_time}). Production asks whether the chamber can keep running. {verified} Spec {lsl}–{usl} {unit}."
+    cause: C_CHAMBER_SHIFT
+    cause_options: [C_CHAMBER_SHIFT, C_METRO_OFFSET, C_DRIFT, C_RECIPE_ALL]
+    action: A_VERIFY
+    action_options: [A_VERIFY, A_HOLD_INHIBIT, A_RECORD, A_RETARGET]
+    decision: D_HOLD
+    decision_options: [D_HOLD, D_RELEASE, D_RETARGET, D_SCRAP]
+    notify: [EE, PE, PIE_YE, MGR_QE]
+    message_role: EE
+    model_message:
+      zh: "【{chamber} 機台確認】{param} 自 {start_wafer}（{start_time}）起偏移約 {shift} {unit}（{shift_sigma}σ），其他 chamber 正常，量測已確認不是量測問題。受影響 lot 已 hold，請 inhibit {chamber}，並對照該時間點前後的 PM、零件更換與機台警報；修復後請跑 qual 片，回到 CL 附近再放行。"
+      en: "[{chamber} tool check] {param} has shifted by about {shift} {unit} ({shift_sigma}σ) since {start_wafer} ({start_time}); the other chambers are normal and metrology has been ruled out. Affected lots are on hold. Please inhibit {chamber} and compare with PMs, part swaps and alarms around that time; after the fix, run qual wafers back near the CL before release."
+    keypoints:
+      - {zh: "指出哪個 chamber", en: "Names the chamber", any: ["{chamber}"]}
+      - {zh: "說明從什麼時候開始", en: "Says when it started", any: ["{start_wafer}", "{start_time}", "since", "從", "開始"]}
+      - {zh: "給出偏移量", en: "Gives the size of the shift", any: ["{shift}", "σ", "sigma"]}
+      - {zh: "請對方做具體的事（查 PM／零件／警報、inhibit、qual）", en: "Asks for a concrete action (check PM / parts / alarms, inhibit, qual)", any: ["pm", "inhibit", "qual", "警報", "alarm", "零件", "part"]}
+    explanation:
+      zh: "只有 {chamber} 偏、偏移是突然發生且持續，其他 chamber 正常 → 典型的單一 chamber 製程偏移（不是量測，量測問題會讓所有 chamber 一起偏）。OCAP 第一步永遠是排除量測（重測、參考機台、GOF）；若量測已確認，下一步才是 hold 受影響 lot、inhibit chamber、請 EE 查 PM／零件／警報，修復後跑 qual。產品不必直接報廢，交給 PIE／PE 依偏移量與規格做 disposition。"
+      en: "Only {chamber} moved, suddenly and persistently, while the other chambers are normal → a classic single-chamber process shift (a metrology problem would move every chamber). Step one of the OCAP is always to rule out the measurement (re-measure, reference tool, GOF); once that is confirmed, hold the affected lots, inhibit the chamber, have EE check PMs / parts / alarms, and run qual after the fix. Do not scrap outright: PIE / PE disposition the wafers by the size of the shift versus the spec."
+
+  spc_slow_drift:
+    domain: spc
+    title: {zh: "慢漂移", en: "Slow drift"}
+    brief:
+      zh: "【週會前整理】{param} 在 {chamber} 的 EWMA 圖一路往同一方向走，最近開始超出管制界限，但單點都還在規格內。這個 chamber 距離上次 PM 已 {pm_days} 天（PM 週期約 {pm_cycle} 天）。"
+      en: "[Before the weekly meeting] The EWMA chart of {param} on {chamber} keeps moving in one direction and has recently crossed its limit, but every single point is still inside the spec. The chamber is {pm_days} days past its last PM (PM cycle about {pm_cycle} days)."
+    cause: C_DRIFT
+    cause_options: [C_DRIFT, C_CHAMBER_SHIFT, C_METRO_OFFSET, C_RANDOM]
+    action: A_PM
+    action_options: [A_PM, A_RECORD, A_RETARGET, A_HOLD_INHIBIT]
+    decision: D_RELEASE_WATCH
+    decision_options: [D_RELEASE_WATCH, D_SCRAP, D_RETARGET, D_HOLD]
+    notify: [EE, PE, MGR_QE]
+    message_role: EE
+    model_message:
+      zh: "【{chamber} 建議提前 PM】{param} 從 PM 後持續往同方向漂移（累計約 {drift_total} {unit}），EWMA 已出界、單點仍在規格內。距上次 PM 已 {pm_days} 天，接近 {pm_cycle} 天週期，建議提前 PM／更換消耗品；在 PM 前我們會提高抽樣並用 EWMA 追蹤。"
+      en: "[{chamber}: suggest pulling the PM in] {param} has drifted steadily in one direction since the last PM (about {drift_total} {unit} so far); EWMA is out of its limit while single points are still in spec. It is {pm_days} days since the PM, close to the {pm_cycle}-day cycle, so we suggest an early PM / consumable change. Until then we will raise sampling and track it with EWMA."
+    keypoints:
+      - {zh: "指出 chamber", en: "Names the chamber", any: ["{chamber}"]}
+      - {zh: "說明是持續漂移（趨勢）", en: "Describes it as a steady drift (a trend)", any: ["漂移", "drift", "趨勢", "trend", "ewma"]}
+      - {zh: "提到 PM／消耗品", en: "Mentions the PM / consumables", any: ["pm", "消耗品", "consumable"]}
+      - {zh: "說明期間的監控", en: "Says how it is monitored meanwhile", any: ["抽樣", "sampling", "監控", "monitor", "ewma"]}
+    explanation:
+      zh: "連續、單向、只有一個 chamber、接近 PM 週期 → 消耗品老化。I-MR 對這種小而持續的變化反應很慢，EWMA 才會先出界。因為單點仍在規格內，不需要 hold 產品；正確做法是提前 PM、期間提高抽樣。只調 target 會把老化藏起來，PM 後又會反向跳一次。"
+      en: "Continuous, one-directional, one chamber only and close to the PM cycle → consumable wear. I-MR reacts slowly to such a small sustained change; EWMA crosses its limit first. Single points are still in spec, so product need not be held; the right move is an early PM with more sampling until then. Re-targeting would only hide the wear, and the process would jump back the other way after the PM."
+
+  spc_metro_offset:
+    domain: spc
+    title: {zh: "很多 chamber 同時 OOC", en: "Many chambers OOC at once"}
+    brief:
+      zh: "【早班】{param} 的 SPC 在 {n_chambers} 個 chamber 幾乎同時出現 OOC，而且一批高、一批正常，交替出現。PE 懷疑最近的 recipe 修改，準備調整製程。"
+      en: "[Morning shift] SPC for {param} shows OOC on all {n_chambers} chambers at almost the same time, alternating lot by lot between high and normal. PE suspects the latest recipe change and is about to adjust the process."
+    cause: C_METRO_OFFSET
+    cause_options: [C_METRO_OFFSET, C_RECIPE_ALL, C_CHAMBER_SHIFT, C_DRIFT]
+    action: A_REGROUP
+    action_options: [A_REGROUP, A_RETARGET, A_HOLD_INHIBIT, A_RECORD]
+    decision: D_REMEASURE_RELEASE
+    decision_options: [D_REMEASURE_RELEASE, D_HOLD, D_RETARGET, D_SCRAP]
+    notify: [EE, PE, MGR_QE]
+    message_role: PE
+    model_message:
+      zh: "【請先不要調製程】{param} 的 OOC 來自量測機台：依量測機台分組後，只有 {metro} 量的晶圓偏約 {offset} {unit}（{offset_sigma}σ），同時間另一台量的晶圓正常，所有 chamber 都一樣，產品本身沒有變。我們正用黃金片確認並校正 {metro}；在那之前請不要依這些數值調 recipe，受影響的 lot 會在參考機台重測後放行。"
+      en: "[Please hold off on the process change] The {param} OOC comes from metrology: grouped by metrology tool, only wafers measured on {metro} are off by about {offset} {unit} ({offset_sigma}σ), while wafers measured on the other tool at the same time are normal, on every chamber. The product has not changed. We are checking and recalibrating {metro} with a golden wafer; until then please do not adjust the recipe on these readings. Affected lots will be released after re-measurement on the reference tool."
+    keypoints:
+      - {zh: "指出是哪台量測機台", en: "Names the metrology tool", any: ["{metro}"]}
+      - {zh: "明確說不是製程、請先不要調", en: "Says clearly it is not the process / do not adjust", any: ["不要調", "不是製程", "not the process", "do not adjust", "hold off", "量測"]}
+      - {zh: "給出證據（依量測機台分組）", en: "Gives the evidence (grouped by metrology tool)", any: ["分組", "group", "metro_tool", "量測機台"]}
+      - {zh: "說明下一步（黃金片、校正、重測）", en: "States the next step (golden wafer, recalibrate, re-measure)", any: ["黃金片", "golden", "校正", "calibrat", "重測", "re-measure"]}
+    explanation:
+      zh: "所有 chamber 同時偏、而且隨 lot 一高一低 → 共同因素不是製程，而是量測機台（lot 交替送到兩台量測機台）。依 metro_tool_id 分組後只有 {metro} 那條線偏。正確做法是先依量測機台分組、用黃金片確認並修正量測機台，受影響 lot 在參考機台重測後放行。若直接調 recipe，反而會把正常的製程調壞。"
+      en: "Every chamber moved at once and it alternates lot by lot → the common factor is not the process but the metrology tool (lots alternate between two metrology tools). Grouped by metro_tool_id, only the {metro} line is off. Group by metrology tool first, confirm and fix the tool with a golden wafer, and release the affected lots after re-measuring on the reference tool. Adjusting the recipe would push a healthy process off target."
+
+  spc_uniformity_only:
+    domain: spc
+    title: {zh: "平均值正常、均勻度變差", en: "Mean fine, uniformity worse"}
+    brief:
+      zh: "【交接】{chamber} 的 {param} 晶圓平均值 SPC 一切正常，但下游反映這個 chamber 出來的晶圓邊緣電性較差。"
+      en: "[Handover] The wafer-mean SPC of {param} on {chamber} looks completely normal, but downstream reports worse electrical results at the wafer edge for wafers from this chamber."
+    cause: C_SHAPE
+    cause_options: [C_SHAPE, C_RANDOM, C_METRO_OFFSET, C_OFF_TARGET]
+    action: A_WAFERMAP
+    action_options: [A_WAFERMAP, A_RECORD, A_RETARGET, A_REGROUP]
+    decision: D_HOLD
+    decision_options: [D_HOLD, D_RELEASE, D_RETARGET]
+    notify: [EE, PE, PIE_YE]
+    message_role: EE
+    model_message:
+      zh: "【{chamber} 片內均勻度變差】{param} 的晶圓平均值沒有變，但片內 1σ % 從約 {nu_before}% 升到約 {nu_after}%，只有 {chamber}。請檢查影響片內分布的硬體（噴頭、加熱器分區、edge ring、間距）；晶圓圖顯示的形狀附在後面。受影響 lot 已 hold 給 PIE 評估。"
+      en: "[{chamber}: within-wafer uniformity worse] The wafer mean of {param} has not moved, but within-wafer 1σ % rose from about {nu_before}% to about {nu_after}%, on {chamber} only. Please check the hardware that sets the within-wafer profile (showerhead, heater zones, edge ring, spacing); the wafer maps showing the shape are attached. Affected lots are held for PIE assessment."
+    keypoints:
+      - {zh: "指出 chamber", en: "Names the chamber", any: ["{chamber}"]}
+      - {zh: "給出均勻度數字", en: "Gives the uniformity numbers", any: ["{nu_after}", "{nu_before}", "1σ", "nu"]}
+      - {zh: "說明平均值沒變（是形狀問題）", en: "Says the mean did not change (a shape problem)", any: ["平均", "mean", "形狀", "shape"]}
+      - {zh: "請檢查對應硬體", en: "Asks for the matching hardware check", any: ["噴頭", "showerhead", "加熱", "heater", "edge ring", "間距", "spacing"]}
+    explanation:
+      zh: "只看平均值的 SPC 會漏掉形狀改變：中心變厚、邊緣變薄可以互相抵消，平均值不動。片內 1σ % 的管制圖才看得到。下游邊緣電性變差也符合形狀改變。處置：看晶圓圖確認形狀、請 EE 查對應硬體，受影響 lot hold 給 PIE 評估。"
+      en: "A mean-only SPC misses shape changes: a thicker centre and thinner edge cancel out and the mean stays put. Only the within-wafer 1σ % chart shows it, and worse edge electrical results downstream fit a shape change. Confirm the shape on the wafer maps, have EE check the matching hardware, and hold the affected lots for PIE."
+
+  spc_cpk_off_center:
+    domain: spc
+    title: {zh: "Cpk 不足但沒有 OOC", en: "Low Cpk without any OOC"}
+    brief:
+      zh: "【季度能力檢討】{param} 這一季的 SPC 沒有任何 OOC，但品保報告 Cpk = {cpk}（Cp = {cp}），低於要求的 1.33。規格 {lsl}–{usl} {unit}，目標 {target}。"
+      en: "[Quarterly capability review] {param} had no OOC at all this quarter, but quality reports Cpk = {cpk} (Cp = {cp}), below the 1.33 requirement. Spec {lsl}–{usl} {unit}, target {target}."
+    cause: C_OFF_TARGET
+    cause_options: [C_OFF_TARGET, C_CHAMBER_SHIFT, C_METRO_OFFSET, C_SHAPE]
+    action: A_RETARGET
+    action_options: [A_RETARGET, A_HOLD_INHIBIT, A_VERIFY, A_PM]
+    decision: D_RETARGET
+    decision_options: [D_RETARGET, D_HOLD, D_SCRAP]
+    notify: [PE, MGR_QE]
+    message_role: PE
+    model_message:
+      zh: "【Cpk 改善建議】{param} 製程穩定（本季無 OOC），Cp = {cp} 足夠，但平均 {mean} 偏離目標 {target} 約 {offset} {unit}，使 Cpk 只有 {cpk}。問題在置中而不是變異：建議依變更管理把 target 往中心調約 {offset} {unit}，調整後預期 Cpk 接近 Cp。調整前我們會再確認量測機台 matching，排除量測偏差。"
+      en: "[Cpk improvement proposal] {param} is stable (no OOC this quarter) and Cp = {cp} is fine, but the mean {mean} sits about {offset} {unit} off the {target} target, so Cpk is only {cpk}. The issue is centring, not spread: we propose re-targeting by about {offset} {unit} through change control, after which Cpk should approach Cp. Before that we will re-check metrology matching to rule out a measurement bias."
+    keypoints:
+      - {zh: "比較 Cp 與 Cpk", en: "Compares Cp with Cpk", any: ["cp", "{cp}"]}
+      - {zh: "給出偏離目標的量", en: "Gives how far off target it is", any: ["{offset}", "{mean}", "偏離", "off"]}
+      - {zh: "提出調 target", en: "Proposes a re-target", any: ["target", "目標", "置中", "centr"]}
+      - {zh: "提到變更管理", en: "Mentions change control", any: ["變更", "change control", "ecn", "簽核"]}
+    explanation:
+      zh: "Cp 高、Cpk 低 → 變異夠小，只是平均不在規格中心。管制圖沒有 OOC，這不是 OCAP 事件，不需要 hold 或停機；正確做法是和 PE 討論調 target（走變更管理），調完再確認 Cpk。也要確認量測沒有系統偏差（matching），以免把量測 offset 當成製程偏離。"
+      en: "High Cp with low Cpk → the spread is small, the mean is just not centred. No OOC means this is not an OCAP event; no hold or tool-down. Discuss re-targeting with PE through change control and re-check Cpk afterwards. Also confirm metrology has no systematic bias (matching), so a gauge offset is not mistaken for a process offset."
+
+  spc_false_alarm:
+    domain: spc
+    title: {zh: "凌晨的單點 OOC", en: "A single OOC point at night"}
+    brief:
+      zh: "【凌晨 03:10】{param} 在 {chamber} 跳了一個 OOC 點（{wafer}，{value} {unit}，約 {z}σ），前後的點都很穩定。{remeasure}"
+      en: "[03:10] {param} on {chamber} shows one OOC point ({wafer}, {value} {unit}, about {z}σ); the points before and after are steady. {remeasure}"
+    cause: C_RANDOM
+    cause_options: [C_RANDOM, C_CHAMBER_SHIFT, C_DRIFT, C_METRO_OFFSET]
+    action: A_VERIFY
+    action_options: [A_VERIFY, A_RECORD, A_HOLD_INHIBIT, A_PM]
+    decision: D_REMEASURE_RELEASE
+    decision_options: [D_REMEASURE_RELEASE, D_RELEASE, D_HOLD, D_SCRAP]
+    notify: []
+    message_role: MGR_QE
+    model_message:
+      zh: "【交接紀錄】{chamber} 的 {param} 在 {wafer} 出現單點 OOC（{value} {unit}，約 {z}σ），前後點都正常、其他規則無違規。已重測確認回到正常範圍，判定為單點異常，未 hold、未停機，已在 SPC 加註解；若同一 chamber 短期內再出現，將升級給 EE。"
+      en: "[Handover note] {param} on {chamber} had a single OOC point at {wafer} ({value} {unit}, about {z}σ); neighbouring points are normal and no other rule fired. Re-measurement is back in the normal range, so this is judged an isolated point: no hold, no tool-down, SPC comment added. If the same chamber flags again soon, it will be escalated to EE."
+    keypoints:
+      - {zh: "指出哪一片／哪一點", en: "Identifies the wafer / point", any: ["{wafer}", "{chamber}"]}
+      - {zh: "提到重測結果", en: "Mentions the re-measurement", any: ["重測", "re-measur", "remeasur"]}
+      - {zh: "說明處置（未 hold、已註解）", en: "States the action taken (no hold, comment added)", any: ["hold", "註解", "comment", "放行", "releas"]}
+      - {zh: "說明後續條件（再發生就升級）", en: "Sets a follow-up trigger (escalate if it repeats)", any: ["再", "again", "repeat", "升級", "escalat"]}
+    explanation:
+      zh: "單一點、前後穩定、其他規則沒違規 → 很可能是機率（3σ 大約每 370 點就會出現一次）或量測瞬間異常。先重測；重測正常就記錄、加註解、放行，不要過度反應（停機、調 recipe 反而增加變異）。若已經重測過且正常，直接記錄即可。仍要留紀錄：同一 chamber 短期內再出現就不是隨機。"
+      en: "One point, steady neighbours, no other rule → most likely chance (a 3σ point occurs about once every 370 points) or a momentary measurement glitch. Re-measure; if it is normal, record it, comment the SPC and release. Do not over-react: a tool-down or recipe change adds variation. If it was already re-measured and normal, just record it. Keep the record anyway: a repeat on the same chamber soon after is no longer chance."
+
+  # ---------------------------------------------------------------- Wafer map
+  wafer_edge_roll:
+    domain: wafer
+    title: {zh: "最外圈變薄", en: "Thin outer ring"}
+    brief:
+      zh: "【交接】{chamber} 的 {param} 晶圓 {wafer} 片內 1σ NU = {nu}%（平常約 {nu_median}%），最外圈明顯偏低。這個 chamber 的 edge ring 已使用 {rf_hours} RF 小時（壽命約 {ring_life}）。{verified}"
+      en: "[Handover] {param} wafer {wafer} from {chamber}: within-wafer NU = {nu}% (usually about {nu_median}%), with a clearly low outer ring. The chamber's edge ring has {rf_hours} RF hours (life about {ring_life}). {verified}"
+    cause: C_EDGE_RING
+    cause_options: [C_EDGE_RING, C_HEATER_TILT, C_SITE_OUTLIER, C_SHOWERHEAD]
+    action: A_VERIFY
+    action_options: [A_VERIFY, A_EE_HW, A_RECORD, A_RETARGET]
+    decision: D_HOLD
+    decision_options: [D_HOLD, D_RELEASE, D_RETARGET]
+    notify: [EE, PE, PIE_YE]
+    message_role: EE
+    model_message:
+      zh: "【{chamber} edge ring 檢查】{wafer} 的 {param} 最外圈明顯滾降，NU {nu}%（平常 {nu_median}%），內圈正常，形狀只在邊緣。edge ring 已 {rf_hours} RF 小時，接近壽命 {ring_life}。請檢查／更換 edge ring 後跑 qual 片，我們會確認邊緣點恢復；受影響 lot 先 hold。"
+      en: "[{chamber}: edge ring check] {param} on {wafer} rolls off clearly in the outer ring, NU {nu}% (usually {nu_median}%); the inner area is normal, so the shape is edge-only. The edge ring has {rf_hours} RF hours, close to its {ring_life} life. Please inspect / replace the edge ring and run qual wafers; we will confirm the edge sites recover. Affected lots are on hold."
+    keypoints:
+      - {zh: "指出 chamber", en: "Names the chamber", any: ["{chamber}"]}
+      - {zh: "說明形狀只在邊緣", en: "Says the shape is edge-only", any: ["邊緣", "外圈", "edge", "roll"]}
+      - {zh: "給出 NU 數字", en: "Gives the NU numbers", any: ["{nu}", "nu", "1σ"]}
+      - {zh: "請檢查 edge ring 並跑 qual", en: "Asks for an edge-ring check and qual", any: ["edge ring", "focus ring", "qual", "更換", "replace"]}
+    explanation:
+      zh: "只有最外圈改變、內圈正常（Zernike edge_roll 項最大、徑向剖面最外圈下掉），加上 edge ring 接近壽命 → edge ring 磨耗。若量測尚未確認，先排除邊緣點的量測問題（對焦、pattern recognition）；確認後請 EE 更換 edge ring 並跑 qual，受影響 lot 依邊緣晶粒風險 hold 給 PIE 評估。"
+      en: "Only the outer ring changed while the inside is normal (largest Zernike edge_roll term, radial profile dropping at the edge), and the edge ring is near end of life → edge-ring wear. If metrology has not been checked, first rule out edge-site measurement problems (focus, pattern recognition); then have EE replace the ring and run qual, and hold the affected lots for PIE to judge the edge-die risk."
+
+  wafer_tilt:
+    domain: wafer
+    title: {zh: "一側厚一側薄", en: "One side thick, one side thin"}
+    brief:
+      zh: "【交接】{chamber} 的 {param} 晶圓 {wafer} NU = {nu}%（平常約 {nu_median}%），晶圓一側厚、對面一側薄。{verified}"
+      en: "[Handover] {param} wafer {wafer} from {chamber}: NU = {nu}% (usually about {nu_median}%), thick on one side and thin on the opposite side. {verified}"
+    cause: C_HEATER_TILT
+    cause_options: [C_HEATER_TILT, C_EDGE_RING, C_SHOWERHEAD, C_SITE_OUTLIER]
+    action: A_VERIFY
+    action_options: [A_VERIFY, A_EE_HW, A_RECORD, A_RETARGET]
+    decision: D_HOLD
+    decision_options: [D_HOLD, D_RELEASE, D_RETARGET]
+    notify: [EE, PE, PIE_YE]
+    message_role: EE
+    model_message:
+      zh: "【{chamber} 一側偏厚】{wafer} 的 {param} 呈現單一方向的傾斜，NU {nu}%（平常 {nu_median}%），Zernike 以 tilt 項為主。請檢查加熱器分區、氣流／排氣是否偏一側，以及晶圓放置位置與機台水平；修正後請跑 qual，我們會比對前後的晶圓圖。"
+      en: "[{chamber}: one side thicker] {param} on {wafer} shows a one-directional tilt, NU {nu}% (usually {nu_median}%), dominated by the Zernike tilt term. Please check the heater zones, whether gas flow / exhaust is off to one side, wafer placement and tool levelling; run qual after the fix and we will compare the maps before and after."
+    keypoints:
+      - {zh: "指出 chamber", en: "Names the chamber", any: ["{chamber}"]}
+      - {zh: "說明是一側偏（傾斜）", en: "Describes a one-sided tilt", any: ["傾斜", "tilt", "一側", "one side", "side"]}
+      - {zh: "請檢查加熱器／氣流／放置／水平", en: "Asks to check heater / flow / placement / levelling", any: ["加熱", "heater", "氣流", "flow", "放置", "placement", "水平", "level"]}
+      - {zh: "修正後 qual", en: "Qual after the fix", any: ["qual"]}
+    explanation:
+      zh: "一側厚一側薄、Zernike tilt 項最大 → 方向性的問題：加熱器分區、氣流／排氣、晶圓放置偏移或機台水平。先確認量測（座標或 notch 方向設定錯誤也會造成假的傾斜），再請 EE 檢查硬體，修正後 qual。"
+      en: "Thick on one side, thin on the other, Zernike tilt dominant → a directional cause: heater zones, gas flow / exhaust, wafer placement or tool levelling. Check the measurement first (a wrong coordinate or notch setting fakes a tilt), then have EE check the hardware and qual after the fix."
+
+  wafer_bad_site:
+    domain: wafer
+    title: {zh: "NU 突然變大", en: "NU suddenly jumped"}
+    brief:
+      zh: "【交接】{chamber} 的 {param} 晶圓 {wafer} NU 突然變大（{nu}%，平常約 {nu_median}%），SPC 的片內 1σ % 圖出現 OOC。"
+      en: "[Handover] {param} wafer {wafer} from {chamber}: NU suddenly jumped ({nu}%, usually about {nu_median}%) and the within-wafer 1σ % SPC chart flagged OOC."
+    cause: C_SITE_OUTLIER
+    cause_options: [C_SITE_OUTLIER, C_EDGE_RING, C_HEATER_TILT, C_SHOWERHEAD]
+    action: A_VERIFY
+    action_options: [A_VERIFY, A_EE_HW, A_HOLD_INHIBIT, A_RECORD]
+    decision: D_REMEASURE_RELEASE
+    decision_options: [D_REMEASURE_RELEASE, D_HOLD, D_SCRAP]
+    notify: []
+    message_role: MGR_QE
+    model_message:
+      zh: "【交接紀錄】{wafer} 的 NU 變大來自單一量測點 site {site}（{site_value} {unit}，其他點平均 {neighbour_mean}），周圍點正常、沒有空間形狀。已重測該點，判定為量測異常（微粒或 pattern recognition），晶圓放行，SPC 已加註解。若同一點位重複發生，會請量測機台 EE 檢查。"
+      en: "[Handover note] The NU jump on {wafer} comes from one site, site {site} ({site_value} {unit} vs {neighbour_mean} for the others); neighbouring sites are normal and there is no spatial shape. The site was re-measured and judged a measurement glitch (particle or pattern recognition); the wafer is released and the SPC commented. If the same site repeats, the metrology tool's EE will be asked to check."
+    keypoints:
+      - {zh: "指出是哪一個點", en: "Identifies the site", any: ["{site}", "site"]}
+      - {zh: "給出該點與其他點的數值", en: "Gives the site value vs the others", any: ["{site_value}", "{neighbour_mean}"]}
+      - {zh: "提到重測", en: "Mentions the re-measurement", any: ["重測", "re-measur", "remeasur"]}
+      - {zh: "說明處置（放行、註解）", en: "States the action (released, commented)", any: ["放行", "releas", "註解", "comment"]}
+    explanation:
+      zh: "整片只有一個點離群、周圍點正常、沒有連續的空間形狀 → 製程不會只在一個量測點上改變，比較可能是量測問題（微粒、pattern recognition 對錯位置、對焦）。重測該點即可確認，不需要 hold 或停機。片內 1σ % 對單點非常敏感，這是它的盲點之一。"
+      en: "One outlying site with normal neighbours and no continuous spatial shape → a process does not change at a single site, so a measurement problem is more likely (particle, pattern recognition on the wrong spot, focus). Re-measuring the site confirms it; no hold or tool-down. Within-wafer 1σ % is very sensitive to one bad site, one of its blind spots."
+
+  wafer_bowl_after_pm:
+    domain: wafer
+    title: {zh: "PM 後中心與邊緣差變大", en: "Centre-to-edge worse after a PM"}
+    brief:
+      zh: "【PM 後第一天】{chamber} 昨天做完 PM（更換 {pm_part}）。今天 {param} 晶圓 {wafer} NU = {nu}%（平常約 {nu_median}%），中心與邊緣差變大。{verified}"
+      en: "[First day after a PM] {chamber} finished a PM yesterday (the {pm_part} was replaced). Today {param} wafer {wafer} has NU = {nu}% (usually about {nu_median}%), with a larger centre-to-edge difference. {verified}"
+    cause: C_SHOWERHEAD
+    cause_options: [C_SHOWERHEAD, C_EDGE_RING, C_HEATER_TILT, C_DRIFT]
+    action: A_VERIFY
+    action_options: [A_VERIFY, A_EE_HW, A_RECORD, A_RETARGET]
+    decision: D_HOLD
+    decision_options: [D_HOLD, D_RELEASE, D_RETARGET]
+    notify: [EE, PE, PIE_YE]
+    message_role: EE
+    model_message:
+      zh: "【PM 後均勻度異常】{chamber} PM（更換 {pm_part}）後第一批，{param} 呈現中心對邊緣的碗形，NU {nu}%（PM 前約 {nu_median}%）。請確認 {pm_part} 的安裝、間距與相關設定是否與 PM 前一致；修正後請跑 qual 片，我們會比對 PM 前後的晶圓圖。受影響 lot 先 hold。"
+      en: "[Uniformity problem after the PM] On the first lots after the {chamber} PM ({pm_part} replaced), {param} shows a centre-to-edge bowl, NU {nu}% (about {nu_median}% before the PM). Please check that the {pm_part} installation, spacing and related settings match the pre-PM state; run qual wafers after the fix and we will compare the maps before and after. Affected lots are on hold."
+    keypoints:
+      - {zh: "指出 chamber 與 PM", en: "Names the chamber and the PM", any: ["{chamber}", "pm"]}
+      - {zh: "說明是中心對邊緣（碗形）", en: "Describes the centre-to-edge (bowl) shape", any: ["碗", "bowl", "中心", "centre", "center"]}
+      - {zh: "請檢查 PM 更換的零件安裝與間距", en: "Asks to check the replaced part's installation and spacing", any: ["安裝", "install", "間距", "spacing", "{pm_part}"]}
+      - {zh: "qual 後再放行", en: "Qual before release", any: ["qual"]}
+    explanation:
+      zh: "PM 後立刻出現、形狀是中心對邊緣的碗形（Zernike bowl 項主導）→ PM 時更換或重裝的硬體（噴頭、間距、研磨頭）位置或設定改變。這也是為什麼 PM 後要先跑 qual 才放行。先確認量測，再請 EE 檢查安裝。"
+      en: "It appeared right after the PM and the shape is a centre-to-edge bowl (Zernike bowl dominant) → hardware replaced or re-installed at the PM (showerhead, spacing, polishing head) changed position or setting. This is exactly why a chamber runs qual before release after a PM. Check the measurement first, then have EE check the installation."
+
+  # ---------------------------------------------------------------- Film stack
+  stack_wrong_underlayer:
+    domain: film
+    title: {zh: "χ² 很好，但膜厚和 TEM 對不上", en: "Great χ², but the thickness disagrees with TEM"}
+    brief:
+      zh: "【PE 來電】HfO₂ 在線量測 {fitted} nm，但 TEM 抽測只有 {tem} nm（差 {diff} nm）。量測結果 χ² = {chi2}，擬合曲線看起來非常好。量測 recipe 把 IL（SiO₂）固定在 {il_recipe} nm。"
+      en: "[Call from PE] Inline HfO₂ reads {fitted} nm, but a TEM check says {tem} nm (a {diff} nm difference). The fit has χ² = {chi2} and the fitted curve looks excellent. The metrology recipe fixes the IL (SiO₂) at {il_recipe} nm."
+    cause: C_FIXED_LAYER
+    cause_options: [C_FIXED_LAYER, C_NOISE_TOOL, C_WRONG_DISP, C_METRO_OFFSET]
+    action: A_FIX_RECIPE
+    action_options: [A_FIX_RECIPE, A_RETARGET, A_HOLD_INHIBIT, A_RECORD]
+    decision: D_RECIPE_FIX
+    decision_options: [D_RECIPE_FIX, D_HOLD, D_RELEASE, D_SCRAP]
+    notify: [PE, MGR_QE]
+    message_role: PE
+    model_message:
+      zh: "【HfO₂ 量測偏差原因】差異來自量測模型：recipe 把 IL 固定在 {il_recipe} nm，但實際 IL 已改變（推估約 {il_true} nm），擬合把差異算進 HfO₂，所以 χ² 很好卻偏了約 {diff} nm。這不是 ALD 製程偏移，請先不要調 HfO₂ 循環數。我們會改成量測 IL（前站資料 feed-forward 或分開量）並重新驗證 recipe。"
+      en: "[Cause of the HfO₂ discrepancy] It comes from the metrology model: the recipe fixes the IL at {il_recipe} nm, but the real IL has changed (estimated about {il_true} nm), and the fit pushes the difference into HfO₂. That is why χ² looks great while the result is off by about {diff} nm. This is not an ALD process shift, so please do not change the HfO₂ cycle count. We will measure the IL instead (feed-forward from the previous step, or a separate measurement) and re-validate the recipe."
+    keypoints:
+      - {zh: "指出原因是固定的 IL", en: "Identifies the fixed IL as the cause", any: ["il", "固定", "fixed", "底層", "underlayer"]}
+      - {zh: "說明 χ² 看不出來", en: "Explains why χ² cannot show it", any: ["χ²", "chi", "χ2", "gof"]}
+      - {zh: "請對方不要調製程", en: "Asks not to adjust the process", any: ["不要調", "do not", "don't", "不是製程", "not a process", "not an ald"]}
+      - {zh: "說明修正方式（feed-forward／量 IL）", en: "States the fix (feed-forward / measure the IL)", any: ["feed-forward", "feed forward", "前站", "量 il", "measure the il", "重新驗證", "re-validate"]}
+    explanation:
+      zh: "χ² 只檢查「模型能不能擬合光譜」，不檢查模型裡固定的值是否正確。底層 IL 改變了 {d_il} nm，擬合會把差異轉嫁到 HfO₂，χ² 仍然很小。這不是隨機雜訊，而是模型偏差；修正方式是更新／feed-forward IL，而不是調製程。修正前，不要依這些數值調 ALD 或判退產品。"
+      en: "χ² only checks whether the model can fit the spectrum, not whether the values fixed in the model are right. The IL changed by {d_il} nm, the fit transfers that into HfO₂, and χ² stays small. This is model bias, not random noise: fix it by updating / feeding forward the IL, not by changing the process. Until then, do not adjust the ALD or reject product on these readings."
+
+  stack_float_n_thin:
+    domain: film
+    title: {zh: "新 recipe 重複性很差", en: "New recipe with poor repeatability"}
+    brief:
+      zh: "【新 recipe 驗證】{t} nm 的 HfO₂ 用反射儀 recipe，同時浮動厚度與 n。同一片連續量 6 次，厚度標準差 {sd_float} nm（固定 n 時只有 {sd_fixed} nm）。"
+      en: "[New recipe validation] {t} nm HfO₂ on a reflectometry recipe that floats both thickness and n. Six repeats on the same wafer give a thickness standard deviation of {sd_float} nm (only {sd_fixed} nm with n fixed)."
+    cause: C_CORR
+    cause_options: [C_CORR, C_NOISE_TOOL, C_FIXED_LAYER, C_REPEAT]
+    action: A_FIX_RECIPE
+    action_options: [A_FIX_RECIPE, A_TOOL_FIX, A_RECORD, A_RETARGET]
+    decision: D_RECIPE_NOT_READY
+    decision_options: [D_RECIPE_NOT_READY, D_RECIPE_OK, D_GAUGE_OK]
+    notify: [PE]
+    message_role: PE
+    model_message:
+      zh: "【recipe 驗證結果】{t} nm HfO₂ 同時浮動厚度與 n 時，兩者高度相關（|r| = {corr}），厚度重複性 1σ = {sd_float} nm，不能用。改成固定 n（用厚膜或參考片量好的值）後重複性為 {sd_fixed} nm。我們會用固定 n 的版本重新做 GR&R 後再發行。"
+      en: "[Recipe validation result] With thickness and n both floated on {t} nm HfO₂, the two are strongly correlated (|r| = {corr}) and thickness repeatability is 1σ = {sd_float} nm, which is not usable. With n fixed (from a thick film or a reference wafer) repeatability is {sd_fixed} nm. We will re-run the GR&R on the fixed-n version before release."
+    keypoints:
+      - {zh: "指出厚度與 n 相關", en: "Points out the thickness–n correlation", any: ["相關", "correlat", "|r|", "{corr}"]}
+      - {zh: "給出兩種做法的重複性", en: "Gives the repeatability of both versions", any: ["{sd_float}", "{sd_fixed}"]}
+      - {zh: "說明修正：固定 n", en: "States the fix: fix n", any: ["固定 n", "fix n", "fixed n", "fixing n", "n fixed"]}
+      - {zh: "重做 GR&R 再發行", en: "Redo the GR&R before release", any: ["gr&r", "grr", "驗證", "validat"]}
+    explanation:
+      zh: "超薄膜的光譜主要對「光學厚度」（厚度 × n）敏感，分不開兩者：同時浮動時相關係數接近 1，雜訊在兩者之間來回抵換，厚度重複性變差。固定 n（由厚膜或參考片取得）就能恢復精度。這是 recipe 設計問題，不是機台硬體問題。"
+      en: "For an ultra-thin film the spectrum mainly senses the optical thickness (thickness × n) and cannot separate the two: floated together they correlate near 1, noise trades between them, and thickness repeatability suffers. Fixing n (taken from a thick film or a reference wafer) restores the precision. This is a recipe-design problem, not tool hardware."
+
+  # ---------------------------------------------------------------- MSA
+  msa_repeatability:
+    domain: msa
+    title: {zh: "新量測機台 GR&R 不過", en: "New metrology tool fails GR&R"}
+    brief:
+      zh: "【新機台驗收】{tool} 在 GR&R 研究中 %GRR = {grr}%（P/T = {pt}%，ndc = {ndc}）。供應商說：「量測很準，平均值和參考片一致。」"
+      en: "[New tool acceptance] {tool} scores %GRR = {grr}% in the GR&R study (P/T = {pt}%, ndc = {ndc}). The vendor says: \"It is accurate, the average matches the reference wafer.\""
+    cause: C_REPEAT
+    cause_options: [C_REPEAT, C_REPRO, C_PART_RANGE, C_OFFSET]
+    action: A_TOOL_FIX
+    action_options: [A_TOOL_FIX, A_MATCH, A_RESELECT, A_RECORD]
+    decision: D_GAUGE_NOT_OK
+    decision_options: [D_GAUGE_NOT_OK, D_GAUGE_OK, D_RECIPE_OK]
+    notify: [EE, PE, MGR_QE]
+    message_role: EE
+    model_message:
+      zh: "【GR&R 未通過】{tool} 的 %GRR = {grr}%（重複性 {repeat}%、再現性 {reprod}%），ndc = {ndc}，主要是重複性：同一片同一點重複量的散布太大。平均值準不代表精度夠。請檢查對焦、光源強度與壽命、stage 定位與量測點大小，修正後我們會重做 GR&R，之前不能用於 SPC 與放行。"
+      en: "[GR&R failed] {tool}: %GRR = {grr}% (repeatability {repeat}%, reproducibility {reprod}%), ndc = {ndc}, dominated by repeatability: repeated measurements of the same site scatter too much. A correct average does not mean enough precision. Please check focus, lamp intensity / life, stage positioning and spot size; we will redo the GR&R after the fix, and the tool cannot be used for SPC or release until then."
+    keypoints:
+      - {zh: "給出 %GRR 與拆解", en: "Gives %GRR and its breakdown", any: ["{grr}", "{repeat}", "%grr"]}
+      - {zh: "指出是重複性", en: "Says it is repeatability", any: ["重複性", "repeatab"]}
+      - {zh: "請檢查機台硬體", en: "Asks for a hardware check", any: ["對焦", "focus", "光源", "lamp", "stage", "spot"]}
+      - {zh: "說明修好前不能用、要重做 GR&R", en: "Not usable until fixed; redo the GR&R", any: ["重做", "redo", "不能用", "cannot be used", "not be used"]}
+    explanation:
+      zh: "%GRR 拆開後幾乎全部來自重複性（同一機台重複量的雜訊），再現性很小 → 問題在機台本身的精度（對焦、光源、stage、量測點大小），不是機台之間的差異。「平均值正確」說的是準確度，GR&R 看的是精密度。修好之前不能用於 SPC 或放行判定。"
+      en: "Broken down, %GRR is almost all repeatability (noise of repeated measurements on one tool) and little reproducibility → the problem is the tool's own precision (focus, lamp, stage, spot size), not tool-to-tool differences. A correct average is accuracy; GR&R measures precision. Until it is fixed, the tool cannot be used for SPC or release decisions."
+
+  msa_reproducibility:
+    domain: msa
+    title: {zh: "三台量測機台合不來", en: "Three metrology tools disagree"}
+    brief:
+      zh: "【fleet 檢討】三台量測機台合做 GR&R，%GRR = {grr}%（P/T = {pt}%）。每一台自己的重複性都很好。"
+      en: "[Fleet review] A combined GR&R on three metrology tools gives %GRR = {grr}% (P/T = {pt}%). Each tool on its own repeats very well."
+    cause: C_REPRO
+    cause_options: [C_REPRO, C_REPEAT, C_PART_RANGE, C_NOISE_TOOL]
+    action: A_MATCH
+    action_options: [A_MATCH, A_TOOL_FIX, A_RESELECT, A_RECORD]
+    decision: D_GAUGE_NOT_OK
+    decision_options: [D_GAUGE_NOT_OK, D_GAUGE_OK, D_RECIPE_OK]
+    notify: [EE, PE, MGR_QE]
+    message_role: EE
+    model_message:
+      zh: "【量測機台不一致】三台合做 GR&R 的 %GRR = {grr}%，其中再現性 {reprod}%、重複性只有 {repeat}%：每台都很穩，但彼此不同，{worst_tool} 偏最多（機台間差 {tool_spread} nm）。請用黃金片比對三台的 recipe 版本、n,k 檔與 calibration，修正後重做 matching 與 GR&R。"
+      en: "[Metrology tools disagree] The combined GR&R gives %GRR = {grr}%: reproducibility {reprod}%, repeatability only {repeat}%. Each tool is stable but they differ, {worst_tool} the most (tool-to-tool spread {tool_spread} nm). Please compare recipe versions, n,k files and calibration on a golden wafer, then redo matching and the GR&R."
+    keypoints:
+      - {zh: "指出是再現性（機台間）", en: "Says it is reproducibility (tool to tool)", any: ["再現性", "reproduc", "機台間", "tool-to-tool", "tool to tool"]}
+      - {zh: "指出偏最多的機台", en: "Names the tool that is furthest off", any: ["{worst_tool}"]}
+      - {zh: "請比對 recipe／calibration（黃金片）", en: "Asks to compare recipe / calibration (golden wafer)", any: ["黃金片", "golden", "calibration", "recipe", "n,k"]}
+      - {zh: "重做 matching／GR&R", en: "Redo matching / GR&R", any: ["matching", "gr&r", "重做", "redo"]}
+    explanation:
+      zh: "再現性主導、重複性小 → 每台自己都穩定，但系統性地不一樣：calibration、recipe 版本或 n,k 檔不同。處置是 fleet matching（黃金片比對、修正 offset），不是修單台機台的硬體。"
+      en: "Reproducibility dominates and repeatability is small → each tool is stable on its own but they differ systematically: calibration, recipe version or n,k file. The fix is fleet matching (golden-wafer comparison, offset correction), not repairing one tool's hardware."
+
+  msa_narrow_parts:
+    domain: msa
+    title: {zh: "%GRR 很高，但 P/T 很好", en: "High %GRR, but a good P/T"}
+    brief:
+      zh: "【GR&R 報告覆核】%GRR（研究變異）= {grr}%，看起來不合格；但 P/T = {pt}%。研究用的 10 片晶圓厚度範圍只有 {part_range} nm，規格寬度 {tol} nm。"
+      en: "[GR&R report review] %GRR (study variation) = {grr}%, which looks like a fail, but P/T = {pt}%. The 10 study wafers span only {part_range} nm of thickness; the spec is {tol} nm wide."
+    cause: C_PART_RANGE
+    cause_options: [C_PART_RANGE, C_REPEAT, C_REPRO, C_OFFSET]
+    action: A_RESELECT
+    action_options: [A_RESELECT, A_TOOL_FIX, A_MATCH, A_RECORD]
+    decision: D_GAUGE_OK
+    decision_options: [D_GAUGE_OK, D_GAUGE_NOT_OK, D_RECIPE_NOT_READY]
+    notify: [MGR_QE]
+    message_role: MGR_QE
+    model_message:
+      zh: "【GR&R 判定說明】%GRR {grr}% 偏高是因為研究晶圓只涵蓋 {part_range} nm（規格寬 {tol} nm），分母太小；以規格計算的 P/T = {pt}%，量測系統足以判定合格與否。建議以 P/T 判定本機台可用於放行，並重選涵蓋製程範圍的晶圓重做一次研究，讓 %GRR 與 ndc 也有意義。"
+      en: "[GR&R verdict explained] The high %GRR of {grr}% is because the study wafers cover only {part_range} nm (spec width {tol} nm), so the denominator is too small; P/T against the spec is {pt}%, so the gauge can tell in-spec from out-of-spec. We propose accepting the tool for release decisions on P/T and repeating the study with wafers spanning the process range so that %GRR and ndc are meaningful too."
+    keypoints:
+      - {zh: "說明研究晶圓範圍太窄", en: "Explains the study wafers span too little", any: ["{part_range}", "範圍", "range", "窄", "narrow"]}
+      - {zh: "以 P/T 判斷", en: "Judges by P/T", any: ["p/t", "{pt}"]}
+      - {zh: "建議重選研究晶圓", en: "Proposes re-selecting the study wafers", any: ["重選", "re-select", "reselect", "涵蓋", "span"]}
+    explanation:
+      zh: "%GRR（研究變異）以研究晶圓自己的範圍當分母；晶圓都差不多厚時分母很小，%GRR 就很高、ndc 很低，即使量測雜訊很小。P/T 以規格寬度為分母，才回答「能不能判定合格」。正確做法：以 P/T 判斷，並重選涵蓋製程範圍的研究晶圓。"
+      en: "%GRR (study variation) uses the study wafers' own range as the denominator; if the wafers are all about the same thickness the denominator is tiny, so %GRR is high and ndc low even with small measurement noise. P/T uses the spec width and answers \"can it judge in or out of spec\". Judge by P/T and re-select study wafers that span the process range."
+
+  msa_matching:
+    domain: msa
+    title: {zh: "新機台 matching 不過", en: "New tool fails matching"}
+    brief:
+      zh: "【新機台放量前】{tool} 對參考機台 FT01 的 matching：平均偏差 {offset} nm（規格 ±{spec}），Deming 斜率 {slope}（容許 1 ± {slope_tol}）。產線希望明天開始用 {tool} 量產品。"
+      en: "[Before releasing the new tool] {tool} vs the reference tool FT01: mean offset {offset} nm (spec ±{spec}), Deming slope {slope} (allowed 1 ± {slope_tol}). Production wants to start measuring product on {tool} tomorrow."
+    cause: C_OFFSET
+    cause_options: [C_OFFSET, C_SLOPE, C_REPEAT, C_PART_RANGE]
+    action: A_CALIBRATE
+    action_options: [A_CALIBRATE, A_RECORD, A_RESELECT, A_TOOL_FIX]
+    decision: D_ROUTE_REF
+    decision_options: [D_ROUTE_REF, D_RELEASE, D_GAUGE_OK]
+    notify: [EE, PE, MGR_QE]
+    message_role: MGR_QE
+    model_message:
+      zh: "【{tool} 尚不能放量】matching 不通過（{kind}）：平均偏差 {offset} nm（規格 ±{spec}）、斜率 {slope}（容許 1 ± {slope_tol}）。修正前 {tool} 不量這個 recipe，產品繼續由參考機台量；EE 會重新 calibration，修正後重做 matching，通過後再放量。"
+      en: "[{tool} not released yet] Matching failed ({kind}): mean offset {offset} nm (spec ±{spec}), slope {slope} (allowed 1 ± {slope_tol}). Until it is fixed, {tool} will not run this recipe and product stays on the reference tool; EE will recalibrate, then we redo matching and release the tool once it passes."
+    keypoints:
+      - {zh: "說明結論：還不能放量", en: "States the decision: not released yet", any: ["不能", "not release", "尚不", "not yet"]}
+      - {zh: "給出 offset 與斜率", en: "Gives the offset and slope", any: ["{offset}", "{slope}"]}
+      - {zh: "說明期間產品怎麼量（參考機台）", en: "Says how product is measured meanwhile (reference tool)", any: ["參考機台", "reference", "ft01"]}
+      - {zh: "說明下一步（calibration、重做 matching）", en: "States the next step (recalibrate, redo matching)", any: ["calibrat", "校正", "matching"]}
+    explanation:
+      zh: "matching 要同時看平均偏差和斜率：offset 是整條帶子平移（calibration、參考值），斜率是越厚差越多（波長或角度 calibration、色散模型）。Bland-Altman 圖上整條帶子離開 0 → offset；帶子傾斜 → 斜率。本例是{kind}。任一項超出都不能放量：先改用參考機台，再 calibration 與重做 matching。"
+      en: "Matching needs both the mean offset and the slope: an offset moves the whole band (calibration, reference value); a slope grows with thickness (wavelength or angle calibration, dispersion model). On the Bland-Altman plot a band away from 0 is an offset, a tilted band is a slope. This case is a {kind}. Either one out of tolerance blocks release: use the reference tool, recalibrate and redo matching."
+
+  # ---------------------------------------------------------------- Recipe studies
+  study_technique_choice:
+    domain: study
+    title: {zh: "新規格可以沿用反射儀嗎？", en: "Can the new spec stay on reflectometry?"}
+    brief:
+      zh: "【PE 需求】新產品的氧化層目標 {t0} nm、規格 ±{tol} nm。現有量測 recipe 用反射儀。PE 問：可以直接沿用嗎？"
+      en: "[PE request] The new product's oxide target is {t0} nm with a ±{tol} nm spec. The current metrology recipe uses reflectometry. PE asks: can we just keep it?"
+    cause: C_TECH_REFL
+    cause_options: [C_TECH_REFL, C_TECH_OK, C_SPEC_WRONG, C_NOISE_TOOL]
+    action: A_CHANGE_TECH
+    action_options: [A_CHANGE_TECH, A_KEEP_TECH, A_RETARGET, A_TOOL_FIX]
+    decision: D_RECIPE_NOT_READY
+    decision_options: [D_RECIPE_NOT_READY, D_RECIPE_OK, D_GAUGE_OK]
+    notify: [PE, MGR_QE]
+    message_role: PE
+    model_message:
+      zh: "【量測技術評估】{t0} nm、規格 ±{tol} nm：反射儀預估 1σ ≈ {prec_r} nm → P/T ≈ {pt_r}%；SE ≈ {prec_s} nm → P/T ≈ {pt_s}%。依 P/T < 10%（最多 30%）的原則，結論是：{verdict}。正式發行前會再做 GR&R 確認。"
+      en: "[Metrology technique assessment] {t0} nm with a ±{tol} nm spec: reflectometry gives about 1σ ≈ {prec_r} nm → P/T ≈ {pt_r}%; SE ≈ {prec_s} nm → P/T ≈ {pt_s}%. By the P/T < 10 % (at most 30 %) rule, the conclusion is: {verdict}. A GR&R will confirm it before release."
+    keypoints:
+      - {zh: "給出 P/T", en: "Gives the P/T", any: ["p/t", "{pt_r}", "{pt_s}"]}
+      - {zh: "比較兩種技術", en: "Compares the two techniques", any: ["se", "橢偏", "ellips", "反射", "reflect"]}
+      - {zh: "明確給結論", en: "Gives a clear conclusion", any: ["結論", "conclusion", "沿用", "keep", "改用", "move to", "switch"]}
+      - {zh: "提到 GR&R 確認", en: "Mentions GR&R confirmation", any: ["gr&r", "grr"]}
+    explanation:
+      zh: "量測技術要用 P/T 判斷：P/T = 6σ ÷ (USL − LSL)，一般要 < 10%（最多 30%）。這裡反射儀 P/T ≈ {pt_r}%、SE ≈ {pt_s}%。超薄膜（< 5 nm）的反射光譜對厚度幾乎不敏感，反射儀的 P/T 會遠超過 100%；SE 有相位（Δ）資訊，精度高兩個數量級。厚膜（幾十 nm 以上）反射儀就足夠，不必換機台。"
+      en: "Choose the technique by P/T: P/T = 6σ ÷ (USL − LSL), usually < 10 % (at most 30 %). Here reflectometry gives P/T ≈ {pt_r}% and SE ≈ {pt_s}%. For ultra-thin films (< 5 nm) the reflectance spectrum barely responds to thickness, so reflectometry's P/T is far above 100 %; SE carries phase (Δ) information and is two orders of magnitude more precise. For thick films (tens of nm and up) reflectometry is enough and no tool change is needed."
+
+  # ---------------------------------------------------------------- DOE
+  doe_curvature_missed:
+    domain: doe
+    title: {zh: "2 水準 DOE 想直接定配方", en: "Setting a recipe from a 2-level DOE"}
+    brief:
+      zh: "【DOE 結果】PE 用 2 水準全因子 + 4 個中心點做了 ALD high-k 的 DOE（{n_runs} 次），想直接用模型找 {response} 最小的配方。中心點與角落點的平均差 {curv_diff}（p = {curv_p}）。"
+      en: "[DOE result] PE ran a 2-level full factorial with 4 centre points on the ALD high-k process ({n_runs} runs) and wants to use the model directly to find the recipe with the lowest {response}. Centre points differ from the corner average by {curv_diff} (p = {curv_p})."
+    cause: C_CURVATURE
+    cause_options: [C_CURVATURE, C_NOISE_DOE, C_ALIAS, C_EDGE]
+    action: A_AUGMENT
+    action_options: [A_AUGMENT, A_RELEASE_RECIPE, A_REPLICATE, A_RECORD]
+    decision: D_MODEL_NOT_READY
+    decision_options: [D_MODEL_NOT_READY, D_RELEASE_PROCESS, D_RETARGET]
+    notify: [PE, EE, MGR_QE]
+    message_role: PE
+    model_message:
+      zh: "【DOE 先不要定配方】中心點顯示 {response} 有明顯彎曲（中心與角落差 {curv_diff}，p = {curv_p}），但 2 水準設計分不出是哪個因子造成，模型會把最佳點推到角落。建議在現有實驗上加軸點擴成 CCD（不用重做），補完再找最佳點並跑確認實驗；需要約 6 片實驗晶圓與機台時間。"
+      en: "[Do not set the recipe from this DOE yet] The centre points show clear curvature in {response} (centre vs corners {curv_diff}, p = {curv_p}), but a 2-level design cannot tell which factor causes it, and the model will push the optimum into a corner. We suggest adding axial points to make it a CCD (no need to start over), then finding the optimum and running confirmation wafers; that needs about 6 experimental wafers and tool time."
+    keypoints:
+      - {zh: "指出彎曲（中心點證據）", en: "Points out the curvature (centre-point evidence)", any: ["彎曲", "curvature", "{curv_p}", "中心點", "centre point", "center point"]}
+      - {zh: "說明 2 水準設計看不到哪個因子", en: "Explains a 2-level design cannot tell which factor", any: ["2 水準", "2-level", "two-level", "分不出", "cannot tell"]}
+      - {zh: "建議加軸點／CCD", en: "Suggests axial points / CCD", any: ["ccd", "軸點", "axial"]}
+      - {zh: "提到資源（晶圓、機台時間）", en: "Mentions resources (wafers, tool time)", any: ["晶圓", "wafer", "機台時間", "tool time"]}
+    explanation:
+      zh: "2 水準設計每個因子只有高／低兩個水準，只能擬合直線；中心點能偵測「有沒有彎曲」，卻分不出是哪個因子。ALD 的 NU 對溫度是彎曲的（溫度視窗），線性模型會把最佳點推到角落，真實結果可能更差。補軸點擴成 CCD 是最省的做法。"
+      en: "A 2-level design gives each factor only a high and a low level, so it can only fit straight lines; centre points detect that curvature exists but not which factor causes it. ALD NU curves with temperature (the ALD window), so a linear model pushes the optimum into a corner where reality may be worse. Augmenting to a CCD with axial points is the cheapest fix."
+
+  doe_edge_optimum:
+    domain: doe
+    title: {zh: "最佳點落在範圍邊界", en: "Optimum on the edge of the range"}
+    brief:
+      zh: "【DOE 結果】ALD high-k 的 CCD 做完後，最佳化建議溫度 {t_best} °C，剛好落在實驗範圍的{edge}（範圍 {t_low}–{t_high} °C），預測 D = {D}。PE 想直接用這個條件發行。"
+      en: "[DOE result] After the ALD high-k CCD, the optimiser suggests {t_best} °C, right on the {edge} edge of the tested range ({t_low}–{t_high} °C), predicted D = {D}. PE wants to release this condition directly."
+    cause: C_EDGE
+    cause_options: [C_EDGE, C_CURVATURE, C_NOISE_DOE, C_ALIAS]
+    action: A_AUGMENT
+    action_options: [A_AUGMENT, A_RELEASE_RECIPE, A_REPLICATE, A_RECORD]
+    decision: D_MODEL_NOT_READY
+    decision_options: [D_MODEL_NOT_READY, D_RELEASE_PROCESS, D_RETARGET]
+    notify: [PE, EE, MGR_QE]
+    message_role: PE
+    model_message:
+      zh: "【最佳點在範圍邊界】CCD 建議溫度 {t_best} °C，正好在範圍的{edge}（{t_low}–{t_high} °C）。最佳化只在實驗範圍內搜尋，真正的最佳點很可能在範圍外。建議下一輪把溫度範圍往這個方向移（以目前邊界附近為新的中心），再做一次小 DOE；在那之前不建議用目前的建議值發行。"
+      en: "[Optimum on the range edge] The CCD suggests {t_best} °C, right on the {edge} edge of the range ({t_low}–{t_high} °C). The optimiser only searches inside the tested range, so the true optimum is probably outside it. We suggest shifting the temperature range that way next round (centring near the current edge) and running a small DOE; we do not recommend releasing the current suggestion before that."
+    keypoints:
+      - {zh: "指出最佳點在邊界", en: "Points out the optimum is on the edge", any: ["邊界", "edge", "{t_best}"]}
+      - {zh: "說明模型不能外插", en: "Explains the model cannot extrapolate", any: ["外插", "extrapolat", "範圍外", "outside"]}
+      - {zh: "建議移動範圍再做一次", en: "Suggests moving the range and running again", any: ["移", "shift", "move", "下一輪", "next round", "doe"]}
+    explanation:
+      zh: "最佳點落在邊界通常代表「還可以更好」：模型不能外插，真正的最佳點在範圍外（本例中 ALD 溫度視窗的中心不在測試範圍內）。正確做法是沿著改善方向移動範圍再做一次小 DOE，而不是直接發行邊界上的配方。"
+      en: "An optimum on the boundary usually means it can get better: the model cannot extrapolate and the true optimum lies outside the range (here the centre of the ALD temperature window is outside the tested range). Move the range along the improving direction and run a small DOE instead of releasing a recipe sitting on the edge."
+
+  doe_noisy:
+    domain: doe
+    title: {zh: "DOE 幾乎沒有顯著項", en: "A DOE with almost nothing significant"}
+    brief:
+      zh: "【DOE 結果】CVD TiN 的 CCD（{n_runs} 次、沒有重複）分析後幾乎沒有顯著項，預測 R² = {r2_pred}，殘差 RMSE = {rmse}。量測機台最近剛換過光源。"
+      en: "[DOE result] The CVD TiN CCD ({n_runs} runs, no replicates) shows almost no significant terms, predicted R² = {r2_pred}, residual RMSE = {rmse}. The metrology tool had its lamp replaced recently."
+    cause: C_NOISE_DOE
+    cause_options: [C_NOISE_DOE, C_CURVATURE, C_EDGE, C_ALIAS]
+    action: A_REPLICATE
+    action_options: [A_REPLICATE, A_AUGMENT, A_RELEASE_RECIPE, A_RECORD]
+    decision: D_MODEL_NOT_READY
+    decision_options: [D_MODEL_NOT_READY, D_RELEASE_PROCESS, D_RETARGET]
+    notify: [PE, EE]
+    message_role: PE
+    model_message:
+      zh: "【DOE 雜訊太大】這次 CCD 的殘差 RMSE = {rmse}、預測 R² = {r2_pred}，效應被雜訊蓋住，不能用來定配方。量測機台剛換光源，我們先確認量測 GR&R；之後建議加重複（中心點至少 4–6 次）再分析，必要時每片多量幾點取平均。"
+      en: "[Too much noise in the DOE] This CCD has residual RMSE = {rmse} and predicted R² = {r2_pred}; the effects are buried in noise, so it cannot set the recipe. The metrology tool just had a new lamp, so we will check the measurement GR&R first; after that we suggest adding replicates (at least 4–6 centre points) and analysing again, averaging more sites per wafer if needed."
+    keypoints:
+      - {zh: "給出雜訊／模型數字", en: "Gives the noise / model numbers", any: ["{rmse}", "{r2_pred}", "rmse", "r²", "r2"]}
+      - {zh: "懷疑量測並確認 GR&R", en: "Suspects metrology and checks the GR&R", any: ["gr&r", "grr", "光源", "lamp", "量測"]}
+      - {zh: "建議加重複", en: "Suggests adding replicates", any: ["重複", "replicat", "中心點", "centre point", "center point"]}
+    explanation:
+      zh: "沒有顯著項不代表因子沒影響，可能是雜訊太大。先找雜訊來源：量測（GR&R、剛換光源）還是製程本身。對策：降低量測雜訊、加重複與中心點、增加每片量測點數。雜訊沒控制之前，任何最佳化都只是在擬合雜訊。"
+      en: "No significant terms does not mean the factors do nothing; the noise may be too large. Find the noise source first: metrology (GR&R, a new lamp) or the process itself. Then reduce measurement noise, add replicates and centre points, and measure more sites per wafer. Until the noise is under control, any optimisation is fitting noise."
+
+  # ---------------------------------------------------------------- Fab simulator
+  fab_chamber_excursion:
+    domain: fab
+    title: {zh: "良率下降 + 閘極氧化層異常", en: "Yield drop with a gate-oxide signal"}
+    brief:
+      zh: "【良率警示】{start_lot} 之後部分 lot 良率下降，最差晶圓 {worst_wafer} 只有 {worst_yield}%。閘極氧化層 gate_ox_thk 的 SPC 有異常。{verified}"
+      en: "[Yield alert] Some lots after {start_lot} lost yield; the worst wafer {worst_wafer} is at only {worst_yield}%. The gate-oxide (gate_ox_thk) SPC shows a signal. {verified}"
+    cause: C_CHAMBER_SHIFT
+    cause_options: [C_CHAMBER_SHIFT, C_METRO_OFFSET, C_PARTICLE, C_DRIFT]
+    action: A_VERIFY
+    action_options: [A_VERIFY, A_HOLD_INHIBIT, A_RETARGET, A_RECORD]
+    decision: D_HOLD
+    decision_options: [D_HOLD, D_RELEASE, D_SCRAP, D_RETARGET]
+    notify: [EE, PE, PIE_YE, MGR_QE]
+    message_role: PIE_YE
+    model_message:
+      zh: "【良率影響評估】{chamber} 自 {start_lot} 起閘極氧化層偏移約 {shift} nm，造成約 {impact} 個百分點的良率變化（最差 {worst_wafer} {worst_yield}%）。受影響範圍是該 chamber 在此期間處理的所有晶圓（不只量測到的那幾片），已 hold 並 inhibit {chamber}。請依電性（Vt）與良率資料做 disposition。"
+      en: "[Yield impact assessment] Gate oxide on {chamber} has shifted by about {shift} nm since {start_lot}, changing yield by about {impact} percentage points (worst {worst_wafer} at {worst_yield}%). The exposure is every wafer that chamber processed in this window, not only the measured ones; {chamber} is held and inhibited. Please disposition by electrical (Vt) and yield data."
+    keypoints:
+      - {zh: "指出 chamber 與開始時間", en: "Names the chamber and the start", any: ["{chamber}", "{start_lot}"]}
+      - {zh: "量化良率影響", en: "Quantifies the yield impact", any: ["{impact}", "{worst_yield}", "良率", "yield"]}
+      - {zh: "說明受影響範圍（不只量測片）", en: "Defines the exposure (not only measured wafers)", any: ["所有晶圓", "every wafer", "all wafers", "genealogy", "範圍", "exposure"]}
+      - {zh: "請對方做 disposition", en: "Asks for disposition", any: ["disposition", "判定", "處置"]}
+    explanation:
+      zh: "良率下降 + 閘極氧化層 SPC 在單一 chamber 偏移 + 晶圓圖以 gate_ox 參數失效為主 → 單一 chamber 製程偏移。注意抽樣只量 5/25 片：受影響的是該 chamber 在這段時間處理的所有晶圓，要用 genealogy 找出來。若量測已確認，直接 hold + inhibit + 通知 EE；否則先重測。"
+      en: "Yield drop + a gate-oxide SPC shift on one chamber + die maps dominated by gate-oxide parametric fails → a single-chamber process shift. Sampling measures only 5 of 25 wafers: the exposure is every wafer the chamber processed in the window, found through genealogy. If metrology is already confirmed, hold + inhibit + notify EE; otherwise re-measure first."
+
+  fab_particle_event:
+    domain: fab
+    title: {zh: "良率掉、參數 SPC 卻都正常", en: "Yield drops while parameter SPC is clean"}
+    brief:
+      zh: "【良率警示】{start_lot} 附近幾批良率突然下降，最差晶圓 {worst_wafer} 只有 {worst_yield}%，晶圓圖外圈一整圈失效。參數 SPC 都在管制內，只有 inline 缺陷密度 defect_density 跳高。"
+      en: "[Yield alert] A few lots around {start_lot} suddenly lost yield; the worst wafer {worst_wafer} is at only {worst_yield}%, with a full ring of failures at the edge. Parameter SPC is in control; only the inline defect_density jumped."
+    cause: C_PARTICLE
+    cause_options: [C_PARTICLE, C_EDGE_RING, C_CHAMBER_SHIFT, C_METRO_OFFSET]
+    action: A_FA
+    action_options: [A_FA, A_RETARGET, A_RECORD, A_REGROUP]
+    decision: D_HOLD
+    decision_options: [D_HOLD, D_RELEASE, D_SCRAP, D_RETARGET]
+    notify: [RDA, EE, PIE_YE, MGR_QE]
+    message_role: RDA
+    model_message:
+      zh: "【FA 請求】{start_lot} 起約 4 批良率下降（最差 {worst_wafer} {worst_yield}%），失效集中在晶圓外圈、以缺陷為主，inline defect_density 同時升高，commonality 指向 {tool}。請優先 review／SEM {worst_wafer} 的外圈失效晶粒，確認缺陷類型與可能來源；量測端可提供失效晶粒座標。"
+      en: "[FA request] About 4 lots from {start_lot} lost yield (worst {worst_wafer} at {worst_yield}%); failures concentrate in the outer ring and are defect-driven, inline defect_density rose at the same time, and commonality points to {tool}. Please prioritise review / SEM of the outer-ring failing dies on {worst_wafer} to classify the defects and their likely source; metrology can provide the failing-die coordinates."
+    keypoints:
+      - {zh: "指出最差晶圓與位置（外圈）", en: "Names the worst wafer and location (edge ring)", any: ["{worst_wafer}", "外圈", "edge", "ring"]}
+      - {zh: "說明是缺陷而非參數", en: "Says it is defects, not a parameter", any: ["缺陷", "defect"]}
+      - {zh: "指出 commonality 的機台", en: "Names the tool from commonality", any: ["{tool}", "commonality"]}
+      - {zh: "請求 review／SEM", en: "Requests review / SEM", any: ["review", "sem", "切面", "cross-section"]}
+    explanation:
+      zh: "參數 SPC 全部正常、良率掉、失效是缺陷且呈外圈環狀、缺陷密度跳高 → 微粒事件，不是參數偏移（edge ring 磨耗會表現為厚度滾降的參數失效）。處置：hold、做 commonality 找出共同的沉積機台、請 RDA review／SEM 找缺陷來源，同時請 EE 檢查 {tool}（腔體清潔、邊緣與夾持區域）。調 target 沒有用。"
+      en: "Parameter SPC clean, yield down, failures are defects in an edge ring, defect density up → a particle event, not a parameter shift (edge-ring wear would show up as thickness roll-off, i.e. parametric fails). Hold, run commonality to find the shared deposition tool, have RDA review / SEM the defects, and have EE check {tool} (chamber cleanliness, edge and clamp areas). Re-targeting does nothing here."
+
+  fab_metro_offset:
+    domain: fab
+    title: {zh: "很多 chamber OOC、良率卻很穩", en: "Many chambers OOC, yet yield is steady"}
+    brief:
+      zh: "【早會】gate_ox_thk 的 SPC 從 {start_lot} 起好幾個 chamber 都出現 OOC，PE 準備調整 RTP 的溫度。但良率一直很穩（平均 {yield}%）。"
+      en: "[Morning meeting] gate_ox_thk SPC has shown OOC on several chambers since {start_lot}, and PE is about to adjust the RTP temperature. Yet yield has stayed steady (mean {yield}%)."
+    cause: C_METRO_OFFSET
+    cause_options: [C_METRO_OFFSET, C_RECIPE_ALL, C_CHAMBER_SHIFT, C_DRIFT]
+    action: A_REGROUP
+    action_options: [A_REGROUP, A_RETARGET, A_HOLD_INHIBIT, A_RECORD]
+    decision: D_REMEASURE_RELEASE
+    decision_options: [D_REMEASURE_RELEASE, D_HOLD, D_RETARGET, D_SCRAP]
+    notify: [EE, PE, MGR_QE]
+    message_role: PE
+    model_message:
+      zh: "【請先不要調 RTP】gate_ox_thk 的 OOC 來自量測機台 {metro}：依量測機台分組後，只有 {metro} 量的晶圓偏約 {offset} nm，所有 chamber 都一樣；電性與良率（平均 {yield}%）完全沒變，這次事件的良率影響為 {impact} 個百分點。我們正用黃金片確認並校正 {metro}，期間產品改由另一台量測。"
+      en: "[Please do not adjust the RTP yet] The gate_ox_thk OOC comes from metrology tool {metro}: grouped by metrology tool, only wafers measured on {metro} are off by about {offset} nm, on every chamber; electrical results and yield (mean {yield}%) have not changed, and the yield impact of this event is {impact} percentage points. We are checking and recalibrating {metro} with a golden wafer; product is measured on the other tool meanwhile."
+    keypoints:
+      - {zh: "指出量測機台", en: "Names the metrology tool", any: ["{metro}"]}
+      - {zh: "請對方先不要調製程", en: "Asks not to adjust the process", any: ["不要調", "do not adjust", "don't adjust", "not adjust", "hold off"]}
+      - {zh: "用良率／電性佐證產品沒變", en: "Uses yield / electrical data to show the product is unchanged", any: ["良率", "yield", "電性", "electrical"]}
+      - {zh: "說明下一步（黃金片、校正）", en: "States the next step (golden wafer, recalibrate)", any: ["黃金片", "golden", "校正", "calibrat"]}
+    explanation:
+      zh: "多個 chamber 同時偏、良率卻完全沒變 → 產品沒有改變，改變的是量測。依 metro_tool_id 分組就能看出只有一台量測機台偏。若 PE 依此調整 RTP 溫度，反而會把正常的閘極氧化層調壞，製造真正的 excursion。"
+      en: "Several chambers moved together while yield did not change at all → the product did not change, the measurement did. Grouping by metro_tool_id shows a single metrology tool is off. If PE adjusted the RTP temperature on these readings, a healthy gate oxide would be pushed off target and create a real excursion."

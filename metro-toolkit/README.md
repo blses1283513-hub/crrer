@@ -35,7 +35,7 @@ proving gauge capability, and turning site data into SPC and root cause.
 cd metro-toolkit
 pip install -r requirements.txt          # or: pip install -e ".[dashboard,dev]"
 
-python -m pytest                         # ~110 tests: physics limits, statistics, end-to-end
+python -m pytest                         # ~170 tests: physics limits, statistics, cases, end-to-end
 PYTHONPATH=src python -m metro_toolkit.demo            # report -> reports/demo/report.md
 streamlit run src/metro_toolkit/dashboard/app.py       # interactive dashboard
 ```
@@ -66,7 +66,9 @@ Full step-by-step Windows instructions (including SemiYield and the other upstre
 6. **Data import** and **Fab simulator**: see the sections below.
 7. **DOE / recipe**: design an experiment, run it on a virtual ALD or CVD tool (or upload your own results),
    fit a response surface, optimise thickness + uniformity together, confirm, and check against the answer key.
-8. **Guide 參數與圖表說明**: every parameter and chart explanation in one searchable place (see below).
+8. **Case study 案例練習**: 🎲 a random, realistic situation from any of the pages above; decide and write the
+   message, then get scored and debriefed (see below).
+9. **Guide 參數與圖表說明**: every parameter and chart explanation in one searchable place (see below).
 
 ## Five lessons the demo makes concrete
 
@@ -106,6 +108,40 @@ Content lives in `src/metro_toolkit/guide/` (`params_*.yaml`, `charts_*.yaml`, `
 labels) and can be edited without touching code. `insights.py` and `insights_semiyield.py` turn each chart's data
 into the status and the numbers the messages quote. `tests/test_guide.py` checks that every control and chart has
 complete text in both languages and that every value a message uses is actually provided.
+
+## Case study practice (案例練習)
+
+Dashboard → **Case study 案例練習** → 🎲 **隨機案例** (random case). Each case is one situation a Metro AE meets in
+real work, with randomised numbers but one known cause. The charts are drawn by the same simulators and chart code as
+the other pages, so the evidence looks exactly like it would there.
+
+1. Read the situation and the evidence (charts with the usual "📖 How to read this chart" panel).
+2. Answer: **root cause**, **first action**, **disposition / decision**, **who to notify** (RDA, PE, EE,
+   PIE / YE, Manager / QE, or nobody), and **write the message** to the role the case names.
+3. Submit: score out of 100 (cause 40, action 25, decision 20, notify 15 by overlap), the model answers with the
+   reasoning, your message beside a model message, and a checklist of what a good message must contain (the number,
+   the tool / chamber, the impact, the ask).
+
+| Area | Case types |
+| --- | --- |
+| SPC | one chamber shifted · slow drift · many chambers OOC at once (metrology offset) · mean fine but uniformity worse · low Cpk without any OOC · a single OOC point at night (false alarm: record, don't escalate) |
+| Wafer map | thin outer ring · one side thick · NU jumped (one bad site) · centre-to-edge worse after a PM |
+| Film stack & fit | great χ² but the thickness disagrees with TEM (wrong fixed underlayer) · poor repeatability on a new recipe (floating n on a thin film) |
+| MSA | repeatability fails GR&R · reproducibility (three tools disagree) · high %GRR with a good P/T (narrow parts) · new tool fails matching (offset or slope) |
+| Recipe studies | can the new spec stay on reflectometry? (thin: switch to SE; thick: keep it) |
+| DOE / recipe | setting a recipe from a 2-level DOE (curvature) · optimum on the edge of the range · a DOE with almost nothing significant |
+| Fab simulator | yield drop with a gate-oxide shift · yield drop with clean parameter SPC (particles) · many chambers OOC with steady yield (metrology offset) |
+
+* **Levels**: basic, intermediate, advanced. Harder cases have smaller signals, and on intermediate / advanced
+  the brief may say the measurement was already re-verified, which changes the right first action (verify vs
+  hold and inhibit).
+* **Case IDs** such as `spc_chamber_shift-I-04217` (type, level B / I / A, seed) always rebuild the same case.
+  Paste one under **用案例編號重練 · Replay a case by its ID** to retry it or to discuss the same case with someone else.
+* **Study log**: **存到我的練習紀錄 Save to my study log** writes the debrief as Markdown to `data/cases/<case id>.md` and adds a line to
+  `data/cases/history.jsonl`. The page shows your history (case count, mean and last-5 score, mean by area). `data/` is git-ignored;
+  `METRO_CASES_PATH` moves the folder.
+* Texts live in `src/metro_toolkit/cases/cases.yaml` (zh + en) and data in `cases/generators.py`, so you can add
+  your own case types. Answers follow generic OCAP practice; in real work your fab's OCAP and sign-off rules decide.
 
 ## Vocabulary study files (Eudic 歐路詞典)
 
@@ -239,8 +275,10 @@ metro-toolkit/
 │   ├── datagen/            synthetic thickness data, fab simulator + answer key, MSA study data
 │   ├── doe/                designs · model · optimize · virtual (process tools with an answer key)
 │   ├── guide/              chart & parameter guide: params_*.yaml · charts_*.yaml · insights (data → status)
+│   ├── cases/              case study practice: cases.yaml (texts, answers) · generators.py (23 case types)
 │   ├── ingest/             readers · mapping · convert · checks · store (your own data)
 │   ├── dashboard/app.py    Streamlit app
+│   ├── dashboard/figures.py chart builders shared by the pages and the case study
 │   ├── demo.py             one-command report
 │   ├── schema.py · config.py · viz.py
 └── tests/                  pytest suite
