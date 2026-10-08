@@ -227,3 +227,30 @@ VRT
 Tetragonal phase
 Rietveld
 TiOx
+SLAM
+Scribe line
+Secondary electrons
+Everhart–Thornley detector
+Edge bloom
+Edge threshold
+Resist shrinkage
+Line/space
+Contact hole
+Overlay
+Box-in-box
+DBO
+Wafer magnification
+Wafer rotation
+Field magnification
+Field rotation
+TIS
+TE polarization
+TM polarization
+Film stress
+Stoney equation
+Tensile stress
+Compressive stress
+Wafer bow
+Thermal stress
+FFT thickness
+Michelson interferometer

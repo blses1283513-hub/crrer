@@ -228,3 +228,30 @@ VRT,可變保存時間,Cells whose retention jumps between values as a defect tr
 Tetragonal phase,四方相,High-κ (about 38) crystal phase of ZrO₂; the monoclinic phase has κ near 20.,ZrO₂ 的高介電常數晶相。,High-k; Rietveld,tetragonal; t-ZrO2,08 Film Stack and Dispersion Models
 Rietveld,Rietveld 精修,Whole-pattern XRD fitting that quantifies phase fractions.,以全譜擬合 XRD 求各晶相比例。,Tetragonal phase,Rietveld refinement; XRD,07 XRR XRF FTIR Profilometry
 TiOx,氧化鈦介面層,Thin oxide formed on the TiN electrode during ozone-based ZrO₂ ALD.,O₃ ALD 時在 TiN 上形成的氧化層。,Interfacial layer; TiN; ZAZ,TiO2 interfacial layer,08 Film Stack and Dispersion Models
+SLAM,切割道量測標記,"Dedicated metrology marks placed in the scribe line: film pads, OCD gratings, CD-SEM targets, overlay boxes, alignment marks.",放在切割道上的專用量測標記。,Scribe line; Pad; Overlay,Scribe line area mark; scribe line mark,03 Metrology Technology Map
+Scribe line,切割道,The gap between dies where wafers are sawn; hosts metrology and test structures.,晶粒之間的切割區，放量測與測試結構。,SLAM; Pad,scribe; kerf; street,03 Metrology Technology Map
+Secondary electrons,二次電子,Low-energy (<50 eV) electrons emitted from the top few nm of the sample; the CD-SEM imaging signal.,樣品表面逸出的低能電子，CD-SEM 成像訊號。,CD-SEM; Everhart–Thornley detector; Edge bloom,SE yield; secondary electron,03 Metrology Technology Map
+Everhart–Thornley detector,Everhart–Thornley 偵測器,Scintillator-photomultiplier detector with a positively biased collector grid that pulls in secondary electrons.,以正偏壓收集柵吸入二次電子的偵測器。,Secondary electrons; CD-SEM,ET detector; Everhart-Thornley,03 Metrology Technology Map
+Edge bloom,邊緣亮化,Bright CD-SEM signal at feature edges because secondary electrons escape from two surfaces.,邊緣二次電子逸出較多而變亮。,Secondary electrons; Edge threshold,edge effect,03 Metrology Technology Map
+Edge threshold,邊緣閾值,Fraction between signal minimum and maximum used to locate an edge; it defines which CD (top or bottom) is reported.,決定邊緣位置的訊號百分比。,CD-SEM; Edge bloom,threshold algorithm,03 Metrology Technology Map
+Resist shrinkage,光阻收縮,Loss of resist CD under electron-beam dose; repeated measurements at one site shrink the feature.,電子束劑量使光阻 CD 變小。,CD-SEM; GR&R,shrinkage; e-beam shrinkage,12 MSA and Gauge R&R
+Line/space,線與間距,Periodic line pattern; the standard target for CD-SEM and OCD gratings.,週期性線條圖形。,Pitch; OCD; CD,L/S; line and space,06 OCD Scatterometry
+Contact hole,接觸孔,"Hole feature; CD-SEM measures its top diameter and ellipticity, the bottom is dark and hard to see.",孔狀圖形；底部難以用 SEM 觀察。,CD-SEM; Aspect ratio,CH; via hole,06 OCD Scatterometry
+Overlay,疊對,Placement error of the current layer relative to a previous layer.,當層相對前層的位置誤差。,Box-in-box; Wafer magnification; TIS,OVL; registration,03 Metrology Technology Map
+Box-in-box,框中框疊對標記,"Overlay mark: outer box on the previous layer, inner box on the current layer; overlay is the difference of their centres.",外框前層、內框當層的疊對標記。,Overlay; TIS,BiB; registration box; IBO,03 Metrology Technology Map
+DBO,繞射式疊對,Overlay measured from the asymmetry of diffraction from stacked gratings.,用疊層光柵繞射不對稱量疊對。,Overlay; Box-in-box,diffraction-based overlay,03 Metrology Technology Map
+Wafer magnification,晶圓放大,Linear overlay term proportional to distance from wafer centre (ppm); 1 ppm is 150 nm at 150 mm.,與離晶圓中心距離成正比的疊對項。,Field magnification; Wafer rotation; Overlay,wafer mag; Mw,03 Metrology Technology Map
+Wafer rotation,晶圓旋轉,Overlay term from a small rotation of the whole wafer pattern (µrad).,整片圖形的微小旋轉。,Wafer magnification; Field rotation,wafer rot; Rw,03 Metrology Technology Map
+Field magnification,場內放大,Overlay term proportional to position inside each exposure field.,與曝光場內位置成正比的疊對項。,Wafer magnification; Field rotation,field mag; intrafield magnification; Mf,03 Metrology Technology Map
+Field rotation,場內旋轉,Rotation of each exposure field about its own centre.,每個曝光場繞自身中心的旋轉。,Field magnification; Wafer rotation,field rot; Rf,03 Metrology Technology Map
+TIS,機台誘發偏移,Apparent overlay created by tool asymmetry; removed by averaging 0° and 180° measurements.,機台不對稱造成的假疊對，0°/180° 平均去除。,Overlay; Box-in-box,Tool-induced shift,13 Tool-to-Tool Matching
+TE polarization,TE 偏振,Electric field parallel to the grating lines; sees the area-averaged ε of the grating.,電場平行光柵線。,TM polarization; OCD; EMA,TE,06 OCD Scatterometry
+TM polarization,TM 偏振,"Electric field perpendicular to the grating lines; sees the averaged 1/ε, dominated by the low-index part.",電場垂直光柵線。,TE polarization; OCD,TM,06 OCD Scatterometry
+Film stress,薄膜應力,"In-plane stress in a film; tensile is positive, compressive is negative.",膜內平面應力，拉為正、壓為負。,Stoney equation; Wafer bow; Thermal stress,residual stress; intrinsic stress,03 Metrology Technology Map
+Stoney equation,Stoney 方程,σ = [E/(1−ν)]_s t_s²/(6 t_f) · Δ(1/R): film stress from the change in wafer curvature.,由晶圓曲率變化求膜應力。,Film stress; Wafer bow,Stoney,03 Metrology Technology Map
+Tensile stress,拉應力,"Positive stress: the film wants to shrink, bending the wafer concave on the film side.",正應力，晶圓往膜面凹。,Compressive stress; Film stress,tensile,03 Metrology Technology Map
+Compressive stress,壓應力,"Negative stress: the film wants to expand, bending the wafer convex on the film side.",負應力，晶圓往膜面凸。,Tensile stress; Film stress,compressive,03 Metrology Technology Map
+Wafer bow,晶圓翹曲,Out-of-plane deflection of the wafer centre; bow ≈ D²/(8R).,晶圓中心偏離平面的量。,Stoney equation; Wafer magnification,bow; warp,03 Metrology Technology Map
+Thermal stress,熱應力,Stress from different thermal expansion of film and substrate after cooling: M_f(α_f − α_s)ΔT.,膜與基板熱膨脹差造成的應力。,Film stress; Stoney equation,thermal mismatch,03 Metrology Technology Map
+FFT thickness,FFT 厚度法,Thick-film thickness from the Fourier transform of reflectance vs wavenumber; peak at optical path 2nt.,對波數光譜做 FFT 求厚度。,Reflectometry; FTIR; Fringe,fringe FFT,04 Reflectometry
+Michelson interferometer,Michelson 干涉儀,Two-arm interferometer at the heart of FTIR spectrometers; used for thick films and epi.,FTIR 的核心干涉儀，用於厚膜與磊晶。,FTIR; FFT thickness,Michelson,07 XRR XRF FTIR Profilometry

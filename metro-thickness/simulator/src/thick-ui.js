@@ -60,7 +60,7 @@
       for (const s of series.filter((q) => q.label)) {
         leg.append(u.svg('line', { x1: lx, x2: lx + 16, y1: T - 18, y2: T - 18, stroke: s.color, 'stroke-width': 2.4, 'stroke-dasharray': s.dash || null }));
         leg.append(u.svg('text', { x: lx + 20, y: T - 14, 'font-size': 10.5, fill: 'var(--text-dim)' }, s.label));
-        lx += 30 + s.label.length * 6.2;
+        lx += 30 + [...s.label].reduce((w, ch) => w + (ch.charCodeAt(0) > 0x2e80 ? 10.6 : 6.1), 0);
       }
       g.append(leg);
     }

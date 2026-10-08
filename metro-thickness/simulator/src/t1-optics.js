@@ -112,8 +112,11 @@
         ['系統偏差 bias', `${bias >= 0 ? '+' : ''}${bias.toFixed(3)} nm`, Math.abs(bias) > 0.05 ? 'badtxt' : 'goodtxt'], ['重複性 1σ', `${(m.sd[0] * 1000).toFixed(1)} pm`]];
       if (cfg.floatTA) pairs.push(['Al₂O₃ 擬合', `${m.mean[1].toFixed(3)} ± ${m.sd[1].toFixed(3)} nm`], ['corr(t_Z, t_A)', m.sys.corr[0][1].toFixed(3), Math.abs(m.sys.corr[0][1]) > 0.9 ? 'badtxt' : '']);
       if (cfg.floatN) { const j = names.indexOf('Δn'); pairs.push(['Δn 擬合', m.mean[j].toFixed(4)], ['corr(t_Z, n)', m.sys.corr[0][j].toFixed(3), Math.abs(m.sys.corr[0][j]) > 0.9 ? 'badtxt' : '']); }
-      res.replaceChildren(V.kvGrid(pairs), u.el('div', { class: 'row' }, u.el('span', { class: 'note' }, 'χ²ν（理想 ≈ 1）'), V.chip(chi.toFixed(chi < 10 ? 2 : 0), chiKind),
-        u.el('span', { class: 'note' }, chi > 20 ? '模型無法解釋資料：殘差有結構，先查堆疊與 n/k。' : chi > 2 ? '殘差略有結構。' : '殘差接近純雜訊；但好的擬合不代表模型正確，看 XRR 與分批斜率。')));
+      const gofV = D.ext.gof(m.one.data, m.model), gofK = D.ext.gofBand(gofV);
+      r.gof = gofV;
+      res.replaceChildren(V.kvGrid(pairs), u.el('div', { class: 'row' }, u.el('span', { class: 'note' }, 'GOF（≈1 完美、≥0.95 可接受、<0.8 不吻合）'), V.chip(gofV.toFixed(4), gofK),
+        u.el('span', { class: 'note' }, 'χ²ν（理想 ≈ 1）'), V.chip(chi.toFixed(chi < 10 ? 2 : 0), chiKind),
+        u.el('span', { class: 'note' }, gofV >= 0.95 && chi > 20 ? `GOF ${gofV.toFixed(4)} 看起來「合格」，但 χ²ν = ${chi.toFixed(0)}：GOF 是對光譜總變化的比例，光譜本身變化很大時，系統性殘差也只佔一點點。GOF 合格不代表模型對——要一起看 χ²ν、殘差結構與 XRR。` : chi > 20 ? '模型無法解釋資料：殘差有結構，先查堆疊與 n/k。' : chi > 2 ? '殘差略有結構。' : '殘差接近純雜訊；但好的擬合不代表模型正確，看 XRR 與分批斜率。')));
       const msgs = [];
       if (!cfg.includeIL && truth.tIL > 0.05) msgs.push(`模型省略了 ${truth.tIL.toFixed(2)} nm TiOx 介面層：擬合把它吸收進 ZrO₂，讀值偏厚 ${bias.toFixed(2)} nm。`);
       if (Math.abs(truth.fT - cfg.libFT) > 0.05) msgs.push(`真實膜的晶相（f_t ${truth.fT.toFixed(2)}）與 n/k 資料庫（${cfg.libFT.toFixed(2)}）不一致：n 錯，厚度跟著錯。`);
@@ -156,7 +159,7 @@
       const xrrTot = truth.tZ + truth.tA + truth.tIL + truth.amc + R.n() * 0.03;
       const seTot = result.m.sys.x[0] + (result.cfg.floatTA ? result.m.sys.x[1] : result.cfg.tAfixed) + (result.cfg.includeIL ? 0.5 : 0);
       const diff = seTot - xrrTot;
-      D.t1Last = { bias: result.m.sys.x[0] - truth.tZ, sd: result.m.sd[0], chi: result.m.sys.chi2nu, slope: result.slope, seXrr: diff };
+      D.t1Last = { bias: result.m.sys.x[0] - truth.tZ, sd: result.m.sd[0], chi: result.m.sys.chi2nu, slope: result.slope, seXrr: diff, gof: result.gof };
       document.dispatchEvent(new CustomEvent('dms:results'));
       xrrKv.replaceChildren(V.kvGrid([['XRR 總厚 total', `${xrrTot.toFixed(2)} nm`], ['SE 模型總厚', `${seTot.toFixed(2)} nm`], ['差距 SE − XRR', `${diff >= 0 ? '+' : ''}${diff.toFixed(2)} nm`, Math.abs(diff) > 0.15 ? 'badtxt' : 'goodtxt']]),
         u.el('p', { class: 'note' }, 'XRR 讀值以「真實總厚 + 0.03 nm 雜訊」模擬（條紋週期近乎與模型無關）；曲線本身由 Parratt 遞迴計算。'));

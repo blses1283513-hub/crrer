@@ -272,7 +272,7 @@ Spot size
 <div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">Spot size</span><span style="font-size:1.05em;margin-left:8px;color:#333">光斑大小</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: spot</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>Size of the measurement beam on the wafer; must fit inside the pad.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>量測光束在晶圓上的大小。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://Pad">Pad</a> · <a href="entry://AOI">AOI</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 03 Metrology Technology Map</div></div>
 </>
 Pad
-<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">Pad</span><span style="font-size:1.05em;margin-left:8px;color:#333">量測墊</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: measurement pad, test pad</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>Dedicated blanket or grating area (often in the scribe line) for metrology.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>切割道上專供量測的區域。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://Spot size">Spot size</a> · Scribe line</div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 03 Metrology Technology Map</div></div>
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">Pad</span><span style="font-size:1.05em;margin-left:8px;color:#333">量測墊</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: measurement pad, test pad</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>Dedicated blanket or grating area (often in the scribe line) for metrology.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>切割道上專供量測的區域。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://Spot size">Spot size</a> · <a href="entry://Scribe line">Scribe line</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 03 Metrology Technology Map</div></div>
 </>
 Dispersion model
 <div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">Dispersion model</span><span style="font-size:1.05em;margin-left:8px;color:#333">色散模型</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: dispersion</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>Parameterized formula for n(λ), k(λ) of a material.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>描述 n、k 隨波長變化的參數化公式。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://Cauchy">Cauchy</a> · <a href="entry://Tauc–Lorentz">Tauc–Lorentz</a> · <a href="entry://Drude model">Drude model</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 08 Film Stack and Dispersion Models</div></div>
@@ -684,6 +684,87 @@ Rietveld
 </>
 TiOx
 <div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">TiOx</span><span style="font-size:1.05em;margin-left:8px;color:#333">氧化鈦介面層</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: TiO2 interfacial layer</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>Thin oxide formed on the TiN electrode during ozone-based ZrO₂ ALD.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>O₃ ALD 時在 TiN 上形成的氧化層。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://Interfacial layer">Interfacial layer</a> · <a href="entry://TiN">TiN</a> · <a href="entry://ZAZ">ZAZ</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 08 Film Stack and Dispersion Models</div></div>
+</>
+SLAM
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">SLAM</span><span style="font-size:1.05em;margin-left:8px;color:#333">切割道量測標記</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: Scribe line area mark, scribe line mark</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>Dedicated metrology marks placed in the scribe line: film pads, OCD gratings, CD-SEM targets, overlay boxes, alignment marks.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>放在切割道上的專用量測標記。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://Scribe line">Scribe line</a> · <a href="entry://Pad">Pad</a> · <a href="entry://Overlay">Overlay</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 03 Metrology Technology Map</div></div>
+</>
+Scribe line
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">Scribe line</span><span style="font-size:1.05em;margin-left:8px;color:#333">切割道</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: scribe, kerf, street</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>The gap between dies where wafers are sawn; hosts metrology and test structures.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>晶粒之間的切割區，放量測與測試結構。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://SLAM">SLAM</a> · <a href="entry://Pad">Pad</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 03 Metrology Technology Map</div></div>
+</>
+Secondary electrons
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">Secondary electrons</span><span style="font-size:1.05em;margin-left:8px;color:#333">二次電子</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: SE yield, secondary electron</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>Low-energy (&lt;50 eV) electrons emitted from the top few nm of the sample; the CD-SEM imaging signal.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>樣品表面逸出的低能電子，CD-SEM 成像訊號。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://CD-SEM">CD-SEM</a> · <a href="entry://Everhart–Thornley detector">Everhart–Thornley detector</a> · <a href="entry://Edge bloom">Edge bloom</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 03 Metrology Technology Map</div></div>
+</>
+Everhart–Thornley detector
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">Everhart–Thornley detector</span><span style="font-size:1.05em;margin-left:8px;color:#333">Everhart–Thornley 偵測器</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: ET detector, Everhart-Thornley</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>Scintillator-photomultiplier detector with a positively biased collector grid that pulls in secondary electrons.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>以正偏壓收集柵吸入二次電子的偵測器。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://Secondary electrons">Secondary electrons</a> · <a href="entry://CD-SEM">CD-SEM</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 03 Metrology Technology Map</div></div>
+</>
+Edge bloom
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">Edge bloom</span><span style="font-size:1.05em;margin-left:8px;color:#333">邊緣亮化</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: edge effect</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>Bright CD-SEM signal at feature edges because secondary electrons escape from two surfaces.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>邊緣二次電子逸出較多而變亮。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://Secondary electrons">Secondary electrons</a> · <a href="entry://Edge threshold">Edge threshold</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 03 Metrology Technology Map</div></div>
+</>
+Edge threshold
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">Edge threshold</span><span style="font-size:1.05em;margin-left:8px;color:#333">邊緣閾值</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: threshold algorithm</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>Fraction between signal minimum and maximum used to locate an edge; it defines which CD (top or bottom) is reported.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>決定邊緣位置的訊號百分比。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://CD-SEM">CD-SEM</a> · <a href="entry://Edge bloom">Edge bloom</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 03 Metrology Technology Map</div></div>
+</>
+Resist shrinkage
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">Resist shrinkage</span><span style="font-size:1.05em;margin-left:8px;color:#333">光阻收縮</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: shrinkage, e-beam shrinkage</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>Loss of resist CD under electron-beam dose; repeated measurements at one site shrink the feature.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>電子束劑量使光阻 CD 變小。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://CD-SEM">CD-SEM</a> · <a href="entry://GR&amp;R">GR&amp;R</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 12 MSA and Gauge R&amp;R</div></div>
+</>
+Line/space
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">Line/space</span><span style="font-size:1.05em;margin-left:8px;color:#333">線與間距</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: L/S, line and space</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>Periodic line pattern; the standard target for CD-SEM and OCD gratings.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>週期性線條圖形。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://Pitch">Pitch</a> · <a href="entry://OCD">OCD</a> · <a href="entry://CD">CD</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 06 OCD Scatterometry</div></div>
+</>
+Contact hole
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">Contact hole</span><span style="font-size:1.05em;margin-left:8px;color:#333">接觸孔</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: CH, via hole</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>Hole feature; CD-SEM measures its top diameter and ellipticity, the bottom is dark and hard to see.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>孔狀圖形；底部難以用 SEM 觀察。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://CD-SEM">CD-SEM</a> · <a href="entry://Aspect ratio">Aspect ratio</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 06 OCD Scatterometry</div></div>
+</>
+Overlay
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">Overlay</span><span style="font-size:1.05em;margin-left:8px;color:#333">疊對</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: OVL, registration</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>Placement error of the current layer relative to a previous layer.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>當層相對前層的位置誤差。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://Box-in-box">Box-in-box</a> · <a href="entry://Wafer magnification">Wafer magnification</a> · <a href="entry://TIS">TIS</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 03 Metrology Technology Map</div></div>
+</>
+Box-in-box
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">Box-in-box</span><span style="font-size:1.05em;margin-left:8px;color:#333">框中框疊對標記</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: BiB, registration box, IBO</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>Overlay mark: outer box on the previous layer, inner box on the current layer; overlay is the difference of their centres.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>外框前層、內框當層的疊對標記。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://Overlay">Overlay</a> · <a href="entry://TIS">TIS</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 03 Metrology Technology Map</div></div>
+</>
+DBO
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">DBO</span><span style="font-size:1.05em;margin-left:8px;color:#333">繞射式疊對</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: diffraction-based overlay</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>Overlay measured from the asymmetry of diffraction from stacked gratings.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>用疊層光柵繞射不對稱量疊對。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://Overlay">Overlay</a> · <a href="entry://Box-in-box">Box-in-box</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 03 Metrology Technology Map</div></div>
+</>
+Wafer magnification
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">Wafer magnification</span><span style="font-size:1.05em;margin-left:8px;color:#333">晶圓放大</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: wafer mag, Mw</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>Linear overlay term proportional to distance from wafer centre (ppm); 1 ppm is 150 nm at 150 mm.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>與離晶圓中心距離成正比的疊對項。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://Field magnification">Field magnification</a> · <a href="entry://Wafer rotation">Wafer rotation</a> · <a href="entry://Overlay">Overlay</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 03 Metrology Technology Map</div></div>
+</>
+Wafer rotation
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">Wafer rotation</span><span style="font-size:1.05em;margin-left:8px;color:#333">晶圓旋轉</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: wafer rot, Rw</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>Overlay term from a small rotation of the whole wafer pattern (µrad).</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>整片圖形的微小旋轉。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://Wafer magnification">Wafer magnification</a> · <a href="entry://Field rotation">Field rotation</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 03 Metrology Technology Map</div></div>
+</>
+Field magnification
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">Field magnification</span><span style="font-size:1.05em;margin-left:8px;color:#333">場內放大</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: field mag, intrafield magnification, Mf</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>Overlay term proportional to position inside each exposure field.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>與曝光場內位置成正比的疊對項。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://Wafer magnification">Wafer magnification</a> · <a href="entry://Field rotation">Field rotation</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 03 Metrology Technology Map</div></div>
+</>
+Field rotation
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">Field rotation</span><span style="font-size:1.05em;margin-left:8px;color:#333">場內旋轉</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: field rot, Rf</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>Rotation of each exposure field about its own centre.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>每個曝光場繞自身中心的旋轉。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://Field magnification">Field magnification</a> · <a href="entry://Wafer rotation">Wafer rotation</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 03 Metrology Technology Map</div></div>
+</>
+TIS
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">TIS</span><span style="font-size:1.05em;margin-left:8px;color:#333">機台誘發偏移</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: Tool-induced shift</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>Apparent overlay created by tool asymmetry; removed by averaging 0° and 180° measurements.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>機台不對稱造成的假疊對，0°/180° 平均去除。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://Overlay">Overlay</a> · <a href="entry://Box-in-box">Box-in-box</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 13 Tool-to-Tool Matching</div></div>
+</>
+TE polarization
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">TE polarization</span><span style="font-size:1.05em;margin-left:8px;color:#333">TE 偏振</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: TE</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>Electric field parallel to the grating lines; sees the area-averaged ε of the grating.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>電場平行光柵線。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://TM polarization">TM polarization</a> · <a href="entry://OCD">OCD</a> · <a href="entry://EMA">EMA</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 06 OCD Scatterometry</div></div>
+</>
+TM polarization
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">TM polarization</span><span style="font-size:1.05em;margin-left:8px;color:#333">TM 偏振</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: TM</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>Electric field perpendicular to the grating lines; sees the averaged 1/ε, dominated by the low-index part.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>電場垂直光柵線。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://TE polarization">TE polarization</a> · <a href="entry://OCD">OCD</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 06 OCD Scatterometry</div></div>
+</>
+Film stress
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">Film stress</span><span style="font-size:1.05em;margin-left:8px;color:#333">薄膜應力</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: residual stress, intrinsic stress</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>In-plane stress in a film; tensile is positive, compressive is negative.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>膜內平面應力，拉為正、壓為負。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://Stoney equation">Stoney equation</a> · <a href="entry://Wafer bow">Wafer bow</a> · <a href="entry://Thermal stress">Thermal stress</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 03 Metrology Technology Map</div></div>
+</>
+Stoney equation
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">Stoney equation</span><span style="font-size:1.05em;margin-left:8px;color:#333">Stoney 方程</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: Stoney</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>σ = [E/(1−ν)]_s t_s²/(6 t_f) · Δ(1/R): film stress from the change in wafer curvature.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>由晶圓曲率變化求膜應力。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://Film stress">Film stress</a> · <a href="entry://Wafer bow">Wafer bow</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 03 Metrology Technology Map</div></div>
+</>
+Tensile stress
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">Tensile stress</span><span style="font-size:1.05em;margin-left:8px;color:#333">拉應力</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: tensile</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>Positive stress: the film wants to shrink, bending the wafer concave on the film side.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>正應力，晶圓往膜面凹。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://Compressive stress">Compressive stress</a> · <a href="entry://Film stress">Film stress</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 03 Metrology Technology Map</div></div>
+</>
+Compressive stress
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">Compressive stress</span><span style="font-size:1.05em;margin-left:8px;color:#333">壓應力</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: compressive</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>Negative stress: the film wants to expand, bending the wafer convex on the film side.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>負應力，晶圓往膜面凸。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://Tensile stress">Tensile stress</a> · <a href="entry://Film stress">Film stress</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 03 Metrology Technology Map</div></div>
+</>
+Wafer bow
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">Wafer bow</span><span style="font-size:1.05em;margin-left:8px;color:#333">晶圓翹曲</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: bow, warp</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>Out-of-plane deflection of the wafer centre; bow ≈ D²/(8R).</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>晶圓中心偏離平面的量。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://Stoney equation">Stoney equation</a> · <a href="entry://Wafer magnification">Wafer magnification</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 03 Metrology Technology Map</div></div>
+</>
+Thermal stress
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">Thermal stress</span><span style="font-size:1.05em;margin-left:8px;color:#333">熱應力</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: thermal mismatch</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>Stress from different thermal expansion of film and substrate after cooling: M_f(α_f − α_s)ΔT.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>膜與基板熱膨脹差造成的應力。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://Film stress">Film stress</a> · <a href="entry://Stoney equation">Stoney equation</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 03 Metrology Technology Map</div></div>
+</>
+FFT thickness
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">FFT thickness</span><span style="font-size:1.05em;margin-left:8px;color:#333">FFT 厚度法</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: fringe FFT</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>Thick-film thickness from the Fourier transform of reflectance vs wavenumber; peak at optical path 2nt.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>對波數光譜做 FFT 求厚度。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://Reflectometry">Reflectometry</a> · <a href="entry://FTIR">FTIR</a> · <a href="entry://Fringe">Fringe</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 04 Reflectometry</div></div>
+</>
+Michelson interferometer
+<div style="font-family:sans-serif;line-height:1.5"><span style="font-size:1.15em;font-weight:600;color:#2b3590">Michelson interferometer</span><span style="font-size:1.05em;margin-left:8px;color:#333">Michelson 干涉儀</span><div style="color:#777;font-size:0.85em;margin:2px 0 6px">also: Michelson</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">EN</span>Two-arm interferometer at the heart of FTIR spectrometers; used for thick films and epi.</div><div style="margin:4px 0"><span style="display:inline-block;min-width:2.2em;color:#fff;background:#3a45b0;border-radius:3px;padding:0 4px;margin-right:6px;font-size:0.8em;text-align:center">中</span>FTIR 的核心干涉儀，用於厚膜與磊晶。</div><div style="margin:6px 0 2px;font-size:0.92em"><b>Related 相關詞:</b> <a href="entry://FTIR">FTIR</a> · <a href="entry://FFT thickness">FFT thickness</a></div><div style="color:#888;font-size:0.8em;margin-top:6px">Metro Thickness Tools Book · 07 XRR XRF FTIR Profilometry</div></div>
 </>
 Metro
 @@@LINK=Metrology
@@ -1407,4 +1488,139 @@ XRD
 </>
 TiO2 interfacial layer
 @@@LINK=TiOx
+</>
+Scribe line area mark
+@@@LINK=SLAM
+</>
+scribe line mark
+@@@LINK=SLAM
+</>
+scribe
+@@@LINK=Scribe line
+</>
+kerf
+@@@LINK=Scribe line
+</>
+street
+@@@LINK=Scribe line
+</>
+SE yield
+@@@LINK=Secondary electrons
+</>
+secondary electron
+@@@LINK=Secondary electrons
+</>
+ET detector
+@@@LINK=Everhart–Thornley detector
+</>
+Everhart-Thornley
+@@@LINK=Everhart–Thornley detector
+</>
+edge effect
+@@@LINK=Edge bloom
+</>
+threshold algorithm
+@@@LINK=Edge threshold
+</>
+shrinkage
+@@@LINK=Resist shrinkage
+</>
+e-beam shrinkage
+@@@LINK=Resist shrinkage
+</>
+L/S
+@@@LINK=Line/space
+</>
+line and space
+@@@LINK=Line/space
+</>
+CH
+@@@LINK=Contact hole
+</>
+via hole
+@@@LINK=Contact hole
+</>
+OVL
+@@@LINK=Overlay
+</>
+registration
+@@@LINK=Overlay
+</>
+BiB
+@@@LINK=Box-in-box
+</>
+registration box
+@@@LINK=Box-in-box
+</>
+IBO
+@@@LINK=Box-in-box
+</>
+diffraction-based overlay
+@@@LINK=DBO
+</>
+wafer mag
+@@@LINK=Wafer magnification
+</>
+Mw
+@@@LINK=Wafer magnification
+</>
+wafer rot
+@@@LINK=Wafer rotation
+</>
+Rw
+@@@LINK=Wafer rotation
+</>
+field mag
+@@@LINK=Field magnification
+</>
+intrafield magnification
+@@@LINK=Field magnification
+</>
+Mf
+@@@LINK=Field magnification
+</>
+field rot
+@@@LINK=Field rotation
+</>
+Rf
+@@@LINK=Field rotation
+</>
+Tool-induced shift
+@@@LINK=TIS
+</>
+TE
+@@@LINK=TE polarization
+</>
+TM
+@@@LINK=TM polarization
+</>
+residual stress
+@@@LINK=Film stress
+</>
+intrinsic stress
+@@@LINK=Film stress
+</>
+Stoney
+@@@LINK=Stoney equation
+</>
+tensile
+@@@LINK=Tensile stress
+</>
+compressive
+@@@LINK=Compressive stress
+</>
+bow
+@@@LINK=Wafer bow
+</>
+warp
+@@@LINK=Wafer bow
+</>
+thermal mismatch
+@@@LINK=Thermal stress
+</>
+fringe FFT
+@@@LINK=FFT thickness
+</>
+Michelson
+@@@LINK=Michelson interferometer
 </>

@@ -38,7 +38,7 @@ html = patch(
     '<p class="lede">一階物理模型＋製程變異層。',
     '<p class="lede">以《Metro Thickness Tools Book》為骨架，延伸自 DRAM Metro Simulator：先在 T1–T4 走完膜厚量測的整條鏈'
     '（光譜→模型→膜厚→晶圓圖→SPC→根因），再看膜厚如何經 C_s、漏電與感測餘量變成 fail bit。'
-    '虛線底線的術語可停留或點選，顯示中文、短定義與相關詞。一階物理模型＋製程變異層。',
+    'T5–T9 延伸到切割道量測標記（SLAM）、CD-SEM、疊對、乾蝕刻剖面／OCD 與薄膜應力。虛線底線的術語可停留或點選，顯示中文、短定義與相關詞。一階物理模型＋製程變異層。',
     "lede",
 )
 
@@ -47,12 +47,18 @@ html = patch(
     html,
     '<main class="wrap">\n  <section id="m6"',
     '<main class="wrap">\n'
-    '  <nav class="jump" aria-label="模組"><a href="#t4">T4 異常判讀</a><a href="#t1">T1 光學量測</a><a href="#t2">T2 ALD 晶圓圖</a>'
-    '<a href="#t3">T3 SPC・量具・匹配</a><a href="#npi">NPI 驗證</a><a href="#m6">M6 漂移傳遞</a><a href="#m2">M2 cell</a><a href="#m4">M4 餘量</a><a href="#m5">M5 retention</a></nav>\n'
+    '  <nav class="jump" aria-label="模組"><a href="#t4">T4 異常判讀</a><a href="#t5">T5 SLAM 標記</a><a href="#t1">T1 光學量測</a><a href="#t1b">T1b 厚度範圍・n k</a><a href="#t2">T2 ALD 晶圓圖</a>'
+    '<a href="#t3">T3 SPC・量具・匹配</a><a href="#t9">T9 應力</a><a href="#t8">T8 蝕刻・OCD</a><a href="#t6">T6 CD-SEM</a><a href="#t7">T7 疊對</a><a href="#npi">NPI 驗證</a><a href="#m6">M6 漂移傳遞</a><a href="#m2">M2 cell</a><a href="#m4">M4 餘量</a><a href="#m5">M5 retention</a></nav>\n'
     '  <section id="t4" class="panel" aria-labelledby="h-t4"></section>\n'
+    '  <section id="t5" class="panel" aria-labelledby="h-t5"></section>\n'
     '  <section id="t1" class="panel" aria-labelledby="h-t1"></section>\n'
+    '  <section id="t1b" class="panel" aria-labelledby="h-t1b"></section>\n'
     '  <section id="t2" class="panel" aria-labelledby="h-t2"></section>\n'
     '  <section id="t3" class="panel" aria-labelledby="h-t3"></section>\n'
+    '  <section id="t9" class="panel" aria-labelledby="h-t9"></section>\n'
+    '  <section id="t8" class="panel" aria-labelledby="h-t8"></section>\n'
+    '  <section id="t6" class="panel" aria-labelledby="h-t6"></section>\n'
+    '  <section id="t7" class="panel" aria-labelledby="h-t7"></section>\n'
     '  <section id="npi" class="panel" aria-labelledby="h-npi"></section>\n'
     '  <section id="m6"',
     "sections",
@@ -85,7 +91,12 @@ html = patch(
     "      selected: 'tZ', presetId: 'micron1b', scenarioId: null, caseId: null,\n"
     "      thick: root.DMS.thick.clone(root.DMS.thick.THICK_DEFAULTS),\n"
     "      t1: { includeIL: true, floatTA: false, floatN: false, libFT: 0.9, noise: 1, xrfT: 10, xrfRho: 5.4 },\n"
-    "      t3: { tool: 0, tools: [{ off: 0, slope: 1 }, { off: 0.02, slope: 1 }, { off: 0.02, slope: 1.0 }], event: 'none', amcRate: 0, plan: 'p49' } };",
+    "      t3: { tool: 0, tools: [{ off: 0, slope: 1 }, { off: 0.02, slope: 1 }, { off: 0.02, slope: 1.0 }], event: 'none', amcRate: 0, plan: 'p49' },\n"
+    "      ext: { slam: { pad: 50, scribe: 80, focus: 'film' }, range: { d: 100 },\n"
+    "        stress: { film: 'pesin', s: -300, tf: 100, ts: 775, pre: 10, usePre: true },\n"
+    "        ov: { Tx: 1, Ty: -0.5, Mwx: 0.03, Mwy: 0.03, Rw: 0.02, Mfx: 0.3, Mfy: -0.2, Rf: 0.1, noise: 0.6, tis: 0.3, useStress: false, tis180: false },\n"
+    "        sem: { topCD: 30, h: 60, swa: 87, beam: 2, frames: 16, thr: 50, scans: 1, hole: false, mat: 'resist' },\n"
+    "        ocd: { time: 1, bias: 1, poly: 0, hm: 0, floatSWA: true, modelHM: true, trueSWAoff: 0 } } };",
     "freshState",
 )
 html = patch(
@@ -112,13 +123,14 @@ html = patch(
   function setThick(patch) { st.thick = merge(st.thick, patch); st.scenarioId = null; notify(); }
   function setT1(patch) { st.t1 = { ...st.t1, ...patch }; notify(); }
   function setT3(patch) { st.t3 = merge(st.t3, patch); notify(); }
+  function setExt(patch) { st.ext = merge(st.ext, patch); notify(); }
   // quiet update used by T1 when the recipe bias is recomputed (no notify loop if unchanged)
   function setModelBias(v) { if (Math.abs(st.thick.metro.modelBias - v) < 1e-6) return; st.thick = merge(st.thick, { metro: { modelBias: v } }); notify(); }
   function applyCase(id) {
     const c = (root.DMS.cases || []).find((x) => x.id === id); if (!c) return;
     const fresh = freshState();
     st = { ...fresh, params: { ...fresh.params, ...clone(c.params || {}) },
-      thick: merge(fresh.thick, clone(c.thick || {})), t1: { ...fresh.t1, ...(c.t1 || {}) }, t3: merge(fresh.t3, clone(c.t3 || {})),
+      thick: merge(fresh.thick, clone(c.thick || {})), t1: { ...fresh.t1, ...(c.t1 || {}) }, t3: merge(fresh.t3, clone(c.t3 || {})), ext: merge(fresh.ext, clone(c.ext || {})),
       drift: c.drift ? { ...clone(c.drift) } : fresh.drift, selected: c.select || 'tZ', caseId: id };
     notify();
   }""",
@@ -146,7 +158,7 @@ html = patch(
     html,
     "  const api = { init, get, snapshot, subscribe, setParam, setMeas, setDrift, select, selectMeasurand, applyPreset, applyScenario, reset,\n    exportJSON, importJSON, saveMine, loadMine };",
     "  const api = { init, get, snapshot, subscribe, setParam, setMeas, setDrift, select, selectMeasurand, applyPreset, applyScenario, reset,\n"
-    "    exportJSON, importJSON, saveMine, loadMine, setThick, setT1, setT3, setModelBias, applyCase };",
+    "    exportJSON, importJSON, saveMine, loadMine, setThick, setT1, setT3, setExt, setModelBias, applyCase };",
     "state api",
 )
 
@@ -177,7 +189,7 @@ html = patch(
     html,
     "    D.chainBar.mount('#chain');\n    for (const [k, sel] of [['m6', '#m6'], ['m2', '#m2'], ['m4', '#m4'], ['m5', '#m5']]) {",
     "    D.chainBar.mount('#chain');\n    if (D.thickChain) D.thickChain.mount('#chain');\n"
-    "    for (const [k, sel] of [['t4', '#t4'], ['t1', '#t1'], ['t2', '#t2'], ['t3', '#t3'], ['npi', '#npi'], ['m6', '#m6'], ['m2', '#m2'], ['m4', '#m4'], ['m5', '#m5']]) {",
+    "    for (const [k, sel] of [['t4', '#t4'], ['t5', '#t5'], ['t1', '#t1'], ['t1b', '#t1b'], ['t2', '#t2'], ['t3', '#t3'], ['t9', '#t9'], ['t8', '#t8'], ['t6', '#t6'], ['t7', '#t7'], ['npi', '#npi'], ['m6', '#m6'], ['m2', '#m2'], ['m4', '#m4'], ['m5', '#m5']]) {",
     "mount",
 )
 html = patch(
@@ -201,7 +213,7 @@ css = (SRC / "thick.css").read_text(encoding="utf-8")
 html = patch(html, "  @media (prefers-reduced-motion: reduce){ *{animation:none !important;transition:none !important;} }\n</style>",
              "  @media (prefers-reduced-motion: reduce){ *{animation:none !important;transition:none !important;} }\n" + css + "\n</style>", "css")
 
-modules = ["thick-engine.js", "thick-ui.js", "t1-optics.js", "t2-map.js", "t3-spc.js", "t4-triage.js", "npi.js", "terms.js"]
+modules = ["thick-engine.js", "ext-engine.js", "thick-ui.js", "t1-optics.js", "t1b-range.js", "t2-map.js", "t3-spc.js", "t4-triage.js", "t5-slam.js", "t6-cdsem.js", "t7-overlay.js", "t8-ocd.js", "t9-stress.js", "npi.js", "terms.js"]
 js = "\n".join(f"/* ---- {m} ---- */\n" + (SRC / m).read_text(encoding="utf-8") for m in modules)
 # thick-engine must load before state.init runs (state reads DMS.thick); insert all modules before main.js
 html = patch(html, "/* ---- main.js ---- */", js + "\n/* ---- main.js ---- */", "modules")

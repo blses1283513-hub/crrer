@@ -3207,5 +3207,409 @@
 "ZAZ"
 ],
 "note": "08 Film Stack and Dispersion Models"
+},
+{
+"term": "SLAM",
+"alt": [
+"Scribe line area mark",
+"scribe line mark"
+],
+"zh": "切割道量測標記",
+"en": "Dedicated metrology marks placed in the scribe line: film pads, OCD gratings, CD-SEM targets, overlay boxes, alignment marks.",
+"zhdef": "放在切割道上的專用量測標記。",
+"rel": [
+"Scribe line",
+"Pad",
+"Overlay"
+],
+"note": "03 Metrology Technology Map"
+},
+{
+"term": "Scribe line",
+"alt": [
+"scribe",
+"kerf",
+"street"
+],
+"zh": "切割道",
+"en": "The gap between dies where wafers are sawn; hosts metrology and test structures.",
+"zhdef": "晶粒之間的切割區，放量測與測試結構。",
+"rel": [
+"SLAM",
+"Pad"
+],
+"note": "03 Metrology Technology Map"
+},
+{
+"term": "Secondary electrons",
+"alt": [
+"SE yield",
+"secondary electron"
+],
+"zh": "二次電子",
+"en": "Low-energy (<50 eV) electrons emitted from the top few nm of the sample; the CD-SEM imaging signal.",
+"zhdef": "樣品表面逸出的低能電子，CD-SEM 成像訊號。",
+"rel": [
+"CD-SEM",
+"Everhart–Thornley detector",
+"Edge bloom"
+],
+"note": "03 Metrology Technology Map"
+},
+{
+"term": "Everhart–Thornley detector",
+"alt": [
+"ET detector",
+"Everhart-Thornley"
+],
+"zh": "Everhart–Thornley 偵測器",
+"en": "Scintillator-photomultiplier detector with a positively biased collector grid that pulls in secondary electrons.",
+"zhdef": "以正偏壓收集柵吸入二次電子的偵測器。",
+"rel": [
+"Secondary electrons",
+"CD-SEM"
+],
+"note": "03 Metrology Technology Map"
+},
+{
+"term": "Edge bloom",
+"alt": [
+"edge effect"
+],
+"zh": "邊緣亮化",
+"en": "Bright CD-SEM signal at feature edges because secondary electrons escape from two surfaces.",
+"zhdef": "邊緣二次電子逸出較多而變亮。",
+"rel": [
+"Secondary electrons",
+"Edge threshold"
+],
+"note": "03 Metrology Technology Map"
+},
+{
+"term": "Edge threshold",
+"alt": [
+"threshold algorithm"
+],
+"zh": "邊緣閾值",
+"en": "Fraction between signal minimum and maximum used to locate an edge; it defines which CD (top or bottom) is reported.",
+"zhdef": "決定邊緣位置的訊號百分比。",
+"rel": [
+"CD-SEM",
+"Edge bloom"
+],
+"note": "03 Metrology Technology Map"
+},
+{
+"term": "Resist shrinkage",
+"alt": [
+"shrinkage",
+"e-beam shrinkage"
+],
+"zh": "光阻收縮",
+"en": "Loss of resist CD under electron-beam dose; repeated measurements at one site shrink the feature.",
+"zhdef": "電子束劑量使光阻 CD 變小。",
+"rel": [
+"CD-SEM",
+"GR&R"
+],
+"note": "12 MSA and Gauge R&R"
+},
+{
+"term": "Line/space",
+"alt": [
+"L/S",
+"line and space"
+],
+"zh": "線與間距",
+"en": "Periodic line pattern; the standard target for CD-SEM and OCD gratings.",
+"zhdef": "週期性線條圖形。",
+"rel": [
+"Pitch",
+"OCD",
+"CD"
+],
+"note": "06 OCD Scatterometry"
+},
+{
+"term": "Contact hole",
+"alt": [
+"CH",
+"via hole"
+],
+"zh": "接觸孔",
+"en": "Hole feature; CD-SEM measures its top diameter and ellipticity, the bottom is dark and hard to see.",
+"zhdef": "孔狀圖形；底部難以用 SEM 觀察。",
+"rel": [
+"CD-SEM",
+"Aspect ratio"
+],
+"note": "06 OCD Scatterometry"
+},
+{
+"term": "Overlay",
+"alt": [
+"OVL",
+"registration"
+],
+"zh": "疊對",
+"en": "Placement error of the current layer relative to a previous layer.",
+"zhdef": "當層相對前層的位置誤差。",
+"rel": [
+"Box-in-box",
+"Wafer magnification",
+"TIS"
+],
+"note": "03 Metrology Technology Map"
+},
+{
+"term": "Box-in-box",
+"alt": [
+"BiB",
+"registration box",
+"IBO"
+],
+"zh": "框中框疊對標記",
+"en": "Overlay mark: outer box on the previous layer, inner box on the current layer; overlay is the difference of their centres.",
+"zhdef": "外框前層、內框當層的疊對標記。",
+"rel": [
+"Overlay",
+"TIS"
+],
+"note": "03 Metrology Technology Map"
+},
+{
+"term": "DBO",
+"alt": [
+"diffraction-based overlay"
+],
+"zh": "繞射式疊對",
+"en": "Overlay measured from the asymmetry of diffraction from stacked gratings.",
+"zhdef": "用疊層光柵繞射不對稱量疊對。",
+"rel": [
+"Overlay",
+"Box-in-box"
+],
+"note": "03 Metrology Technology Map"
+},
+{
+"term": "Wafer magnification",
+"alt": [
+"wafer mag",
+"Mw"
+],
+"zh": "晶圓放大",
+"en": "Linear overlay term proportional to distance from wafer centre (ppm); 1 ppm is 150 nm at 150 mm.",
+"zhdef": "與離晶圓中心距離成正比的疊對項。",
+"rel": [
+"Field magnification",
+"Wafer rotation",
+"Overlay"
+],
+"note": "03 Metrology Technology Map"
+},
+{
+"term": "Wafer rotation",
+"alt": [
+"wafer rot",
+"Rw"
+],
+"zh": "晶圓旋轉",
+"en": "Overlay term from a small rotation of the whole wafer pattern (µrad).",
+"zhdef": "整片圖形的微小旋轉。",
+"rel": [
+"Wafer magnification",
+"Field rotation"
+],
+"note": "03 Metrology Technology Map"
+},
+{
+"term": "Field magnification",
+"alt": [
+"field mag",
+"intrafield magnification",
+"Mf"
+],
+"zh": "場內放大",
+"en": "Overlay term proportional to position inside each exposure field.",
+"zhdef": "與曝光場內位置成正比的疊對項。",
+"rel": [
+"Wafer magnification",
+"Field rotation"
+],
+"note": "03 Metrology Technology Map"
+},
+{
+"term": "Field rotation",
+"alt": [
+"field rot",
+"Rf"
+],
+"zh": "場內旋轉",
+"en": "Rotation of each exposure field about its own centre.",
+"zhdef": "每個曝光場繞自身中心的旋轉。",
+"rel": [
+"Field magnification",
+"Wafer rotation"
+],
+"note": "03 Metrology Technology Map"
+},
+{
+"term": "TIS",
+"alt": [
+"Tool-induced shift"
+],
+"zh": "機台誘發偏移",
+"en": "Apparent overlay created by tool asymmetry; removed by averaging 0° and 180° measurements.",
+"zhdef": "機台不對稱造成的假疊對，0°/180° 平均去除。",
+"rel": [
+"Overlay",
+"Box-in-box"
+],
+"note": "13 Tool-to-Tool Matching"
+},
+{
+"term": "TE polarization",
+"alt": [
+"TE"
+],
+"zh": "TE 偏振",
+"en": "Electric field parallel to the grating lines; sees the area-averaged ε of the grating.",
+"zhdef": "電場平行光柵線。",
+"rel": [
+"TM polarization",
+"OCD",
+"EMA"
+],
+"note": "06 OCD Scatterometry"
+},
+{
+"term": "TM polarization",
+"alt": [
+"TM"
+],
+"zh": "TM 偏振",
+"en": "Electric field perpendicular to the grating lines; sees the averaged 1/ε, dominated by the low-index part.",
+"zhdef": "電場垂直光柵線。",
+"rel": [
+"TE polarization",
+"OCD"
+],
+"note": "06 OCD Scatterometry"
+},
+{
+"term": "Film stress",
+"alt": [
+"residual stress",
+"intrinsic stress"
+],
+"zh": "薄膜應力",
+"en": "In-plane stress in a film; tensile is positive, compressive is negative.",
+"zhdef": "膜內平面應力，拉為正、壓為負。",
+"rel": [
+"Stoney equation",
+"Wafer bow",
+"Thermal stress"
+],
+"note": "03 Metrology Technology Map"
+},
+{
+"term": "Stoney equation",
+"alt": [
+"Stoney"
+],
+"zh": "Stoney 方程",
+"en": "σ = [E/(1−ν)]_s t_s²/(6 t_f) · Δ(1/R): film stress from the change in wafer curvature.",
+"zhdef": "由晶圓曲率變化求膜應力。",
+"rel": [
+"Film stress",
+"Wafer bow"
+],
+"note": "03 Metrology Technology Map"
+},
+{
+"term": "Tensile stress",
+"alt": [
+"tensile"
+],
+"zh": "拉應力",
+"en": "Positive stress: the film wants to shrink, bending the wafer concave on the film side.",
+"zhdef": "正應力，晶圓往膜面凹。",
+"rel": [
+"Compressive stress",
+"Film stress"
+],
+"note": "03 Metrology Technology Map"
+},
+{
+"term": "Compressive stress",
+"alt": [
+"compressive"
+],
+"zh": "壓應力",
+"en": "Negative stress: the film wants to expand, bending the wafer convex on the film side.",
+"zhdef": "負應力，晶圓往膜面凸。",
+"rel": [
+"Tensile stress",
+"Film stress"
+],
+"note": "03 Metrology Technology Map"
+},
+{
+"term": "Wafer bow",
+"alt": [
+"bow",
+"warp"
+],
+"zh": "晶圓翹曲",
+"en": "Out-of-plane deflection of the wafer centre; bow ≈ D²/(8R).",
+"zhdef": "晶圓中心偏離平面的量。",
+"rel": [
+"Stoney equation",
+"Wafer magnification"
+],
+"note": "03 Metrology Technology Map"
+},
+{
+"term": "Thermal stress",
+"alt": [
+"thermal mismatch"
+],
+"zh": "熱應力",
+"en": "Stress from different thermal expansion of film and substrate after cooling: M_f(α_f − α_s)ΔT.",
+"zhdef": "膜與基板熱膨脹差造成的應力。",
+"rel": [
+"Film stress",
+"Stoney equation"
+],
+"note": "03 Metrology Technology Map"
+},
+{
+"term": "FFT thickness",
+"alt": [
+"fringe FFT"
+],
+"zh": "FFT 厚度法",
+"en": "Thick-film thickness from the Fourier transform of reflectance vs wavenumber; peak at optical path 2nt.",
+"zhdef": "對波數光譜做 FFT 求厚度。",
+"rel": [
+"Reflectometry",
+"FTIR",
+"Fringe"
+],
+"note": "04 Reflectometry"
+},
+{
+"term": "Michelson interferometer",
+"alt": [
+"Michelson"
+],
+"zh": "Michelson 干涉儀",
+"en": "Two-arm interferometer at the heart of FTIR spectrometers; used for thick films and epi.",
+"zhdef": "FTIR 的核心干涉儀，用於厚膜與磊晶。",
+"rel": [
+"FTIR",
+"FFT thickness"
+],
+"note": "07 XRR XRF FTIR Profilometry"
 }
 ]
