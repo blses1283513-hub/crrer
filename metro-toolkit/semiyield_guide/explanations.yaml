@@ -1,4 +1,5 @@
 # Hover explanations for SemiYield's dashboard (Traditional Chinese + English term).
+# Every Chinese text also has a full English version in a parallel *_en field (help_en, hover_en, en, note_en).
 # Edit freely, then restart the dashboard. Nothing in SemiYield itself is modified.
 #
 # widgets:  shown as the "?" tooltip next to an input or metric card.
@@ -6,14 +7,18 @@
 #   min/max   (sliders) disambiguate the same label used on different tabs
 #   options   (selectbox) exact option list, to disambiguate the same label
 #   help      text; Streamlit renders basic Markdown
+#   help_en   full English version of help (same Markdown structure, bold terms and lists)
 # charts:   matched by the figure title (regex). Hover text is attached to the data points.
 #   hover     Plotly hovertemplate: %{x}, %{y:.2f} insert the point's values, <br> = new line
+#   hover_en  English version of hover; must keep exactly the same %{...} and [[...]] placeholders
 #   lines     explanation for reference lines (hline/vline); matched by their annotation text
+#             (each line entry also has hover + hover_en)
 #
 # Covers all six pages: Simulation, Data Generator, SPC Dashboard, Yield Prediction,
 # Process Optimizer, SPICE Export. Charts without an entry get a generic "x / y" hover.
 #   kind      (optional) only match this widget type, e.g. metric / number_input / subheader
 #   features  process-parameter names (bottom of file) -> used wherever SemiYield shows a column name
+#             each: zh / en = name in Traditional Chinese / English, unit, note / note_en = explanation
 
 widgets:
   - label: "Navigation"
@@ -21,8 +26,13 @@ widgets:
       選擇頁面：**Simulation** 單一製程步驟的物理模型、**Data Generator** 產生合成晶圓廠資料、
       **SPC Dashboard** 管制圖與製程能力、**Yield Prediction** 良率機器學習、
       **Process Optimizer** 貝氏最佳化找製程窗口、**SPICE Export** 輸出電路模型。
+    help_en: |
+      Select a page: **Simulation** (physical models of individual process steps), **Data Generator** (synthetic fab data),
+      **SPC Dashboard** (control charts and process capability), **Yield Prediction** (machine-learning yield models),
+      **Process Optimizer** (Bayesian optimization to find the process window), **SPICE Export** (transistor models for circuit simulation).
   - label: "Upload process data CSV"
     help: "上傳自己的製程資料 CSV（至少一個數值欄位、10 筆以上資料）。**請勿上傳公司機密資料到公開環境。**"
+    help_en: "Upload your own process data as a CSV file (at least one numeric column and 10 or more rows). **Do not upload confidential company data to a public environment.**"
   # ------------------------------------------------------------------ Oxidation (Deal-Grove)
   - label: "Temperature (C)"
     min: 800
@@ -31,21 +41,36 @@ widgets:
       **Temperature 溫度（氧化）**：氧化爐管的溫度。
       溫度越高，氧化速率常數越大（Arrhenius 關係），相同時間長出的 SiO₂ 越厚。
       製程位置：閘極氧化層、墊氧化層、場氧化層的成長步驟。
+    help_en: |
+      **Temperature (oxidation)**: temperature of the oxidation furnace tube.
+      Higher temperature increases the oxidation rate constants (Arrhenius relationship), so a thicker SiO₂ film grows in the same time.
+      Where it is used: growth of the gate oxide, pad oxide and field oxide.
   - label: "Atmosphere"
     options: ["dry", "wet"]
     help: |
       **Atmosphere 氧化氣氛**
       - **dry 乾氧（O₂）**：成長慢、膜緻密、品質高，用於**閘極氧化層**。
       - **wet 濕氧（H₂O 蒸氣）**：成長快、膜較疏鬆，用於**厚的隔離／場氧化層**。
+    help_en: |
+      **Atmosphere (oxidizing ambient)**
+      - **dry (O₂)**: slow growth, dense high-quality film; used for the **gate oxide**.
+      - **wet (H₂O vapor)**: fast growth, less dense film; used for **thick isolation / field oxides**.
   - label: "Max time (min)"
     help: |
       **Max time 最長氧化時間**：模擬的氧化時間長度。
       同時決定圖的 X 軸範圍，以及下方「Final Thickness」所使用的時間。
+    help_en: |
+      **Max time (maximum oxidation time)**: duration of the simulated oxidation.
+      It also sets the x-axis range of the charts and the time used for "Final Thickness" below.
   - label: "Initial oxide thickness (nm)"
     help: |
       **Initial oxide thickness 初始氧化層厚度**：氧化開始前已存在的氧化層，
       例如自然氧化層（約 1–2 nm）或前一步驟留下的氧化層。
       在 Deal-Grove 公式 x² + Ax = B(t + τ) 中對應時間偏移 τ。
+    help_en: |
+      **Initial oxide thickness**: oxide already present before oxidation starts,
+      e.g. native oxide (about 1–2 nm) or oxide left over from a previous step.
+      In the Deal-Grove equation x² + Ax = B(t + τ) it corresponds to the time offset τ.
 
   # ------------------------------------------------------------------ Implantation
   - label: "Ion species"
@@ -55,24 +80,44 @@ widgets:
       - **phosphorus 磷 P**：n 型，中等質量。
       - **arsenic 砷 As**：n 型，較重、射程淺，常用於源／汲極。
       - **antimony 銻 Sb**：n 型，最重、射程最淺，用於超淺接面或埋層。
+    help_en: |
+      **Ion species**
+      - **boron (B)**: p-type; light ion with a long range; commonly used for p-well and channel doping.
+      - **phosphorus (P)**: n-type; medium mass.
+      - **arsenic (As)**: n-type; heavier, shallow range; commonly used for source/drain.
+      - **antimony (Sb)**: n-type; heaviest, shallowest range; used for ultra-shallow junctions or buried layers.
   - label: "Energy (keV)"
     help: |
       **Energy 植入能量**：離子被加速的能量。
       能量越高，離子打得越深，濃度峰值（投影射程 Rp）越深、分布越寬（ΔRp 越大）。
+    help_en: |
+      **Energy (implant energy)**: the energy to which the ions are accelerated.
+      The higher the energy, the deeper the ions penetrate: the concentration peak (projected range Rp) moves deeper and the profile broadens (larger straggle ΔRp).
   - label: "Dose (cm^-2)"
     help: |
       **Dose 劑量 Φ**：單位面積植入的離子總數。
       劑量決定濃度高低：峰值濃度 ≈ Φ / (√(2π)·ΔRp)。劑量加倍，整條曲線約抬高一倍。
+    help_en: |
+      **Dose Φ**: total number of implanted ions per unit area.
+      The dose sets the concentration level: peak concentration ≈ Φ / (√(2π)·ΔRp). Doubling the dose roughly doubles the whole profile.
   - label: "Background doping (cm^-3)"
     help: |
       **Background doping 基板背景摻雜濃度**：晶圓原本的摻雜濃度。
       植入濃度曲線下降到與它相等的深度，就是接面深度 xj（pn 接面位置）。
+    help_en: |
+      **Background doping (substrate background concentration)**: the original doping concentration of the wafer.
+      The depth at which the implanted profile falls to this level is the junction depth xj (location of the pn junction).
   - label: "Distribution model"
     help: |
       **Distribution model 分布模型**
       - **gaussian 高斯**：對稱的鐘形，簡單，適合粗估。
       - **pearsoniv Pearson IV**：加入偏斜（skewness）與峰度（kurtosis），
         能描述輕離子（如硼）往深處拖尾的真實形狀。
+    help_en: |
+      **Distribution model**
+      - **gaussian (Gaussian)**: symmetric bell shape; simple, suitable for first-order estimates.
+      - **pearsoniv (Pearson IV)**: adds skewness and kurtosis,
+        capturing the realistic deep tail of light ions such as boron.
 
   # ------------------------------------------------------------------ Etching (Langmuir-Hinshelwood)
   - label: "Etch mode"
@@ -81,25 +126,42 @@ widgets:
       - **single 單一反應物**：速率只取決於一種蝕刻氣體的壓力。
       - **two_reactant 雙反應物**：兩種氣體（第二種為 O₂）都吸附在表面並彼此反應
         （Langmuir-Hinshelwood 機制），速率同時受兩者壓力影響。
+    help_en: |
+      **Etch mode**
+      - **single (single reactant)**: the rate depends only on the pressure of one etchant gas.
+      - **two_reactant (two reactants)**: both gases (the second one is O₂) adsorb on the surface and react with each other
+        (Langmuir-Hinshelwood mechanism), so the rate depends on both pressures.
   - label: "Material"
     options: ["SiO2", "Si", "Si3N4"]
     help: |
       **Material 被蝕刻的材料**：SiO₂（氧化矽）、Si（矽）、Si₃N₄（氮化矽）。
       不同材料的反應常數不同，造成速率差異，也就是**選擇比**的來源。
+    help_en: |
+      **Material (film being etched)**: SiO₂ (silicon oxide), Si (silicon), Si₃N₄ (silicon nitride).
+      Each material has different reaction constants, which produce different etch rates; this is the origin of **selectivity**.
   - label: "Pressure (mTorr)"
     help: |
       **Pressure 蝕刻氣體壓力**：壓力越高，表面吸附的反應物越多，速率越快，
       但會趨近飽和（R = k_s·KP / (1+KP)，表面被佔滿後不再增加）。
+    help_en: |
+      **Pressure (etchant gas pressure)**: higher pressure means more reactant adsorbed on the surface and a faster etch rate,
+      but the rate approaches saturation (R = k_s·KP / (1+KP); once the surface is fully covered it no longer increases).
   - label: "Temperature (C)"
     min: 20
     max: 400
     help: |
       **Temperature 蝕刻溫度**：晶圓／腔體溫度。
       溫度越高，表面反應越容易越過活化能障礙，蝕刻速率越快（Arrhenius 關係）。
+    help_en: |
+      **Temperature (etch temperature)**: wafer / chamber temperature.
+      At higher temperature the surface reactions overcome the activation-energy barrier more easily, so the etch rate increases (Arrhenius relationship).
   - label: "O2 pressure (mTorr)"
     help: |
       **O2 pressure 氧氣壓力**（僅雙反應物模式）：第二種反應物 O₂ 的壓力。
       與蝕刻氣體在表面競爭／協同，改變整體蝕刻速率。
+    help_en: |
+      **O2 pressure (oxygen pressure)** (two-reactant mode only): pressure of the second reactant, O₂.
+      It competes or cooperates with the etchant gas on the surface and changes the overall etch rate.
 
   # ------------------------------------------------------------------ Deposition (CVD / PVD / ALD)
   - label: "Process type"
@@ -109,127 +171,209 @@ widgets:
       - **PECVD 電漿輔助 CVD**：用電漿降低溫度，常用於後段（金屬層之後）。
       - **ALD 原子層沉積**：每個循環長一層原子，厚度可精準控制，覆蓋近乎 100%。
       - **PVD 物理氣相沉積（濺鍍）**：粒子直線射出，階梯覆蓋差，常用於金屬膜。
+    help_en: |
+      **Process type (deposition process)**
+      - **LPCVD (low-pressure chemical vapor deposition)**: high temperature, uniform film, good step coverage.
+      - **PECVD (plasma-enhanced CVD)**: the plasma lowers the process temperature; commonly used in the back end of line (after metallization).
+      - **ALD (atomic layer deposition)**: about one atomic layer per cycle; precise thickness control and nearly 100% conformal coverage.
+      - **PVD (physical vapor deposition, sputtering)**: line-of-sight particle flux, poor step coverage; commonly used for metal films.
   - label: "Material"
     help: |
       **Material 沉積材料**：可選項目隨製程類型改變
       （例：ALD 可沉積 HfO₂、Al₂O₃、TiN；PVD 可沉積 Al、TiN、W）。
+    help_en: |
+      **Material (deposited film)**: the available choices depend on the process type
+      (e.g. ALD can deposit HfO₂, Al₂O₃, TiN; PVD can deposit Al, TiN, W).
   - label: "Temperature (C)"
     min: 100
     max: 900
     help: |
       **Temperature 沉積溫度**：基板溫度。
       沉積速率隨溫度呈指數上升（R ∝ exp(−Ea/k_B·T)）。右圖的對數軸上近似一條直線。
+    help_en: |
+      **Temperature (deposition temperature)**: substrate temperature.
+      The deposition rate rises exponentially with temperature (R ∝ exp(−Ea/k_B·T)); on the log axis of the chart on the right it is approximately a straight line.
   - label: "Pressure (Torr)"
     help: |
       **Pressure 前驅物分壓**：反應氣體的壓力，速率與它成正比（R ∝ P）。
       對 ALD 與 PVD 影響較小（由自限制反應或濺鍍功率主導）。
+    help_en: |
+      **Pressure (precursor partial pressure)**: pressure of the reactant gas; the rate is proportional to it (R ∝ P).
+      It has less effect on ALD and PVD (dominated by the self-limiting surface reactions or by the sputtering power).
   - label: "Time (min or cycles for ALD)"
     help: |
       **Time 沉積時間**：CVD／PVD 為分鐘；**ALD 則為循環數**。
       厚度 = 速率 × 時間（ALD：每循環厚度 × 循環數）。
+    help_en: |
+      **Time (deposition time)**: minutes for CVD / PVD; **number of cycles for ALD**.
+      Thickness = rate × time (ALD: growth per cycle × number of cycles).
   - label: "Feature aspect ratio"
     help: |
       **Feature aspect ratio 深寬比**：結構深度 ÷ 寬度。
       深寬比越大，越難讓氣體到達溝槽底部，階梯覆蓋率越低（DRAM 電容孔洞是高深寬比的例子）。
+    help_en: |
+      **Feature aspect ratio**: feature depth ÷ width.
+      The higher the aspect ratio, the harder it is for the gas to reach the bottom of the trench and the lower the step coverage (DRAM capacitor holes are an example of high-aspect-ratio features).
   - label: "Temperature delta for stress (K)"
     help: |
-      **Temperature delta 溫差 ΔT**：沉積溫度到室溫的溫度變化（降溫為負值）。
+      **Temperature delta 溫差 ΔT**：SemiYield 的定義是 ΔT = 沉積溫度 − 室溫，所以沉積後降溫（正常情況）為**正值**。
       用於熱應力：σ_thermal = E/(1−ν) · (α_膜 − α_基板) · ΔT。
-      總應力 = 本質應力 + 熱應力；正值為張應力、負值為壓應力。
+      總應力 = 本質應力 + 熱應力；正值為張應力、負值為壓應力。例：α_膜 > α_基板 且 ΔT > 0 → 膜降溫時收縮較多 → 張應力。
+      注意：滑桿預設 −200 K 代表「升溫」的反向情況；模擬一般的沉積後降溫請設成正值（例如 +400 K）。
+    help_en: |
+      **Temperature delta ΔT**: SemiYield defines ΔT = deposition temperature − room temperature, so cooling down after deposition (the normal case) is **positive**.
+      Used for the thermal stress: σ_thermal = E/(1−ν) · (α_film − α_substrate) · ΔT.
+      Total stress = intrinsic stress + thermal stress; positive values are tensile, negative values are compressive. Example: α_film > α_substrate and ΔT > 0 → the film shrinks more on cooling → tensile.
+      Note: the slider default of −200 K is the reverse (heating) case; to model normal post-deposition cooling use a positive value (e.g. +400 K).
 
   # ------------------------------------------------------------------ Data Generator (feeds the SPC page)
   - label: "Number of lots"
     help: "**Number of lots 批數**：模擬幾個 lot。越多，SPC 圖的點越多、趨勢越明顯。"
+    help_en: "**Number of lots**: how many lots to simulate. More lots give more points on the SPC charts and make trends more visible."
   - label: "Wafers per lot"
     help: "**Wafers per lot 每批晶圓數**：一個 lot 的晶圓片數（實際廠內通常 25 片）。"
+    help_en: "**Wafers per lot**: number of wafers in one lot (typically 25 in a production fab)."
   - label: "Drift rate"
     help: |
       **Drift rate 漂移率**：每個 lot 的製程平均值做隨機漫步時，每步標準差佔製程 σ 的比例
       （0.05 = 5% σ／lot）。越大，lot 之間的平均值飄得越遠，SPC 越容易出現趨勢與異常。
+    help_en: |
+      **Drift rate**: the process mean performs a random walk from lot to lot; this is the standard deviation of each step as a fraction of the process σ
+      (0.05 = 5% σ per lot). The larger it is, the further the mean wanders between lots and the more likely trends and out-of-control signals appear on the SPC charts.
   - label: "Aging factor"
     help: |
       **Aging factor 老化因子**：機台每個 lot 劣化的比例（0.002 = 0.2%／lot）。
       影響蝕刻速率與沉積均勻性，造成緩慢單向的漂移（類似兩次 PM 之間的變化）。
+    help_en: |
+      **Aging factor**: fractional tool degradation per lot (0.002 = 0.2% per lot).
+      It affects the etch rate and the deposition uniformity, producing a slow, one-directional drift (similar to the change between two preventive-maintenance (PM) events).
   - label: "Random seed"
     help: "**Random seed 亂數種子**：相同的種子會產生完全相同的資料，方便重現結果。"
+    help_en: "**Random seed**: the same seed produces exactly the same data, so results can be reproduced."
   - label: "Generate Dataset"
     help: "產生合成的晶圓廠資料。完成後可到 **SPC Dashboard** 頁面畫管制圖。"
+    help_en: "Generate synthetic fab data. When it is done, go to the **SPC Dashboard** page to plot control charts."
 
   # ------------------------------------------------------------------ SPC
   - label: "Data source"
     help: "**Data source 資料來源**：使用 Data Generator 產生的資料，或上傳自己的 CSV（至少 10 筆數值）。"
+    help_en: "**Data source**: use the data produced by the Data Generator, or upload your own CSV (at least 10 numeric values)."
   - label: "Parameter to chart"
     help: |
       **Parameter 管制參數**：要畫管制圖的製程參數，例如 gate_oxide_thickness（閘極氧化層厚度）、poly_cd（線寬 CD）。
       序號欄位（lot_sequence、wafer_sequence 等）已從清單移除：它們只是一直遞增的編號，不是製程參數。
+    help_en: |
+      **Parameter (controlled parameter)**: the process parameter to plot on the control chart, e.g. gate_oxide_thickness (gate oxide thickness) or poly_cd (linewidth CD).
+      Sequence columns (lot_sequence, wafer_sequence, etc.) have been removed from the list: they are just ever-increasing counters, not process parameters.
   - label: "USL"
     help: |
       **USL 規格上限 (Upper Specification Limit)**。選好參數後，Metro 說明會自動填入可靠的建議值
       （方法顯示在框下方，游標停在 ? 看計算過程）。若沒有出現建議值，框內是 SemiYield 原本的預設：
       資料的 99.5 百分位，**不是真正的規格**。
+    help_en: |
+      **USL (Upper Specification Limit)**. Once a parameter is selected, the Metro guide automatically fills in a reliable suggested value
+      (the method is shown below the box; hover over the ? to see the calculation). If no suggestion appears, the box holds SemiYield's original default:
+      the 99.5th percentile of the data, which is **not a real specification**.
   - label: "LSL"
     help: |
       **LSL 規格下限 (Lower Specification Limit)**。同 USL：選好參數後自動填入建議值；
       若沒有建議值，框內是資料的 0.5 百分位，**不是真正的規格**。
+    help_en: |
+      **LSL (Lower Specification Limit)**. Same as USL: a suggested value is filled in automatically once a parameter is selected;
+      if there is no suggestion, the box holds the 0.5th percentile of the data, which is **not a real specification**.
 
   # ------------------------------------------------------------------ metric cards
   - label: "Final Thickness"
     help: "**Final Thickness 最終氧化層厚度**：在「Max time」時間結束時的氧化層厚度（Deal-Grove 模型）。"
+    help_en: "**Final Thickness**: oxide thickness at the end of the \"Max time\" period (Deal-Grove model)."
   - label: "Junction Depth"
     help: |
       **Junction Depth 接面深度 xj**：植入濃度降到與背景摻雜相等的深度，
       即 pn 接面位置。N/A 表示劑量太低，植入濃度從未超過背景。
+    help_en: |
+      **Junction Depth xj**: the depth at which the implanted concentration falls to the background doping level,
+      i.e. the location of the pn junction. N/A means the dose is too low and the implanted concentration never exceeds the background.
   - label: "SiO2 etch rate"
     help: "**SiO₂ 蝕刻速率**：目前壓力與溫度下，氧化矽每分鐘被蝕刻的厚度。"
+    help_en: "**SiO₂ etch rate**: thickness of silicon oxide removed per minute at the current pressure and temperature."
   - label: "Si etch rate"
     help: "**Si 蝕刻速率**：目前壓力與溫度下，矽每分鐘被蝕刻的厚度。"
+    help_en: "**Si etch rate**: thickness of silicon removed per minute at the current pressure and temperature."
   - label: "SiO2/Si selectivity"
     help: |
       **Selectivity 選擇比** = SiO₂ 蝕刻速率 ÷ Si 蝕刻速率。
       比值越高，蝕刻氧化層時越不會傷到下方的矽（例如蝕刻接觸孔時停在矽表面）。
+    help_en: |
+      **Selectivity** = SiO₂ etch rate ÷ Si etch rate.
+      The higher the ratio, the less the underlying silicon is attacked while the oxide is etched (e.g. stopping on the silicon surface during contact-hole etch).
   - label: "Deposited thickness"
     help: "**Deposited thickness 沉積厚度** = 沉積速率 × 時間（ALD 為每循環厚度 × 循環數）。"
+    help_en: "**Deposited thickness** = deposition rate × time (for ALD: growth per cycle × number of cycles)."
   - label: "Step coverage"
     help: |
       **Step coverage 階梯覆蓋率**：溝槽側壁／底部的膜厚 ÷ 表面膜厚。
       100% 為完全保形（ALD 接近）；PVD 因直線射出，覆蓋率低。
+    help_en: |
+      **Step coverage**: film thickness on the trench sidewall / bottom ÷ film thickness on the top surface.
+      100% means fully conformal (ALD comes close); PVD has low coverage because of its line-of-sight deposition.
   - label: "Non-uniformity (1s)"
     help: |
       **Non-uniformity 不均勻度（1σ）**：整片 300 mm 晶圓上膜厚的標準差 ÷ 平均值（%）。
       越小越均勻；此為經驗模型的估計，不是量測值。
+    help_en: |
+      **Non-uniformity (1σ)**: standard deviation of the film thickness across the whole 300 mm wafer ÷ mean thickness (%).
+      Smaller means more uniform; this is an estimate from an empirical model, not a measured value.
   - label: "Film stress"
     help: |
       **Film stress 薄膜應力**（MPa）：本質應力 + 熱應力。
       **正值＝張應力 (tensile)**，**負值＝壓應力 (compressive)**。應力過大會造成晶圓翹曲或膜層裂開。
+    help_en: |
+      **Film stress** (MPa): intrinsic stress + thermal stress.
+      **Positive = tensile stress**, **negative = compressive stress**. Excessive stress causes wafer bow (warpage) or film cracking.
   - label: "Cp"
     help: |
       **Cp 製程能力**（只看變異）= (USL − LSL) ÷ (6σ_within)。
       不考慮平均值有沒有偏離中心。σ_within 由相鄰點的移動全距估計（短期變異）。
+    help_en: |
+      **Cp (process capability)** (spread only) = (USL − LSL) ÷ (6σ_within).
+      It ignores whether the mean is off-center. σ_within is estimated from the moving range of consecutive points (short-term variation).
   - label: "Cpk"
     help: |
       **Cpk** 同時考慮變異與偏離中心 = min(USL − μ, μ − LSL) ÷ (3σ_within)。
       常見要求：**≥ 1.33**；< 1.0 表示有明顯比例的產品會超出規格。
+    help_en: |
+      **Cpk** accounts for both spread and off-centering = min(USL − μ, μ − LSL) ÷ (3σ_within).
+      Typical requirement: **≥ 1.33**; < 1.0 means a significant fraction of the product will fall outside the specification.
   - label: "Pp"
     help: "**Pp 製程績效**（只看變異）= (USL − LSL) ÷ (6σ_overall)。σ_overall 是全部資料的標準差（含長期漂移）。"
+    help_en: "**Pp (process performance)** (spread only) = (USL − LSL) ÷ (6σ_overall). σ_overall is the standard deviation of all the data (including long-term drift)."
   - label: "Ppk"
     help: |
       **Ppk** = min(USL − μ, μ − LSL) ÷ (3σ_overall)，用長期總變異。
       若 Ppk 明顯低於 Cpk，代表製程在 lot 之間有漂移，短期看不出來。
+    help_en: |
+      **Ppk** = min(USL − μ, μ − LSL) ÷ (3σ_overall), using the long-term total variation.
+      If Ppk is clearly lower than Cpk, the process drifts between lots in a way that the short-term variation does not reveal.
   - label: "Sigma level"
     help: "**Sigma level**：平均值到最近規格界限的距離，以 σ_within 為單位。數值越大，離規格越遠、越安全。"
+    help_en: "**Sigma level**: distance from the mean to the nearest specification limit, in units of σ_within. The larger the value, the further the process is from the limit and the safer it is."
 
   # ------------------------------------------------------------------ Data Generator (charts section)
   - label: "Parameter"
     kind: selectbox
     help: "**Parameter 參數**：選擇要看「每批平均值隨時間變化」的製程參數。漂移（Drift rate）與老化（Aging factor）會在這張趨勢圖上出現。"
+    help_en: "**Parameter**: choose the process parameter whose lot mean over time is plotted. Drift (Drift rate) and aging (Aging factor) show up on this trend chart."
   - label: "Select wafer"
     help: "**Select wafer 選擇晶圓**：畫出這片晶圓的局部良率晶圓圖（只列出前 50 片）。"
+    help_en: "**Select wafer**: plot the local-yield wafer map of this wafer (only the first 50 wafers are listed)."
   - label: "Process Parameter Trends"
     kind: subheader
     help: "每個 lot 的平均值隨時間（lot 順序）的變化。慢慢飄＝lot 間漂移；單向持續變化＝機台老化。"
+    help_en: "Mean of each lot versus time (lot order). Slow wandering = lot-to-lot drift; a sustained one-directional change = tool aging."
   - label: "Wafer Map"
     kind: subheader
     help: "單片晶圓的局部良率分布（模擬）。綠色高、紅色低；四角為晶圓外，畫成 0。"
+    help_en: "Local yield distribution across a single wafer (simulated). Green = high, red = low; the corners lie outside the wafer and are drawn as 0."
 
   # ------------------------------------------------------------------ Yield Prediction
   - label: "Training Configuration"
@@ -238,36 +382,59 @@ widgets:
       **訓練設定**：用 Data Generator 的資料訓練「由製程參數預測良率」的模型。
       模型為堆疊集成（stacking）：隨機森林 + XGBoost（未安裝則改用第二個隨機森林）+ LSTM（未安裝 PyTorch 則略過），
       再用 Ridge 迴歸學習各模型的權重。
+    help_en: |
+      **Training configuration**: trains a model that predicts yield from the process parameters, using the Data Generator data.
+      The model is a stacking ensemble: random forest + XGBoost (replaced by a second random forest if not installed) + LSTM (skipped if PyTorch is not installed),
+      with a Ridge regression that learns the weight of each model.
   - label: "Test set fraction"
     help: |
       **Test set fraction 測試集比例**：資料**最後**這個比例的晶圓（依時間順序）留作測試，不參與訓練。
       依時間切分比隨機切分更接近真實情況：「用過去的資料預測未來」。
+    help_en: |
+      **Test set fraction**: this fraction of the wafers at the **end** of the data (in time order) is held out for testing and not used for training.
+      A time-ordered split is closer to reality than a random split: "use past data to predict the future".
   - label: "Number of trees (RF/XGB)"
     help: "**Number of trees 樹的數量**：隨機森林與 XGBoost 中決策樹的數目。越多通常越穩定，但訓練越慢。"
+    help_en: "**Number of trees**: number of decision trees in the random forest and in XGBoost. More trees are usually more stable, but training is slower."
   - label: "Train Ensemble Model"
     help: "開始訓練集成模型，並計算 SHAP 特徵重要度（需要數十秒）。"
+    help_en: "Start training the ensemble model and compute the SHAP feature importance (takes a few tens of seconds)."
   - label: "R2"
     help: |
       **R² 決定係數**：模型解釋了測試集良率變異的比例。1 = 完美，0 = 跟直接猜平均值一樣，負值 = 比猜平均值還差。
       測試集是**最新**的 20% 晶圓，模型從未看過。
       Metro 修正：SemiYield 原本用很小的驗證集學集成權重（例如 −0.11 與 +1.76），會把預測的良率下降放大約 1.65 倍，
       預設資料下 R² 為 −1.47。改成「非負、總和為 1」的權重並用全部訓練資料重訓後約為 0.8（8 個亂數種子平均 0.18 → 0.80）。
+    help_en: |
+      **R² (coefficient of determination)**: fraction of the test-set yield variance explained by the model. 1 = perfect, 0 = no better than predicting the mean, negative = worse than predicting the mean.
+      The test set is the **most recent** 20% of the wafers, which the model has never seen.
+      Metro fix: SemiYield originally learned the ensemble weights on a very small validation set (e.g. −0.11 and +1.76), which amplifies predicted yield drops by about 1.65×,
+      giving R² = −1.47 on the default data. With non-negative weights that sum to 1, and retraining on all training data, R² is about 0.8 (mean over 8 random seeds: 0.18 → 0.80).
   - label: "RMSE"
     help: "**RMSE 均方根誤差**：預測良率與實際良率差距的典型大小（與良率同單位，0–1）。越小越好；對大誤差較敏感。"
+    help_en: "**RMSE (root-mean-square error)**: typical size of the difference between predicted and actual yield (same units as yield, 0–1). Smaller is better; more sensitive to large errors."
   - label: "MAE"
     help: "**MAE 平均絕對誤差**：預測良率與實際良率差距的平均（0–1）。越小越好；比 RMSE 不受少數大誤差影響。"
+    help_en: "**MAE (mean absolute error)**: average absolute difference between predicted and actual yield (0–1). Smaller is better; less affected by a few large errors than RMSE."
   - label: "Feature Importance (SHAP)"
     kind: subheader
     help: |
       **SHAP 特徵重要度**：每個製程參數對「預測良率」平均貢獻了多少（取絕對值，不分正負）。
       用來找出最值得管控的參數；注意它代表模型學到的關聯，不一定是因果。
+    help_en: |
+      **SHAP feature importance**: the average contribution of each process parameter to the predicted yield (absolute value, regardless of sign).
+      Use it to identify the parameters most worth controlling; note that it reflects associations learned by the model, not necessarily causation.
   - label: "Predict Yield for Custom Process Parameters"
     kind: subheader
     help: "輸入一組製程參數（預設為資料中位數），用訓練好的模型預測良率。可以試著把某個參數推出規格，看良率怎麼變。"
+    help_en: "Enter a set of process parameters (defaults are the data medians) and predict the yield with the trained model. Try pushing one parameter out of specification to see how the yield changes."
   - label: "Predicted Yield"
     help: |
       **Predicted Yield 預測良率**：模型對上面這組參數的良率預測（0–1）。
       「± uncertainty」是不確定度：各子模型預測的分散程度，越大代表越不可信（例如輸入超出訓練資料範圍）。
+    help_en: |
+      **Predicted Yield**: the model's yield prediction (0–1) for the parameter set above.
+      "± uncertainty" is the spread of the individual sub-model predictions; a larger value means a less reliable prediction (e.g. inputs outside the range of the training data).
 
   # ------------------------------------------------------------------ Process Optimizer
   - label: "Parameter Bounds"
@@ -276,62 +443,95 @@ widgets:
       **參數範圍**：貝氏最佳化會在這個範圍內搜尋最佳條件。
       ⚠ 注意：此頁的「良率」是**示範用的公式**（二次曲面 + 少量雜訊），最佳點固定在你設定範圍的**正中央**，
       不是真實製程資料。適合學習最佳化流程，不適合當作製程結論。
+    help_en: |
+      **Parameter bounds**: Bayesian optimization searches for the best conditions within this range.
+      ⚠ Note: the "yield" on this page is a **demonstration formula** (quadratic surface + a little noise) whose optimum is always at the **exact center** of the range you set,
+      not real process data. It is suitable for learning the optimization workflow, not for drawing process conclusions.
   - label: "Gate oxide time min (s)"
     help: "**閘極氧化時間下限**（秒）。搜尋範圍的下限；示範公式的最佳點在上下限的中點。"
+    help_en: "**Gate oxide time, lower bound** (s). Lower limit of the search range; the optimum of the demonstration formula is at the midpoint between the lower and upper bounds."
   - label: "Gate oxide time max (s)"
     help: "**閘極氧化時間上限**（秒）。搜尋範圍的上限。"
+    help_en: "**Gate oxide time, upper bound** (s). Upper limit of the search range."
   - label: "Anneal temp min (C)"
     help: "**退火溫度下限**（°C）。搜尋範圍的下限；示範公式的最佳點在上下限的中點。"
+    help_en: "**Anneal temperature, lower bound** (°C). Lower limit of the search range; the optimum of the demonstration formula is at the midpoint between the lower and upper bounds."
   - label: "Anneal temp max (C)"
     help: "**退火溫度上限**（°C）。搜尋範圍的上限。"
+    help_en: "**Anneal temperature, upper bound** (°C). Upper limit of the search range."
   - label: "Optimization iterations"
     help: |
       **Optimization iterations 最佳化次數**：在 5 個隨機起始點之後，再做幾次「由模型挑選下一個條件」的實驗。
       每一次相當於跑一片實驗晶圓。
+    help_en: |
+      **Optimization iterations**: after the 5 random initial points, the number of additional experiments in which the model selects the next condition.
+      Each iteration corresponds to running one experimental wafer.
   - label: "Run Optimization"
     help: "開始貝氏最佳化：先跑 5 個隨機起始點，再用高斯過程模型逐次挑選最可能改善的條件。"
+    help_en: "Start Bayesian optimization: first evaluate 5 random initial points, then use a Gaussian-process model to select, one at a time, the conditions most likely to improve the yield."
   - label: "Optimization Results"
     kind: subheader
     help: "目前找到的最佳條件與其良率（來自示範公式，不是真實製程）。"
+    help_en: "Best conditions found so far and their yield (from the demonstration formula, not a real process)."
   - label: "gate_oxide_time"
     kind: metric
     help: "**最佳閘極氧化時間**（秒）：所有實驗中良率最高的那一次所用的條件。"
+    help_en: "**Best gate oxide time** (s): the condition used in the experiment with the highest yield among all experiments."
   - label: "anneal_temp"
     kind: metric
     help: "**最佳退火溫度**（°C）：所有實驗中良率最高的那一次所用的條件。"
+    help_en: "**Best anneal temperature** (°C): the condition used in the experiment with the highest yield among all experiments."
   - label: "Best Yield"
     help: "**Best Yield 最佳良率**：所有實驗中觀測到的最高良率（含少量量測雜訊）。"
+    help_en: "**Best Yield**: the highest yield observed among all experiments (includes a small amount of measurement noise)."
   - label: "Optimization Convergence"
     kind: subheader
     help: "每一次實驗的良率，以及到目前為止的最佳值。最佳值曲線變平代表已收斂，再多做實驗幫助不大。"
+    help_en: "Yield of each experiment and the best value so far. When the best-so-far curve flattens, the optimization has converged and further experiments add little."
   - label: "Process Window (95% of optimum)"
     kind: subheader
     help: |
       **Process window 製程窗口**：在最佳點附近，模型預測良率仍 ≥ 最佳良率 95% 的參數範圍。
       窗口越寬，代表製程對該參數越不敏感、越好量產。
+    help_en: |
+      **Process window**: the parameter range around the optimum within which the model-predicted yield is still ≥ 95% of the best yield.
+      The wider the window, the less sensitive the process is to that parameter and the easier it is to run in volume production.
 
   # ------------------------------------------------------------------ SPICE Export
   - label: "Process Parameters"
     kind: subheader
     help: "把製程結果（氧化層厚度、通道長度、摻雜、接面深度）轉成電晶體模型參數。這是製程端交給電路設計端的橋樑。"
+    help_en: "Converts the process results (oxide thickness, channel length, doping, junction depth) into transistor model parameters. This is the bridge from process engineering to circuit design."
   - label: "Gate oxide thickness (nm)"
     help: |
       **Gate oxide thickness 閘極氧化層厚度 tox**：越薄，閘極電容 Cox = ε_ox/tox 越大、臨界電壓越低、
       電晶體越快，但漏電越大。這正是膜厚量測要嚴格管控的原因。
+    help_en: |
+      **Gate oxide thickness tox**: the thinner the oxide, the larger the gate capacitance Cox = ε_ox/tox, the lower the threshold voltage
+      and the faster the transistor, but the higher the leakage. This is exactly why film-thickness metrology must be tightly controlled.
   - label: "Channel length (nm)"
     help: "**Channel length 通道長度 Lg**（≈ 閘極線寬 CD）：越短越快，但短通道效應（臨界電壓下降、漏電增加）越明顯。"
+    help_en: "**Channel length Lg** (≈ gate linewidth CD): shorter is faster, but short-channel effects (threshold-voltage roll-off, increased leakage) become more pronounced."
   - label: "Substrate doping (log10 cm^-3)"
     help: |
       **Substrate doping 基板摻雜濃度**（以 log10 表示，17 = 10¹⁷ cm⁻³）。
       摻雜越高，臨界電壓越高、遷移率越低。
+    help_en: |
+      **Substrate doping** (as log10; 17 = 10¹⁷ cm⁻³).
+      Higher doping raises the threshold voltage and lowers the carrier mobility.
   - label: "Junction depth (nm)"
     help: "**Junction depth 接面深度 xj**：源／汲極的深度。越淺越能抑制短通道效應，但電阻越大。"
+    help_en: "**Junction depth xj**: depth of the source/drain junctions. Shallower junctions suppress short-channel effects better, but their resistance is higher."
   - label: "Model level"
     help: |
       **Model level 模型版本**：BSIM3v3 或 BSIM4，加州大學柏克萊分校的標準 MOSFET 精簡模型。
       BSIM4 較新，涵蓋更多小尺寸效應。
+    help_en: |
+      **Model level**: BSIM3v3 or BSIM4, the standard MOSFET compact models from the University of California, Berkeley.
+      BSIM4 is newer and covers more small-geometry effects.
   - label: "Model name"
     help: "**Model name 模型名稱**：寫進 SPICE 檔中的模型名稱，電路檔用這個名字引用此電晶體模型。"
+    help_en: "**Model name**: the model name written into the SPICE file; circuit netlists reference this transistor model by this name."
   - label: "Computed SPICE Parameters"
     kind: subheader
     help: |
@@ -343,12 +543,25 @@ widgets:
       - **CDSC** 源汲極與通道的耦合電容，影響次臨界擺幅
       - **RDSW** 源汲極寄生電阻（每單位寬度）
       ⚠ 由教科書公式估算，不是校正過的晶圓廠模型。
+    help_en: |
+      Key BSIM parameters:
+      - **VTH0** threshold voltage at zero body bias: the gate voltage at which the transistor starts to turn on (V)
+      - **TOX** oxide thickness (meters)
+      - **U0** low-field carrier mobility (cm²/V·s); higher mobility gives higher drive current
+      - **K1** first-order body-effect coefficient: how the body (substrate) bias shifts the threshold voltage
+      - **CDSC** source/drain-to-channel coupling capacitance; affects the subthreshold swing
+      - **RDSW** source/drain parasitic resistance (per unit width)
+      ⚠ Estimated from textbook equations; not a calibrated foundry model.
   - label: "Download SPICE Files"
     kind: subheader
     help: |
       - **.subckt** 子電路（把電晶體包成可重複使用的元件）
       - **.lib** 模型卡（BSIM 參數）
       - **testbench** 測試電路，可直接用 ngspice 或 LTspice 模擬
+    help_en: |
+      - **.subckt** subcircuit (wraps the transistor as a reusable component)
+      - **.lib** model card (BSIM parameters)
+      - **testbench** test circuit that can be simulated directly in ngspice or LTspice
 
 charts:
   # ------------------------------------------------------------------ Oxidation
@@ -360,6 +573,11 @@ charts:
           時間 t = %{x:.1f} min → 厚度 x = <b>%{y:.2f} nm</b><br>
           <i>先快後慢：初期受表面反應限制（近似線性），<br>
           變厚後受氧氣穿過氧化層的擴散限制（近似拋物線）。</i><extra></extra>
+        hover_en: >-
+          <b>Oxide thickness</b><br>
+          Time t = %{x:.1f} min → thickness x = <b>%{y:.2f} nm</b><br>
+          <i>Fast at first, then slower: initially limited by the surface reaction (approximately linear),<br>
+          then, as the oxide thickens, by oxidant diffusion through the oxide (approximately parabolic).</i><extra></extra>
   - match: "^Growth Rate vs Time"
     traces:
       - name: "Growth rate"
@@ -367,6 +585,10 @@ charts:
           <b>成長速率 Growth rate dx/dt</b><br>
           時間 t = %{x:.1f} min → 速率 = <b>%{y:.3f} nm/min</b><br>
           <i>氧化層越厚，氧氣越難到達 Si/SiO₂ 介面，速率越低。</i><extra></extra>
+        hover_en: >-
+          <b>Growth rate dx/dt</b><br>
+          Time t = %{x:.1f} min → rate = <b>%{y:.3f} nm/min</b><br>
+          <i>The thicker the oxide, the harder it is for the oxidant to reach the Si/SiO₂ interface, so the rate drops.</i><extra></extra>
 
   # ------------------------------------------------------------------ Implantation
   - match: "implant at"
@@ -376,17 +598,29 @@ charts:
           <b>摻雜濃度 Dopant concentration</b><br>
           深度 x = %{x:.1f} nm → N = <b>%{y:.2e} cm⁻³</b>（對數軸）<br>
           <i>峰值位置 ≈ 投影射程 Rp；峰越寬代表 ΔRp 越大。</i><extra></extra>
+        hover_en: >-
+          <b>Dopant concentration</b><br>
+          Depth x = %{x:.1f} nm → N = <b>%{y:.2e} cm⁻³</b> (log axis)<br>
+          <i>Peak position ≈ projected range Rp; a wider peak means a larger straggle ΔRp.</i><extra></extra>
     lines:
       - text: "^Background"
         hover: >-
           <b>背景摻雜 Background doping</b><br>
           基板原本的濃度（%{y:.2e} cm⁻³）。<br>
           <i>植入曲線與它相交的位置就是接面深度 xj。</i><extra></extra>
+        hover_en: >-
+          <b>Background doping</b><br>
+          Original substrate concentration (%{y:.2e} cm⁻³).<br>
+          <i>The point where the implanted profile crosses this line is the junction depth xj.</i><extra></extra>
       - text: "^xj="
         hover: >-
           <b>接面深度 Junction depth xj</b><br>
           植入濃度 = 背景濃度的位置（x = %{x:.1f} nm）。<br>
           <i>此深度以上為被植入的型態，以下回到基板型態（pn 接面）。</i><extra></extra>
+        hover_en: >-
+          <b>Junction depth xj</b><br>
+          Depth where implanted concentration = background concentration (x = %{x:.1f} nm).<br>
+          <i>Shallower than this, the region has the implanted doping type; deeper, it returns to the substrate type (pn junction).</i><extra></extra>
 
   # ------------------------------------------------------------------ Etching
   - match: "etch rate vs temperature"
@@ -396,6 +630,10 @@ charts:
           <b>蝕刻速率 Etch rate</b><br>
           溫度 T = %{x:.0f} °C → R = <b>%{y:.1f} nm/min</b><br>
           <i>溫度越高，表面反應越快（Arrhenius）。</i><extra></extra>
+        hover_en: >-
+          <b>Etch rate</b><br>
+          Temperature T = %{x:.0f} °C → R = <b>%{y:.1f} nm/min</b><br>
+          <i>Higher temperature gives faster surface reactions (Arrhenius).</i><extra></extra>
   - match: "etch rate vs pressure"
     traces:
       - name: "Rate vs pressure"
@@ -403,6 +641,10 @@ charts:
           <b>蝕刻速率 Etch rate</b><br>
           壓力 P = %{x:.0f} mTorr → R = <b>%{y:.1f} nm/min</b><br>
           <i>低壓區近似線性（表面覆蓋率低）；高壓區趨於飽和（表面被反應物佔滿）。</i><extra></extra>
+        hover_en: >-
+          <b>Etch rate</b><br>
+          Pressure P = %{x:.0f} mTorr → R = <b>%{y:.1f} nm/min</b><br>
+          <i>Nearly linear at low pressure (low surface coverage); saturates at high pressure (surface fully covered by reactant).</i><extra></extra>
 
   # ------------------------------------------------------------------ Deposition
   - match: "growth rate vs temperature"
@@ -412,6 +654,10 @@ charts:
           <b>沉積速率 Deposition rate</b><br>
           溫度 T = %{x:.0f} °C → R = <b>%{y:.3g} nm/min（ALD：nm/循環）</b>（對數軸）<br>
           <i>對數軸上近似直線：斜率由活化能 Ea 決定，Ea 越大，對溫度越敏感。</i><extra></extra>
+        hover_en: >-
+          <b>Deposition rate</b><br>
+          Temperature T = %{x:.0f} °C → R = <b>%{y:.3g} nm/min (ALD: nm/cycle)</b> (log axis)<br>
+          <i>Approximately a straight line on the log axis: the slope is set by the activation energy Ea; the larger Ea, the more temperature-sensitive the rate.</i><extra></extra>
 
   # ------------------------------------------------------------------ SPC
   - match: "^I-MR Chart"
@@ -423,19 +669,33 @@ charts:
           量測值 = <b>%{y:.4g}</b><br>
           狀態：%{customdata}<br>
           <i>紅點＝違反 Western Electric 規則（如 1 點超出 3σ、連續 8 點同側），需要調查原因。</i><extra></extra>
+        hover_en: >-
+          <b>Observation #%{x}</b><br>
+          Measured value = <b>%{y:.4g}</b><br>
+          Status: %{customdata}<br>
+          <i>Red point = Western Electric rule violation (e.g. 1 point beyond 3σ, 8 consecutive points on the same side), investigate the cause.</i><extra></extra>
     lines:
       - text: "^CL$"
         hover: >-
           <b>CL 中心線 (Center Line)</b> = %{y:.4g}<br>
           <i>製程平均值。點應隨機分布在它的上下。</i><extra></extra>
+        hover_en: >-
+          <b>CL (Center Line)</b> = %{y:.4g}<br>
+          <i>Process mean. Points should scatter randomly above and below it.</i><extra></extra>
       - text: "^UCL$"
         hover: >-
           <b>UCL 管制上限 (Upper Control Limit)</b> = %{y:.4g}<br>
           <i>CL + 3σ。由製程自己的變異算出，<b>不是規格</b>；超出代表製程出現特殊原因。</i><extra></extra>
+        hover_en: >-
+          <b>UCL (Upper Control Limit)</b> = %{y:.4g}<br>
+          <i>CL + 3σ. Calculated from the process's own variation, <b>not a specification</b>; a point beyond it signals a special (assignable) cause.</i><extra></extra>
       - text: "^LCL$"
         hover: >-
           <b>LCL 管制下限 (Lower Control Limit)</b> = %{y:.4g}<br>
           <i>CL − 3σ。由製程變異算出，<b>不是規格</b>。</i><extra></extra>
+        hover_en: >-
+          <b>LCL (Lower Control Limit)</b> = %{y:.4g}<br>
+          <i>CL − 3σ. Calculated from the process variation, <b>not a specification</b>.</i><extra></extra>
 
   # ------------------------------------------------------------------ Data Generator
   - match: "^(?P<param>\\S+) lot mean over time"
@@ -446,6 +706,11 @@ charts:
           [[param]] 批平均 = <b>%{y:.4g}</b><br>
           <i>[[note]]</i><br>
           <i>慢慢飄移＝lot 間漂移（Drift rate）；單向持續變化＝機台老化（Aging factor）。</i><extra></extra>
+        hover_en: >-
+          <b>Lot #%{x}</b><br>
+          [[param]] lot mean = <b>%{y:.4g}</b><br>
+          <i>[[note]]</i><br>
+          <i>Slow wandering = lot-to-lot drift (Drift rate); sustained one-directional change = tool aging (Aging factor).</i><extra></extra>
   - match: "^Local yield map"
     traces:
       - name: ".*"
@@ -453,6 +718,10 @@ charts:
           <b>晶粒位置</b> 第 %{y} 列、第 %{x} 行<br>
           局部良率 = <b>%{z:.2f}</b><br>
           <i>綠＝高、紅＝低；四角的 0 是晶圓外（沒有晶粒）。</i><extra></extra>
+        hover_en: >-
+          <b>Die position</b> row %{y}, column %{x}<br>
+          Local yield = <b>%{z:.2f}</b><br>
+          <i>Green = high, red = low; the 0 values in the corners are outside the wafer (no die).</i><extra></extra>
 
   # ------------------------------------------------------------------ Yield Prediction
   - match: "^Feature importance"
@@ -464,6 +733,11 @@ charts:
           平均 |SHAP| = <b>%{x:.4g}</b><br>
           %{customdata}<br>
           <i>數值越大＝這個參數對預測良率的影響越大（不分正負；代表關聯，不一定是因果）。</i><extra></extra>
+        hover_en: >-
+          <b>%{y}</b><br>
+          Mean |SHAP| = <b>%{x:.4g}</b><br>
+          %{customdata}<br>
+          <i>Larger value = this parameter has a larger effect on the predicted yield (regardless of sign; it indicates association, not necessarily causation).</i><extra></extra>
 
   # ------------------------------------------------------------------ Process Optimizer
   - match: "^Bayesian optimization convergence"
@@ -474,25 +748,47 @@ charts:
           良率 = <b>%{y:.4f}</b><br>
           <i>第 0–4 次是隨機起始點；之後由高斯過程模型挑選最可能改善的條件。</i><br>
           <i>⚠ 良率來自示範公式，不是真實製程。</i><extra></extra>
+        hover_en: >-
+          <b>Experiment #%{x}</b> (counting from 0)<br>
+          Yield = <b>%{y:.4f}</b><br>
+          <i>Experiments 0–4 are random initial points; after that, a Gaussian-process model selects the condition most likely to improve the yield.</i><br>
+          <i>⚠ The yield comes from a demonstration formula, not a real process.</i><extra></extra>
       - name: "^Best so far$"
         hover: >-
           <b>到第 %{x} 次為止的最佳良率</b> = %{y:.4f}<br>
           <i>曲線變平代表已收斂，再多做實驗幫助不大。</i><extra></extra>
+        hover_en: >-
+          <b>Best yield up to experiment #%{x}</b> = %{y:.4f}<br>
+          <i>A flattening curve means the optimization has converged; further experiments add little.</i><extra></extra>
 
 # Process-parameter names used by SemiYield's data (column names). Used for the Yield Prediction inputs,
 # the SHAP bars, the Data Generator trend chart and the caption under the SPC parameter selector.
 features:
-  gate_oxide_thickness: {zh: "閘極氧化層厚度", unit: "nm", note: "電晶體閘極下的 SiO₂ 厚度，決定閘極電容與臨界電壓；標稱 8.5 nm。"}
-  poly_cd: {zh: "多晶矽閘極線寬 CD", unit: "nm", note: "閘極的關鍵尺寸（約等於通道長度），越小越快但漏電越大；標稱 90 nm。"}
-  implant_dose: {zh: "植入劑量", unit: "cm⁻²", note: "每平方公分植入的離子數，決定摻雜濃度與臨界電壓；標稱 1×10¹³。"}
-  anneal_temp: {zh: "退火溫度", unit: "°C", note: "植入後活化摻雜物、修復晶格損傷的溫度；標稱 1000 °C。"}
-  metal_resistance: {zh: "金屬片電阻", unit: "Ω/□", note: "金屬導線層的片電阻，偏高表示膜太薄或材料問題；標稱 0.08。"}
-  contact_resistance: {zh: "接觸電阻", unit: "Ω", note: "金屬與矽之間接觸孔的電阻，過高會拖慢電路；標稱 15 Ω。"}
-  etch_rate: {zh: "蝕刻速率", unit: "nm/min", note: "每分鐘蝕刻的厚度；機台老化會使它逐漸下降。標稱 120。"}
-  deposition_unif: {zh: "沉積不均勻度", unit: "% 1σ", note: "整片晶圓膜厚的 1σ 不均勻度，越小越好；機台老化會使它變差。標稱 2%。"}
-  defect_density: {zh: "缺陷密度", unit: "個/cm²", note: "每平方公分的致命缺陷數，越小越好；透過 Murphy 模型降低良率。"}
-  yield: {zh: "良率", unit: "0–1", note: "合格晶粒比例 = 參數良率 × 缺陷良率（Murphy 模型）。是結果指標，不是製程參數。"}
-  wafer_map_mean: {zh: "晶圓圖平均局部良率", unit: "0–1", note: "晶圓圖上各晶粒局部良率的平均。"}
-  wafer_map_std: {zh: "晶圓圖局部良率標準差", unit: "", note: "晶圓圖上良率的分散程度，越大代表空間不均勻越嚴重。"}
-  lot_sequence: {zh: "批次序號", unit: "", note: "只是 lot 的順序編號，不是製程參數。"}
-  wafer_sequence: {zh: "晶圓序號", unit: "", note: "只是晶圓的順序編號，不是製程參數。"}
+  gate_oxide_thickness: {zh: "閘極氧化層厚度", unit: "nm", note: "電晶體閘極下的 SiO₂ 厚度，決定閘極電容與臨界電壓；標稱 8.5 nm。",
+    en: "Gate oxide thickness", note_en: "SiO₂ thickness under the transistor gate; sets the gate capacitance and the threshold voltage. Nominal 8.5 nm."}
+  poly_cd: {zh: "多晶矽閘極線寬 CD", unit: "nm", note: "閘極的關鍵尺寸（約等於通道長度），越小越快但漏電越大；標稱 90 nm。",
+    en: "Polysilicon gate CD (linewidth)", note_en: "Critical dimension of the gate (approximately the channel length); smaller is faster but leaks more. Nominal 90 nm."}
+  implant_dose: {zh: "植入劑量", unit: "cm⁻²", note: "每平方公分植入的離子數，決定摻雜濃度與臨界電壓；標稱 1×10¹³。",
+    en: "Implant dose", note_en: "Number of ions implanted per square centimeter; sets the doping concentration and the threshold voltage. Nominal 1×10¹³."}
+  anneal_temp: {zh: "退火溫度", unit: "°C", note: "植入後活化摻雜物、修復晶格損傷的溫度；標稱 1000 °C。",
+    en: "Anneal temperature", note_en: "Post-implant temperature that activates the dopants and repairs the lattice damage. Nominal 1000 °C."}
+  metal_resistance: {zh: "金屬片電阻", unit: "Ω/□", note: "金屬導線層的片電阻，偏高表示膜太薄或材料問題；標稱 0.08。",
+    en: "Metal sheet resistance", note_en: "Sheet resistance of the metal interconnect layer; a high value indicates a film that is too thin or a material problem. Nominal 0.08."}
+  contact_resistance: {zh: "接觸電阻", unit: "Ω", note: "金屬與矽之間接觸孔的電阻，過高會拖慢電路；標稱 15 Ω。",
+    en: "Contact resistance", note_en: "Resistance of the contacts between metal and silicon; too high a value slows the circuit down. Nominal 15 Ω."}
+  etch_rate: {zh: "蝕刻速率", unit: "nm/min", note: "每分鐘蝕刻的厚度；機台老化會使它逐漸下降。標稱 120。",
+    en: "Etch rate", note_en: "Thickness etched per minute; tool aging makes it decrease gradually. Nominal 120."}
+  deposition_unif: {zh: "沉積不均勻度", unit: "% 1σ", note: "整片晶圓膜厚的 1σ 不均勻度，越小越好；機台老化會使它變差。標稱 2%。",
+    en: "Deposition non-uniformity", note_en: "1σ within-wafer film-thickness non-uniformity; smaller is better. Tool aging makes it worse. Nominal 2%."}
+  defect_density: {zh: "缺陷密度", unit: "個/cm²", note: "每平方公分的致命缺陷數，越小越好；透過 Murphy 模型降低良率。",
+    en: "Defect density", note_en: "Number of killer defects per square centimeter; smaller is better. Reduces yield through the Murphy yield model."}
+  yield: {zh: "良率", unit: "0–1", note: "合格晶粒比例 = 參數良率 × 缺陷良率（Murphy 模型）。是結果指標，不是製程參數。",
+    en: "Yield", note_en: "Fraction of good dies = parametric yield × defect-limited yield (Murphy model). An outcome metric, not a process parameter."}
+  wafer_map_mean: {zh: "晶圓圖平均局部良率", unit: "0–1", note: "晶圓圖上各晶粒局部良率的平均。",
+    en: "Wafer-map mean local yield", note_en: "Mean of the local die yields on the wafer map."}
+  wafer_map_std: {zh: "晶圓圖局部良率標準差", unit: "", note: "晶圓圖上良率的分散程度，越大代表空間不均勻越嚴重。",
+    en: "Wafer-map local-yield standard deviation", note_en: "Spread of the yield across the wafer map; a larger value indicates more severe spatial non-uniformity."}
+  lot_sequence: {zh: "批次序號", unit: "", note: "只是 lot 的順序編號，不是製程參數。",
+    en: "Lot sequence number", note_en: "Just the sequential lot number, not a process parameter."}
+  wafer_sequence: {zh: "晶圓序號", unit: "", note: "只是晶圓的順序編號，不是製程參數。",
+    en: "Wafer sequence number", note_en: "Just the sequential wafer number, not a process parameter."}

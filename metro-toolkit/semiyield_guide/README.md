@@ -5,7 +5,18 @@ Adds explanations to SemiYield's dashboard without changing SemiYield:
 * **Inputs and metric cards** get a `?` icon. Hover it to see what the parameter means and where it sits in the process.
 * **Chart points** show what the point represents (values with units, and why it matters). Reference lines
   (UCL / CL / LCL, background doping, junction depth xj) explain themselves when you hover them.
-* Text is Traditional Chinese with the English term, so it matches the Eudic study files.
+* **Under every chart**:
+  * a status line read from the chart itself, with the reason (for example "1 of the last 5 points breaks a WE rule
+    → follow the OCAP");
+  * a **📖 怎麼讀這張圖 · How to read this chart** panel covering the legend, what the chart shows, good vs bad
+    patterns, the next step, what to record, and ready-to-send messages for RDA, PE, EE, PIE/YE and Manager/QE.
+
+  The panel text comes from metro-toolkit's `src/metro_toolkit/guide/charts_semiyield.yaml`.
+* **Legend entries** are added for lines SemiYield draws without one: CL, UCL/LCL, WE violations, background
+  doping, junction depth.
+* **Language:** the sidebar switch **說明語言 Guide language** selects 繁中 + English, 繁中 or English for tooltips,
+  hover text and panels. The English text is in `explanations.yaml` (`help_en`, `hover_en`, `en` / `note_en`).
+  Switching keeps SemiYield's page and inputs: the launcher gives each SemiYield control a stable key.
 
 **Covered:** all six pages (Simulation, Data Generator, SPC Dashboard, Yield Prediction, Process Optimizer,
 SPICE Export): every input, metric card and button, the section headers that need context (SHAP, process

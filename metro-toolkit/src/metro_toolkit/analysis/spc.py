@@ -197,6 +197,7 @@ def wafer_summary(df: pd.DataFrame, value: str = "value") -> pd.DataFrame:
     """Collapse site-level rows (standard schema) to one row per wafer."""
     keys = [k for k in WAFER_KEYS if k in df.columns]
     g = df.groupby(keys, sort=False, dropna=False)  # keep wafers whose tool/chamber is blank
+    extra = {"metro_tool_id": ("metro_tool_id", "first")} if "metro_tool_id" in df.columns else {}
     out = g.agg(
         timestamp=("timestamp", "min"),
         mean=(value, "mean"),
@@ -204,6 +205,7 @@ def wafer_summary(df: pd.DataFrame, value: str = "value") -> pd.DataFrame:
         min=(value, "min"),
         max=(value, "max"),
         n_sites=(value, "size"),
+        **extra,  # which metrology tool measured the wafer: lets SPC group by metrology tool (gauge vs process)
     ).reset_index()
     out["nu_1sigma_pct"] = 100 * out["std"] / out["mean"]
     out["range"] = out["max"] - out["min"]

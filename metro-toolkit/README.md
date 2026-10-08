@@ -66,6 +66,7 @@ Full step-by-step Windows instructions (including SemiYield and the other upstre
 6. **Data import** and **Fab simulator**: see the sections below.
 7. **DOE / recipe**: design an experiment, run it on a virtual ALD or CVD tool (or upload your own results),
    fit a response surface, optimise thickness + uniformity together, confirm, and check against the answer key.
+8. **Guide 參數與圖表說明**: every parameter and chart explanation in one searchable place (see below).
 
 ## Five lessons the demo makes concrete
 
@@ -80,9 +81,35 @@ Full step-by-step Windows instructions (including SemiYield and the other upstre
 5. **Chart uniformity, not just the mean.** A −2 nm bowl excursion is invisible on the wafer-mean chart and
    obvious on the within-wafer 1σ % chart.
 
+## Chart & parameter guide (Metro AE language, 繁中 + English)
+
+Every control, KPI tile and table column has a "?" tooltip, and every chart has:
+
+* **Legend entries for everything drawn**: control limits, CL, Phase I end, spec lines, alert lines, wafer edge,
+  significance thresholds. Hover text on every point.
+* **A status line read from the data**: 🟢 normal (record it), 🟡 watch (record and track) or 🔴 act (follow the
+  OCAP), with the reason and the real numbers. For example, "RTP02-B went OOC within the last 5 points (WE1, WE2)" or
+  "lowest Cpk = 0.87 < 1.0".
+* **A "📖 怎麼讀這張圖 · How to read this chart" panel** with four tabs:
+  1. legend and axes;
+  2. what it shows, good vs bad patterns and what this data says;
+  3. the next step for each status, plus a one-line e-log / SPC-comment record to copy;
+  4. a ready-to-send message for each role: RDA (defect / failure analysis), PE, EE, PIE / YE, and
+     Manager / QE.
+
+The sidebar switch **說明語言 Guide language** selects 繁中 + English, 繁中 or English (your settings are kept
+when you switch). The **Guide 參數與圖表說明** page lists and searches all of it. SemiYield gets the same panels under
+its 11 charts through `semiyield_guide/launch_semiyield.py`, with English tooltips and legend entries for CL / UCL /
+LCL, background doping and junction depth.
+
+Content lives in `src/metro_toolkit/guide/` (`params_*.yaml`, `charts_*.yaml`, `meta.yaml` for roles and status
+labels) and can be edited without touching code. `insights.py` and `insights_semiyield.py` turn each chart's data
+into the status and the numbers the messages quote. `tests/test_guide.py` checks that every control and chart has
+complete text in both languages and that every value a message uses is actually provided.
+
 ## Vocabulary study files (Eudic 歐路詞典)
 
-210 metrology / fab / statistics terms with Traditional Chinese translations, explanations and example
+223 metrology / fab / statistics terms with Traditional Chinese translations, explanations and example
 sentences, one file per tool plus a combined file, in both Eudic import formats:
 [`docs/eudic/`](docs/eudic/README.md). Edit `docs/eudic/glossary.yaml` and run `python -m metro_toolkit.eudic` to rebuild.
 
@@ -211,6 +238,7 @@ metro-toolkit/
 │   ├── analysis/spc.py     control charts, WE rules, capability, per-chamber SPC
 │   ├── datagen/            synthetic thickness data, fab simulator + answer key, MSA study data
 │   ├── doe/                designs · model · optimize · virtual (process tools with an answer key)
+│   ├── guide/              chart & parameter guide: params_*.yaml · charts_*.yaml · insights (data → status)
 │   ├── ingest/             readers · mapping · convert · checks · store (your own data)
 │   ├── dashboard/app.py    Streamlit app
 │   ├── demo.py             one-command report

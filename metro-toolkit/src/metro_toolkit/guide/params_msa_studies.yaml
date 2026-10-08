@@ -1,0 +1,172 @@
+# MSA page (Gauge R&R, tool matching) and Recipe studies page: controls, KPI tiles and table columns.
+# Each entry: zh and en, written as a Metro AE would explain it: definition, typical setting, effect, traps.
+
+params:
+  msa.upload:
+    zh: |
+      **GR&R CSV 上傳**：用自己的 GR&R 資料取代合成研究。欄位：**part**（晶圓或量測點編號）、**operator**（本頁＝量測機台；也可以是多頭機台的 head，或獨立的 load/unload session）、**value**（量測值）。
+      - 必須是**平衡交叉設計**：每片 × 每台的重複次數相同（典型 10 片 × 3 台 × 3 次），每格至少 2 次重複，否則會報錯。
+      - 晶圓要涵蓋製程範圍（規格內不同厚度），不要全部同一 lot、同一厚度，否則 %SV 與 ndc 會失真。
+      - 重複量測最好包含 load/unload 並分散在不同時間（dynamic）；只做連續重量（static）會低估量產時的雜訊。
+      上傳後，下面三個滑桿不再使用。
+    en: |
+      **GR&R CSV upload**: replaces the synthetic study with your own GR&R data. Columns: **part** (wafer or site ID), **operator** (here = metrology tool; can also be a head of a multi-head tool or an independent load/unload session), **value** (measured value).
+      - Must be a **balanced crossed design**: the same number of replicates for every wafer × tool (typically 10 wafers × 3 tools × 3 replicates), at least 2 per cell, otherwise it raises an error.
+      - Wafers must span the process range (different thicknesses within spec); all from one lot at one thickness distorts %SV and ndc.
+      - Replicates should include load/unload and be spread over time (dynamic); back-to-back repeats only (static) underestimate production noise.
+      Once a file is uploaded, the three sliders below are not used.
+  msa.repeat_sigma:
+    zh: |
+      **repeatability σ（nm）重複性**：合成研究中，同一台機台重複量同一片的雜訊（1σ）。範圍 0.01–0.3 nm，預設 0.05。
+      - 實務上對應 dynamic repeatability（含 load/unload、對焦、定位）。
+      - 在 ±1.5 nm 的規格（公差 3 nm）下，σ = 0.05 nm 單獨就佔 P/T ≈ 10 %（6 × 0.05 ÷ 3）。
+      調大 → repeatability 長條變長、P/T 上升、ndc 下降。
+    en: |
+      **repeatability σ (nm)**: in the synthetic study, the noise (1σ) when one tool measures the same wafer again. Range 0.01–0.3 nm, default 0.05.
+      - In practice this corresponds to dynamic repeatability (including load/unload, focus, positioning).
+      - With a ±1.5 nm spec (3 nm tolerance), σ = 0.05 nm alone gives P/T ≈ 10 % (6 × 0.05 ÷ 3).
+      Increase it → longer repeatability bar, higher P/T, lower ndc.
+  msa.tool_sigma:
+    zh: |
+      **tool-to-tool σ（nm）機台間差異**：本研究的「operator」＝量測機台（FT01–FT03），這是各機台固定 offset 的分布（1σ）。範圍 0–0.3 nm，預設 0.03。
+      調大 → reproducibility 長條變長。
+      陷阱：只有 3 台機台時，機台間變異只有 2 個自由度，估計非常不穩：真實值 0.03 nm 也可能被估成 0（被重複性雜訊蓋過）。要可靠評估機台差異，請搭配下方的 tool matching（逐點配對比較），或增加機台／session 數。
+    en: |
+      **tool-to-tool σ (nm)**: in this study "operator" = metrology tool (FT01–FT03); this is the spread (1σ) of each tool's fixed offset. Range 0–0.3 nm, default 0.03.
+      Increase it → longer reproducibility bar.
+      Trap: with only 3 tools the tool-to-tool variance has just 2 degrees of freedom, so the estimate is very unstable: a true 0.03 nm can be estimated as 0 (buried in repeatability noise). For a reliable view of tool differences use the tool-matching section below (paired site-by-site comparison), or add more tools / sessions.
+  msa.part_sigma:
+    zh: |
+      **part spread σ（nm）晶圓間差異**：研究晶圓真實厚度的分布（1σ）。範圍 0.1–3.0 nm，預設 1.0。
+      - **不影響 P/T**（P/T 只看量測 σ 與規格），但強烈影響 %SV 與 ndc。
+      - 晶圓太相似 → %GRR 看起來很差、ndc 很小，機台其實沒變；分布刻意拉太寬（例如挑規格外的片）→ %GRR 看起來過於漂亮。
+      挑選研究晶圓應代表真實的製程範圍。
+    en: |
+      **part spread σ (nm)**: the true thickness spread (1σ) of the study wafers. Range 0.1–3.0 nm, default 1.0.
+      - **Does not affect P/T** (P/T depends only on measurement σ and the spec), but strongly affects %SV and ndc.
+      - Wafers too similar → %GRR looks bad and ndc small although the tool has not changed; an artificially wide spread (e.g. picking out-of-spec wafers) → %GRR looks better than it is.
+      Pick study wafers that represent the real process range.
+  msa.lsl:
+    zh: |
+      **LSL 規格下限（nm）**：和 USL 一起算 P/T（%Tolerance）。預設取自 config/limits.yaml 的 ox_thickness_nm（98.5 nm）。
+      改規格只改變 P/T 與 verdict，不改變變異分量與 %SV。公差（USL − LSL）越窄，同樣的量測雜訊佔比越大。請用產品的正式規格，而不是管制界限。
+    en: |
+      **LSL, lower spec limit (nm)**: together with USL it sets P/T (%Tolerance). Default from ox_thickness_nm in config/limits.yaml (98.5 nm).
+      Changing the spec changes only P/T and the verdict, not the variance components or %SV. The narrower the tolerance (USL − LSL), the larger the share taken by the same measurement noise. Use the product's official spec, not the control limits.
+  msa.usl:
+    zh: |
+      **USL 規格上限（nm）**：和 LSL 一起算 P/T。預設取自 config/limits.yaml 的 ox_thickness_nm（101.5 nm），公差 3 nm。
+      USL 必須大於 LSL；單邊規格的參數不適用本頁的 P/T 公式。
+    en: |
+      **USL, upper spec limit (nm)**: together with LSL it sets P/T. Default from ox_thickness_nm in config/limits.yaml (101.5 nm), a 3 nm tolerance.
+      USL must be greater than LSL; this page's P/T formula does not apply to one-sided specs.
+  msa.grr:
+    zh: |
+      **%GRR (study var) 量測變異佔研究變異**＝100 × σ_GRR ÷ σ總。回答「觀察到的總變異中有多少是量測雜訊」，適合判斷量測系統能否用於 SPC／製程監控。
+      < 10 % 可接受、10–30 % 有條件接受、≥ 30 % 不可接受。
+      會受研究晶圓分布影響（見 part spread）；k（6 或 5.15）在分子分母中抵消，不影響這個值。
+    en: |
+      **%GRR (study var)** = 100 × σ_GRR ÷ σ total. Answers "how much of the observed variation is measurement noise?"; the right measure for whether the gauge can support SPC / process monitoring.
+      < 10 % acceptable, 10–30 % conditionally acceptable, ≥ 30 % unacceptable.
+      Depends on the spread of the study wafers (see part spread); k (6 or 5.15) cancels out and does not change it.
+  msa.pt:
+    zh: |
+      **P/T（Precision-to-Tolerance，%Tolerance）**＝6 × σ_GRR ÷ (USL − LSL) × 100。回答「量測雜訊吃掉多少規格」，適合判斷量測能否用來判定合格／不合格（產品 disposition）。
+      有規格時，verdict 與頁面狀態都以 P/T 為準：< 10 % 好、10–30 % 有條件、≥ 30 % 不可接受。
+      k = 6（limits.yaml 的 grr_k，AIAG 第 4 版）；較舊文件用 5.15，數字會小約 14 %，跨報告比較時要先確認 k。
+    en: |
+      **P/T (Precision-to-Tolerance, %Tolerance)** = 6 × σ_GRR ÷ (USL − LSL) × 100. Answers "how much of the spec does measurement noise use up?"; the right measure for pass / fail decisions (product disposition).
+      When spec limits are given, the verdict and the page status follow P/T: < 10 % good, 10–30 % conditional, ≥ 30 % unacceptable.
+      k = 6 (grr_k in limits.yaml, AIAG 4th edition); older documents use 5.15, which gives numbers about 14 % smaller, so check k before comparing reports.
+  msa.ndc:
+    zh: |
+      **ndc（number of distinct categories，可分辨等級數）**＝⌊1.41 × σ_part ÷ σ_GRR⌋。在研究晶圓的分布範圍內，量測系統能可靠區分出幾個等級。
+      ≥ 5 才適合 SPC 與製程控制；< 5 時 SPC 看到的多半是量測雜訊（頁面狀態升為「注意」）；ndc = 1 表示量測系統只能分辨「有／沒有」。
+      和 %SV 一樣受研究晶圓的挑選影響。
+    en: |
+      **ndc (number of distinct categories)** = ⌊1.41 × σ_part ÷ σ_GRR⌋. How many categories the gauge can reliably tell apart within the spread of the study wafers.
+      ≥ 5 is needed for SPC and process control; below 5, most of what SPC sees is measurement noise (page status raised to "watch"); ndc = 1 means the gauge can only tell "something / nothing".
+      Like %SV, it depends on how the study wafers were picked.
+  msa.verdict:
+    zh: |
+      **verdict 判定**：acceptable（< 10 %）、marginal（10–30 %，有條件接受，需簽核）、unacceptable（≥ 30 %）。
+      有規格時依 P/T 判定，沒有規格時依 %GRR (study var)；所以它可能和上方的 %GRR 磚、圖上的長條看起來不一致。
+      ndc < 5 不改變判定文字，但頁面狀態會升為「注意」。
+    en: |
+      **verdict**: acceptable (< 10 %), marginal (10–30 %, conditionally acceptable with sign-off), unacceptable (≥ 30 %).
+      Based on P/T when spec limits are given, otherwise on %GRR (study var); so it can disagree with the %GRR tile and the bars on the chart.
+      ndc < 5 does not change the verdict text, but raises the page status to "watch".
+  msa.offset:
+    zh: |
+      **true offset of FT02（nm）**：合成 matching 研究中，FT02 相對參考機台 FT01 的真實固定偏差。範圍 −0.5～+0.5 nm，預設 0.1。
+      匹配規格為 ±0.3 nm（limits.yaml 的 matching_offset_spec）：偏差超過約 ±0.3 → TOST 不通過（不匹配）；超過規格一半（±0.15）→ 狀態「注意」。
+      實務上固定 offset 的來源：calibration、參考片定值、recipe 的 n,k 或模型差異。
+    en: |
+      **true offset of FT02 (nm)**: in the synthetic matching study, the true constant offset of FT02 against the reference tool FT01. Range −0.5 to +0.5 nm, default 0.1.
+      The matching spec is ±0.3 nm (matching_offset_spec in limits.yaml): an offset beyond about ±0.3 → TOST fails (not matched); beyond half the spec (±0.15) → status "watch".
+      Real-world sources of a constant offset: calibration, the reference wafer's certified value, different n,k or model in the recipe.
+  msa.slope:
+    zh: |
+      **true slope of FT02**：FT02 = offset + slope × 真值。範圍 0.95–1.05，預設 1.00；容許 1 ± 0.02（limits.yaml 的 matching_slope_tol）。
+      陷阱：斜率以 0 nm 為支點，量測值在 100 nm 附近時，斜率 1.003 本身就造成約 0.3 nm 的平均偏差（整個 offset 規格），所以常見「斜率仍在容許內、TOST 卻先失敗」。
+      實務上比例偏差的來源：波長或入射角 calibration、色散模型不同。
+    en: |
+      **true slope of FT02**: FT02 = offset + slope × true value. Range 0.95–1.05, default 1.00; tolerance 1 ± 0.02 (matching_slope_tol in limits.yaml).
+      Trap: the slope pivots around 0 nm, so near 100 nm a slope of 1.003 alone adds about 0.3 nm of mean offset (the whole offset spec); "slope still within tolerance but TOST already fails" is therefore common.
+      Real-world sources of proportional bias: wavelength or angle-of-incidence calibration, different dispersion models.
+  msa.col.tool:
+    zh: "**tool**：候選量測機台。每列都是和參考機台（本頁為 FT01）比；若未指定參考機台，則和每個 (wafer, site) 的 fleet 中位數比。"
+    en: "**tool**: candidate metrology tool. Each row is compared with the reference tool (FT01 on this page); without a reference, with the fleet median of each (wafer, site)."
+  msa.col.n:
+    zh: "**n**：配對的 (wafer, site) 數（合成範例 5 片 × 49 點 = 245）。同一片上的 site 不完全獨立（片間效應），有效樣本數比 n 小；n 很大時信賴區間很窄，TOST 幾乎只看平均偏差本身。"
+    en: "**n**: number of paired (wafer, site) points (245 = 5 wafers × 49 sites in the synthetic example). Sites on one wafer are not fully independent (wafer-level effects), so the effective sample size is smaller than n; with a large n the confidence interval is very narrow and the TOST is decided almost entirely by the mean offset itself."
+  msa.col.mean_offset:
+    zh: "**mean_offset 平均偏差（nm）**：候選 − 參考的平均差，對應圖上的灰色虛線。和 ±matching spec 比；正值＝候選機台量得較厚。"
+    en: "**mean_offset (nm)**: mean of candidate − reference, the grey dashed line on the plot. Compare with ±matching spec; positive = the candidate reads thicker."
+  msa.col.sd_difference:
+    zh: "**sd_difference 差值標準差（nm）**：各點差值的 1σ。只有隨機雜訊時約等於 √(σ候選² + σ參考²)，兩台重複性相同時 ≈ 1.41 × 重複性；明顯更大 → site 層級不一致（定位、spot size、圖案或晶圓邊緣）。約 95 % 的點會落在 mean_offset ± 2 × sd_difference 內（limits of agreement）。"
+    en: "**sd_difference (nm)**: 1σ of the site differences. With random noise only it is about √(σ candidate² + σ reference²), ≈ 1.41 × repeatability for two equally repeatable tools; clearly larger → site-level disagreement (positioning, spot size, pattern or wafer edge). About 95 % of points fall within mean_offset ± 2 × sd_difference (limits of agreement)."
+  msa.col.deming_slope:
+    zh: "**deming_slope Deming 斜率**：候選對參考的斜率，用 Deming regression（假設兩台誤差變異相同，δ = 1）。一般最小平方法把參考當成沒有誤差，會把斜率估得偏向 0（regression dilution）。理想值 = 1；需要涵蓋夠寬的厚度範圍才估得準。"
+    en: "**deming_slope**: slope of candidate vs reference from Deming regression (equal error variance on both tools assumed, δ = 1). Ordinary least squares treats the reference as error-free and biases the slope toward 0 (regression dilution). Ideal = 1; a wide enough thickness range is needed for a precise estimate."
+  msa.col.offset_equivalent:
+    zh: "**offset_equivalent 偏差等價**：TOST（兩個單尾檢定，α = 0.05）通過＝平均差的 90 % 信賴區間完全落在 ±matching spec 內。False 不一定代表偏差大，也可能是點太少或雜訊太大使信賴區間太寬。"
+    en: "**offset_equivalent**: TOST (two one-sided tests, α = 0.05) passes = the 90 % confidence interval of the mean difference lies entirely inside ±matching spec. False does not always mean a large offset; too few points or too much noise can make the interval too wide."
+  msa.col.slope_ok:
+    zh: "**slope_ok 斜率合格**：|Deming 斜率 − 1| ≤ slope_tol（limits.yaml 的 matching_slope_tol，預設 0.02）。"
+    en: "**slope_ok**: |Deming slope − 1| ≤ slope_tol (matching_slope_tol in limits.yaml, default 0.02)."
+  msa.col.matched:
+    zh: "**matched 匹配**：offset_equivalent 與 slope_ok 都為 True。只有 matched 的機台，才能和參考機台互換量測同一 recipe 的產品。"
+    en: "**matched**: both offset_equivalent and slope_ok are True. Only a matched tool may measure product interchangeably with the reference tool on this recipe."
+  study.sensitivity_run:
+    zh: |
+      **Run sensitivity study（反射儀 vs SE）**：在 gate_oxide_thin 疊層（SiO2 on Si）上，以 1–200 nm 共 9 個厚度，比較反射儀與 SE（65/70/75°）的估計精度，數秒完成。
+      計算：厚度 ±0.05 nm 時訊號的差分 → 每 nm 的訊號變化 → 除以訊號雜訊（反射儀 0.002、SE 0.0007）與 √資料點數 → 1σ 精度。
+      只浮動厚度、沒有模型誤差，是理想化的下限：用來比較技術、找轉折厚度，不能當成機台規格。
+    en: |
+      **Run sensitivity study (reflectometry vs SE)**: on the gate_oxide_thin stack (SiO2 on Si), compares the estimated precision of reflectometry and SE (65/70/75°) at 9 thicknesses from 1 to 200 nm; takes a few seconds.
+      Method: signal difference for thickness ±0.05 nm → signal change per nm → divided by the signal noise (reflectometry 0.002, SE 0.0007) and √(number of data points) → 1σ precision.
+      Thickness only floats and there is no model error, so it is an idealised lower bound: use it to compare techniques and find the crossover thickness, not as a tool spec.
+  study.tn_run:
+    zh: |
+      **Run thickness / n correlation study**：單層 SiO2 類薄膜（Cauchy A = 1.46、B = 0.0035）在 Si 上，厚度 2、5、10、25、50、100、200 nm。模擬含雜訊的 SE（65/70/75°，Ψ 雜訊 0.02°、Δ 雜訊 0.04°）量測，再把厚度與 A 一起浮動擬合（A 起始值 1.5），記錄相關係數、誤差與標準誤差。約需 5 秒。
+    en: |
+      **Run thickness / n correlation study**: a single SiO2-like film (Cauchy A = 1.46, B = 0.0035) on Si at 2, 5, 10, 25, 50, 100 and 200 nm. Simulates a noisy SE measurement (65/70/75°, Ψ noise 0.02°, Δ noise 0.04°), then fits thickness and A together (A starts at 1.5) and records correlation, errors and standard errors. Takes about 5 s.
+  study.col.thickness_nm:
+    zh: "**thickness_nm 膜厚（nm）**：模擬的真實厚度。"
+    en: "**thickness_nm**: true simulated film thickness (nm)."
+  study.col.corr_t_n:
+    zh: "**corr_t_n 厚度–n 相關性**：擬合後厚度與 A 的相關係數絕對值（由共變異矩陣）。> 0.9 表示兩者強烈互相牽動，一個的誤差會轉成另一個的誤差；超薄膜接近 1。厚膜也可能偏高，但因為 σ 本身很小，實際影響小，所以要和 σ 一起看。"
+    en: "**corr_t_n**: absolute correlation between fitted thickness and A (from the covariance matrix). > 0.9 means they pull on each other strongly, so an error in one becomes an error in the other; close to 1 on ultra-thin films. It can stay high on thick films too, but there the σ values are tiny, so read it together with σ."
+  study.col.t_error_nm:
+    zh: "**t_error_nm 厚度誤差（nm）**：擬合厚度 − 真值（單次模擬、固定亂數種子）。和 t_stderr_nm 比：|誤差| 在 1–2 倍 stderr 內屬正常雜訊；遠大於 → 偏差（模型、局部最小值）。"
+    en: "**t_error_nm**: fitted − true thickness (nm), one simulation with a fixed random seed. Compare with t_stderr_nm: |error| within 1–2 × stderr is normal noise; much larger → a bias (model, local minimum)."
+  study.col.t_stderr_nm:
+    zh: "**t_stderr_nm 厚度標準誤差（nm）**：同時浮動 n 時，由擬合共變異矩陣得到的厚度 1σ 不確定度。比只浮動厚度時大，差距就是厚度–n 相關性的代價。"
+    en: "**t_stderr_nm**: 1σ thickness uncertainty (nm) from the fit's covariance matrix with n floated. Larger than with thickness floated alone; the difference is the price of the thickness–n correlation."
+  study.col.A_error:
+    zh: "**A_error**：擬合的 Cauchy A − 真值 1.46。A 約等於長波長的 n。"
+    en: "**A_error**: fitted − true Cauchy A (1.46). A is roughly n at long wavelength."
+  study.col.A_stderr:
+    zh: "**A_stderr σ(A)**：A 的 1σ 標準誤差，即圖上的 Y 值。> 0.01（參考門檻）→ n 無法從這片膜可靠量出，薄膜 recipe 應固定 n。SiO2 的 n 錯 0.01 約造成 1 % 厚度誤差。"
+    en: "**A_stderr, σ(A)**: 1σ standard error of A, the plotted Y value. > 0.01 (reference limit) → n cannot be measured reliably from this film, and the thin-film recipe should fix n. An n error of 0.01 on SiO2 gives about a 1 % thickness error."

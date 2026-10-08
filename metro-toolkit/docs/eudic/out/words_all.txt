@@ -25,6 +25,7 @@ center-to-edge
 central composite design
 chamber
 chamber matching
+change control
 chemical mechanical polishing
 chemical vapor deposition
 class imbalance
@@ -32,6 +33,7 @@ commonality analysis
 confirmation run
 confusion matrix
 container
+containment
 contour plot
 control chart
 control limits
@@ -55,8 +57,10 @@ die
 diffusion barrier
 dishing
 dispersion model
+disposition
 drift
 dynamic repeatability
+e-log
 edge exclusion
 edge ring
 edge roll-off
@@ -64,6 +68,7 @@ editable install
 ensemble model
 environment variable
 equivalence test
+escalation
 etching
 EWMA chart
 excursion
@@ -71,6 +76,7 @@ expected improvement
 explainability
 extinction coefficient
 false alarm
+false call
 fault detection and classification
 feature selection
 film stack
@@ -84,6 +90,7 @@ gate oxide
 gauge R&R
 Gaussian process
 global search
+golden wafer
 goodness of fit
 Grad-CAM
 ground truth
@@ -93,6 +100,7 @@ high-k dielectric
 hold
 Hotelling T-squared
 individuals and moving range chart
+inhibit
 interfacial layer
 interference fringe
 interpolation
@@ -111,15 +119,18 @@ measurement system analysis
 metrology
 model-based fitting
 monitor wafer
+moving range
 nearest centroid classifier
 non-uniformity
 notch
 number of distinct categories
+OCAP
 offset
 ONO stack
 optical constants
 orchestration
 out of control
+out of spec
 overlay
 oversampling
 parameter correlation
@@ -135,12 +146,14 @@ precursor
 predicted R-squared
 preventive maintenance
 process capability
+process of record
 process route
 process simulation
 process step
 process window
 Psi and Delta
 purge
+qual
 queue time
 radial profile
 random forest

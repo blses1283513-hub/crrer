@@ -19,6 +19,7 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 "metro_toolkit.metrology.thinfilm" = ["data/*.csv"]
+"metro_toolkit.guide" = ["*.yaml"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

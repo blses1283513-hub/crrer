@@ -1,0 +1,258 @@
+# Film stack & fit page and Wafer map page.
+# Template values for stack_reflectance and stack_se (from insights.stack_fit):
+#   {technique} {chi2} {worst_param} {worst_err} {worst_sigma} {err_sigma} {max_corr} {corr_pair} {fixed_layers}
+# Template values for wafer_map, wafer_zernike and wafer_radial (from insights.wafer_page):
+#   {wafer} {chamber} {param} {unit} {mean} {nu} {nu_median} {nu_ratio} {range} {n_sites} {n_oos} {lsl} {usl}
+#   {sig_term} {sig_text} {sig_coef} {sig_share} {r2} {center} {edge} {ce_diff} {ce_pct} {roll}
+# {finding} and {status} always exist.
+
+charts:
+  # ------------------------------------------------------------------------------------------- reflectometry
+  stack_reflectance:
+    page: "Film stack & fit"
+    title: {zh: "反射光譜：量測 vs 模型擬合（含擬合結果表、reduced χ²、參數相關矩陣）", en: "Reflectance spectrum: measured vs fitted model (with fit table, reduced χ², parameter correlation)"}
+    legend:
+      - item: "● measured 量測 · 藍點 blue dots"
+        zh: "量測（此處為模擬）的反射率光譜 R(λ)：垂直入射，250–1000 nm 每個波長一點，共 301 點。點在橘線兩側的上下抖動就是量測雜訊，大小由 Reflectance noise 滑桿（1σ）決定。"
+        en: "Measured (here: simulated) reflectance spectrum R(λ): normal incidence, one dot per wavelength from 250 to 1000 nm, 301 points. The up-and-down scatter of the dots around the orange line is the measurement noise, set by the Reflectance noise slider (1σ)."
+      - item: "— model fit 模型擬合 · 橘線 orange line"
+        zh: "把擬合出來的膜厚（有勾選時也包含 n）代回膜堆模型算出的理論光譜（技術：{technique}）。橘線穿過藍點中間、兩者的差（殘差）沒有規律 → 模型能解釋這筆光譜。但「能解釋」不等於「膜厚正確」：固定層錯了，橘線一樣可以貼得很好。"
+        en: "Theoretical spectrum of the stack model evaluated with the fitted thickness (and n, if floated); technique: {technique}. An orange line running through the middle of the dots with patternless residuals → the model can explain this spectrum. But ‘explains the spectrum’ is not ‘the thickness is right’: with a wrong fixed layer the orange line can still fit perfectly."
+    axes:
+      zh: "X 軸＝波長（nm），250–1000 nm；Y 軸＝反射率 R（絕對值 0–1，垂直入射；裸矽在可見光約 0.35，UV 端較高）。圖下方左邊是擬合結果表：parameter（L0＝最上層，往下 L1、L2…；.thickness 為膜厚 nm，.A 為 Cauchy 的 n 參數）、true 模擬真值、fitted 擬合值、± 1σ 統計不確定度、error＝fitted − true。右邊是 reduced χ²（目前 {chi2}，整體吻合度）與 Parameter correlation 矩陣（浮動參數兩兩之間的相關係數，−1 到 +1；只有浮動 ≥ 2 個參數時才顯示）。"
+      en: "X = wavelength (nm), 250–1000 nm; Y = reflectance R (absolute, 0–1, normal incidence; bare silicon is about 0.35 in the visible and higher in the UV). Below the chart, left: the fit table: parameter (L0 = top layer, then L1, L2…; .thickness is thickness in nm, .A is the Cauchy n parameter), true (simulated truth), fitted, ± 1σ (statistical uncertainty), error = fitted − true. Right: reduced χ² (now {chi2}, overall agreement) and the Parameter correlation matrix (correlation coefficient between each pair of floated parameters, −1 to +1; shown only when ≥ 2 parameters float)."
+    what:
+      zh: "反射儀量的是垂直入射的反射率光譜。光在薄膜上表面和下方界面各反射一次，兩道光互相干涉，形成隨波長起伏的條紋（fringes）；條紋的位置和間距由光學厚度 n·d 決定，膜越厚條紋越密。膜厚不是直接量到的，而是解反問題：把膜堆模型（層數、各層 n,k、固定層膜厚）代入，先做全域搜尋（避免鎖在錯的條紋級數），再用最小平方法微調浮動參數，直到模型光譜和量測光譜最吻合。所以報出的膜厚永遠是「量測 + 模型」的結果：量測雜訊決定 ± 1σ；模型錯誤（n,k、固定層、介面層、表面污染）造成偏差，這個偏差不在 ± 1σ 裡，χ² 也常常看不出來。"
+      en: "A reflectometer measures the reflectance spectrum at normal incidence. Light reflected from the top surface and from the interface below interferes, producing fringes that rise and fall with wavelength; their positions and spacing are set by the optical thickness n·d, and thicker films give denser fringes. Thickness is not measured directly: it is the solution of an inverse problem. The stack model (number of layers, n,k of each layer, thickness of the fixed layers) is evaluated, a global search runs first (so the fit does not lock onto the wrong fringe order), and least squares then refines the floated parameters until the model and measured spectra agree best. A reported thickness is therefore always ‘measurement + model’: measurement noise sets the ± 1σ, while model errors (n,k, fixed layers, interfacial layers, surface contamination) create a bias that is not inside the ± 1σ and that χ² often cannot see."
+    read:
+      zh: "好：橘線在整個波段都穿過藍點中間、殘差沒有規律；χ² ≈ 1；error 在 ±2σ 以內；相關係數 |r| < 0.95。壞：(1) 條紋的峰谷位置左右錯開 → 光學厚度 n·d 錯：真值超出 recipe 的 fit bounds、鎖在錯的條紋級數，或 n 錯，χ² 通常很大；(2) 峰谷位置對、但振幅（峰谷高低差）不對 → 膜與基板的折射率對比錯、模型少了吸收 k，或反射率校正（reference／baseline）偏掉；(3) 只有短波長（UV）對不上 → 吸收或色散沒建模、有介面層／原生氧化層／表面污染，或 UV 訊號弱、雜訊大；(4) 薄膜（< 約 10 nm）沒有條紋、整條光譜只是稍微平移 → 線看起來很好但 ± 1σ 很大，這是反射儀的物理極限，該換 SE；(5) 最危險的情況：線貼得很好、χ² ≈ 1，但固定的底層和實際不同 → 浮動層被「擠」偏，error 遠大於 ± 1σ；模擬時有 true 欄可以對照，量產時只有參考片、前站量測 feed-forward 或 TEM／XRR 交叉比對才看得出來；(6) |r| > 0.95 → 兩個參數互相抵換，單一數字不可信。"
+      en: "Good: the orange line runs through the middle of the dots over the whole range with patternless residuals; χ² ≈ 1; error within ±2σ; correlation |r| < 0.95. Bad: (1) fringe peaks and valleys shifted sideways → the optical thickness n·d is wrong: the true value lies outside the recipe's fit bounds, the fit locked onto the wrong fringe order, or n is wrong; χ² is usually large; (2) peak and valley positions right but amplitude (peak-to-valley contrast) wrong → wrong film/substrate index contrast, absorption k missing from the model, or the reflectance calibration (reference / baseline) is off; (3) mismatch only at short (UV) wavelengths → absorption or dispersion not modelled, an interfacial / native oxide / surface contamination layer, or weak UV signal with high noise; (4) thin films (< ~10 nm) show no fringes, only a slight shift of the whole spectrum → the line looks fine but ± 1σ is large; that is the physical limit of reflectometry, switch to SE; (5) the dangerous case: the line fits, χ² ≈ 1, but a fixed underlayer differs from reality → the floated layer is pushed off and the error is far larger than ± 1σ; in simulation the true column shows it, in production only a reference wafer, feed-forward of the previous-step measurement or a TEM / XRR cross-check reveals it; (6) |r| > 0.95 → two parameters trade off and neither single number can be trusted."
+    action:
+      act:
+        zh: "膜厚數字先不要用。OCAP（量測端）：(1) 看殘差形狀找原因：條紋錯位 → 條紋級數／fit bounds／n；振幅錯 → n,k 或反射率校正；只有 UV 錯 → 吸收、介面層、表面污染；(2) 同一點重測、換鄰近點，並在參考機台或標準片（reference wafer）上量，確認光源（尤其 UV 強度）、對焦與反射率校正正常——標準片也偏 → 量測機台問題，交機台端處理；(3) 檢查固定層 {fixed_layers} 是否和前站實際量測值一致，可行時改成 feed-forward 前站每片／每點的量測值；(4) 確認前，這些晶圓的結果不進 SPC 判斷、不做 APC 回饋，相關 lot 先 hold；(5) 若是 recipe 模型問題，走 recipe 變更流程（重新建模、調整固定／浮動參數），用參考片與 TEM／XRR 驗證後再 release。"
+        en: "Do not use the thickness yet. OCAP (metrology side): (1) read the residual shape to find the cause: shifted fringes → fringe order / fit bounds / n; wrong amplitude → n,k or reflectance calibration; UV only → absorption, interfacial layer, surface contamination; (2) re-measure the same site and a neighbouring site, and measure on a reference tool or a reference wafer to confirm the lamp (especially UV intensity), focus and reflectance calibration — if the reference wafer is also off, it is a metrology-tool problem, hand it to the tool owner; (3) check that the fixed layer(s) {fixed_layers} match the actual previous-step measurement and, where possible, feed forward the per-wafer / per-site value; (4) until confirmed, keep these results out of SPC decisions and APC feedback and hold the affected lots; (5) if the recipe model is wrong, go through recipe change control (re-model, change the fixed / floated parameters) and validate on a reference wafer and against TEM / XRR before release."
+      watch:
+        zh: "記錄並追蹤：在 SPC 點加註解（χ²／GOF 偏高），看是否只有特定 site（邊緣、圖案區）或特定量測機台偏高；追蹤 χ² 隨時間的趨勢（光源老化、校正漂移會讓 χ² 慢慢升高）。若是 |r| > 0.95，和 recipe owner 討論固定其中一個參數（例如用厚膜參考片量好的 n，或前站量測的底層膜厚），或增加資訊（加入 UV 波段、改用多角度 SE）。"
+        en: "Record and track: comment the SPC points (χ² / GOF elevated) and check whether only certain sites (edge, patterned area) or one metrology tool are affected; trend χ² over time (lamp ageing and calibration drift raise it slowly). If |r| > 0.95, discuss with the recipe owner fixing one of the two parameters (e.g. n measured on a thick reference film, or the underlayer thickness from the previous step) or adding information (UV range, multi-angle SE)."
+      good:
+        zh: "擬合可信：χ² ≈ 1、error 在 ± 1σ 量級、參數沒有互相抵換。照常記錄；定期用標準片確認量測機台，並在前站製程、材料或 n,k 庫變更時重新驗證固定層與 n,k 的假設——χ² 好看不代表沒有偏差。"
+        en: "The fit is trustworthy: χ² ≈ 1, error of the order of ± 1σ, no parameter trade-off. Record as usual; check the metrology tool regularly on a reference wafer and re-validate the fixed-layer and n,k assumptions whenever the previous step, the material or the n,k library changes — a good χ² does not prove there is no bias."
+    record:
+      zh: "[Film fit] {technique} · reduced χ² {chi2} · 最大偏差 {worst_param} = {worst_err}（± 1σ {worst_sigma}，{err_sigma}σ）· 最大 |r| {max_corr}（{corr_pair}）· 與 recipe 不符的固定層 {fixed_layers} · 狀態 {status} · 膜堆／量測機台：＿＿ · 處置：＿＿"
+      en: "[Film fit] {technique} · reduced χ² {chi2} · largest error {worst_param} = {worst_err} (± 1σ {worst_sigma}, {err_sigma}σ) · max |r| {max_corr} ({corr_pair}) · fixed layers off recipe {fixed_layers} · status {status} · stack / metrology tool: ___ · action: ___"
+    roles:
+      RDA:
+        zh: "【膜厚量測確認】{technique} 擬合：{finding}。若需要絕對厚度的參考，請協助在代表點做 TEM 切面（或 XRR），特別是 {worst_param} 與固定層 {fixed_layers}；量測端可提供 site 座標。確認前，這個膜厚不建議當作失效分析的依據。"
+        en: "[Film thickness check] {technique} fit: {finding}. If an absolute reference is needed, please help with a TEM cross-section (or XRR) at a representative site, especially {worst_param} and the fixed layer(s) {fixed_layers}; metrology can provide the site coordinates. Until confirmed, please do not use this thickness as evidence in failure analysis."
+      PE:
+        zh: "【量測模型提醒】{finding}。{worst_param} 目前偏差 {worst_err}（{err_sigma}σ），量測不確定度 ± {worst_sigma} 不包含模型偏差。請確認前站實際膜厚（固定層 {fixed_layers}）是否和 recipe 假設一致；量測確認前，請不要依這個數字調整沉積時間或 APC target。"
+        en: "[Metrology model notice] {finding}. {worst_param} is currently off by {worst_err} ({err_sigma}σ); the measurement uncertainty of ± {worst_sigma} does not include model bias. Please confirm that the actual previous-step thickness (fixed layer(s) {fixed_layers}) matches the recipe assumption; until metrology confirms, please do not adjust deposition time or the APC target based on this number."
+      EE:
+        zh: "【量測機台／recipe 檢查】{technique} reduced χ² = {chi2}。若同一 recipe 在多片、多點都偏高，請檢查量測機台：光源強度（尤其 UV）、對焦、反射率校正與標準片結果；若只有這個膜堆偏高，則是 recipe 模型問題。製程機台是否需要動作，等量測確認後再決定。"
+        en: "[Metrology tool / recipe check] {technique} reduced χ² = {chi2}. If the same recipe is high on many wafers and sites, please check the metrology tool: lamp intensity (especially UV), focus, reflectance calibration and the reference-wafer result; if only this stack is high, it is a recipe-model problem. Any action on the process tool waits until metrology has confirmed."
+      PIE_YE:
+        zh: "【可能影響電性的量測偏差】{finding}。若 {worst_param} 是關鍵介電層，{worst_err} 的偏差會直接影響 EOT、電容與漏電的預估。建議受影響晶圓先 hold，量測確認後再 disposition；可用 e-test（C-V、EOT）交叉驗證。"
+        en: "[Metrology bias that may affect electrical results] {finding}. If {worst_param} is a critical dielectric, an error of {worst_err} feeds directly into the EOT, capacitance and leakage estimates. Suggest holding the affected wafers and dispositioning after metrology confirms; e-test (C-V, EOT) can cross-check."
+      MGR_QE:
+        zh: "【狀態】膜厚量測（{technique}）：{status}。{finding}。風險：數字可能是量測模型偏差，不一定是製程偏移。已採取：重測與參考片確認；待決定：受影響 lot 是否 hold、recipe 模型是否修正。紀錄：e-log 已更新。"
+        en: "[Status] Film thickness metrology ({technique}): {status}. {finding}. Risk: the number may be a metrology-model bias, not necessarily a process shift. Done: re-measurement and reference-wafer check. Decision needed: hold the affected lots or not, and whether to correct the recipe model. Records: e-log updated."
+
+  # ------------------------------------------------------------------------------------------- ellipsometry
+  stack_se:
+    page: "Film stack & fit"
+    title: {zh: "橢圓偏光（SE）：中間入射角的 Ψ、Δ 對波長，量測 vs 模型擬合（含擬合結果表、reduced χ²、參數相關矩陣）", en: "Spectroscopic ellipsometry: Ψ and Δ vs wavelength at the middle angle, measured vs fitted model (with fit table, reduced χ², parameter correlation)"}
+    legend:
+      - item: "● measured 量測 · 藍點 blue dots（Ψ 圖與 Δ 圖 Ψ and Δ charts）"
+        zh: "量測（此處為模擬）的 Ψ（左圖）與 Δ（右圖），單位為度，250–1000 nm 每個波長一點。只畫中間的入射角（標題上的角度，預設 70°），但擬合同時使用 recipe 的所有角度（預設 65／70／75°）。點的抖動是量測雜訊：Ψ 由 noise 滑桿設定，Δ 為其 2 倍。"
+        en: "Measured (here: simulated) Ψ (left chart) and Δ (right chart) in degrees, one dot per wavelength from 250 to 1000 nm. Only the middle angle of incidence is drawn (the angle in the title, 70° by default), but the fit uses all of the recipe's angles (65 / 70 / 75° by default). The scatter is measurement noise: Ψ from the noise slider, Δ twice that."
+      - item: "— model fit 模型擬合 · 橘線 orange line（Ψ 圖與 Δ 圖 Ψ and Δ charts）"
+        zh: "擬合後的膜堆模型在同一角度算出的 Ψ、Δ（技術：{technique}）。兩張圖都要看：超薄膜的厚度資訊主要在 Δ（相位），Ψ 對折射率對比、吸收與基板較敏感。橘線貼合藍點只表示模型能解釋資料，不保證固定層與 n,k 正確。"
+        en: "Ψ and Δ computed at the same angle from the fitted stack model (technique: {technique}). Check both charts: for ultra-thin films the thickness information is mainly in Δ (phase), while Ψ is more sensitive to index contrast, absorption and the substrate. A line that hugs the dots only says the model can explain the data; it does not prove the fixed layers and n,k are right."
+    axes:
+      zh: "X 軸＝波長（nm），250–1000 nm；左圖 Y 軸＝Ψ（度，0–90°，tanΨ＝p、s 偏振反射振幅比）；右圖 Y 軸＝Δ（度，0–360°，p、s 偏振的相位差）。圖下方左邊是擬合結果表：parameter（L0＝最上層，往下 L1、L2…；.thickness 膜厚 nm，.A 為 Cauchy 的 n 參數）、true、fitted、± 1σ、error＝fitted − true；右邊是 reduced χ²（目前 {chi2}，涵蓋所有角度）與 Parameter correlation 矩陣（浮動 ≥ 2 個參數時才顯示）。"
+      en: "X = wavelength (nm), 250–1000 nm; left chart Y = Ψ (degrees, 0–90°, tanΨ = ratio of the p and s reflection amplitudes); right chart Y = Δ (degrees, 0–360°, phase difference between p and s). Below the charts, left: the fit table: parameter (L0 = top layer, then L1, L2…; .thickness in nm, .A is the Cauchy n parameter), true, fitted, ± 1σ, error = fitted − true. Right: reduced χ² (now {chi2}, covering all angles) and the Parameter correlation matrix (shown only when ≥ 2 parameters float)."
+    what:
+      zh: "SE 在斜角入射（recipe 預設 65°、70°、75°，接近矽的 Brewster 角）量測反射光偏振狀態的改變：r_p ÷ r_s＝tanΨ · e^(iΔ)。Ψ 是 p、s 兩個偏振方向反射振幅的比，Δ 是兩者的相位差。因為 Δ 是相位，次奈米的膜厚變化就看得到，所以閘極氧化層、high-k、ONO、ZAZ 電容介電層這類超薄或多層膜都用 SE 而不用反射儀（3 nm SiO2 在本模擬器預設雜訊下：SE 的 ± 1σ 約 0.0006 nm，反射儀約 0.1 nm）。擬合時把 Ψ、Δ 轉成 N＝cos2Ψ、C＝sin2Ψ·cosΔ、S＝sin2Ψ·sinΔ，避開 Δ 在 0／360° 的跳點，也自動降低 Δ 定義不清處（Ψ 很小時）的權重。和反射儀一樣，結果是「量測 + 模型」：模型錯誤造成的偏差不在 ± 1σ 裡。"
+      en: "SE measures, at oblique incidence (65°, 70°, 75° by default, near the Brewster angle of silicon), how reflection changes the polarisation state: r_p ÷ r_s = tanΨ · e^(iΔ). Ψ is the ratio of the p and s reflection amplitudes, Δ their phase difference. Because Δ is a phase, sub-nanometre thickness changes are visible, which is why gate oxide, high-k, ONO and ZAZ capacitor dielectrics, and other ultra-thin or multilayer films are measured by SE rather than reflectometry (3 nm SiO2 with this simulator's default noise: SE ± 1σ ≈ 0.0006 nm, reflectometry ≈ 0.1 nm). The fit converts Ψ, Δ into N = cos2Ψ, C = sin2Ψ·cosΔ, S = sin2Ψ·sinΔ, which avoids the 0/360° wrap of Δ and automatically down-weights Δ where it is poorly defined (small Ψ). As with reflectometry, the result is ‘measurement + model’: bias from a wrong model is not inside the ± 1σ."
+    read:
+      zh: "好：Ψ、Δ 兩張圖的橘線都穿過藍點、殘差沒有規律；χ² ≈ 1 或略低（本模擬器的 SE 雜訊是保守估計，正確模型通常約 0.4–0.6）；error 在 ±2σ 以內；|r| < 0.95。壞：(1) Δ 有系統性偏移而 Ψ 貼合 → 可能是量測機台偏光元件／入射角的校正，或模型少了一層（表面吸附、介面層）；超薄膜的厚度資訊主要在 Δ，這種殘差會直接變成膜厚誤差；(2) 只有 UV 端（< 約 350 nm）對不上 → 介電層開始吸收（Cauchy 模型假設透明）、退火後結晶或組成改變、介面層，或矽基板的光學常數（約 290 nm 與 365 nm 的臨界點附近對溫度、摻雜與表面損傷敏感）；(3) 中間角度看起來很好但 χ² 高 → 其他角度（65°／75°）對不上：入射角校正、光斑太大或光斑內膜厚不均；(4) Δ 在 0° 與 360° 之間跳動 → 顯示上的折回，不是擬合錯誤；Ψ 很小處 Δ 雜訊大是物理現象；(5) 最危險：兩張圖都貼合、χ² 正常，但固定層和實際不同 → 浮動層被擠偏，error 遠大於 ± 1σ。同材料（如 ZAZ 上下兩層 ZrO2）或光學性質相近的薄層幾乎無法分開，偏差幾乎全部轉嫁；夾著不同材料的膜堆（如 ONO）χ² 有時會升高；(6) 兩層一起浮動時 |r| 常接近 1（本模擬器 nitride_on_oxide 約 −0.98、ONO 約 −0.97）：總光學厚度很準，兩層怎麼分配主要靠 UV 的色散差異。"
+      en: "Good: in both the Ψ and Δ charts the orange line runs through the dots with patternless residuals; χ² ≈ 1 or a little lower (this simulator's SE noise is a conservative estimate, so a correct model usually gives about 0.4–0.6); error within ±2σ; |r| < 0.95. Bad: (1) a systematic offset in Δ while Ψ fits → possibly the metrology tool's polariser / angle-of-incidence calibration, or a layer missing from the model (surface adsorbate, interfacial layer); for ultra-thin films the thickness information is mainly in Δ, so this residual turns directly into thickness error; (2) mismatch only in the UV (< ~350 nm) → the dielectric starts to absorb (the Cauchy model assumes it is transparent), crystallisation or composition changed after anneal, an interfacial layer, or the silicon substrate's optical constants (near the ~290 nm and ~365 nm critical points they are sensitive to temperature, doping and surface damage); (3) the middle angle looks fine but χ² is high → the other angles (65° / 75°) do not fit: angle-of-incidence calibration, a spot that is too large, or thickness non-uniformity inside the spot; (4) Δ jumping between 0° and 360° → a display wrap, not a misfit; high Δ noise where Ψ is small is physics; (5) the most dangerous case: both charts fit and χ² is normal, but a fixed layer differs from reality → the floated layer is pushed off and the error is far larger than ± 1σ. Thin layers of the same material (e.g. the two ZrO2 layers of ZAZ) or of similar optical properties are practically inseparable, so almost the whole error is transferred; stacks with a different material in between (e.g. ONO) sometimes do raise χ²; (6) when two layers float together |r| is often close to 1 (in this simulator about −0.98 for nitride_on_oxide and −0.97 for ONO): the total optical thickness is precise, while the split between the layers relies mainly on their different UV dispersion."
+    action:
+      act:
+        zh: "膜厚數字先不要用。OCAP（量測端）：(1) Ψ、Δ 都看，判斷殘差出現在哪個波段、哪一個量；(2) 同一點重測、換鄰近點，並量參考片（例如已知厚度的熱氧化標準片），確認 SE 的偏光元件、入射角與光源校正；參考片也偏 → 量測機台問題，交機台端處理；(3) 超薄膜要考慮 queue time：等待期間的表面吸附（AMC、水氣）會讓讀值慢慢變厚，比對沉積到量測的時間差；(4) 檢查固定層 {fixed_layers} 是否等於前站實際量測值，可行時改成 feed-forward；(5) 確認前，結果不進 SPC 判斷與 APC 回饋，相關 lot 先 hold；若是 recipe 模型問題，走 recipe 變更流程，用參考片與 TEM／XRR 驗證後再 release。"
+        en: "Do not use the thickness yet. OCAP (metrology side): (1) look at both Ψ and Δ to see in which wavelength range and in which quantity the residual sits; (2) re-measure the same site and a neighbouring site, and measure a reference wafer (e.g. a thermal-oxide standard of known thickness) to confirm the SE polariser, angle-of-incidence and lamp calibration; if the reference wafer is also off, it is a metrology-tool problem, hand it to the tool owner; (3) for ultra-thin films consider queue time: surface adsorption while waiting (AMC, moisture) makes the reading creep thicker, so compare the time between deposition and measurement; (4) check that the fixed layer(s) {fixed_layers} equal the actual previous-step measurement and feed it forward where possible; (5) until confirmed, keep the results out of SPC decisions and APC feedback and hold the affected lots; if the recipe model is wrong, go through recipe change control and validate on a reference wafer and against TEM / XRR before release."
+      watch:
+        zh: "記錄並追蹤：SPC 點加註解；看 χ² 偏高是否集中在特定 site、特定角度或特定量測機台；追蹤 χ² 與參考片讀值的趨勢（光源老化、校正漂移）。|r| > 0.95 時，和 recipe owner 討論固定其中一個參數（前站量測的底層、厚膜參考片量好的 n），或改為報告總厚度。"
+        en: "Record and track: comment the SPC points; check whether the high χ² concentrates on certain sites, certain angles or one metrology tool; trend χ² and the reference-wafer reading (lamp ageing, calibration drift). If |r| > 0.95, discuss with the recipe owner fixing one of the two parameters (underlayer from the previous-step measurement, n from a thick reference film) or reporting the total thickness instead."
+      good:
+        zh: "擬合可信。照常記錄；定期量參考片確認機台，並在前站製程、材料或 n,k 庫變更時重新驗證固定層與 n,k 的假設——χ² 好看不代表沒有偏差。"
+        en: "The fit is trustworthy. Record as usual; measure the reference wafer regularly to confirm the tool, and re-validate the fixed-layer and n,k assumptions whenever the previous step, the material or the n,k library changes — a good χ² does not prove there is no bias."
+    record:
+      zh: "[Film fit] {technique} · reduced χ² {chi2} · 最大偏差 {worst_param} = {worst_err}（± 1σ {worst_sigma}，{err_sigma}σ）· 最大 |r| {max_corr}（{corr_pair}）· 與 recipe 不符的固定層 {fixed_layers} · 狀態 {status} · 膜堆／量測機台／角度：＿＿ · 處置：＿＿"
+      en: "[Film fit] {technique} · reduced χ² {chi2} · largest error {worst_param} = {worst_err} (± 1σ {worst_sigma}, {err_sigma}σ) · max |r| {max_corr} ({corr_pair}) · fixed layers off recipe {fixed_layers} · status {status} · stack / metrology tool / angles: ___ · action: ___"
+    roles:
+      RDA:
+        zh: "【超薄膜量測確認】SE 擬合：{finding}。若需要絕對厚度參考，請協助在代表點做 TEM 切面（high-k、介面層建議 HR-TEM），特別是 {worst_param} 與固定層 {fixed_layers}；量測端可提供 site 座標。確認前，這個膜厚不建議當作失效分析的依據。"
+        en: "[Ultra-thin film check] SE fit: {finding}. If an absolute reference is needed, please help with a TEM cross-section at a representative site (HR-TEM recommended for high-k and interfacial layers), especially {worst_param} and the fixed layer(s) {fixed_layers}; metrology can provide the site coordinates. Until confirmed, please do not use this thickness as evidence in failure analysis."
+      PE:
+        zh: "【量測模型提醒】{finding}。{worst_param} 偏差 {worst_err}（{err_sigma}σ），± {worst_sigma} 不包含模型偏差。請確認前站的實際膜厚（固定層 {fixed_layers}）與 recipe 假設一致，並確認沉積到量測的 queue time；量測確認前，請不要依此數字調整 cycle 數、沉積時間或 APC target。"
+        en: "[Metrology model notice] {finding}. {worst_param} is off by {worst_err} ({err_sigma}σ); ± {worst_sigma} does not include model bias. Please confirm that the actual previous-step thickness (fixed layer(s) {fixed_layers}) matches the recipe assumption, and check the deposition-to-measurement queue time; until metrology confirms, please do not adjust the cycle count, deposition time or APC target based on this number."
+      EE:
+        zh: "【量測機台／recipe 檢查】SE reduced χ² = {chi2}。若同一 recipe 多片、多點都偏高，請檢查 SE 量測機台：光源強度（尤其 UV）、偏光元件與入射角校正、對焦，以及參考片結果；若只有這個膜堆偏高，則是 recipe 模型問題。製程機台是否需要動作，等量測確認後再決定。"
+        en: "[Metrology tool / recipe check] SE reduced χ² = {chi2}. If the same recipe is high on many wafers and sites, please check the SE tool: lamp intensity (especially UV), polariser and angle-of-incidence calibration, focus, and the reference-wafer result; if only this stack is high, it is a recipe-model problem. Any action on the process tool waits until metrology has confirmed."
+      PIE_YE:
+        zh: "【可能影響電性】{finding}。超薄介電層（閘極氧化層、high-k、電容介電層）{worst_err} 的膜厚偏差就足以改變 EOT、Vt、漏電與電容的預估。建議受影響晶圓先 hold，量測確認後再 disposition；可用 e-test（C-V、EOT、漏電）交叉驗證。"
+        en: "[Possible electrical impact] {finding}. For an ultra-thin dielectric (gate oxide, high-k, capacitor dielectric) a thickness error of {worst_err} is enough to change the EOT, Vt, leakage and capacitance estimates. Suggest holding the affected wafers and dispositioning after metrology confirms; e-test (C-V, EOT, leakage) can cross-check."
+      MGR_QE:
+        zh: "【狀態】超薄膜量測（SE）：{status}。{finding}。風險：數字可能是量測模型偏差，不一定是製程偏移。已採取：重測與參考片確認；待決定：受影響 lot 是否 hold、recipe 模型是否修正。紀錄：e-log 已更新。"
+        en: "[Status] Ultra-thin film metrology (SE): {status}. {finding}. Risk: the number may be a metrology-model bias, not necessarily a process shift. Done: re-measurement and reference-wafer check. Decision needed: hold the affected lots or not, and whether to correct the recipe model. Records: e-log updated."
+
+  # ------------------------------------------------------------------------------------------- wafer map
+  wafer_map:
+    page: "Wafer map"
+    title: {zh: "晶圓圖（單片晶圓等高線圖，絕對值或相對平均的偏差）", en: "Wafer map (contour map of one wafer, absolute or deviation from mean)"}
+    legend:
+      - item: "▦ 色塊 colour field · 絕對值：藍色漸層 absolute: sequential blue ／ 偏差：藍–灰–紅 deviation: blue–grey–red"
+        zh: "由量測點內插出來的等高線色塊（thin-plate spline，會通過每一個量測點，分成約 16 個色階）。absolute：單一藍色漸層，淺 → 深＝低 → 高；deviation from mean：藍–灰–紅，灰＝本片平均 {mean} {unit}，藍＝低於平均、紅＝高於平均。點與點之間的顏色是模型算的，不是量到的。"
+        en: "Contour colour field interpolated from the measured sites (thin-plate spline that passes through every site, in about 16 colour bands). Absolute: a single sequential blue, light → dark = low → high; deviation from mean: blue–grey–red, grey = this wafer's mean {mean} {unit}, blue = below the mean, red = above. The colour between sites is computed by a model, not measured."
+      - item: "○ sites 量測點 · 白點灰框 white dots with grey ring"
+        zh: "實際的量測位置（本片 {n_sites} 點）。滑鼠移上去會顯示 site 編號與量測值——這才是真正的數據，判讀以點為準，不要以顏色為準。"
+        en: "Actual measurement locations ({n_sites} sites on this wafer). Hover to see the site number and its measured value — these are the real data; judge by the sites, not by the colours."
+      - item: "◯ wafer edge 晶圓邊緣 · 灰色圓 grey circle"
+        zh: "畫在最外圈量測點的半徑上，是「有資料區」的邊界，不是物理的晶圓邊緣：300 mm 晶圓半徑 150 mm，扣掉 edge exclusion（例如 3 mm）與最外圈取樣位置後，圓外到 bevel 之間完全沒有資料。"
+        en: "Drawn at the radius of the outermost measured site: the boundary of the area with data, not the physical wafer edge. A 300 mm wafer has a 150 mm radius; after the edge exclusion (e.g. 3 mm) and the position of the outermost sampling ring, there is no data at all between this circle and the bevel."
+      - item: "▮ colour bar 色條"
+        zh: "顏色對應的數值，單位 {unit}。色條範圍會自動縮放到這一片自己的最小～最大值（deviation 模式為對稱於 0 的 ± 最大偏差），所以很均勻的晶圓也會看起來顏色對比很強；判斷大小要讀色條上的數字，並和規格 {lsl}–{usl} 比較。"
+        en: "Value of each colour, in {unit}. The bar auto-scales to this wafer's own min–max (in deviation mode: symmetric ± the largest deviation around 0), so even a very uniform wafer shows strong colour contrast; read the numbers on the bar and compare them with the spec {lsl}–{usl}."
+    axes:
+      zh: "X、Y＝晶圓座標（mm），原點為晶圓中心，等比例顯示；座標方向（notch 在哪一側）依量測機台／資料的定義，說出「哪一側厚」之前先確認。標題＝晶圓編號（chamber）。上方指標：mean 平均、1σ NU、range、(max−min)/2·mean、sites 量測點數。"
+      en: "X, Y = wafer coordinates (mm), origin at the wafer centre, equal scaling; the orientation (which side the notch is on) follows the metrology tool's / data's convention, so confirm it before saying ‘which side is thick’. Title = wafer ID (chamber). KPI tiles above: mean, 1σ NU, range, (max−min)/2·mean, sites."
+    what:
+      zh: "把一片晶圓的量測點畫成空間分布，回答「不均勻在哪裡、是什麼形狀」。1σ NU 只是一個數字：同樣的 NU 可以是中心厚（bowl）、一邊厚（tilt）、邊緣掉（edge roll-off）或單一壞點，原因與該找的人完全不同。形狀是機台硬體與製程條件的指紋（fingerprint）：同一個 chamber 通常有固定的形狀，形狀改變常常比平均值或 NU 更早出現。注意這張圖是內插模型：9 或 13 點的取樣只能看到最低階的形狀，比點距小的特徵（局部熱點、窄的邊緣環、lift pin 痕跡）根本看不到；即使 49 點，相鄰環之間也有約 50 mm 沒有資料。"
+      en: "Shows one wafer's sites as a spatial distribution and answers ‘where is the non-uniformity and what shape is it?’. 1σ NU is just one number: the same NU can be a thick centre (bowl), one thick side (tilt), a dropping edge (edge roll-off) or a single bad site, each with a different cause and a different person to call. The shape is a fingerprint of the tool hardware and process conditions: a chamber usually has a stable shape, and a shape change often appears before the mean or the NU moves. Remember the map is an interpolation model: a 9- or 13-site plan only resolves the lowest-order shapes, and features smaller than the site spacing (local hot spots, a narrow edge ring, lift-pin marks) are simply invisible; even with 49 sites there are about 50 mm without data between neighbouring rings."
+    read:
+      zh: "好：顏色變化平緩、色條範圍遠小於規格寬度、沒有單點孤島、形狀和這個 chamber 平常的指紋一樣。壞：(1) 同心圓（中心和邊緣不同）→ bowl：加熱器溫度分區、showerhead 間距／氣流、電漿密度、CMP 研磨頭分區壓力；(2) 一側厚一側薄 → tilt：加熱器或氣流偏一側、晶圓放偏（robot 交接偏移）、pedestal 水平、抽氣口位置；(3) 對角兩區高、另兩區低（鞍形）→ astigmatism：夾持（chuck）、晶圓應力／翹曲、兩向不對稱的氣流（slit valve 與 pump port 方向）；(4) 只有最外圈突變 → edge roll-off／turn-up：edge／focus ring 損耗、shadow ring、CMP retaining ring 與邊緣壓力、bevel 附近的製程；(5) 單一點特別高或低、周圍正常 → 先懷疑量測（pattern recognition、對焦、擬合 GOF 不好、點落在缺陷上），重測後仍在才當作局部製程問題；(6) 任何量測點超出規格 → OOS，不管 NU 多好都要處理。"
+      en: "Good: smooth colour changes, a colour-bar range far smaller than the spec width, no single-site islands, and the same shape as this chamber's usual fingerprint. Bad: (1) concentric pattern (centre differs from edge) → bowl: heater temperature zones, showerhead gap / gas flow, plasma density, CMP head zone pressures; (2) one side thick, the other thin → tilt: heater or gas flow biased to one side, wafer placed off-centre (robot hand-off offset), pedestal levelling, pump-port position; (3) two opposite quadrants high, the other two low (saddle) → astigmatism: chucking, wafer stress / bow, 2-fold asymmetric flow (slit-valve vs pump-port direction); (4) only the outermost ring changes abruptly → edge roll-off / turn-up: edge / focus ring wear, shadow ring, CMP retaining ring and edge pressure, processes near the bevel; (5) one site much higher or lower than its neighbours → suspect the measurement first (pattern recognition, focus, poor fit GOF, site on a defect) and treat it as a local process issue only if it survives a re-measurement; (6) any site out of spec → OOS, which must be handled however good the NU is."
+    action:
+      act:
+        zh: "OCAP：(1) 先確認量測：看最差幾個 site 的擬合品質（GOF／χ²），同一片重測，必要時在另一台匹配的量測機台或用參考片確認；單點異常且重測正常 → 量測問題，記錄後放行；(2) 確認是真的 → hold 該 lot，查 {chamber} 前後片（commonality：同 chamber、同時段、同 recipe）是否同樣形狀；(3) 通知 EE 依形狀檢查 {chamber}：bowl 看加熱器／showerhead／分區壓力，tilt 看氣流／晶圓放置／水平，edge 看 edge ring／retaining ring 使用時數；同樣形狀連續出現在多片時 inhibit；(4) 通知 PE／PIE 評估 disposition（OOS {n_oos} 點，規格 {lsl}–{usl} {unit}）；(5) 修復後跑 qual 片，形狀與 NU 回到 chamber 基準再 release。"
+        en: "OCAP: (1) verify the measurement first: check the fit quality (GOF / χ²) of the worst sites, re-measure the wafer, and if needed confirm on a matched metrology tool or with a reference wafer; a single bad site that re-measures normal → metrology issue, record and release; (2) if it is real → hold the lot and check wafers before and after on {chamber} (commonality: same chamber, same time window, same recipe) for the same shape; (3) ask EE to check {chamber} according to the shape: bowl → heater / showerhead / zone pressure, tilt → gas flow / wafer placement / levelling, edge → edge ring / retaining ring hours; inhibit if the same shape repeats on consecutive wafers; (4) ask PE / PIE to disposition ({n_oos} OOS sites, spec {lsl}–{usl} {unit}); (5) after the fix, run qual wafers and release once the shape and NU are back at the chamber baseline."
+      watch:
+        zh: "不必停機，但要追：e-log 記錄形狀與 NU 倍數，在 SPC 的 NU% 點加註解；提高該 chamber 的抽樣（每 lot 多量一片，或改用較密的 site plan），追蹤主要 Zernike 項隨時間與 PM／耗材時數的關係；形狀持續變強時，提前和 EE 討論 PM 或 chamber 調整。"
+        en: "No tool-down needed, but follow up: log the shape and NU ratio in the e-log and comment the NU% point in SPC; raise sampling on that chamber (one more wafer per lot, or a denser site plan) and trend the main Zernike term against time and PM / consumable hours; if the shape keeps growing, discuss an early PM or chamber adjustment with EE."
+      good:
+        zh: "形狀與 NU 正常。照常記錄；把這個 chamber 的典型形狀（Zernike 係數）留作基準，PM 或零件更換後比對。"
+        en: "Shape and NU are normal. Record as usual; keep this chamber's typical shape (Zernike coefficients) as a baseline and compare after PMs or part swaps."
+    record:
+      zh: "[Wafer map] {param} · {wafer}（{chamber}）· mean {mean} {unit} · 1σ NU {nu}%（全體中位數 {nu_median}%，×{nu_ratio}）· range {range} · {n_sites} 點，OOS {n_oos}（規格 {lsl}–{usl}）· 主要形狀 {sig_term} · 狀態 {status} · 處置：＿＿"
+      en: "[Wafer map] {param} · {wafer} ({chamber}) · mean {mean} {unit} · 1σ NU {nu}% (fleet median {nu_median}%, ×{nu_ratio}) · range {range} · {n_sites} sites, OOS {n_oos} (spec {lsl}–{usl}) · main shape {sig_term} · status {status} · action: ___"
+    roles:
+      RDA:
+        zh: "【晶圓圖】{param} {wafer}（{chamber}）：{finding}。主要形狀是 {sig_term}；若要做缺陷 review／SEM／切面，建議優先取最高與最低的 site 以及外圈區域，量測端可提供 site 座標與數值。"
+        en: "[Wafer map] {param} {wafer} ({chamber}): {finding}. The main shape is {sig_term}; if you plan defect review / SEM / cross-section, suggest starting with the highest and lowest sites and the outer ring; metrology can provide the site coordinates and values."
+      PE:
+        zh: "【均勻度】{param} {wafer}：1σ NU = {nu}%，是全體中位數 {nu_median}% 的 {nu_ratio} 倍；主要形狀：{sig_text}。OOS {n_oos} 點（規格 {lsl}–{usl} {unit}）。請確認期間是否有 recipe 變更、進料差異或製程窗口偏移；已排除量測問題。"
+        en: "[Uniformity] {param} {wafer}: 1σ NU = {nu}%, {nu_ratio}× the fleet median of {nu_median}%; main shape: {sig_text}. {n_oos} OOS sites (spec {lsl}–{usl} {unit}). Please check for recipe changes, incoming-material differences or a process-window shift in this period; metrology has been ruled out."
+      EE:
+        zh: "【機台確認】{chamber} 的 {wafer} 出現 {sig_term} 形狀（{sig_text}；係數 {sig_coef} {unit}），1σ NU {nu}%（全體中位數的 {nu_ratio} 倍）。請對照 PM、零件更換、耗材時數與警報；需要時 inhibit 並跑 qual 片確認形狀回到基準。"
+        en: "[Tool check] {wafer} on {chamber} shows a {sig_term} shape ({sig_text}; coefficient {sig_coef} {unit}), 1σ NU {nu}% ({nu_ratio}× the fleet median). Please compare with PMs, part swaps, consumable hours and alarms; inhibit if needed and run qual wafers to confirm the shape is back at baseline."
+      PIE_YE:
+        zh: "【可能影響良率】{param} {wafer}（{chamber}）：{finding}。OOS {n_oos} 點；邊緣 − 中心 = {ce_diff} {unit}（{ce_pct}%），外圈 die 的風險較高。請評估受影響 lot 的電性／良率風險與 disposition。"
+        en: "[Possible yield impact] {param} {wafer} ({chamber}): {finding}. {n_oos} OOS sites; edge − centre = {ce_diff} {unit} ({ce_pct}%), so outer-ring dies carry the higher risk. Please assess the electrical / yield risk and disposition of the affected lots."
+      MGR_QE:
+        zh: "【狀態】{param} 晶圓圖 {wafer}（{chamber}）：{status}。{finding}。已採取：量測確認、通知 EE／PE；待決定：是否 hold／inhibit、受影響 lot 的 disposition。紀錄：e-log 已更新。"
+        en: "[Status] {param} wafer map {wafer} ({chamber}): {status}. {finding}. Done: measurement verified, EE / PE notified. Decision needed: hold / inhibit or not, and disposition of the affected lots. Records: e-log updated."
+
+  # ------------------------------------------------------------------------------------------- Zernike signature
+  wafer_zernike:
+    page: "Wafer map"
+    title: {zh: "空間特徵：低階 Zernike 係數（標題顯示 R²）", en: "Spatial signature: low-order Zernike coefficients (R² in the title)"}
+    legend:
+      - item: "▬ 藍色橫條 blue bars · 每項一條 one per term"
+        zh: "每一條代表一個 Zernike 項的係數；長度＝係數大小，單位同參數（{unit}），有正負：往右為正、往左為負。piston（＝平均值）不畫。目前最大的是 {sig_term}（{sig_coef} {unit}）。"
+        en: "Each bar is the coefficient of one Zernike term; its length is the coefficient in the parameter's unit ({unit}) and it is signed: right = positive, left = negative. Piston (= the mean) is not drawn. Largest now: {sig_term} ({sig_coef} {unit})."
+    axes:
+      zh: "X 軸＝係數（{unit}，有正負）；Y 軸＝各項（ρ＝半徑 ÷ 最外圈量測點半徑，θ＝角度）：tilt_x＝ρcosθ，正＝+x 側高，兩端差約 2 × 係數；tilt_y＝ρsinθ，正＝+y 側高；bowl＝2ρ²−1，正＝邊緣高於中心、負＝中心高（純 bowl 時 邊緣 − 中心 ≈ 2 × 係數）；astig_0＝ρ²cos2θ，正＝±x 方向高、±y 方向低的鞍形；astig_45＝同上轉 45°；edge_roll＝一級球差 6ρ⁴−6ρ²+1，在中心與邊緣為 +1、約 71% 半徑處為 −0.5，描述外圈的翹起或滾降，要和 bowl 一起看。標題 R²＝這些低階項能解釋的片內變異比例（目前 {r2}）。"
+      en: "X = coefficient ({unit}, signed); Y = terms (ρ = radius ÷ outermost-site radius, θ = angle): tilt_x = ρcosθ, positive = +x side high, side-to-side difference ≈ 2 × coefficient; tilt_y = ρsinθ, positive = +y side high; bowl = 2ρ²−1, positive = edge higher than centre, negative = centre high (for a pure bowl, edge − centre ≈ 2 × coefficient); astig_0 = ρ²cos2θ, positive = a saddle high along ±x and low along ±y; astig_45 = the same rotated by 45°; edge_roll = primary spherical 6ρ⁴−6ρ²+1, which is +1 at the centre and the edge and −0.5 at about 71 % radius, so it describes an outer-region turn-up or roll-off and must be read together with bowl. R² in the title = share of within-wafer variance these low-order terms explain (now {r2})."
+    what:
+      zh: "把晶圓圖拆成幾個有物理意義的形狀（signature），每個形狀一個數字：用最小平方法把量測點擬合成低階 Zernike 多項式的組合。好處是把「形狀」變成可以畫 SPC、可以做 chamber matching 的數字，並能對應到機台的調整旋鈕（加熱器分區、氣體分配、showerhead 間距、CMP 分區壓力、edge ring 高度）。R² 告訴你形狀解釋了多少：高（> 0.6）→ 系統性的機台／製程指紋；低 → 剩下的是局部或隨機變異（單點、雜訊、高頻圖案）。"
+      en: "Breaks the wafer map into a few physically meaningful shapes (the signature), one number per shape: the sites are fitted by least squares with a combination of low-order Zernike polynomials. This turns ‘shape’ into numbers you can put on SPC and use for chamber matching, and that map onto tool knobs (heater zones, gas distribution, showerhead gap, CMP zone pressures, edge-ring height). R² tells you how much the shapes explain: high (> 0.6) → a systematic tool / process fingerprint; low → what remains is local or random variation (single sites, noise, high-frequency patterns)."
+    read:
+      zh: "好：所有橫條都比量測重複性與規格寬度小很多，或和這個 chamber 的基準一樣。壞：(1) 某一項特別大且比平常大 → 對應的硬體指紋：tilt → 氣流／晶圓放置／水平，bowl → 溫度分布／showerhead／CMP 分區壓力，astig → chuck／應力／兩向氣流，edge_roll → edge／focus ring、retaining ring、bevel；(2) 某一項隨時間慢慢變大 → 耗材老化（ring 損耗、pad 壽命）；PM 後突然變號或變大 → 安裝、零件或設定改變；(3) NU 高但 R² 低 → 不是平滑形狀，多半是單一壞點或局部缺陷，回到晶圓圖看是哪一點。陷阱：(a) 點數少時 R² 必然很高：項數上限是點數 − 2，9 點時 7 項（含 piston）只剩 2 個自由度，R² 接近 1 不代表形狀清楚；(b) Zernike 只在連續圓盤上互相正交，在稀疏的量測點上各項會互相「漏」（例如 bowl 與 edge_roll）；(c) 主要項佔「係數平方和」的 {sig_share}%，是快速排序用，各項的面積權重不同，不是嚴格的變異分解；(d) 小於量測重複性的係數只是雜訊。"
+      en: "Good: every bar is much smaller than the measurement repeatability and the spec width, or matches this chamber's baseline. Bad: (1) one term clearly larger than usual → the matching hardware fingerprint: tilt → gas flow / wafer placement / levelling, bowl → temperature profile / showerhead / CMP zone pressure, astig → chuck / stress / 2-fold flow, edge_roll → edge / focus ring, retaining ring, bevel; (2) a term growing slowly over time → consumable wear (ring erosion, pad life); a sudden sign flip or jump after a PM → installation, part or setting change; (3) high NU but low R² → not a smooth shape, most likely a single bad site or a local defect; go back to the map to find it. Traps: (a) with few sites R² is high by construction: the number of terms is capped at sites − 2, and with 9 sites the 7 terms (incl. piston) leave only 2 degrees of freedom, so R² near 1 does not mean a clear shape; (b) Zernike terms are orthogonal only over a continuous disc; on a sparse site set they leak into each other (e.g. bowl and edge_roll); (c) the main term's {sig_share}% is its share of the summed squared coefficients, a quick ranking only: the terms have different area weights, so it is not an exact variance decomposition; (d) a coefficient smaller than the measurement repeatability is noise."
+    action:
+      act:
+        zh: "（狀態跟著晶圓圖）先確認不是單點造成的假形狀：看 R² 與晶圓圖上的單點、重測確認。再依主要項 {sig_term} 通知 EE 檢查 {chamber}：tilt → 氣流／晶圓放置／水平；bowl → 加熱器／showerhead／分區壓力；astig → chuck／應力／兩向氣流；edge_roll → edge／focus ring、retaining ring、bevel。用同一 chamber 最近幾片的係數判斷是突變還是漂移，突變就對時間點找 PM、零件更換或警報；必要時 inhibit，修復後 qual 片的係數回到基準再 release。"
+        en: "(Status follows the wafer map.) First make sure a single site is not faking the shape: check R² and isolated sites on the map, and re-measure. Then, according to the main term {sig_term}, ask EE to check {chamber}: tilt → gas flow / wafer placement / levelling; bowl → heater / showerhead / zone pressure; astig → chuck / stress / 2-fold flow; edge_roll → edge / focus ring, retaining ring, bevel. Use the coefficients of the chamber's last few wafers to tell a step from a drift; for a step, look for a PM, part swap or alarm at that time. Inhibit if needed, and release after qual wafers bring the coefficients back to baseline."
+      watch:
+        zh: "把主要項係數加入 SPC（每個 chamber 一張，建立 Phase I 基準），追蹤是否持續變大；和 EE 對照耗材時數（edge ring、pad、showerhead），必要時提高抽樣或改用較密的 site plan 確認形狀。"
+        en: "Put the main term's coefficient on SPC (one chart per chamber, with its own Phase I baseline) and track whether it keeps growing; compare with consumable hours (edge ring, pad, showerhead) together with EE, and raise sampling or use a denser site plan to confirm the shape if needed."
+      good:
+        zh: "形狀在基準內。記錄係數作為 chamber 指紋；PM 後比較前後係數，並用同一項係數做 chamber matching。"
+        en: "Shape within baseline. Record the coefficients as the chamber fingerprint; compare before and after PMs, and use the same coefficients for chamber matching."
+    record:
+      zh: "[Signature] {param} · {wafer}（{chamber}）· 主要項 {sig_term} = {sig_coef} {unit}（佔係數平方和 {sig_share}%）· R² {r2} · {n_sites} 點 · 狀態 {status} · 處置：＿＿"
+      en: "[Signature] {param} · {wafer} ({chamber}) · main term {sig_term} = {sig_coef} {unit} ({sig_share}% of summed squared coefficients) · R² {r2} · {n_sites} sites · status {status} · action: ___"
+    roles:
+      RDA:
+        zh: "【空間特徵】{wafer}（{chamber}）主要形狀 {sig_term}（{sig_coef} {unit}，R² {r2}）。這是平滑的大範圍形狀，不是局部缺陷；若要找相關的缺陷或失效，請以形狀最極端的區域（例如 tilt 的厚側或薄側、edge_roll 的外圈）優先取樣。"
+        en: "[Spatial signature] {wafer} ({chamber}) main shape {sig_term} ({sig_coef} {unit}, R² {r2}). This is a smooth, wafer-scale shape, not a local defect; if you look for related defects or failures, sample the most extreme region of the shape first (e.g. the thick or thin side of a tilt, the outer ring for edge_roll)."
+      PE:
+        zh: "【製程形狀】{param} {wafer}：主要 Zernike 項 {sig_term} = {sig_coef} {unit}（佔係數平方和 {sig_share}%），R² {r2}。{sig_text}。若要用 recipe 補償（加熱器分區、氣體分配、CMP 分區壓力），建議先做小 split 確認敏感度，並先排除單一 chamber 的硬體問題。"
+        en: "[Process shape] {param} {wafer}: main Zernike term {sig_term} = {sig_coef} {unit} ({sig_share}% of summed squared coefficients), R² {r2}. {sig_text}. If you want to compensate in the recipe (heater zones, gas distribution, CMP zone pressures), suggest a small split first to confirm the sensitivity, after ruling out a single-chamber hardware issue."
+      EE:
+        zh: "【機台指紋】{chamber} 的主要形狀是 {sig_term}（{sig_coef} {unit}）：{sig_text}。請比對 PM 紀錄與耗材時數，並和其他 chamber 的同一項係數比較（chamber matching）；若形狀突然出現，請找同時間的零件更換或警報。"
+        en: "[Tool fingerprint] The main shape on {chamber} is {sig_term} ({sig_coef} {unit}): {sig_text}. Please compare with the PM log and consumable hours, and with the same coefficient on the other chambers (chamber matching); if the shape appeared suddenly, look for a part swap or alarm at that time."
+      PIE_YE:
+        zh: "【形狀與良率】{param} {wafer}：主要形狀 {sig_term}，低階形狀解釋了 R² = {r2} 的片內變異。系統性形狀會讓特定區域（中心、某一側、外圈）的 die 一起偏，請對照 die 良率圖是否有相同的區域分布。"
+        en: "[Shape and yield] {param} {wafer}: main shape {sig_term}; the low-order shapes explain R² = {r2} of the within-wafer variance. A systematic shape shifts the dies of one region together (centre, one side, outer ring); please check whether the die yield map shows the same regional pattern."
+      MGR_QE:
+        zh: "【狀態】{param} 空間特徵 {wafer}（{chamber}）：{status}。主要形狀 {sig_term}，已通知 EE 依形狀確認硬體；待決定：是否需要 chamber 調整或提前 PM。紀錄：e-log 與係數趨勢已更新。"
+        en: "[Status] {param} spatial signature {wafer} ({chamber}): {status}. Main shape {sig_term}; EE has been asked to check the matching hardware. Decision needed: chamber adjustment or early PM. Records: e-log and coefficient trend updated."
+
+  # ------------------------------------------------------------------------------------------- radial profile
+  wafer_radial:
+    page: "Wafer map"
+    title: {zh: "徑向分布（各環平均 ±1σ）", en: "Radial profile (ring mean ±1σ)"}
+    legend:
+      - item: "●— ring mean ±1σ 環平均 ±1σ · 藍線＋點、灰色誤差棒 blue line with markers, grey error bars"
+        zh: "把量測點依半徑分成 6 個等寬的環（0 到最外圈量測點），每個有量測點的環畫一點：位置＝該環量測點的平均半徑，高度＝環內平均值；灰色誤差棒＝環內標準差（±1σ），代表同一半徑上不同角度的差異。只有 1 個點的環（通常是中心）誤差棒為 0，意思是「無法計算」而不是「完全均勻」；沒有量測點的環不畫。"
+        en: "Sites are grouped into 6 equal-width radial rings (from 0 to the outermost site), one point per ring that has sites: position = mean radius of the ring's sites, height = ring mean; the grey error bar = standard deviation within the ring (±1σ), i.e. the variation between angles at the same radius. A ring with only one site (usually the centre) has a zero error bar, meaning ‘cannot be computed’, not ‘perfectly uniform’; rings without sites are not drawn."
+    axes:
+      zh: "X 軸＝半徑（mm，0＝晶圓中心，最右邊＝最外圈量測點）；Y 軸＝量測值（單位 {unit}）。49 點 polar plan 通常只有 4 個環（中心、約 1/3、2/3 半徑與最外圈），9／13 點只有 3 個環，所以線上的轉折只代表這幾個半徑之間的平均變化。"
+      en: "X = radius (mm, 0 = wafer centre, rightmost point = outermost site); Y = measured value ({unit}). A 49-site polar plan usually gives only 4 rings (centre, about 1/3 and 2/3 radius, outermost), and 9- or 13-site plans only 3, so a bend in the line is only the average change between those radii."
+    what:
+      zh: "把 2D 晶圓圖壓成「中心 → 邊緣」一條線，專門看徑向形狀：中心和邊緣差多少、外圈有沒有突然滾降（edge roll-off）或翹起。大多數沉積、蝕刻、CMP 的不均勻都是徑向的（溫度、電漿、壓力分區、邊緣環），這張圖最容易對應到 recipe 的徑向調整旋鈕。誤差棒也告訴你「把一整圈平均掉」是否合理：誤差棒大 → 同一半徑不同角度差很多（tilt、鞍形、局部點），平均值會把它藏起來，要回去看晶圓圖。"
+      en: "Collapses the 2D map into one centre → edge line to look at radial shape only: how much the edge differs from the centre, and whether the outer ring suddenly rolls off (edge roll-off) or turns up. Most deposition, etch and CMP non-uniformity is radial (temperature, plasma, pressure zones, edge rings), so this chart maps most directly onto the recipe's radial knobs. The error bars also tell you whether averaging a whole ring is fair: large bars → angles at the same radius differ a lot (tilt, saddle, local sites), the ring mean hides it, go back to the map."
+    read:
+      zh: "好：線接近水平、各環誤差棒小且大小相近，最外圈和前一環之間沒有突變。壞：(1) 單調上升或下降 → bowl（中心厚或邊緣厚）：溫度分布、showerhead／電漿密度、CMP 分區壓力；(2) 內圈平、最外圈突然掉（或翹）→ edge roll-off／turn-up：edge／focus ring 損耗、shadow ring、CMP retaining ring 與邊緣壓力、bevel 附近的沉積或蝕刻；本片最外圈相對前一環 {roll} {unit}，當變化大於環內 σ 中位數的 2 倍時會被標記為 edge roll-off；(3) 中段凹或凸（W／M 形）→ 多區加熱或壓力分區之間的過渡；(4) 某一環誤差棒特別大 → 該半徑有方向性差異（tilt、鞍形、notch 附近、單點異常），環平均不能代表；(5) 邊緣 − 中心（{ce_diff} {unit}，{ce_pct}%）＝半徑 ≥ 0.8R 的點平均減 ≤ 0.3R 的點平均，中心常常只有 1 個點，對雜訊很敏感。最外圈量測點之外（到 bevel）沒有資料：要看真正的邊緣，需要邊緣加密的 site plan（例如在 140–148 mm 多加幾點）。"
+      en: "Good: a nearly flat line, small and similar error bars on every ring, no abrupt change between the outermost ring and the one before it. Bad: (1) steadily rising or falling → bowl (thick centre or thick edge): temperature profile, showerhead / plasma density, CMP zone pressures; (2) flat inside, the outermost ring suddenly drops (or rises) → edge roll-off / turn-up: edge / focus ring wear, shadow ring, CMP retaining ring and edge pressure, deposition or etch near the bevel; here the outermost ring differs from the previous ring by {roll} {unit}, flagged as edge roll-off when the step exceeds twice the median within-ring σ; (3) dip or bump at mid-radius (W / M shape) → transition between heater or pressure zones; (4) one ring with a much larger error bar → directional differences at that radius (tilt, saddle, near the notch, a single bad site); the ring mean does not represent it; (5) edge − centre ({ce_diff} {unit}, {ce_pct}%) = mean of sites at ≥ 0.8R minus mean of sites at ≤ 0.3R, and the centre is often a single site, so it is noise-sensitive. Beyond the outermost site (out to the bevel) there is no data: to see the real edge you need an edge-dense site plan (e.g. a few more sites between 140 and 148 mm)."
+    action:
+      act:
+        zh: "先確認量測：外圈點最容易受量測影響（邊緣的對焦、pattern recognition、點太靠近 edge exclusion、晶圓翹曲），重測外圈或在參考機台確認。確認是真的 → 依 OCAP hold 該 lot，通知 EE 檢查 {chamber} 的 edge／focus ring、retaining ring、shadow ring 的使用時數、安裝與高度，以及邊緣區的加熱／壓力設定；請 PIE 評估外圈 die 的風險；修復後 qual 片的徑向分布回到基準再 release。"
+        en: "Verify the measurement first: outer sites are the most measurement-sensitive (focus at the edge, pattern recognition, sites too close to the edge exclusion, wafer bow); re-measure the outer ring or confirm on a reference tool. If it is real → hold the lot per OCAP, ask EE to check the hours, installation and height of the edge / focus ring, retaining ring or shadow ring on {chamber}, and the edge-zone heater / pressure settings; ask PIE to assess the risk to outer-ring dies; release after qual wafers bring the radial profile back to baseline."
+      watch:
+        zh: "記錄邊緣 − 中心與最外圈變化並追蹤趨勢（對照耗材時數；edge roll-off 常隨 ring 損耗慢慢變大）；考慮暫時改用邊緣加密的 site plan，看清楚最後幾 mm。"
+        en: "Record edge − centre and the outer-ring step and trend them (against consumable hours; edge roll-off often grows slowly as the ring wears); consider an edge-dense site plan for a while to see the last few millimetres."
+      good:
+        zh: "徑向分布正常。照常記錄；把邊緣 − 中心值納入 chamber 基準，PM 或耗材更換後比對。"
+        en: "Radial profile normal. Record as usual; add the edge − centre value to the chamber baseline and compare after PMs or consumable changes."
+    record:
+      zh: "[Radial] {param} · {wafer}（{chamber}）· 中心 {center} ／ 邊緣 {edge} {unit} · 邊緣 − 中心 {ce_diff}（{ce_pct}%）· 最外圈 − 前一環 {roll} · {n_sites} 點 · 狀態 {status} · 處置：＿＿"
+      en: "[Radial] {param} · {wafer} ({chamber}) · centre {center} / edge {edge} {unit} · edge − centre {ce_diff} ({ce_pct}%) · outermost − previous ring {roll} · {n_sites} sites · status {status} · action: ___"
+    roles:
+      RDA:
+        zh: "【邊緣分布】{wafer}（{chamber}）邊緣 − 中心 = {ce_diff} {unit}（{ce_pct}%），最外圈相對前一環 {roll} {unit}。若要找邊緣相關的缺陷（剝落、殘留、bevel 沉積），建議優先 review 外圈與 bevel 區；量測只到最外圈量測點的半徑，更外面沒有資料。"
+        en: "[Edge profile] {wafer} ({chamber}) edge − centre = {ce_diff} {unit} ({ce_pct}%), outermost ring vs the previous ring {roll} {unit}. If you look for edge-related defects (peeling, residue, bevel deposition), suggest reviewing the outer ring and the bevel first; metrology only reaches the outermost site radius, there is no data beyond it."
+      PE:
+        zh: "【徑向均勻度】{param} {wafer}：中心 {center}、邊緣 {edge} {unit}，邊緣 − 中心 {ce_diff}（{ce_pct}%），最外圈變化 {roll}。若要調整徑向分布（加熱器分區、壓力分區、氣體分配），請先確認同 chamber 多片是否一致，再用 split 驗證；已排除量測問題。"
+        en: "[Radial uniformity] {param} {wafer}: centre {center}, edge {edge} {unit}, edge − centre {ce_diff} ({ce_pct}%), outer-ring step {roll}. Before tuning the radial profile (heater zones, pressure zones, gas distribution), please confirm it is consistent over several wafers on the same chamber, then verify with a split; metrology has been ruled out."
+      EE:
+        zh: "【邊緣硬體】{chamber}：{wafer} 最外圈相對前一環變化 {roll} {unit}，邊緣 − 中心 {ce_diff} {unit}。請檢查 edge／focus ring、retaining ring 或 shadow ring 的使用時數、安裝與高度，以及邊緣區的加熱／壓力；需要時 inhibit 並跑 qual 片。"
+        en: "[Edge hardware] {chamber}: on {wafer} the outermost ring differs from the previous ring by {roll} {unit}, edge − centre {ce_diff} {unit}. Please check the hours, installation and height of the edge / focus ring, retaining ring or shadow ring, and the edge-zone heating / pressure; inhibit and run qual wafers if needed."
+      PIE_YE:
+        zh: "【外圈 die 風險】{param} {wafer}：邊緣 − 中心 {ce_diff} {unit}（{ce_pct}%）；{finding}。外圈面積大、die 數多，邊緣偏移對良率影響大；請對照外圈 die 的電性與良率，評估 disposition。"
+        en: "[Outer-ring die risk] {param} {wafer}: edge − centre {ce_diff} {unit} ({ce_pct}%); {finding}. The outer ring has the largest area and the most dies, so an edge shift weighs heavily on yield; please compare the outer-ring dies' electrical and yield results and assess disposition."
+      MGR_QE:
+        zh: "【狀態】{param} 徑向分布 {wafer}（{chamber}）：{status}。邊緣 − 中心 {ce_diff} {unit}（{ce_pct}%）。已採取：量測確認、通知 EE；待決定：是否更換邊緣耗材、是否 hold 受影響 lot。紀錄：e-log 已更新。"
+        en: "[Status] {param} radial profile {wafer} ({chamber}): {status}. Edge − centre {ce_diff} {unit} ({ce_pct}%). Done: measurement verified, EE notified. Decision needed: replace edge consumables or not, hold the affected lots or not. Records: e-log updated."

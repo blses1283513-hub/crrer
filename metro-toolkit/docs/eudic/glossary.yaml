@@ -681,7 +681,7 @@ terms:
     note: "因異常把 lot 或機台暫停，待工程判定。"
     ex: "The lot went on hold after two points violated rule 2."
     ex_zh: "兩點違反法則 2 之後，這批被暫停。"
-    tools: [wl]
+    tools: [wl, mt]
   - en: "root cause analysis"
     zh: "根本原因分析"
     note: "找出異常真正來源的分析過程。"
@@ -775,7 +775,7 @@ terms:
     note: "找出低良率晶圓共同經過的機台或腔體。"
     ex: "Commonality analysis points to the chamber shared by most failing wafers."
     ex_zh: "共通性分析指向大多數失效晶圓共同經過的腔體。"
-    tools: [wl]
+    tools: [wl, mt]
   - en: "yield"
     zh: "良率"
     note: "合格晶粒佔總晶粒的比例。"
@@ -1286,3 +1286,83 @@ terms:
     ex: "In the surface-reaction limited regime the heater profile shows up in the thickness map."
     ex_zh: "在表面反應控制區，加熱器的溫度分布會反映在膜厚圖上。"
     tools: [mt]
+
+  # ------------------------------------------------------------------ chart guide: OOC handling and communication (metro-toolkit)
+  - en: "out of spec"
+    zh: "超出規格（OOS）"
+    note: "量測值超出產品規格 LSL/USL；和 OOC（超出管制界限）不同，OOS 直接牽涉產品 disposition。"
+    ex: "One site was out of spec, so the wafer needed a disposition even though the chart was in control."
+    ex_zh: "有一個量測點超出規格，雖然管制圖在管制內，這片仍需要判定處置。"
+    tools: [mt, sy]
+  - en: "OCAP"
+    zh: "異常處置計畫（OCAP）"
+    note: "Out-of-Control Action Plan：OOC 發生時的標準處置步驟（先確認量測、hold、通知、檢查機台、qual 後放行）。"
+    ex: "The engineer followed the OCAP: re-measure, hold the lot, then notify the equipment engineer."
+    ex_zh: "工程師依 OCAP 處理：重測、hold 這批，再通知設備工程師。"
+    tools: [mt, sy]
+  - en: "disposition"
+    zh: "判定處置（disposition）"
+    note: "對異常 lot／晶圓做的決定：放行、重工、報廢或繼續 hold，由 PIE／PE 與品保決定。"
+    ex: "Integration owns the disposition of the wafers processed during the excursion."
+    ex_zh: "異常期間處理的晶圓由整合工程負責判定處置。"
+    tools: [mt]
+  - en: "e-log"
+    zh: "電子紀錄（e-log）"
+    note: "機台或製程的電子交班紀錄；記下發生什麼、何時、誰處理、做了什麼，供追溯。"
+    ex: "Write the OOC, the re-measurement result and the action in the e-log before the shift ends."
+    ex_zh: "交班前把 OOC、重測結果與處置寫進 e-log。"
+    tools: [mt]
+  - en: "qual"
+    zh: "機台驗證（qual）"
+    note: "PM 或修理後，用監控片確認機台回到規格與管制中心，才能恢復生產。"
+    ex: "After the PM, two qual wafers landed near the centre line and the chamber was released."
+    ex_zh: "PM 後兩片 qual 片落在中心線附近，chamber 才被放行。"
+    tools: [mt]
+  - en: "inhibit"
+    zh: "禁用（inhibit）"
+    note: "在系統中暫停某機台或 chamber 跑特定 recipe，直到問題排除。"
+    ex: "Equipment inhibited chamber B until the heater was replaced."
+    ex_zh: "設備工程把 chamber B 禁用，直到更換加熱器。"
+    tools: [mt]
+  - en: "containment"
+    zh: "圍堵（containment）"
+    note: "找到根因之前先限制影響範圍的動作：hold、禁用機台、加測、隔離可疑晶圓。"
+    ex: "Containment came first: all lots from the chamber were held and re-measured."
+    ex_zh: "先圍堵：該 chamber 的所有 lot 都 hold 並重測。"
+    tools: [mt]
+  - en: "escalation"
+    zh: "升級通報（escalation）"
+    note: "依影響大小把問題通報給更高層或其他部門；一般先排除量測問題再升級。"
+    ex: "The excursion was escalated to the manager once yield impact was confirmed."
+    ex_zh: "確認影響良率後，異常被升級通報給主管。"
+    tools: [mt]
+  - en: "golden wafer"
+    zh: "黃金片（golden wafer）"
+    note: "長期保存、數值已知的參考片，用來檢查量測機台的穩定性與 matching。"
+    ex: "Both tools measured the golden wafer to separate a recipe difference from a hardware difference."
+    ex_zh: "兩台機台都量了黃金片，用來分辨是 recipe 差異還是硬體差異。"
+    tools: [mt]
+  - en: "process of record"
+    zh: "標準製程（POR）"
+    note: "Process of Record：目前正式發行、量產使用的製程與 recipe。"
+    ex: "The confirmation runs compared the new recipe against the POR."
+    ex_zh: "確認實驗把新配方與 POR 比較。"
+    tools: [mt, sy]
+  - en: "change control"
+    zh: "變更管理（change control）"
+    note: "正式變更 recipe／規格前的審核流程：資料、風險評估、核准與紀錄。"
+    ex: "The new ALD recipe went through change control before release."
+    ex_zh: "新的 ALD 配方在發行前走了變更管理流程。"
+    tools: [mt]
+  - en: "false call"
+    zh: "誤判（false call）"
+    note: "把正常的東西判成異常，例如把隨機缺陷判成有圖樣；會浪費 FA 與工程資源。"
+    ex: "Raising the minimum defect count cut the false calls in half."
+    ex_zh: "提高最少缺陷數門檻後，誤判減少一半。"
+    tools: [mt]
+  - en: "moving range"
+    zh: "移動全距（MR）"
+    note: "相鄰兩點差的絕對值；平均移動全距 ÷ 1.128 用來估計短期 σ，是 I-MR 圖界限的基礎。"
+    ex: "Sigma for the individuals chart comes from the average moving range, not the overall standard deviation."
+    ex_zh: "個別值圖的 σ 來自平均移動全距，而不是整體標準差。"
+    tools: [mt, sy]

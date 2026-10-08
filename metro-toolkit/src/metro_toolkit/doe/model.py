@@ -129,5 +129,7 @@ def curvature_test(coded: pd.DataFrame, y) -> dict | None:
     diff = y[f].mean() - y[c].mean()
     s = y[c].std(ddof=1)
     se = s * np.sqrt(1 / f.sum() + 1 / c.sum())
-    t = diff / se if se > 0 else np.inf
+    if se <= 1e-12 * max(abs(y).max(), 1.0):  # noise-free response (e.g. computed process time): no t-test
+        return {"difference": float(diff), "p": 0.0 if abs(diff) > 1e-9 * max(abs(y).max(), 1.0) else 1.0}
+    t = diff / se
     return {"difference": float(diff), "p": float(2 * stats.t.sf(abs(t), c.sum() - 1))}

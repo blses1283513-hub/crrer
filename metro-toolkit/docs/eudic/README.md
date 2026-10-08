@@ -1,15 +1,15 @@
 # Eudic (歐路詞典) study files
 
-210 Metro AE terms in Traditional Chinese (Taiwan fab usage). Each term has a translation, a one-line
+223 Metro AE terms in Traditional Chinese (Taiwan fab usage). Each term has a translation, a one-line
 explanation, and an example sentence with its translation, tagged by tool.
 
 | Tool | Terms | Vocabulary list (A) | Custom dictionary (B) |
 |---|---|---|---|
-| metro-toolkit | 154 | `out/vocab_metro-toolkit.csv` | `out/dict_metro-toolkit.txt` |
-| SemiYield | 68 | `out/vocab_semiyield.csv` | `out/dict_semiyield.txt` |
+| metro-toolkit | 169 | `out/vocab_metro-toolkit.csv` | `out/dict_metro-toolkit.txt` |
+| SemiYield | 72 | `out/vocab_semiyield.csv` | `out/dict_semiyield.txt` |
 | WaferLens | 70 | `out/vocab_waferlens.csv` | `out/dict_waferlens.txt` |
 | sem-toolkit | 60 | `out/vocab_sem-toolkit.csv` | `out/dict_sem-toolkit.txt` |
-| **All (deduplicated)** | 210 | `out/vocab_all.csv` | `out/dict_all.txt` |
+| **All (deduplicated)** | 223 | `out/vocab_all.csv` | `out/dict_all.txt` |
 
 Terms shared by several tools appear in each of those files.
 

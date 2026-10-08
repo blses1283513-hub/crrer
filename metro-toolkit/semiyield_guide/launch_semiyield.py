@@ -10,7 +10,10 @@ How it works
      when the figure title matches a `charts` entry; other charts get a generic "x / y" hover.
   3. On the SPC page, USL / LSL start from reliable suggested values (spec_limits.py) instead of
      the data's 0.5 / 99.5 percentiles; the method is shown under the boxes and can be overridden.
-  4. SemiYield's own dashboard/app.py is then executed unchanged.
+  4. Under every chart: a status line read from the chart's own data and a "📖 How to read this chart" panel
+     (legend, what it shows, next step, ready-to-send messages per role), from metro-toolkit's guide
+     (src/metro_toolkit/guide, charts_semiyield.yaml). Language: sidebar "說明語言 Guide language".
+  5. SemiYield's own dashboard/app.py is then executed unchanged.
 
 Where is SemiYield?  Set SEMIYIELD_DIR, or keep it next to the crrer folder
 (…\\projects\\semiyield and …\\projects\\crrer), or run from inside the SemiYield folder.
@@ -29,6 +32,7 @@ import streamlit as st
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
+sys.path.insert(0, str(HERE.parent / "src"))  # metro_toolkit.guide (needs only pyyaml + numpy)
 from spec_limits import COUNTERS, SpecSuggestion, baseline_stats, generator_targets, number_format, suggest  # noqa: E402
 
 RULES_FILE = Path(os.environ.get("SEMIYIELD_GUIDE_FILE", HERE / "explanations.yaml"))
@@ -38,6 +42,7 @@ YIELD_FEATURES = ("gate_oxide_thickness", "poly_cd", "implant_dose", "anneal_tem
 WIDGETS = ("slider", "number_input", "selectbox", "radio", "metric", "button", "file_uploader",
            "checkbox", "text_input", "subheader", "title")
 QUIET = {"subheader", "title"}  # never reported as "missing" (most headers need no tooltip)
+INPUTS = {"slider", "number_input", "selectbox", "radio", "button", "file_uploader", "checkbox", "text_input"}
 
 
 # --------------------------------------------------------------------------- #
@@ -63,12 +68,33 @@ def load_rules() -> dict:
         return yaml.safe_load(fh) or {}
 
 
+def guide_lang() -> str:
+    return st.session_state.get("guide_lang", "both")
+
+
+def bilingual(zh: str | None, en: str | None, sep: str = "\n\n---\n\n") -> str | None:
+    """zh / en / both, following the sidebar language switch (falls back to whichever exists)."""
+    lang = guide_lang()
+    zh, en = (zh or "").strip() or None, (en or "").strip() or None
+    if lang == "zh" or not en:
+        return zh or en
+    if lang == "en" or not zh:
+        return en or zh
+    return zh + sep + en
+
+
 def feature_text(name: str, long: bool = True) -> str | None:
     f = getattr(st, "_sy_rules", {}).get("features", {}).get(name)
     if not f:
         return None
     head = f"**{name}** {f['zh']}" + (f"（{f['unit']}）" if f.get("unit") else "")
-    return f"{head}：{f['note']}" if long else f"{f['zh']}：{f['note']}"
+    zh = f"{head}：{f['note']}" if long else f"{f['zh']}：{f['note']}"
+    en = None
+    if f.get("en") and f.get("note_en"):
+        unit_en = f.get("unit_en") or re.sub(r"[\u4e00-\u9fff]", "", str(f.get("unit") or "")).strip()
+        unit = f" ({unit_en})" if unit_en else ""
+        en = f"**{name}** {f['en']}{unit}: {f['note_en']}" if long else f"{f['en']}: {f['note_en']}"
+    return bilingual(zh, en, sep="\n\n" if long else " / ")
 
 
 # --------------------------------------------------------------------------- #
@@ -108,7 +134,7 @@ def _widget_help(kind: str, args, kwargs) -> str | None:
             continue
         if "max" in r and (hi is None or float(r["max"]) != float(hi)):
             continue
-        return str(r["help"]).strip()
+        return bilingual(str(r["help"]), r.get("help_en"))
     if kind in ("number_input", "metric"):  # Yield Prediction inputs are named after process parameters
         return feature_text(label)
     return None
@@ -279,6 +305,19 @@ def _apply_yield_fix() -> bool:
     return True
 
 
+def _stable_key(kind, args, kwargs) -> str:
+    """A widget's identity normally includes its help text, so switching the guide language would reset it.
+    A key built from everything except the help keeps the user's choices (same label + same options/range/default
+    -> same key; repeated identical widgets get an occurrence number)."""
+    import hashlib
+
+    sig = repr((kind, args, sorted((k, v) for k, v in kwargs.items() if k not in ("help", "on_change", "on_click"))))
+    h = hashlib.md5(sig.encode("utf-8", "replace")).hexdigest()[:12]
+    count = st._sy_keys.get(h, 0)
+    st._sy_keys[h] = count + 1
+    return f"sy_{kind}_{h}_{count}"
+
+
 def _call(kind, orig, dg, args, kwargs):
     """Shared wrapper body for module-level (dg=None) and container (dg=self) calls."""
     label = _label(kind, args, kwargs)
@@ -305,6 +344,8 @@ def _call(kind, orig, dg, args, kwargs):
         elif isinstance(label, str) and kind not in QUIET:
             st._sy_cov["widgets_missing"].add(label)
 
+    if kind in INPUTS and kwargs.get("key") is None and hasattr(st, "_sy_keys"):
+        kwargs["key"] = _stable_key(kind, args, {k: v for k, v in kwargs.items() if k != "key"})
     result = orig(dg, *args, **kwargs) if dg is not None else orig(*args, **kwargs)
 
     target = dg if dg is not None else st
@@ -376,6 +417,62 @@ def _axis_title(axis) -> str:
     return text or ""
 
 
+def _hover(spec: dict, param: str = "", name: str | None = None) -> str:
+    """Hover text in the chosen language (both = zh, a blank line, then en); [[note]] in each language."""
+    f = getattr(st, "_sy_rules", {}).get("features", {}).get(name or "") or {}
+    zh = spec["hover"].strip().replace("[[param]]", param).replace("[[note]]", f"{f.get('zh', '')}：{f.get('note', '')}" if f else "")
+    en = (spec.get("hover_en") or "").strip().replace("[[param]]", param).replace(
+        "[[note]]", f"{f.get('en', '')}: {f.get('note_en', '')}" if f.get("en") else "")
+    lang = guide_lang()
+    if lang == "en" and en:
+        return en
+    if lang == "both" and en:
+        return zh.replace("<extra></extra>", "") + "<br><br>" + en
+    return zh
+
+
+# legend entries for reference lines that SemiYield draws as shapes (shapes have no legend of their own)
+LINE_LEGEND = [(r"^CL$", "CL 中心線 (center line)"), (r"^UCL$", "UCL / LCL 管制界限 (±3σ control limits)"),
+               (r"^Background", "Background 背景濃度 (substrate doping)"), (r"^xj=", "xj 接面深度 (junction depth)")]
+
+
+def _add_legends(fig) -> None:
+    import plotly.graph_objects as go
+
+    shapes = list(fig.layout.shapes or [])
+    for ann in list(fig.layout.annotations or []):
+        name = next((n for pat, n in LINE_LEGEND if re.search(pat, ann.text or "")), None)
+        if name is None:
+            continue
+        horiz = "domain" in str(ann.xref or "")
+        shape = next((sh for sh in shapes if (horiz and sh.y0 == ann.y) or (not horiz and sh.x0 == ann.x)), None)
+        line = shape.line if shape is not None else None
+        fig.add_trace(go.Scatter(x=[None], y=[None], mode="lines", name=name, hoverinfo="skip", showlegend=True,
+                                 line=dict(color=getattr(line, "color", None) or "#52514e",
+                                           dash=getattr(line, "dash", None) or "solid", width=1.5)))
+    for tr in list(fig.data):
+        colors = getattr(getattr(tr, "marker", None), "color", None)
+        if colors is not None and not isinstance(colors, str) and "red" in list(colors):
+            fig.add_trace(go.Scatter(x=[None], y=[None], mode="markers", name="WE violation 違規點", hoverinfo="skip",
+                                     marker=dict(color="red", size=8)))
+            tr.showlegend = True
+            break
+    fig.update_layout(showlegend=True)
+
+
+def _explain(fig, where) -> None:
+    """Status line + "how to read this chart" panel under a SemiYield chart."""
+    try:
+        from metro_toolkit.guide.insights_semiyield import facts
+        from metro_toolkit.guide.render import explain
+    except ImportError as exc:
+        st._sy_cov["errors"].append(f"guide unavailable: {exc}")
+        return
+    key, f = facts(fig)
+    if key:
+        explain(key, f, where=where)
+
+
 def _decorate(fig) -> None:
     import numpy as np
     import plotly.graph_objects as go
@@ -398,14 +495,14 @@ def _decorate(fig) -> None:
         return
 
     st._sy_cov["charts_matched"].append(title)
+    _add_legends(fig)
     fig.update_layout(hoverlabel=dict(align="left", bgcolor="#ffffff", bordercolor="#c3c2b7",
                                       font=dict(color="#0b0b0b", size=12)))
     param = m.groupdict().get("param") if m else None
-    note = (feature_text(param, long=False) or "") if param else ""
     for tr in fig.data:
         for spec in rule.get("traces", []):
             if re.search(spec["name"], tr.name or ""):
-                tr.hovertemplate = spec["hover"].strip().replace("[[param]]", param or "").replace("[[note]]", note)
+                tr.hovertemplate = _hover(spec, param or "", param)
                 if spec.get("status_marker"):
                     colors = getattr(getattr(tr, "marker", None), "color", None)
                     if colors is not None and not isinstance(colors, str):
@@ -427,7 +524,7 @@ def _decorate(fig) -> None:
         spec = next((s for s in rule.get("lines", []) if re.search(s["text"], ann.text or "")), None)
         if spec is None:
             continue
-        hover = spec["hover"].strip()
+        hover = _hover(spec)
         if "domain" in str(ann.xref or ""):  # horizontal line: value in ann.y
             if ann.y is None:
                 continue
@@ -455,7 +552,12 @@ def _install_chart_patches() -> None:
                 _decorate(figure_or_data)
             except Exception as exc:  # never break the app because of a tooltip
                 st._sy_cov["errors"].append(f"{type(exc).__name__}: {exc}")
-            return cls_orig(self, figure_or_data, *args, **kwargs)
+            out = cls_orig(self, figure_or_data, *args, **kwargs)
+            try:
+                _explain(figure_or_data, self)
+            except Exception as exc:
+                st._sy_cov["errors"].append(f"{type(exc).__name__}: {exc}")
+            return out
 
         cls_wrapper._sy_guide = True
         DeltaGenerator.plotly_chart = cls_wrapper
@@ -468,7 +570,12 @@ def _install_chart_patches() -> None:
                 _decorate(figure_or_data)
             except Exception as exc:
                 st._sy_cov["errors"].append(f"{type(exc).__name__}: {exc}")
-            return mod_orig(figure_or_data, *args, **kwargs)
+            out = mod_orig(figure_or_data, *args, **kwargs)
+            try:
+                _explain(figure_or_data, None)
+            except Exception as exc:
+                st._sy_cov["errors"].append(f"{type(exc).__name__}: {exc}")
+            return out
 
         mod_wrapper._sy_guide = True
         st.plotly_chart = mod_wrapper
@@ -495,6 +602,7 @@ def main() -> None:
         st.stop()
     st._sy_cov = {"widgets_missing": set(), "charts_matched": [], "charts_generic": [], "errors": []}
     st._sy_ctx = {}
+    st._sy_keys = {}  # occurrence counter for _stable_key, reset every run
     sys.path.insert(0, str(sy_dir))
     _install_widget_patches()
     _install_chart_patches()
@@ -503,6 +611,10 @@ def main() -> None:
 
     cov = st._sy_cov
     with st.sidebar:
+        st.radio("說明語言 Guide language", ["both", "zh", "en"], key="guide_lang", horizontal=True,
+                 format_func={"both": "繁中 + English", "zh": "繁中", "en": "English"}.get,
+                 help="提示（?）、圖上的游標說明與每張圖下方的「怎麼讀這張圖」使用的語言。\n\n---\n\n"
+                      "Language of the tooltips (?), chart hover text and the \"how to read this chart\" panels.")
         _import_panel()
         with st.expander("Metro 說明覆蓋率 (guide coverage)"):
             st.caption(f"SemiYield：{sy_dir}")

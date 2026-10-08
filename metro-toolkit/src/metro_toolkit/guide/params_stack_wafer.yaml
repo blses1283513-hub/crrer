@@ -1,0 +1,216 @@
+# Film stack & fit page and Wafer map page: controls, KPI tiles and table columns.
+# Each entry: zh and en, written as a Metro AE would explain it: definition, typical setting, effect, traps.
+
+params:
+  # ------------------------------------------------------------------------------------------- Film stack & fit
+  stack.select:
+    zh: |
+      **Stack 膜堆（config/films.yaml）**：選一個在 `config/films.yaml` 定義的膜堆 recipe。每個膜堆列出各層材料與名目膜厚（由上而下，最後是基板 Si）、量測技術、SE 入射角，以及哪些層浮動（fit）、其餘層固定在名目值。
+      - **thermal_oxide_100**：100 nm 熱氧化 SiO2 monitor，反射儀，浮動 L0。
+      - **gate_oxide_thin**：3 nm 薄氧化層，SE（65／70／75°）：反射儀在 < 5 nm 幾乎沒有靈敏度。
+      - **highk_on_il**：3 nm HfO2 在 1 nm 介面 SiO2（IL）上，只浮動 HfO2，IL 固定（假設來自前站量測）。
+      - **nitride_on_oxide**：50 nm Si3N4 在 10 nm pad oxide 上，兩層都浮動。
+      - **ono**：SiO2／Si3N4／SiO2（5／10／5 nm），浮動上面兩層，底層氧化固定。
+      - **zaz_capacitor**：ZrO2／Al2O3／ZrO2（2.5／0.5／2.5 nm）DRAM 電容介電層 monitor，只浮動最上層 ZrO2。
+      陷阱：Si、SiO2、Si3N4 用文獻的色散，但 Al2O3、HfO2、ZrO2 的 Cauchy 係數是「典型值」佔位，請換成你的 recipe 實際使用的 n,k。改 YAML 就是改模型，量出的膜厚會跟著變。
+    en: |
+      **Stack (config/films.yaml)**: pick a film-stack recipe defined in `config/films.yaml`. Each stack lists the layers' materials and nominal thicknesses (top to bottom, the last entry is the Si substrate), the technique, the SE angles, and which layers float (fit) while the others stay fixed at nominal.
+      - **thermal_oxide_100**: 100 nm thermal SiO2 monitor, reflectometry, L0 floats.
+      - **gate_oxide_thin**: 3 nm thin oxide, SE (65 / 70 / 75°): reflectometry has almost no sensitivity below 5 nm.
+      - **highk_on_il**: 3 nm HfO2 on a 1 nm interfacial SiO2 (IL); only HfO2 floats, the IL is fixed (assumed from the previous-step measurement).
+      - **nitride_on_oxide**: 50 nm Si3N4 on 10 nm pad oxide, both layers float.
+      - **ono**: SiO2 / Si3N4 / SiO2 (5 / 10 / 5 nm), the top two layers float, the bottom oxide is fixed.
+      - **zaz_capacitor**: ZrO2 / Al2O3 / ZrO2 (2.5 / 0.5 / 2.5 nm) DRAM capacitor-dielectric monitor; only the top ZrO2 floats.
+      Trap: Si, SiO2 and Si3N4 use literature dispersions, but the Cauchy coefficients of Al2O3, HfO2 and ZrO2 are "typical" placeholders; replace them with the n,k your recipe actually uses. Editing the YAML changes the model, and the measured thickness changes with it.
+  stack.true_thickness:
+    zh: |
+      **True L0／L1… 層名 (nm) 真實膜厚**：模擬用的「真實」膜厚，每層一格（L0＝最上層）。程式用這些值產生量測光譜，再用 recipe 的模型去擬合，所以可以直接比較擬合值與真值；量產時沒有真值，只能靠參考片、TEM、XRR。預設＝recipe 名目值，步進＝名目值的 2%。
+      - 改**浮動層**：擬合應該跟著走，error 在約 ±2σ 內。
+      - 改**固定層**：示範模型偏差。浮動層會被「擠」偏，χ² 卻常常不警告。例如 highk_on_il 把 IL 從 1.0 改成 1.3 nm，HfO2 會讀成約 3.22 nm（偏 +0.22 nm，數百個 σ），χ² 仍 < 1；zaz_capacitor 改底層 ZrO2，偏差幾乎全部轉到上層。ONO 改底層氧化時 χ² 會升高：看不看得到，取決於膜堆。
+      - 超出 recipe 的 fit bounds：擬合只能停在邊界或錯的條紋級數（例如 thermal_oxide_100 設 1600 nm，bounds 為 1–1500 nm，會落在約 1337 nm，χ² 上千）。
+    en: |
+      **True L0 / L1… layer (nm)**: the simulated "true" thickness, one box per layer (L0 = top layer). The app generates the measured spectrum from these values and then fits it with the recipe's model, so fitted and true values can be compared directly; in production there is no truth, only reference wafers, TEM and XRR. Default = recipe nominal, step = 2 % of nominal.
+      - Change a **floated layer**: the fit should follow it, with error within about ±2σ.
+      - Change a **fixed layer**: demonstrates model bias. The floated layer is pushed off while χ² often raises no alarm. Example: in highk_on_il, raising the IL from 1.0 to 1.3 nm makes HfO2 read about 3.22 nm (+0.22 nm, hundreds of σ) with χ² still < 1; in zaz_capacitor, changing the bottom ZrO2 moves almost the whole error into the top layer. In ONO, changing the bottom oxide does raise χ²: whether it is visible depends on the stack.
+      - Outside the recipe's fit bounds: the fit can only stop at a bound or on the wrong fringe order (e.g. thermal_oxide_100 set to 1600 nm with bounds 1–1500 nm lands near 1337 nm with χ² in the thousands).
+  stack.technique:
+    zh: |
+      **Technique 量測技術**
+      - **reflectometry 反射儀**：垂直入射量反射率光譜 R(λ)，只有強度、沒有相位。快、光斑小、模型簡單，適合約 10 nm 以上到數 µm 的透明膜（CMP 後膜厚、厚氧化層、光阻）。薄膜沒有干涉條紋，靈敏度快速下降，膜厚與 n 也高度相關。
+      - **se 橢圓偏光儀**：斜角入射（65–75°）量 Ψ、Δ，含相位資訊，對次奈米變化敏感，可分離多層與 n,k；適合閘極氧化層、high-k、多層介電。代價是較慢、斜入射光斑較大、需要入射角與偏光元件校正。
+      預設跟著 recipe。本模擬器 3 nm SiO2 的 ± 1σ：SE 約 0.0006 nm、反射儀約 0.1 nm。
+      陷阱：這裡只換量測方式，浮動／固定參數不變；兩種技術（以及不同機台）的讀值各有 offset，量產上要互換之前必須先做 matching／correlation。
+    en: |
+      **Technique**
+      - **reflectometry**: measures the reflectance spectrum R(λ) at normal incidence, intensity only, no phase. Fast, small spot, simple model; suited to transparent films from about 10 nm up to several µm (post-CMP thickness, thick oxide, resist). Thin films produce no interference fringes, so sensitivity falls quickly and thickness becomes strongly correlated with n.
+      - **se (spectroscopic ellipsometry)**: oblique incidence (65–75°), measures Ψ and Δ, including phase; sensitive to sub-nanometre changes and able to separate several layers and n,k; suited to gate oxide, high-k and multilayer dielectrics. The cost: slower, a larger spot at oblique incidence, and the need for angle-of-incidence and polariser calibration.
+      Defaults to the recipe's technique. In this simulator, ± 1σ for 3 nm SiO2 is about 0.0006 nm with SE and 0.1 nm with reflectometry.
+      Trap: only the measurement changes here; the floated / fixed parameters stay the same. The two techniques (and different tools) each have their own offset, so matching / correlation is required before swapping them in production.
+  stack.noise_r:
+    zh: |
+      **Reflectance noise (1σ) 反射率雜訊**：加在模擬反射率上的白雜訊（絕對 R 單位），範圍 0–0.01，預設 0.002。擬合也用同一個值當作 σ 算 χ²，所以模型正確時 χ² ≈ 1。
+      - 效果：膜厚的 ± 1σ 大致和雜訊成正比，薄膜時放大最多。
+      - 典型：量產反射儀平均後約 0.001–0.003 等級（UV 端光源弱、雜訊較大），請以自己機台的重複性資料為準。
+      - 陷阱：設成 0 時程式改用 0.0001 的下限當 σ：正確模型 χ² ≈ 0、± 1σ ≈ 0（σ 會乘上 √χ²），任何微小的模型誤差反而讓 χ² 暴增。真實雜訊也不全是白雜訊（光源漂移、雜散光、波長校正），系統性誤差在 χ² 裡看起來就像模型錯誤。
+    en: |
+      **Reflectance noise (1σ)**: white noise added to the simulated reflectance (absolute R units), range 0–0.01, default 0.002. The fit uses the same value as σ when computing χ², so a correct model gives χ² ≈ 1.
+      - Effect: the thickness ± 1σ scales roughly with the noise, most strongly for thin films.
+      - Typical: a production reflectometer with averaging is of the order of 0.001–0.003 (noisier at the UV end where the lamp is weak); use your own tool's repeatability data.
+      - Trap: at 0 the app uses a floor of 0.0001 as σ: a correct model gives χ² ≈ 0 and ± 1σ ≈ 0 (σ is multiplied by √χ²), and any tiny model error makes χ² explode. Real noise is not purely white either (lamp drift, stray light, wavelength calibration); systematic errors look like model errors in χ².
+  stack.noise_se:
+    zh: |
+      **Ψ noise (deg, 1σ); Δ noise = 2x 橢偏雜訊**：加在模擬 Ψ 上的白雜訊（度），Δ 自動為 2 倍；範圍 0–0.2°，預設 0.02°。
+      - 為什麼 Δ 較大：Δ 是相位，在 Ψ 很小的波段（接近 Brewster 條件）定義不清、雜訊大。擬合使用 N、C、S（C、S 乘上 sin2Ψ），自然降低這些點的權重。
+      - 擬合用的 σ＝2 × max(Ψ 雜訊, Δ 雜訊 ÷ 2, 0.005°) 換成弧度，是 N、C、S 雜訊的上限估計，所以正確模型的 χ² 通常 < 1（約 0.4–0.6），這不是「比完美還好」。
+      - 典型：量產 SE 的 Ψ、Δ 重複性約百分之一度量級；0.1–0.2° 代表光量不足、對焦或校正有問題。
+      - 陷阱：模擬雜訊是點與點獨立的白雜訊，算出的 ± 1σ 比真實機台樂觀；真正的精度要用重複量測（GR&R）確認。
+    en: |
+      **Ψ noise (deg, 1σ); Δ noise = 2x**: white noise added to the simulated Ψ (degrees); Δ automatically gets twice that; range 0–0.2°, default 0.02°.
+      - Why Δ is larger: Δ is a phase and is poorly defined and noisy where Ψ is small (near the Brewster condition). The fit uses N, C, S (C and S are multiplied by sin2Ψ), which down-weights those points naturally.
+      - The fit's σ = 2 × max(Ψ noise, Δ noise ÷ 2, 0.005°) converted to radians, an upper-bound estimate of the N, C, S noise; so a correct model usually gives χ² < 1 (about 0.4–0.6). That is not "better than perfect".
+      - Typical: production SE repeats Ψ and Δ at the order of a hundredth of a degree; 0.1–0.2° points to low light, focus or calibration problems.
+      - Trap: the simulated noise is white and independent from point to point, so the computed ± 1σ is more optimistic than a real tool; confirm real precision with repeated measurements (GR&R).
+  stack.float_n:
+    zh: |
+      **Also float n of the top layer (Cauchy A) 同時浮動最上層的 n**：把最上層 Cauchy 色散 n(λ) = A + B/λ² + C/λ⁴（λ 以 µm 計）的 A（約等於長波長的折射率）加入浮動參數，範圍為原值 ±0.3。只有最上層是 Cauchy 材料（Al2O3、HfO2、ZrO2；本設定為 highk_on_il、zaz_capacitor）才有效，否則出現警告且不浮動。
+      - 效果：多一個自由度，χ² 可能下降，但膜厚的 ± 1σ 變大，L0.thickness 與 L0.A 出現相關。薄膜量到的主要是光學厚度 n·d：n 高一點、d 薄一點，光譜幾乎一樣。本模擬器 3 nm HfO2（SE 三角度）r 約 −0.8；改用反射儀或雜訊大時更糟。
+      - 典型做法：量產 recipe 固定 n,k（用厚膜參考片或建模時量好的色散），只浮動膜厚；只有膜夠厚、或要監控膜質（密度、組成、退火後結晶）時才浮動 n，並在 monitor wafer 上追蹤。
+      - 陷阱：χ² 變小不等於膜厚更準；A 停在邊界代表模型錯；只浮動 A 只能整體平移 n，無法描述色散形狀或吸收 k 的改變。
+    en: |
+      **Also float n of the top layer (Cauchy A)**: adds the A term of the top layer's Cauchy dispersion n(λ) = A + B/λ² + C/λ⁴ (λ in µm; A is roughly the long-wavelength index) to the floated parameters, within ±0.3 of its value. Works only when the top layer is a Cauchy material (Al2O3, HfO2, ZrO2; here highk_on_il and zaz_capacitor); otherwise a warning appears and n is not floated.
+      - Effect: one more degree of freedom, so χ² may drop, but the thickness ± 1σ grows and L0.thickness and L0.A become correlated. For a thin film what is really measured is the optical thickness n·d: slightly higher n with slightly lower d gives almost the same spectrum. In this simulator, 3 nm HfO2 (3-angle SE) gives r ≈ −0.8; reflectometry or higher noise makes it worse.
+      - Common practice: production recipes fix n,k (dispersion measured on a thick reference film or during model building) and float thickness only; float n only for thick enough films or to monitor film quality (density, composition, crystallisation after anneal), and track it on a monitor wafer.
+      - Traps: a lower χ² does not mean a more accurate thickness; A stopping at a bound means the model is wrong; floating A alone only shifts n uniformly and cannot describe a change of dispersion shape or of absorption k.
+  stack.chi2:
+    zh: |
+      **reduced χ² 約化卡方**＝Σ[(模型 − 量測) ÷ σ]² ÷ (N − p)。N＝資料點數（反射儀 301 個波長；SE 為 角度數 × 3（N、C、S）× 301），p＝浮動參數數，σ＝雜訊滑桿設定的量測雜訊。
+      - ≈ 1：殘差和雜訊同等級，模型能解釋資料。
+      - 1.5–3：注意（watch），有系統性殘差。
+      - > 3：模型與光譜不吻合，膜厚不可信（act）。
+      - 明顯 < 1：假設的雜訊比實際大（本模擬器 SE 正確模型約 0.4–0.6），不代表更好。
+      陷阱：(1) χ² 只說「模型能不能解釋光譜」，不說「模型對不對」：固定層錯、n,k 錯造成的偏差常常讓 χ² 維持正常；(2) χ² 的大小取決於你假設的 σ；(3) 量測機台的 GOF 定義因機台而異（常見 0–1、越接近 1 越好，方向和 χ² 相反），判讀前先確認定義與 recipe 的門檻。
+    en: |
+      **reduced χ²** = Σ[(model − measured) ÷ σ]² ÷ (N − p). N = number of data points (301 wavelengths for reflectometry; for SE, angles × 3 (N, C, S) × 301), p = number of floated parameters, σ = the measurement noise set by the noise slider.
+      - ≈ 1: residuals match the noise; the model explains the data.
+      - 1.5–3: watch, systematic residuals.
+      - > 3: the model does not reproduce the spectrum; do not trust the thickness (act).
+      - Clearly < 1: the assumed noise is larger than the real one (a correct SE model gives about 0.4–0.6 in this simulator); it does not mean "better".
+      Traps: (1) χ² only says whether the model can explain the spectrum, not whether the model is right: bias from a wrong fixed layer or wrong n,k often leaves χ² normal; (2) the size of χ² depends on the σ you assume; (3) metrology tools define GOF differently (often 0–1 with 1 best, the opposite direction to χ²); check the definition and the recipe's threshold before judging.
+  stack.col.parameter:
+    zh: "**parameter 參數**：浮動參數的名稱，格式為 L層號.項目。層號由上往下：L0＝最上層（最先被光照到），基板不編號。`.thickness`＝膜厚（nm）；`.A`＝Cauchy 色散的 A（無單位，約等於長波長折射率，勾選 Also float n 時出現）。沒有列出的層就是固定層：它們的誤差不會出現在這張表，只會轉嫁到浮動層。"
+    en: "**parameter**: name of a floated parameter, written as L + layer number + item (e.g. L0.thickness). Layers are numbered top down: L0 = the top layer (the first one the light meets); the substrate has no number. `.thickness` = thickness (nm); `.A` = the Cauchy A term (dimensionless, roughly the long-wavelength index; appears when Also float n is ticked). Layers not listed are fixed: their errors never show in this table, they are transferred into the floated layers."
+  stack.col.true:
+    zh: "**true 真值**：模擬時使用的真實值（膜厚是你在 True L… 欄輸入的值；A 是材料庫的原始值，模擬器不改 n，所以 A 的 error 只反映雜訊與參數相關）。量產時沒有真值，只能靠參考片（reference wafer）、TEM／XRR 或 golden tool 比對來估計準確度（accuracy）。"
+    en: "**true**: the value used in the simulation (for thickness, what you typed in the True L… boxes; for A, the material library value: the simulator never changes n, so an error in A reflects only noise and parameter correlation). In production there is no truth; accuracy can only be estimated against a reference wafer, TEM / XRR or a golden tool."
+  stack.col.fitted:
+    zh: "**fitted 擬合值**：全域搜尋加最小平方精修後的最佳值，也就是量測機台會報出的數字。若剛好等於 recipe 的 fit bounds 上下限，代表擬合被邊界卡住，結果不可信。"
+    en: "**fitted**: the best value after the global search and least-squares refinement, i.e. the number the metrology tool would report. If it sits exactly on one of the recipe's fit bounds, the fit is stuck at the bound and the result cannot be trusted."
+  stack.col.sigma:
+    zh: |
+      **± 1σ 統計不確定度**：由擬合的 Jacobian 推算的標準誤差，已乘上 √(reduced χ²)。它只反映隨機雜訊經過模型傳遞後的不確定度（precision），**不包含**模型偏差（固定層、n,k、介面層、校正）。
+      - 參數相關高時，± 1σ 會被放大。
+      - 陷阱：模擬的白雜訊讓 ± 1σ 很小（3 nm SiO2 用 SE 約 0.0006 nm），真實機台的重複性要用重複量測與 GR&R 驗證；error 遠大於 ± 1σ → 是偏差，不是雜訊。
+    en: |
+      **± 1σ (statistical uncertainty)**: standard error from the fit's Jacobian, already multiplied by √(reduced χ²). It reflects only how random noise propagates through the model (precision) and does **not include** model bias (fixed layers, n,k, interfacial layers, calibration).
+      - High parameter correlation inflates ± 1σ.
+      - Trap: the simulated white noise makes ± 1σ very small (about 0.0006 nm for 3 nm SiO2 by SE); confirm a real tool's repeatability with repeated measurements and GR&R. An error far larger than ± 1σ is bias, not noise.
+  stack.col.error:
+    zh: |
+      **error 誤差**＝fitted − true（單位同參數）。判讀時除以 ± 1σ：
+      - |error| ≲ 2σ：和雜訊一致。
+      - |error| > 3σ 且有固定層與 recipe 不符：模型偏差（act），χ² 看不出來，± 1σ 也不包含它。
+      也要和規格比：0.2 nm 在 100 nm 氧化層是 0.2%，在 3 nm HfO2 約 7%，足以改變 EOT。量產時看不到這一欄，所以 recipe 開發時要用這種模擬量化「固定層每 1 nm 誤差會轉嫁多少到浮動層」，訂出前站量測要多準。
+    en: |
+      **error** = fitted − true (in the parameter's unit). Judge it in units of ± 1σ:
+      - |error| ≲ 2σ: consistent with noise.
+      - |error| > 3σ with a fixed layer off its recipe value: model bias (act); χ² does not see it and ± 1σ does not contain it.
+      Compare it with the spec too: 0.2 nm is 0.2 % of a 100 nm oxide but about 7 % of a 3 nm HfO2, enough to change the EOT. Production never shows this column, so during recipe development use this kind of simulation to quantify how much of each 1 nm fixed-layer error is transferred into the floated layer, and set how accurate the previous-step measurement must be.
+  stack.corr:
+    zh: |
+      **Parameter correlation 參數相關矩陣**：由擬合的共變異數矩陣算出的相關係數 r（−1 到 +1），對角線＝1；只有浮動 ≥ 2 個參數時才顯示。
+      - |r| 小（< 約 0.9）：兩個參數可以分開決定。
+      - |r| > 0.95（watch）：兩個參數互相抵換（一個變大、另一個變小，光譜幾乎不變），各自的 ± 1σ 被放大，小雜訊就會讓兩個數字反向跳動。負號表示反向抵換（最常見：兩層介電層的分配，或膜厚與 n）。
+      - 本模擬器預設：nitride_on_oxide 兩層約 −0.98、ONO 上面兩層約 −0.97，所以這兩個膜堆一開始就是 watch；總厚度很準，但分配不穩。
+      處理：固定其中一個（前站量測的底層、厚膜參考片的 n）、增加資訊（UV 波段、多角度 SE），或改報總厚度／光學厚度。
+    en: |
+      **Parameter correlation**: correlation coefficients r (−1 to +1) from the fit's covariance matrix; diagonal = 1; shown only when ≥ 2 parameters float.
+      - Small |r| (< about 0.9): the two parameters can be determined separately.
+      - |r| > 0.95 (watch): the two trade off (one up, the other down, almost the same spectrum); each ± 1σ is inflated and small noise makes the two numbers jump in opposite directions. A negative sign means they trade off in opposite directions (most common: the split between two dielectric layers, or thickness vs n).
+      - Defaults in this simulator: about −0.98 for the two layers of nitride_on_oxide and about −0.97 for the top two layers of ONO, so both stacks start at watch: the total thickness is precise, the split is not.
+      Remedies: fix one of them (underlayer from the previous-step measurement, n from a thick reference film), add information (UV range, multi-angle SE), or report the total / optical thickness instead.
+
+  # ------------------------------------------------------------------------------------------- Wafer map
+  wafer.param:
+    zh: "**Parameter 量測項目**：要畫晶圓圖的參數（只列出有量測點座標 x、y 的資料）。每個參數各自計算 NU 與全體晶圓中位數；不同 recipe／產品／量測步驟的同名參數不要混在一起。單位以資料的 unit 欄為準。"
+    en: "**Parameter**: the measured item to map (only data with site coordinates x, y are listed). NU and the fleet median are computed per parameter; never mix the same parameter name from different recipes, products or measurement steps. The unit comes from the data's unit column."
+  wafer.select:
+    zh: |
+      **Wafer (worst NU first) 晶圓（NU 最差的排最前）**：這個參數的所有晶圓（所有 lot、chamber、時間）依片內 1σ NU 由大到小排序，第一片就是最不均勻的。
+      - 用法：先看最差的，判斷是製程形狀還是量測問題，再挑一片接近中位數的當對照。
+      - 指南判斷：本片 NU ÷ 全體晶圓中位數 > 1.3 倍注意、> 2 倍需處理；任何點超出規格（OOS）都需處理。
+      - 陷阱：NU 最差的常常是單一壞點（量測 flyer、擬合失敗、點落在缺陷上）或量測點較少的片，不一定是製程最差的晶圓。
+    en: |
+      **Wafer (worst NU first)**: every wafer of this parameter (all lots, chambers and times), sorted by within-wafer 1σ NU from worst to best; the first one is the least uniform.
+      - Use: look at the worst first, decide whether it is a process shape or a measurement problem, then pick a wafer near the median as a reference.
+      - Guide thresholds: this wafer's NU ÷ fleet median > 1.3× watch, > 2× act; any site out of spec (OOS) is act.
+      - Trap: the worst NU is often a single bad site (metrology flyer, failed fit, site on a defect) or a wafer with fewer sites, not necessarily the worst-processed wafer.
+  wafer.mean:
+    zh: |
+      **mean 平均**：本片所有量測點的算術平均（每點權重相同），單位同參數。和 target／規格中心比較看 offset；也是 SPC 的 wafer mean 點。
+      陷阱：不是面積加權平均，結果取決於 site plan：同一片晶圓用 9 點與 49 點量，若有 bowl 或邊緣滾降，平均值就會不同。不同 site plan 的平均值不要直接比較；被剔除的點也會讓平均偏移。
+    en: |
+      **mean**: arithmetic mean of all sites on this wafer (equal weight per site), in the parameter's unit. Compare with the target / spec centre for offset; it is also the wafer-mean point on SPC.
+      Trap: it is not area-weighted, so it depends on the site plan: the same wafer measured with 9 and with 49 sites gives different means if it has a bowl or edge roll-off. Do not compare means across site plans directly; rejected sites also shift the mean.
+  wafer.nu:
+    zh: |
+      **1σ NU 片內不均勻度**＝100 × 片內標準差（n−1）÷ 平均（%），最常用的膜厚均勻度指標。
+      - 典型（依製程而異，只和同一站自己的歷史比）：熱氧化／爐管常 < 0.5–1%，CVD／PVD 約 1–3%，CMP 後膜厚、蝕刻深度可到數 %。
+      - 指南門檻：本片 ÷ 全體晶圓中位數 > 1.3 倍注意，> 2 倍需處理。
+      - 陷阱：(1) 是相對值：膜越薄，同樣的絕對變化 NU% 越大；平均接近 0 的參數（偏移量、應力、overlay）不要用 NU%，改看絕對 σ；(2) 點數少時 σ 本身不準：9 點時 95% 信賴區間約為 0.68–1.92 倍，49 點約 0.83–1.25 倍，所以 9 點的 1.3 倍可能只是抽樣誤差；(3) NU 不告訴你形狀，同樣 NU 可以是 bowl、tilt 或單一壞點，要看晶圓圖與 Zernike。
+    en: |
+      **1σ NU (within-wafer non-uniformity)** = 100 × within-wafer standard deviation (n−1) ÷ mean (%), the most common thickness-uniformity metric.
+      - Typical (depends on the process; compare only with the same step's own history): thermal oxide / furnace often < 0.5–1 %, CVD / PVD about 1–3 %, post-CMP thickness and etch depth up to a few %.
+      - Guide thresholds: this wafer ÷ fleet median > 1.3× watch, > 2× act.
+      - Traps: (1) it is relative: the thinner the film, the larger the NU % for the same absolute variation; for parameters whose mean is near 0 (offsets, stress, overlay) use the absolute σ instead of NU %; (2) with few sites σ itself is uncertain: the 95 % confidence interval is about 0.68–1.92× with 9 sites and 0.83–1.25× with 49, so a 1.3× ratio on a 9-site wafer can be pure sampling error; (3) NU says nothing about shape; the same NU can be a bowl, a tilt or one bad site; look at the map and the Zernike terms.
+  wafer.range:
+    zh: |
+      **range 全距**＝max − min（單位同參數）。
+      - 對單一異常點最敏感，常用於 CMP、蝕刻與規格以 ± 值表示的參數。
+      - 和規格寬度（USL − LSL）比：range 接近或大於規格寬度 → 再怎麼調平均，都會有點超規。
+      - 陷阱：點數越多 range 自然越大（純隨機時期望 range 約為 9 點 3.0σ、49 點 4.5σ），不同 site plan 的 range 不能直接比；一個 flyer 就能讓 range 加倍，先找出是哪一點並重測確認。
+    en: |
+      **range** = max − min (in the parameter's unit).
+      - Most sensitive to a single abnormal site; common for CMP, etch and parameters whose spec is written as ± a value.
+      - Compare with the spec width (USL − LSL): a range close to or above the spec width → some sites will be out of spec however well the mean is centred.
+      - Trap: range grows naturally with the number of sites (for purely random sites the expected range is about 3.0σ with 9 sites and 4.5σ with 49), so ranges from different site plans are not comparable; one flyer can double the range, so find the site and re-measure it first.
+  wafer.half_range:
+    zh: |
+      **(max−min)/2·mean 半全距 %**＝100 × (max − min) ÷ (2 × 平均)，也就是「± %」的寫法，很多機台規格與供應商資料用這個定義。
+      - 和 1σ NU 不是同一件事：純隨機時約為 1σ NU 的 1.5 倍（9 點）到 2.25 倍（49 點）；有系統性形狀時比例又不同。
+      - 陷阱：均勻度的定義各廠、各機台不同（1σ、3σ、range%、半全距%），報告或比較數字時一定要寫明用哪一個，並使用同一個 site plan 與同樣的 edge exclusion。
+    en: |
+      **(max−min)/2·mean (half-range %)** = 100 × (max − min) ÷ (2 × mean), the "± %" convention used in many tool specs and supplier data.
+      - Not the same thing as 1σ NU: for purely random sites it is about 1.5× the 1σ NU with 9 sites and 2.25× with 49 sites; with a systematic shape the ratio differs again.
+      - Trap: uniformity definitions differ between fabs and tools (1σ, 3σ, range %, half-range %); always state which one you use when reporting or comparing numbers, and use the same site plan and the same edge exclusion.
+  wafer.sites:
+    zh: |
+      **sites 量測點數**：本片這個參數的有效量測點數（有 x、y 座標的列）。
+      - 和 site plan 比（例如 49 點）：比較少 → 有點被剔除（擬合 GOF 不合格、pattern recognition 失敗、邊緣點被略過）或資料匯入問題；少掉的若是外圈點，NU 會看起來比較好。
+      - 取樣密度的限制：9 或 13 點只能看最低階形狀（中心 vs 邊緣、單一方向傾斜）；比點距小的特徵（窄的邊緣環、局部熱點、lift pin 痕跡）看不到。Zernike 項數最多為點數 − 2（9 點時 7 項只剩 2 個自由度，R² 幾乎必然接近 1）；徑向分布只有 3 個環。
+      - 晶圓圖點與點之間的顏色是內插模型，不是量測。
+    en: |
+      **sites**: number of valid sites for this parameter on this wafer (rows with x, y coordinates).
+      - Compare with the site plan (e.g. 49): fewer → sites were rejected (fit GOF failed, pattern recognition failed, edge sites skipped) or there is an import problem; if the missing sites are on the outer ring, the NU looks better than it is.
+      - Sampling-density limits: 9 or 13 sites only resolve the lowest-order shapes (centre vs edge, a single tilt); features smaller than the site spacing (a narrow edge ring, local hot spots, lift-pin marks) are invisible. The number of Zernike terms is capped at sites − 2 (with 9 sites, 7 terms leave only 2 degrees of freedom, so R² is almost bound to be near 1); the radial profile has only 3 rings.
+      - The colour between sites on the wafer map is an interpolation model, not a measurement.
+  wafer.colour:
+    zh: |
+      **Colour scale 色階**
+      - **absolute (sequential) 絕對值**：單一藍色漸層，淺 → 深＝低 → 高。看實際數值的分布、和規格比較。
+      - **deviation from mean (diverging) 相對平均的偏差**：藍–灰–紅，灰＝本片平均，藍＝低於平均、紅＝高於平均，色條對稱於 0。最適合看形狀（哪裡厚、哪裡薄、偏多少）。
+      陷阱：兩種模式的色條都會自動縮放到這一片自己的範圍：非常均勻的晶圓（例如 range 只有 0.3 nm）也會呈現滿檔的顏色對比。一定要讀色條上的數字；不同晶圓不能用顏色深淺比較。
+    en: |
+      **Colour scale**
+      - **absolute (sequential)**: a single blue ramp, light → dark = low → high. Shows the actual values; use it to compare with the spec.
+      - **deviation from mean (diverging)**: blue–grey–red, grey = this wafer's mean, blue = below, red = above, with the colour bar symmetric around 0. Best for reading the shape (where it is thick or thin, and by how much).
+      Trap: in both modes the colour bar auto-scales to this wafer's own range, so even a very uniform wafer (e.g. a range of only 0.3 nm) shows full colour contrast. Always read the numbers on the colour bar; never compare wafers by colour intensity.

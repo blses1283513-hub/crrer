@@ -1,0 +1,43 @@
+# Roles that get a ready-to-send message under every chart, and the three status levels.
+# Status colours are never used alone: every status shows its icon and its words.
+
+roles:
+  RDA:
+    zh: "RDA 缺陷／失效分析"
+    en: "RDA (defect / failure analysis)"
+    cares_zh: "在意：哪幾片、哪幾顆、在晶圓的哪裡、是什麼圖樣；要不要拉片做 review／SEM／切面，以及取樣優先順序。"
+    cares_en: "Cares about: which wafers and dies, where on the wafer, what pattern; whether to pull wafers for review / SEM / cross-section, and which first."
+  PE:
+    zh: "PE 製程工程師"
+    en: "PE (process engineer)"
+    cares_zh: "在意：製程是否偏離 POR／製程窗口、可能的製程原因、影響哪些 lot、是否要調 recipe 或做 split。"
+    cares_en: "Cares about: drift from POR / the process window, likely process cause, which lots are affected, whether to tune the recipe or run a split."
+  EE:
+    zh: "EE 設備工程師"
+    en: "EE (equipment engineer)"
+    cares_zh: "在意：哪台機台／哪個 chamber、從什麼時候開始、和 PM／零件更換／警報的時間關係、要先檢查什麼、要不要 inhibit。"
+    cares_en: "Cares about: which tool / chamber, since when, timing vs PM / part swaps / alarms, what to check first, whether to inhibit it."
+  PIE_YE:
+    zh: "PIE/YE 整合／良率工程師"
+    en: "PIE / YE (integration / yield engineer)"
+    cares_zh: "在意：對元件電性與良率的影響、受影響的 lot／wafer 清單、disposition（放行、重工、報廢、hold）。"
+    cares_en: "Cares about: impact on device electrical results and yield, the list of affected lots / wafers, and disposition (release, rework, scrap, hold)."
+  MGR_QE:
+    zh: "主管／QE 品保"
+    en: "Manager / QE (quality)"
+    cares_zh: "在意：一句話的狀態、風險大小、需要的決定、已採取的圍堵（containment）、紀錄是否完整（e-log、OCAP、異常單）。"
+    cares_en: "Cares about: one-line status, size of the risk, the decision needed, containment already taken, and complete records (e-log, OCAP, excursion report)."
+
+status:
+  good:
+    icon: "🟢"
+    zh: "正常：記錄即可"
+    en: "Normal: record it"
+  watch:
+    icon: "🟡"
+    zh: "注意：記錄並追蹤"
+    en: "Watch: record and track"
+  act:
+    icon: "🔴"
+    zh: "需處理：依 OCAP 行動"
+    en: "Act: follow the OCAP"

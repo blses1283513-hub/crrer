@@ -1,0 +1,10 @@
+# Controls of the Guide page itself.
+
+params:
+  guide.search:
+    zh: |
+      **搜尋 Search**：在所有參數、指標與圖表說明中找關鍵字（中文或英文都可以），例如 EWMA、Cpk、Phase I、bowl、P/T、OCAP。
+      找到的群組會自動展開；清空搜尋框就回到完整清單。
+    en: |
+      **Search**: find a keyword (Chinese or English) in every parameter, KPI and chart explanation, e.g. EWMA, Cpk, Phase I, bowl, P/T, OCAP.
+      Matching groups open automatically; clear the box to see the full list again.

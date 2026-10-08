@@ -1,0 +1,62 @@
+# SPC page. Template values for spc_chart (from insights.spc):
+#   {param} {stat_name} {chart} {group_by} {n_groups} {groups_ooc} {n_ooc} {worst_group} {first_wafer} {first_time}
+#   {latest_wafer} {rules} {shift_sigma} {cpk_min} {cpk_group} {lsl} {usl} {n_points} {recent_groups} {finding} {status}
+
+charts:
+  spc_chart:
+    page: SPC
+    title: {zh: "管制圖（每個 chamber／機台一張）", en: "Control chart (one per chamber / tool)"}
+    legend:
+      - item: "● 彩色線＋點 · coloured line + dots"
+        zh: "每片晶圓一點，值是所選的統計量（{stat_name}）。一個顏色＝一個 {group_by}，顏色跟著 chamber 走，不會因篩選改變。"
+        en: "One dot per wafer; the value is the chosen statistic ({stat_name}). One colour = one {group_by}; the colour follows the chamber and never changes with filters."
+      - item: "— 紅線 UCL / LCL · red lines"
+        zh: "管制上／下限 = CL ± 3σ（EWMA 為隨時間變寬的精確界限；CUSUM 為決策界限 ±h·σ）。由 Phase I 的點算出，代表製程「自己的聲音」，**不是規格**。"
+        en: "Upper / lower control limits = CL ± 3σ (EWMA: exact limits that widen over time; CUSUM: decision interval ±h·σ). Computed from the Phase I points: the voice of the process, **not the spec**."
+      - item: "— 灰線 CL · grey line"
+        zh: "中心線 = Phase I 的平均值。點應該隨機落在兩側。CUSUM 圖沒有 CL（中心是 0）。"
+        en: "Centre line = mean of the Phase I points. Points should scatter randomly on both sides. CUSUM has no CL (its centre is 0)."
+      - item: "◯ 紅圈 · red ring"
+        zh: "OOC（out of control）違規點：違反所選的 Western Electric 規則或超出 EWMA／CUSUM 界限。"
+        en: "OOC (out of control) point: breaks a selected Western Electric rule or the EWMA / CUSUM limit."
+      - item: "┊ 灰色虛線 Phase I · dashed grey line"
+        zh: "Phase I 結束的位置：左邊的點用來算 CL 和管制界限（基準期），右邊才是被監控的 Phase II。"
+        en: "End of Phase I: points to the left set the CL and limits (baseline); points to the right are monitored (Phase II)."
+    axes:
+      zh: "X 軸＝量測時間（晶圓依時間排序）；Y 軸＝{stat_name}，單位同參數（片內 1σ % 為百分比）。表格：points 點數、violations 違規點數、CL 中心線、σ short-term 由移動全距估計的短期 σ。Capability 表：Cp/Cpk 用短期 σ（潛在能力），Pp/Ppk 用整體 σ（實際表現）。"
+      en: "X = measurement time (wafers in time order); Y = {stat_name}, in the parameter's unit (within-wafer 1σ % is a percentage). Table: points, violations, CL, σ short-term (from the moving range). Capability table: Cp/Cpk use short-term σ (potential), Pp/Ppk use overall σ (actual performance)."
+    what:
+      zh: "SPC 用製程自己的歷史判斷「現在是不是和以前一樣」。每個 chamber 分開畫，因為各 chamber 有自己的 offset，混在一起會把 chamber 差異誤當成雜訊，讓界限變寬、事件被掩蓋。"
+      en: "SPC uses the process's own history to ask \"is it still behaving like before?\". Each chamber gets its own chart because chambers have their own offsets; pooling them hides chamber differences inside wider limits and masks events."
+    read:
+      zh: "好：點隨機分布在 CL 兩側、沒有紅圈、各 chamber 的 CL 接近。壞：(1) 單點超出 UCL/LCL → 突發事件（WE1）；(2) 連續多點同側或 2/3 點超過 2σ → 平均值偏移（WE2–4）；(3) 一路往同方向走 → 漂移（消耗品老化、PM 週期）；(4) 只有一個 chamber 異常 → 機台問題；所有 chamber 同時偏 → 進料、recipe 或量測機台問題。看平均值也要看片內 1σ %：形狀改變（bowl、邊緣）平均值可能完全不動。"
+      en: "Good: points scatter randomly around the CL, no red rings, chamber CLs close together. Bad: (1) one point beyond UCL/LCL → sudden event (WE1); (2) runs on one side or 2 of 3 beyond 2σ → mean shift (WE2–4); (3) steady movement in one direction → drift (consumable wear, PM cycle); (4) only one chamber off → tool issue; all chambers off together → incoming material, recipe or metrology tool. Check within-wafer 1σ % as well as the mean: a shape change (bowl, edge) can leave the mean untouched."
+    action:
+      act:
+        zh: "OCAP：(1) 先確認量測：同一片在同一台／參考機台重測，查 GOF、對焦、量測機台的監控片（monitor）是否也偏 → 若是量測問題，交量測端處理、產品放行；(2) 確認是真的製程偏移 → hold 受影響 lot、通知 EE 檢查 {worst_group}（PM 紀錄、零件更換、警報、腔體條件）並視情況 inhibit；(3) 通知 PE／PIE 評估受影響晶圓的 disposition；(4) 機台修復後跑 qual 片確認回到 CL 附近再 release。"
+        en: "OCAP: (1) verify the measurement first: re-measure the same wafer on the same and on a reference tool, check GOF, focus and the metrology tool's own monitor wafer → if it is metrology, fix it there and release product; (2) if the process really moved → hold affected lots, ask EE to check {worst_group} (PM log, part swaps, alarms, chamber condition) and inhibit if needed; (3) ask PE / PIE to disposition the affected wafers; (4) after the fix, run qual wafers back near the CL before releasing the chamber."
+      watch:
+        zh: "不必停機，但要追：在 SPC 點上加註解（已知原因或「調查中」）、提高該 chamber 的抽樣頻率、和 EE 確認是否接近 PM 時間；若 Cpk < 1.33，與 PE 討論是否需要調整 target 或縮小變異。"
+        en: "No tool-down needed, but follow up: comment the SPC points (known cause or \"under investigation\"), raise sampling on that chamber, check with EE whether a PM is due; if Cpk < 1.33, discuss with PE whether to re-target or reduce variation."
+      good:
+        zh: "製程穩定。照常記錄；每季檢查一次界限是否還代表現況（PM、配方變更後要重算 Phase I）。"
+        en: "Process is stable. Record as usual; review the limits each quarter (recompute Phase I after PMs or recipe changes)."
+    record:
+      zh: "[SPC] {param} {stat_name} · {chart} · 依 {group_by} 分組 · {n_points} 點 · 狀態 {status} · OOC：{groups_ooc}（{n_ooc} 點，規則 {rules}，最早 {first_wafer} @ {first_time}）· 最低 Cpk {cpk_min}（{cpk_group}）· 處置：＿＿"
+      en: "[SPC] {param} {stat_name} · {chart} · grouped by {group_by} · {n_points} points · status {status} · OOC: {groups_ooc} ({n_ooc} points, rules {rules}, first {first_wafer} @ {first_time}) · lowest Cpk {cpk_min} ({cpk_group}) · action: ___"
+    roles:
+      RDA:
+        zh: "【SPC 通知】{param} {stat_name}：{finding}。若需要確認是否伴隨缺陷，建議從 {groups_ooc} 最早違規的晶圓 {first_wafer} 開始 review；量測端可提供該片 site 座標。"
+        en: "[SPC notice] {param} {stat_name}: {finding}. If you need to check for related defects, start the review with {first_wafer}, the first violating wafer on {groups_ooc}; metrology can provide its site coordinates."
+      PE:
+        zh: "【SPC】{param} {stat_name}（{chart}）：{finding}。最近 5 點偏離 CL 最多的是 {worst_group}（{shift_sigma}σ）。請確認期間是否有 recipe 變更或進料差異；最低 Cpk = {cpk_min}（{cpk_group}，規格 {lsl}–{usl}）。量測已確認非量測問題後才升級。"
+        en: "[SPC] {param} {stat_name} ({chart}): {finding}. Largest recent shift: {worst_group} ({shift_sigma}σ over the last 5 points). Please check recipe changes or incoming material in that window; lowest Cpk = {cpk_min} ({cpk_group}, spec {lsl}–{usl}). Escalated only after metrology was ruled out."
+      EE:
+        zh: "【機台確認】{param} 在 {groups_ooc} 出現 OOC（{rules}），最早 {first_wafer}（{first_time}）。請對照該時間點的 PM、零件更換與機台警報；{worst_group} 最近 5 點平均偏 {shift_sigma}σ。需要時請 inhibit 並跑 qual 片。"
+        en: "[Tool check] {param} went OOC on {groups_ooc} ({rules}), first at {first_wafer} ({first_time}). Please compare with PMs, part swaps and alarms around that time; {worst_group} averages {shift_sigma}σ off over the last 5 points. Inhibit and run qual wafers if needed."
+      PIE_YE:
+        zh: "【可能影響良率】{param} {stat_name}：{finding}。受影響範圍從 {first_wafer} 起、在 {groups_ooc}；請評估電性／良率風險與 disposition。最低 Cpk = {cpk_min}。"
+        en: "[Possible yield impact] {param} {stat_name}: {finding}. Exposure starts at {first_wafer} on {groups_ooc}; please assess electrical / yield risk and disposition. Lowest Cpk = {cpk_min}."
+      MGR_QE:
+        zh: "【狀態】{param} SPC：{status}。{finding}。已採取：量測確認、通知 EE／PE；待決定：受影響 lot 的 disposition。紀錄：e-log 與 SPC 註解已更新。"
+        en: "[Status] {param} SPC: {status}. {finding}. Done: measurement verified, EE / PE notified. Decision needed: disposition of the affected lots. Records: e-log and SPC comments updated."

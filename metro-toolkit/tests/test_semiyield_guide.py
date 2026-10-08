@@ -156,7 +156,11 @@ def test_launcher_attaches_tooltips_and_hover(monkeypatch):
     assert all(m.help for m in at.metric)
     for el in at.get("plotly_chart"):
         spec = json.loads(el.proto.spec)
-        assert all(d.get("hovertemplate") for d in spec["data"])
+        assert all(d.get("hovertemplate") or d.get("hoverinfo") == "skip" for d in spec["data"])  # skip = legend-only
+    # every chart gets a status line and a "how to read this chart" panel
+    n_charts = len(at.get("plotly_chart"))
+    assert len([e for e in at.expander if "怎麼讀這張圖" in e.label]) == n_charts
+    assert len(at.success) + len(at.warning) + len(at.error) >= n_charts
 
     at.sidebar.radio[0].set_value("Data Generator").run()
     at.button[0].click().run()
@@ -165,6 +169,15 @@ def test_launcher_attaches_tooltips_and_hover(monkeypatch):
     spec = json.loads(at.get("plotly_chart")[0].proto.spec)
     names = [d.get("name") for d in spec["data"]]
     assert {"CL", "UCL", "LCL"} <= set(names)
+    assert any(n and n.startswith("UCL / LCL 管制界限") for n in names) and any(n and n.startswith("CL 中心線") for n in names)
+    assert any("怎麼讀這張圖" in e.label for e in at.expander)
+
+    # English mode: tooltips switch language
+    at.sidebar.radio(key="guide_lang").set_value("en").run()
+    assert not at.exception
+    m = [m for m in at.metric if m.label == "Cpk"][0]
+    assert m.help and not any("\u4e00" <= ch <= "\u9fff" for ch in m.help)
+    at.sidebar.radio(key="guide_lang").set_value("both").run()
     assert all(m.help for m in at.metric)
 
     # counters are removed from the parameter list; the page opens on a real parameter

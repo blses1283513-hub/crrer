@@ -1,0 +1,489 @@
+# Data controls: guide language, page navigation, data source, the Data import page,
+# and one field.<name> entry per standard field (every key of ingest/mapping.py FIELDS).
+# Each entry: zh and en, written as a Metro AE would explain it: definition, typical setting, effect, traps.
+
+params:
+  # ------------------------------------------------------------------ sidebar
+  guide.language:
+    zh: |
+      **說明語言 Guide language**：決定所有說明文字用哪種語言顯示，包括控制項旁的 tooltip（滑鼠移到 ⓘ）、圖表下方的狀態列，以及「📖 怎麼讀這張圖」面板（圖例、判讀、下一步、跟誰說）。
+      - **繁中 + English**：兩種語言並列，中文在前、英文在後。適合學習階段，或同一段結論要同時寫進中文 e-log 與英文報告時。
+      - **繁中** 或 **English**：只顯示一種語言，tooltip 較短，日常監控時比較好讀；「跟誰說」的訊息範本也只產生該語言，直接複製即可。
+      選擇會保留在這次瀏覽 session，切換頁面不會重設。只影響說明文字，不會改變控制項名稱、資料內容或任何計算結果。
+    en: |
+      **Guide language**: the language of every explanation: the tooltips next to controls (hover the ⓘ), the status line under each chart, and the "📖 How to read this chart" panels (legend, reading, next step, who to tell).
+      - **繁中 + English**: both languages, Chinese first. Useful while learning, or when the same conclusion goes into a Chinese e-log and an English report.
+      - **繁中** or **English**: one language only; shorter tooltips that are easier to scan during daily monitoring, and the "who to tell" message templates come out in that language, ready to copy.
+      The choice is kept for the browser session across pages. It changes only the explanations, never control labels, the data or any calculation.
+  nav.page:
+    zh: |
+      **Page 頁面**：切換工作頁面，對應 Metro AE 日常工作的各個環節：
+      - **Data import 資料匯入**：把量測機台、MES 或 EDA 匯出的檔案轉成標準表格；所有真實資料分析的第一步。
+      - **Fab simulator 模擬晶圓廠**：產生含已知事件（答案）的類真實資料，練習抓 excursion、替 SPC 設定打分數。
+      - **Film stack & fit 膜層與擬合**：模擬 reflectometry／SE 光譜並擬合膜厚（與 n），看 χ² 與參數相關性；相當於量測 recipe 的模型開發與檢查。
+      - **Wafer map 晶圓圖**：單片晶圓的片內均勻度（NU%、range）、徑向分布與 Zernike 分解，判斷 center-to-edge、bowl、tilt 等 signature。
+      - **SPC**：依 chamber／tool 分組的晶圓層級管制圖與製程能力（Cp／Cpk）；日常監控與 OOC 處理（依 OCAP）。
+      - **MSA 量測系統分析**：Gauge R&R 與 tool matching；量測機台驗收、PM 後 release 前的確認。
+      - **Recipe studies 量測 recipe 研究**：reflectometry 與 SE 的精度比較、膜厚與 n 的相關性；決定量測手法與要 float 哪些參數。
+      - **DOE / recipe 實驗設計與配方最佳化**：設計實驗、建立回應曲面、找出同時滿足目標值與均勻度的製程配方；支援 PE 做 recipe tuning。
+      - **Guide 參數與圖表說明**：所有控制項與圖表說明的總表，可當教材或查閱。
+      左側「資料來源」只在 Wafer map 與 SPC 頁面出現；其他頁面使用各自的模擬資料或上傳檔案。
+    en: |
+      **Page**: switches the working page; each one maps to part of a Metro AE's job:
+      - **Data import**: turns exports from metrology tools, MES or EDA into the standard table; the first step of any analysis on real data.
+      - **Fab simulator**: generates realistic data with known injected events (an answer key) to practise catching excursions and to score an SPC setup.
+      - **Film stack & fit**: simulates reflectometry / SE spectra and fits thickness (and n), with χ² and parameter correlation; the equivalent of building and checking a metrology recipe model.
+      - **Wafer map**: within-wafer uniformity of one wafer (NU %, range), radial profile and Zernike decomposition, to identify signatures such as center-to-edge, bowl and tilt.
+      - **SPC**: wafer-level control charts grouped by chamber / tool, plus process capability (Cp / Cpk); daily monitoring and OOC handling per the OCAP.
+      - **MSA**: Gauge R&R and tool matching; metrology tool acceptance and the check before release after a PM.
+      - **Recipe studies**: precision of reflectometry vs SE, thickness–n correlation; deciding the technique and which parameters to float.
+      - **DOE / recipe**: designs experiments, fits a response surface and finds a process recipe that meets both target and uniformity; supports the PE's recipe tuning.
+      - **Guide**: the full reference of every control and chart explanation, for study or look-up.
+      The sidebar "Data source" appears only on the Wafer map and SPC pages; the other pages use their own simulated data or uploads.
+  data.source:
+    zh: |
+      **資料來源 Data source**：Wafer map 與 SPC 頁面要分析哪一份資料（只在這兩頁出現）。
+      - **合成範例資料 (synthetic sample)**：內建的模擬氧化層膜厚資料（60 lots、300 片、每片 49 點、2 台製程機台 × 2 chambers、2 台量測機台），含已知的偏移事件；用來熟悉畫面，不代表任何真實製程。
+      - **`匯入：資料集名稱`**：在 Data import 頁面儲存的資料集，或 Fab simulator 產生的模擬資料（sim_…）。最近一次儲存的資料集會自動被選取。
+      - **上傳標準格式 CSV**：臨時看一份已經是標準欄位名稱的 CSV，不存檔。
+      實務：真實資料一律走 Data import（有欄位對應與資料檢查），資料只存在本機 data/imported（已排除在 git 之外）。截圖或寫 e-log 前先確認目前選的是哪一份資料，避免把模擬結果當成真實結論。
+    en: |
+      **Data source**: which dataset the Wafer map and SPC pages analyse (shown only on those two pages).
+      - **Synthetic sample**: built-in simulated oxide-thickness data (60 lots, 300 wafers, 49 sites per wafer, 2 process tools × 2 chambers, 2 metrology tools) with known shift events; for learning the screens, not a real process.
+      - **`匯入：dataset name` (imported)**: a dataset saved on the Data import page, or simulated data from the Fab simulator (sim_…). The most recently saved dataset is selected automatically.
+      - **Upload standard CSV**: a quick look at a CSV that already uses the standard column names; nothing is saved.
+      In practice: bring real data in through Data import (column mapping plus data checks); it is stored only on this PC in data/imported (git-ignored). Before taking a screenshot or writing the e-log, confirm which dataset is selected so a simulated result is never reported as a real one.
+  data.upload_standard:
+    zh: |
+      **Measurement CSV (standard schema) 標準格式 CSV**：直接上傳欄位名稱已符合本工具標準的 CSV（例如本工具輸出的資料、同事整理好的表）。
+      - 必要欄位（名稱需完全一致）：timestamp、lot_id、wafer_id、parameter、value、x、y。選用：product、slot、process_step、tool_id、chamber_id、recipe_id、metro_tool_id、unit、site、target、lsl、usl。
+      - 上傳後檢查：缺必要欄位、value 空白或非數值、時間無法解析、量測點超出 150 mm 半徑、同一晶圓／參數／site 重複。任何一項不通過就整份不使用，並列出問題。
+      - 檔案只在這次 session 使用，不會存檔。
+      陷阱：只接受逗號分隔、UTF-8 編碼。Big5／CP950 存檔、分號或 Tab 分隔、欄位名稱不同、或沒有座標（每片一列）的檔案，請改用 **Data import** 頁面（自動判斷編碼並做欄位對應）。
+    en: |
+      **Measurement CSV (standard schema)**: upload a CSV whose column names already match the toolkit's standard (for example data written by this toolkit, or a table a colleague has already prepared).
+      - Required columns (exact names): timestamp, lot_id, wafer_id, parameter, value, x, y. Optional: product, slot, process_step, tool_id, chamber_id, recipe_id, metro_tool_id, unit, site, target, lsl, usl.
+      - Checks on upload: missing required columns, empty or non-numeric value, unparseable timestamps, sites beyond the 150 mm wafer radius, duplicate wafer / parameter / site rows. Any failure rejects the whole file and lists the problems.
+      - The file is used for this session only and is not saved.
+      Trap: comma-delimited UTF-8 only. Files saved in Big5 / CP950, delimited by semicolons or tabs, with different column names, or without coordinates (one row per wafer) belong on the **Data import** page, which detects the encoding and maps the columns.
+
+  # ------------------------------------------------------------------ Data import page
+  import.format:
+    zh: |
+      **檔案格式**：選擇要匯入的資料類型。
+      - **CSV / Excel**：量測機台、MES 或 EDA 系統匯出的一般表格（CSV、TXT、TSV、Excel、空白分隔的 .data）。文字編碼（UTF-8、Big5／CP950）與分隔符號（逗號、分號、Tab、|）會自動判斷。絕大多數情況選這個。
+      - **SECOM**：UCI 公開的真實晶圓廠資料集（secom.data + secom_labels.data 兩個檔案），用來練習多變量與良率分析；兩個檔案要一起上傳，才能對上合格／失效標籤。
+      資料安全：匯入在這台電腦上的本機程式中處理。公司資料只在公司允許的電腦上使用，不要上傳到任何公開服務。
+    en: |
+      **File format**: the kind of data to import.
+      - **CSV / Excel**: ordinary tables exported from metrology tools, MES or EDA systems (CSV, TXT, TSV, Excel, whitespace-separated .data). Text encoding (UTF-8, Big5 / CP950) and delimiter (comma, semicolon, tab, |) are detected automatically. The right choice almost every time.
+      - **SECOM**: the public UCI dataset from a real fab (two files, secom.data + secom_labels.data), for practising multivariate and yield analysis; upload both files together so each row gets its pass / fail label.
+      Data safety: the import is processed by the local program on this PC. Use company data only on a company-approved PC and never upload it to a public service.
+  import.upload:
+    zh: |
+      **上傳量測資料（CSV、TXT、Excel）**：選擇要匯入的匯出檔。上傳後顯示「列數 × 欄數、文字編碼、分隔符號」與前 15 列預覽，先確認讀對了再往下。
+      - 表頭（欄位名稱）必須在第一列。機台報表常在表頭上方有機台、recipe、日期等抬頭資訊，或在底部有 Mean／Std／Max 統計列：請先刪除，否則欄位會讀錯，統計列也會被當成一筆資料（甚至一片假晶圓）。
+      - 預覽中欄位名稱或中文是亂碼 → 編碼判斷錯誤，請另存為 UTF-8 再上傳。
+      - 整列擠在同一欄 → 分隔符號沒判斷到，檢查檔案是否混用分隔符號。
+      上傳的檔案只在記憶體中處理，按「儲存並使用」後才寫入本機 data/imported（git 已排除）。公司資料不要放到雲端硬碟、公開 AI 服務或 GitHub。
+    en: |
+      **Upload measurement data (CSV, TXT, Excel)**: the export file to import. After upload you see "rows × columns, encoding, delimiter" and a 15-row preview; confirm it was read correctly before going on.
+      - The header (column names) must be the first row. Tool reports often carry a title block above the header (tool, recipe, date) or Mean / Std / Max summary rows at the bottom: delete them first, otherwise columns are misread and a summary row becomes a data row (or even a fake wafer).
+      - Garbled column names or Chinese text in the preview → wrong encoding; re-save the file as UTF-8 and upload again.
+      - Whole rows packed into one column → the delimiter was not detected; check whether the file mixes delimiters.
+      The upload is processed in memory; only "儲存並使用 Save and use" writes it to data/imported on this PC (git-ignored). Never put company data on cloud drives, public AI services or GitHub.
+  import.sheet:
+    zh: |
+      **工作表 Sheet**：Excel 檔有多個工作表時，選擇要匯入的那一張（預設第一張）。一次只匯入一張；要合併多張請分次匯入，或先在 Excel 整理成一張。
+      陷阱：表頭需在第一列。合併儲存格、多列表頭、樞紐分析表、圖表頁、底部的統計列（Mean／Std）都會讓欄位錯亂。最穩定的做法是另存一張「純資料」工作表：一列表頭 + 資料列。
+    en: |
+      **Sheet**: when the workbook has several sheets, the one to import (default: the first). One sheet per import; to combine several, import them separately or consolidate them in Excel first.
+      Trap: the header must be the first row. Merged cells, multi-row headers, pivot tables, chart sheets and summary rows at the bottom (Mean / Std) all scramble the columns. The most reliable approach is a clean "data only" sheet: one header row plus data rows.
+  import.secom_data:
+    zh: |
+      **secom.data**：UCI SECOM 資料集的感測器數值檔，1567 列（每列一個生產單位）× 590 個匿名感測器，空白分隔，缺值為 NaN。
+      匯入後欄位命名為 sensor_001 … sensor_590，以 wide 格式處理（每列一片）；沒有量測點座標，所以可做 SPC、能力分析與良率／特徵分析，不能畫晶圓圖。
+      特性：缺值多、許多欄位數值完全不變；檢查報告會列出「值完全不變」的參數，建議在參數表取消勾選。這是公開資料，可放心用來練習。
+    en: |
+      **secom.data**: the sensor-value file of the UCI SECOM dataset: 1567 rows (one production unit each) × 590 anonymised sensors, whitespace-separated, NaN for missing.
+      After import the columns are named sensor_001 … sensor_590 and handled as wide layout (one row per wafer). There are no site coordinates, so SPC, capability and yield / feature analysis work but wafer maps do not.
+      Characteristics: many missing values and many constant columns; the check report lists the constant parameters, which are best unticked in the parameter table. This is public data, safe for practice.
+  import.secom_labels:
+    zh: |
+      **secom_labels.data**：與 secom.data 逐列對應的標籤檔，每列為「-1 或 1」加上時間（日／月／年 時:分:秒）；-1 = pass、1 = fail。
+      匯入後：timestamp = 標籤中的時間、lot_id = 生產日期（SECOM 沒有批號，以日期代替）、wafer_id = SECOM_0001 起的流水號，並新增 fail 欄（0 = pass、1 = fail）。
+      兩個檔案列數不同會直接報錯，請確認兩個檔案來自同一次下載且未被編輯。fail 欄也會出現在參數表；要做良率／失效分析時保留勾選。
+    en: |
+      **secom_labels.data**: the label file, row-aligned with secom.data; each row is "-1 or 1" plus a time (day/month/year hour:minute:second); -1 = pass, 1 = fail.
+      After import: timestamp = the label time, lot_id = production date (SECOM has no lot IDs, so the date stands in), wafer_id = a running number from SECOM_0001, plus a fail column (0 = pass, 1 = fail).
+      Different row counts in the two files stop the import; make sure both come from the same download and were not edited. The fail column also appears in the parameter table; keep it ticked for yield / failure analysis.
+  import.profile:
+    zh: |
+      **套用已儲存的欄位對應設定（profile）**：profile = 一次匯入的完整設定（long／wide、每個標準欄位對應到哪一欄、參數表的改名／單位／是否匯入、是否換算 nm）。
+      - **（自動判斷）**：依欄位名稱的常見別名自動猜測，每次都要重新確認。
+      - **已存的 profile**：同一種機台、同一種匯出格式第一次對應好就存起來，下次一鍵套用。參數名稱與單位每次都一致，SPC 歷史才接得起來。
+      存放位置：data/imported/profiles/名稱.yaml（只在本機）。
+      陷阱：匯出格式改版（欄位改名、新增參數）時，找不到的欄位會變成「（無）」、新參數用預設值，套用後仍要逐項看一次。profile 不含量測數值，但含欄位與參數名稱，分享前確認沒有敏感資訊。
+    en: |
+      **Apply a saved column-mapping profile**: a profile is the full import setup (long / wide, which source column feeds each standard field, the parameter table's names / units / include flags, and the nm conversion).
+      - **（自動判斷） auto-detect**: guesses from common column-name aliases; confirm it every time.
+      - **A saved profile**: map an export format from a given tool type once, save it, and apply it with one click next time. Parameter names and units then stay identical across imports, so the SPC history joins up.
+      Stored in data/imported/profiles/name.yaml (this PC only).
+      Trap: when the export format changes (renamed columns, new parameters), columns that cannot be found fall back to "（無） none" and new parameters get default settings, so review every item after applying. A profile holds no measured values but does hold column and parameter names; check it contains nothing sensitive before sharing it.
+  import.layout:
+    zh: |
+      **每一列代表什麼？（long / wide）**
+      - **一個量測值（long）**：每列是一個 site 的一個量測值，用「量測項目（parameter）」與「數值（value）」兩欄描述，通常還有 site 與 X／Y 座標。量測機台的 site-level raw data 多半是這種。→ 可畫晶圓圖、做 SPC。至少要對應 parameter、value、wafer_id。
+      - **一片晶圓（wide）**：每列是一片晶圓，每個參數一欄（例如機台的 wafer summary：mean、1σ、range 各一欄；或 SECOM）。→ 可做 SPC、能力分析、良率分析；沒有 site 座標，不能畫晶圓圖。wide 時不會顯示 parameter、value、unit、site、x、y、target、lsl、usl 這些欄位。
+      有對應到 parameter 與 value 時會自動判斷為 long。
+      陷阱：
+      - long 檔誤選 wide：value、x、y、site 這些數字欄都會被當成「參數」，產生沒有意義的管制圖。
+      - 每列一片、但每個 site 一欄（如 THK_01 … THK_49）的檔案會被當成 wide，每個 site 變成一個參數、座標遺失；要畫晶圓圖請先轉成 long（每列一個 site，附 X／Y）。
+    en: |
+      **What does one row represent? (long / wide)**
+      - **One measured value (long)**: each row is one value at one site, described by a "parameter" column and a "value" column, usually with site and X / Y coordinates. Most site-level raw data from metrology tools looks like this. → Wafer maps and SPC. Map at least parameter, value and wafer_id.
+      - **One wafer (wide)**: each row is one wafer with one column per parameter (e.g. a tool's wafer summary with mean, 1σ and range columns, or SECOM). → SPC, capability and yield analysis; no site coordinates, so no wafer maps. In wide layout the fields parameter, value, unit, site, x, y, target, lsl and usl are hidden.
+      Long is detected automatically when parameter and value are mapped.
+      Traps:
+      - A long file imported as wide: value, x, y and site, all numeric, become "parameters" and produce meaningless control charts.
+      - A file with one row per wafer but one column per site (e.g. THK_01 … THK_49) is treated as wide: every site becomes a parameter and the coordinates are lost. For wafer maps, reshape it to long first (one row per site, with X / Y).
+  import.params_table:
+    zh: |
+      **參數表**：決定匯入哪些量測項目、叫什麼名字、單位是什麼；一列 = 一個參數。
+      - **原始名稱**：檔案中的名稱（long：parameter 欄的每個不同值；wide：每個數值欄的欄名），不可修改。
+      - **名稱（可改名）**：匯入後使用的名稱。建議用固定命名規則（如 gox_thk、wl_cd_etch）。不同機台或不同 recipe 版本的同一量測項目要改成同一個名字，歷史資料才接得起來；不同的東西（不同膜層、CMP 前後）絕對不要改成同名，否則會混在同一張圖。要在 SemiYield 的 Yield Prediction 使用時，良率欄請命名為 `yield`。
+      - **單位**：nm、Å（或 A）、µm（或 um）會依設定換算成 nm；其他單位（%、ohm/sq、count）照原樣保留。系統會由名稱後綴（如 _A、(nm)）猜測，請確認。
+      - **匯入**：取消勾選即不匯入。wide 格式中看起來像流水號的欄位（遞增、不重複的整數）預設不勾。
+      實務：量測檔常同時有 GOF（擬合品質）、n／k、MSE、pattern recognition score 等量測健康指標，可匯入作為量測機台／recipe 的監控，但不要拿來對製程下結論。
+      陷阱：long 格式且有對應 unit 欄時，換算依 unit 欄的內容，表中的單位不會被使用。全部取消勾選會無法轉換。
+    en: |
+      **Parameter table**: which measured items to import, what to call them and their units; one row = one parameter.
+      - **原始名稱 Source name**: the name in the file (long: each distinct value of the parameter column; wide: each numeric column's header); read-only.
+      - **名稱 Name (editable)**: the name used after import. Use a fixed naming rule (e.g. gox_thk, wl_cd_etch). Give the same item the same name across tools and recipe versions so the history joins up; never give different things (different film layers, pre- vs post-CMP) the same name, or they end up on one chart. For SemiYield's Yield Prediction, name the yield column `yield`.
+      - **單位 Unit**: nm, Å (or A) and µm (or um) are converted to nm if enabled; other units (%, ohm/sq, count) are kept as they are. The unit is guessed from name suffixes (e.g. _A, (nm)); check it.
+      - **匯入 Include**: untick to leave a parameter out. In wide layout, columns that look like running counters (increasing, unique integers) start unticked.
+      In practice: metrology files often carry tool-health items such as GOF (goodness of fit), n / k, MSE and pattern-recognition score. Import them to monitor the metrology tool or recipe, but do not draw process conclusions from them.
+      Trap: in long layout with a unit column mapped, conversion follows the unit column and the table's unit is ignored. Unticking everything stops the conversion.
+  import.to_nm:
+    zh: |
+      **長度單位（Å、µm）自動換算成 nm**：勾選時，單位為 Å／A 的值 × 0.1、µm／um 的值 × 1000，單位改為 nm；同一列的 target、lsl、usl 也一起換算。檢查報告會列出被換算的參數。
+      建議保持勾選（預設）：不同量測機台或匯出格式常 Å 與 nm 混用，統一成 nm 才能放在同一張管制圖、做 tool matching，規格也才對得上。
+      陷阱：
+      - 單位寫法要精確：nm、Å、A、µm、um 才會被辨識；Ang、NM，以及用希臘字母 μ 打成的 μm（看起來一樣、字碼不同）都不會換算。建議直接輸入 nm、A、um 這類純英數寫法。
+      - 單位欄寫 A 但其實是電流（安培）這類非長度參數，也會被乘 0.1；請先改單位。
+      - 只換算資料中的數值與規格欄；在別處手動輸入的規格（如 MSA 頁面的 LSL／USL）要自己使用相同單位。
+    en: |
+      **Convert length units (Å, µm) to nm**: when ticked, values in Å / A are multiplied by 0.1 and values in µm / um by 1000, and the unit becomes nm; target, lsl and usl on the same rows are converted too. The check report lists the converted parameters.
+      Keep it ticked (the default): different metrology tools or export formats often mix Å and nm, and only one unit lets them share a control chart, a tool-matching study and the same spec limits.
+      Traps:
+      - The unit text must be exact: only nm, Å, A, µm and um are recognised; Ang, NM, and a μm typed with the Greek letter μ (looks identical, different character code) are not converted. Typing plain ASCII such as nm, A, um is safest.
+      - A non-length parameter whose unit is written A (e.g. a current in amperes) is also multiplied by 0.1; fix its unit first.
+      - Only the values and spec columns in the data are converted; spec limits typed in elsewhere (e.g. LSL / USL on the MSA page) must be entered in the same unit by hand.
+  import.m_rows:
+    zh: |
+      **資料列**：轉換後標準表格的列數（一列 = 一個 site 的一個量測值）。已扣除缺值、非數值與時間無法解析的列。wide 格式約等於晶圓數 × 匯入的參數數。和原始檔差很多時，看下方的檢查訊息找原因。
+    en: |
+      **Rows**: rows in the converted standard table (one row = one value at one site), after removing missing values, non-numeric cells and unparseable timestamps. In wide layout it is roughly wafers × imported parameters. If it is far from the source file, read the check messages below for the reason.
+  import.m_lots:
+    zh: |
+      **批 lots**：不同 lot_id 的數目。只有 1 但預期很多 → 沒有對應 lot_id（全部歸為 LOT1）或對應錯欄。比預期多 → split／child lot 被分開計算（如 A1234.1、A1234.2），或誤對應到 FOUP（carrier）ID。
+    en: |
+      **Lots**: number of distinct lot_id values. Only 1 when you expect many → lot_id not mapped (everything becomes LOT1) or mapped to the wrong column. More than expected → split / child lots counted separately (e.g. A1234.1, A1234.2), or the FOUP (carrier) ID was mapped by mistake.
+  import.m_wafers:
+    zh: |
+      **晶圓 wafers**：不同 wafer_id 的數目。檢查：應約等於 lots × 每批量測片數（例如每批抽量 5 片）。明顯偏少 → wafer_id 只有片號 01–25，不同批之間重複，晶圓被合併；明顯偏多 → wafer_id 對應到含時間或量測序號的欄位。
+    en: |
+      **Wafers**: number of distinct wafer_id values. Check: roughly lots × wafers measured per lot (e.g. 5 sampled per lot). Clearly too few → wafer_id holds only the wafer number 01–25, repeated across lots, so wafers were merged; clearly too many → wafer_id was mapped to a column containing a time or a measurement sequence number.
+  import.m_params:
+    zh: |
+      **參數**：匯入的量測項目數（改名後計算）。比勾選的數目少 → 有兩個原始名稱被改成同一個名字而合併，確認這是你要的。
+    en: |
+      **Parameters**: number of imported measured items (counted after renaming). Fewer than the ticked rows → two source names were renamed to the same name and merged; make sure that is intended.
+  import.m_sites:
+    zh: |
+      **每片量測點**：每片晶圓、每個參數的量測點數（中位數）。應等於量測 recipe 的 sampling plan，例如膜厚 9、13、49 點，CD 5–9 點；wide 格式為 1。
+      比 sampling plan 多（例如剛好兩倍）→ 有重量測（re-measure）資料，或 wafer_id 不唯一；long 格式卻是 1 → 這份匯出其實已經是晶圓平均值，無法畫晶圓圖。
+    en: |
+      **Sites per wafer**: measurement points per wafer and parameter (median). It should equal the metrology recipe's sampling plan, e.g. 9, 13 or 49 points for film thickness, 5–9 for CD; 1 for wide layout.
+      More than the sampling plan (e.g. exactly double) → re-measure data, or wafer_id is not unique; 1 in long layout → the export already holds wafer means, so no wafer map is possible.
+  import.name:
+    zh: |
+      **資料集名稱**：儲存後在左側「資料來源」顯示為 `匯入：名稱`，並在本機 data/imported 產生三個檔案：名稱.csv（標準表格）、名稱_wafer.csv（每片一列，SemiYield 用）、名稱_specs.json（檔案中帶的規格）。
+      建議命名：站點_參數_期間，例如 gox_thk_2026W40；只用英數字、底線、連字號（其他符號會被換成底線）。
+      陷阱：同名會直接覆蓋舊資料集，不會詢問；要保留舊版請換名字。
+    en: |
+      **Dataset name**: after saving it appears in the sidebar "Data source" as `匯入：name`, and three files are written to data/imported on this PC: name.csv (standard table), name_wafer.csv (one row per wafer, for SemiYield) and name_specs.json (spec limits carried by the file).
+      Suggested naming: step_parameter_period, e.g. gox_thk_2026W40; use only letters, digits, underscores and hyphens (other symbols are replaced by underscores).
+      Trap: an existing dataset with the same name is overwritten without asking; choose a new name to keep the old one.
+  import.keep_profile:
+    zh: |
+      **同時儲存欄位對應設定（profile）**：儲存資料集時，一併把這次的 long／wide、欄位對應、參數表與 nm 換算設定存成 profile，下次匯入同格式的檔案可直接套用。
+      建議保持勾選（預設）：同一種匯出每次手動對應，很容易某次改名或單位不同，造成 SPC 歷史斷掉或出現假的階梯變化。
+    en: |
+      **Also save the column-mapping profile**: when saving the dataset, also save this import's layout, column mapping, parameter table and nm setting as a profile to apply to the next file in the same format.
+      Keep it ticked (the default): mapping the same export by hand every time invites a different name or unit one day, which breaks the SPC history or creates a fake step change.
+  import.profile_name:
+    zh: |
+      **設定名稱**：profile 的名稱。若這次套用了已存的 profile，預設沿用它的名稱（儲存即更新該 profile）；否則預設為檔名。
+      建議依「機台類型 + 匯出格式」命名，例如 film_thk_site_export、cdsem_lot_summary，而不是依日期或 lot 命名，因為 profile 是給同一種格式重複使用的。同名會直接覆蓋。
+    en: |
+      **Profile name**: the profile's name. If a saved profile was applied this time, its name is the default (saving updates that profile); otherwise the file name is.
+      Name it by tool type plus export format, e.g. film_thk_site_export or cdsem_lot_summary, not by date or lot, because a profile is meant to be reused for the same format. A profile with the same name is overwritten.
+  import.save:
+    zh: |
+      **儲存並使用**：把轉換後的標準表格存成資料集（勾選時同時存 profile），並把左側「資料來源」切換到這份資料，接著可到 Wafer map／SPC 分析；SemiYield 的 launcher 也能載入。
+      - 檢查報告有紅色錯誤（error）時按鈕無法使用，請先修正欄位對應或單位。黃色警告（warning）可以存，但要清楚它對分析的影響（例如少於 10 片的參數 SPC 不可靠）。
+      - 檔案只存在本機 data/imported（已排除在 git 之外，不會推上 GitHub）；可用環境變數 METRO_IMPORT_PATH 改存到公司核准的資料夾。
+      存檔前最後確認：lots／wafers／每片量測點數與預期一致、時間範圍正確、轉換後表格前 20 列看起來合理。
+    en: |
+      **Save and use**: saves the converted standard table as a dataset (plus the profile if ticked) and switches the sidebar "Data source" to it, ready for Wafer map / SPC; SemiYield's launcher can load it too.
+      - The button is disabled while the check report shows a red error; fix the column mapping or units first. Yellow warnings can be saved, but know what they mean for the analysis (e.g. SPC is unreliable for parameters with fewer than 10 wafers).
+      - Files are stored only on this PC in data/imported (git-ignored, never pushed to GitHub); set the METRO_IMPORT_PATH environment variable to store them in a company-approved folder instead.
+      Final check before saving: lots, wafers and sites per wafer match expectations, the time span is right, and the first 20 rows of the converted table look sensible.
+
+  # ------------------------------------------------------------------ standard fields (column mapping)
+  field.timestamp:
+    zh: |
+      **timestamp（量測時間）**：這筆量測的時間。SPC 依它排序，每片晶圓以最早的時間代表。
+      常見欄名：timestamp、time、date、datetime、date_time、meas_time、measure_time、start_time、time_stamp、時間、日期。
+      選哪個時間：匯出常同時有量測時間與製程 track-out 時間。看量測機台本身（matching、量測漂移）用量測時間；要和製程機台的 PM、零件更換、警報對時間，最好用製程站點的 track-out 時間。同一份資料內不要混用。
+      錯了會怎樣：
+      - 沒有對應：以資料列順序代替時間（從 2000-01-01 起每列 1 分鐘），管制圖順序 = 檔案順序，無法對照 e-log 時間。
+      - 無法解析的時間，該列會被移除（檢查報告有警告）。
+      - 日／月順序（03/04 是 3 月 4 日還是 4 月 3 日）判斷錯會靜默地打亂順序；Excel 日期序號（如 45567.5）或 Unix 秒數會被當成 1970 年。建議匯出成 YYYY-MM-DD HH:MM:SS。
+    en: |
+      **timestamp (measurement time)**: when the measurement was taken. SPC sorts by it, and each wafer is represented by its earliest time.
+      Typical column names: timestamp, time, date, datetime, date_time, meas_time, measure_time, start_time, time_stamp, 時間, 日期.
+      Which time: exports often carry both the measurement time and the process track-out time. For the metrology tool itself (matching, metrology drift) use measurement time; to line up with process-tool PMs, part swaps or alarms, the process step's track-out time is better. Never mix the two in one dataset.
+      What breaks if wrong:
+      - Not mapped: row order replaces time (from 2000-01-01, one minute per row); chart order = file order, and nothing can be matched to e-log times.
+      - Unparseable times: those rows are removed (warning in the check report).
+      - Day/month order guessed wrong (is 03/04 March 4 or April 3?) silently scrambles the sequence; Excel serial dates (e.g. 45567.5) or Unix seconds become 1970. Export as YYYY-MM-DD HH:MM:SS.
+  field.lot_id:
+    zh: |
+      **lot_id（批號）**：MES 中的 lot ID；一批通常 25 片，裝在一個 FOUP 中流片。
+      常見欄名：lot_id、lot、lotid、lot_no、lotno、lot_number、lot_name、批號。
+      注意：
+      - lot ≠ FOUP（carrier）ID。FOUP 會重複使用，誤對應到 carrier ID 會把不相關的批混在一起。
+      - split／child lot（如 A1234.1）會被當成不同 lot；要看整批，請在匯出時統一成 parent lot。
+      - 沒有對應：全部歸為 LOT1（檢查報告有警告），lot 層級的分析與 SemiYield 的批次順序就沒有意義。
+    en: |
+      **lot_id (lot ID)**: the lot ID in the MES; a lot is usually 25 wafers travelling in one FOUP.
+      Typical column names: lot_id, lot, lotid, lot_no, lotno, lot_number, lot_name, 批號.
+      Notes:
+      - A lot is not a FOUP (carrier) ID. FOUPs are reused, so mapping the carrier ID mixes unrelated lots.
+      - Split / child lots (e.g. A1234.1) count as separate lots; to see the whole lot, export the parent lot ID.
+      - Not mapped: everything becomes LOT1 (warning in the check report), and lot-level analysis and SemiYield's lot order lose their meaning.
+  field.wafer_id:
+    zh: |
+      **wafer_id（晶圓編號）**：每片晶圓的唯一識別碼，例如雷射刻號（wafer scribe ID）或「lot.slot」（L0001.01）。量測點靠它歸到晶圓，是 long 格式的必要欄位。
+      常見欄名：wafer_id、wafer、waferid、wafer_no、waferno、wfr、wfr_id、wafer_name、substrate_id、晶圓。
+      最常見的錯：匯出中的「wafer」只有片號 01–25，不同 lot 之間重複。結果：不同批的晶圓被當成同一片，晶圓圖疊在一起、NU% 被灌大、出現大量「重複量測」警告、晶圓數偏少。請在匯出查詢或 Excel 中先組成 lot + 片號（如 A1234.07）再匯入。
+      沒有對應：long 格式無法轉換；wide 格式依資料列順序產生 W00001、W00002…。
+    en: |
+      **wafer_id (wafer ID)**: a unique identifier for each wafer, e.g. the laser scribe ID or "lot.slot" (L0001.01). Sites are assigned to wafers by it; required for long layout.
+      Typical column names: wafer_id, wafer, waferid, wafer_no, waferno, wfr, wfr_id, wafer_name, substrate_id, 晶圓.
+      The most common mistake: the export's "wafer" column holds only the wafer number 01–25, repeated across lots. Wafers from different lots are then treated as one: wafer maps overlap, NU % is inflated, "duplicate measurement" warnings pile up, and the wafer count is too low. Build lot + wafer number (e.g. A1234.07) in the export query or in Excel before importing.
+      Not mapped: long layout cannot be converted; wide layout gets W00001, W00002, … in row order.
+  field.slot:
+    zh: |
+      **slot（槽位）**：晶圓在 FOUP 中的位置，300 mm FOUP 為 1–25。
+      常見欄名：slot、slot_no、slot_id、slotno。
+      用途：找與槽位有關的 signature，例如 batch 爐管的裝載位置效應、單片式機台閒置後的 first wafer effect、chamber seasoning、FOUP 內上下位置的差異。
+      注意：經過 sorter 或 split／merge 後，量測時的 slot 可能和製程時不同；分析製程 signature 時要用製程站點當下的 slot。
+      錯對應：把 slot 當成 wafer_id 會讓不同 lot 的晶圓被合併（見 wafer_id）。
+    en: |
+      **slot**: the wafer's position in the FOUP, 1–25 for a 300 mm FOUP.
+      Typical column names: slot, slot_no, slot_id, slotno.
+      Use: slot-related signatures such as load position in a batch furnace, first-wafer effect after idle on single-wafer tools, chamber seasoning, or top-vs-bottom position in the FOUP.
+      Note: after a sorter or a split / merge, the slot at metrology can differ from the slot at the process step; for process signatures use the slot at the process step.
+      Wrong mapping: using slot as wafer_id merges wafers from different lots (see wafer_id).
+  field.parameter:
+    zh: |
+      **parameter（量測項目）**：long 格式中說明「這一列量的是什麼」的欄位，例如 THK、GOX_THK、CD_MEAN、RI（折射率）。long 格式必要欄位。
+      常見欄名：parameter、param、item、measure_item、meas_item、parameter_name、param_name、measurement_name、項目。
+      對應後，每個不同的值會成為參數表中的一列，可改名、設定單位、選擇是否匯入。
+      錯對應：對應到 site 名稱或量測狀態欄 → 每個 site／狀態變成一個「參數」，參數數暴增；對應到 recipe 名稱 → 同一 recipe 下的不同量測項目被混成一個參數。
+    en: |
+      **parameter (measured item)**: in long layout, the column that says what each row measures, e.g. THK, GOX_THK, CD_MEAN, RI (refractive index). Required for long layout.
+      Typical column names: parameter, param, item, measure_item, meas_item, parameter_name, param_name, measurement_name, 項目.
+      Once mapped, each distinct value becomes a row of the parameter table, where it can be renamed, given a unit, and included or left out.
+      Wrong mapping: a site label or a measurement-status column → every site / status becomes a "parameter" and the parameter count explodes; a recipe-name column → different measured items under one recipe are merged into one parameter.
+  field.value:
+    zh: |
+      **value（數值）**：量測結果本身，long 格式必要欄位。
+      常見欄名：value、val、result、meas_value、measured_value、measurement、數值。
+      處理：非數值（N/A、---、FAIL、空白）視為缺值並移除，檢查報告會列出筆數。
+      陷阱：
+      - 擬合或量測失敗時，有些機台會填 0、-999、9999 這類「看起來是數字」的值，不會被自動移除，會在管制圖上變成假 OOC；請搭配 GOF 或量測狀態欄先過濾。
+      - 使用小數逗號（12,34）或千分位的檔案，整欄會被當成文字而變成缺值。
+      - 誤對應到 target 或 spec 欄 → 檢查報告出現「值完全不變」。
+    en: |
+      **value**: the measured result itself; required for long layout.
+      Typical column names: value, val, result, meas_value, measured_value, measurement, 數值.
+      Handling: non-numeric cells (N/A, ---, FAIL, blank) are treated as missing and removed; the check report gives the count.
+      Traps:
+      - On a fit or measurement failure some tools write number-like placeholders such as 0, -999 or 9999. These are not removed automatically and show up as fake OOC points; filter them first using GOF or a measurement-status column.
+      - Files with decimal commas (12,34) or thousands separators are read as text and the whole column becomes missing.
+      - Mapped to the target or a spec column by mistake → the check report shows "values never change".
+  field.unit:
+    zh: |
+      **unit（單位）**：每一列數值的單位，如 nm、Å、µm、%、ohm/sq。
+      常見欄名：unit、units、uom、單位。
+      用途：長度單位依「自動換算成 nm」的設定換算；沒有對應時改用參數表中的單位。
+      陷阱：同一參數出現兩種單位（例如一台量測機台輸出 Å、另一台輸出 nm，又沒勾換算）→ 檢查報告報錯（error），必須先統一，否則 matching 會看到 10 倍的假 offset。
+    en: |
+      **unit**: the unit of each row's value, e.g. nm, Å, µm, %, ohm/sq.
+      Typical column names: unit, units, uom, 單位.
+      Use: length units are converted according to the "convert to nm" setting; when not mapped, the parameter table's unit is used.
+      Trap: one parameter in two units (e.g. one metrology tool reports Å and another nm, with conversion off) → an error in the check report. Unify them first, or matching sees a fake factor-of-10 offset.
+  field.site:
+    zh: |
+      **site（量測點編號）**：量測 recipe sampling plan 中的點位編號（1…N），例如 49 點膜厚 map 的第 1 點通常在晶圓中心。
+      常見欄名：site、site_id、site_no、siteno、point、point_no、pt、pt_no。
+      用途：判斷重複量測（同晶圓、同參數、同 site）、比較同一點位的長期趨勢。
+      沒有對應：依每片、每參數的資料順序自動編號 1、2、3…。
+      注意：site 編號只在同一個 sampling plan 內可比；recipe 改版後同一個編號可能是不同位置，跨 recipe 比較請用 X／Y 座標。誤對應到量測序號之類全域遞增的欄位，重複量測檢查就會失效。
+    en: |
+      **site (site number)**: the point number (1…N) in the metrology recipe's sampling plan; in a 49-point thickness map, site 1 is usually the wafer centre.
+      Typical column names: site, site_id, site_no, siteno, point, point_no, pt, pt_no.
+      Use: detecting re-measured points (same wafer, parameter and site) and trending one site over time.
+      Not mapped: sites are numbered 1, 2, 3 … in row order within each wafer and parameter.
+      Note: site numbers are comparable only within one sampling plan; after a recipe revision the same number can be a different location, so compare across recipes by X / Y. Mapping a globally increasing column such as a measurement sequence number defeats the duplicate check.
+  field.x:
+    zh: |
+      **x（X 座標，mm）**：量測點相對於晶圓中心的 X 座標，單位 mm。採 notch-down 慣例：從晶圓正面看、notch 在 6 點鐘方向，+X 向右、+Y 向上。300 mm 晶圓的 site 應在半徑 150 mm 內（扣掉 edge exclusion 通常 ≤ 147 mm）。long 格式才有。
+      常見欄名：x、x_mm、site_x、x_pos、xpos、x_coord、x_position、pos_x。
+      用途：晶圓圖、徑向分布、Zernike 分解都靠 X／Y；沒有座標就只能做 SPC。
+      錯了會怎樣：
+      - 單位是 µm，或原點在晶圓左下角 → 檢查報告「超出 150 mm 晶圓半徑」。
+      - 用 die 座標（行／列編號）→ 不會報錯，但圖形被壓成中心一小團。
+      - X／Y 對調、正負號相反或 notch 方向不同（notch-up、notch-left）→ 圖形旋轉或鏡像，signature 被報成錯的方位，EE 會去查錯的那一側（例如 slit valve 側）。
+      - 匯出是極座標（r、θ）時，先換算成 x = r·cosθ、y = r·sinθ 再匯入。
+    en: |
+      **x (X coordinate, mm)**: the site's X position from the wafer centre, in mm. Notch-down convention: viewed from the front side with the notch at 6 o'clock, +X points right and +Y points up. On a 300 mm wafer every site should lie within a 150 mm radius (usually ≤ 147 mm after edge exclusion). Long layout only.
+      Typical column names: x, x_mm, site_x, x_pos, xpos, x_coord, x_position, pos_x.
+      Use: wafer maps, radial profiles and Zernike decomposition all depend on X / Y; without coordinates only SPC is possible.
+      What breaks if wrong:
+      - Units in µm, or origin at the wafer's lower-left corner → "sites outside the 150 mm wafer radius" in the check report.
+      - Die coordinates (column / row index) → no warning, but the map shrinks to a small blob at the centre.
+      - X and Y swapped, a sign flipped, or a different notch orientation (notch-up, notch-left) → the map is rotated or mirrored, the signature is reported on the wrong side, and the EE checks the wrong side of the chamber (e.g. the slit-valve side).
+      - Polar exports (r, θ): convert to x = r·cosθ, y = r·sinθ before importing.
+  field.y:
+    zh: |
+      **y（Y 座標，mm）**：量測點相對於晶圓中心的 Y 座標，單位 mm。notch-down 慣例下 notch 在 −Y 方向（6 點鐘），+Y 指向 12 點鐘。必須和 x 使用同一套原點、單位與方向。
+      常見欄名：y、y_mm、site_y、y_pos、ypos、y_coord、y_position、pos_y。
+      陷阱：Y 正負號相反（有些系統 +Y 朝向 notch）會讓晶圓圖上下顛倒：notch 側的 edge roll-off 會被報成對側，和 EE、PE 溝通時方位全錯。匯入後用一片已知 signature 的晶圓（例如明顯的 notch 側偏厚）確認方向一次，存成 profile 後就不必每次檢查。
+    en: |
+      **y (Y coordinate, mm)**: the site's Y position from the wafer centre, in mm. In the notch-down convention the notch is in the −Y direction (6 o'clock) and +Y points to 12 o'clock. Must share x's origin, unit and orientation.
+      Typical column names: y, y_mm, site_y, y_pos, ypos, y_coord, y_position, pos_y.
+      Trap: a flipped Y sign (some systems point +Y toward the notch) turns the map upside down: edge roll-off on the notch side is reported on the opposite side, and every location you give the EE and PE is wrong. After the first import, check the orientation once with a wafer whose signature you know (e.g. clearly thicker on the notch side); once it is saved in a profile you do not need to check every time.
+  field.tool_id:
+    zh: |
+      **tool_id（製程機台）**：在這個製程站點處理這片晶圓的製程機台（equipment／entity ID），不是量測機台。
+      常見欄名：tool_id、tool、eqp、eqp_id、equipment、equipment_id、entity、機台。
+      用途：SPC 可依 tool 分圖；每片一列的 wafer 表也帶這個欄位，供良率分析對應機台。
+      最常見的錯：量測機台的匯出中，「tool」或「eqp」欄通常是量測機台本身。若對應到 tool_id，依 tool 分組時看到的其實是量測機台差異，會把量測 offset 誤判成製程問題（或反過來）。製程機台與 chamber 要從 MES 的製程履歷（lot history）取得，再併入量測資料。
+    en: |
+      **tool_id (process tool)**: the process tool (equipment / entity ID) that processed this wafer at this process step; not the metrology tool.
+      Typical column names: tool_id, tool, eqp, eqp_id, equipment, equipment_id, entity, 機台.
+      Use: SPC can chart by tool; the one-row-per-wafer table also carries it so yield analysis can link wafers to tools.
+      The most common mistake: in a metrology tool's export the "tool" or "eqp" column is usually the metrology tool itself. Mapped to tool_id, grouping by tool then shows metrology-tool differences, and a metrology offset is misread as a process problem (or the reverse). Get the process tool and chamber from the MES process history (lot history) and join them to the measurement data.
+  field.chamber_id:
+    zh: |
+      **chamber_id（腔體）**：cluster tool 中實際處理晶圓的 process chamber（PM1、PM2、ChA…）。SPC 最常用的分組。
+      常見欄名：chamber_id、chamber、ch、chamber_name、pm、腔體。
+      為什麼重要：各 chamber 有固定 offset、各自的漂移與 PM 週期；不分 chamber 時，單一 chamber 的偏移會被其他 chamber 稀釋而抓不到。
+      陷阱：
+      - chamber 名稱在每台機台都一樣（每台都有 PM1）。依 chamber 分組時，不同機台的 PM1 會畫在同一張圖；請使用含機台名稱的 ID（如 DEP01-A、ETCH05_PM2）。
+      - 有些匯出的「PM」欄代表保養（preventive maintenance）次數或日期，不是 process module；先看內容再對應。
+    en: |
+      **chamber_id (chamber)**: the process chamber of the cluster tool that actually processed the wafer (PM1, PM2, ChA …). The most common SPC grouping.
+      Typical column names: chamber_id, chamber, ch, chamber_name, pm, 腔體.
+      Why it matters: each chamber has its own fixed offset, drift and PM cycle; without a chamber split, one chamber's shift is diluted by the others and missed.
+      Traps:
+      - Chamber names repeat on every tool (every tool has a PM1). Grouping by chamber then puts PM1 of different tools on one chart; use tool-qualified IDs (e.g. DEP01-A, ETCH05_PM2).
+      - In some exports a "PM" column means preventive-maintenance count or date, not process module; look at the content before mapping it.
+  field.metro_tool_id:
+    zh: |
+      **metro_tool_id（量測機台）**：量測這片晶圓的 metrology tool。
+      常見欄名：metro_tool_id、metro_tool、meas_tool、metrology_tool、metro_eqp。
+      為什麼重要：同一 fleet 的量測機台之間有 offset（tool matching）。沒有這個欄位時，量測機台 PM、校正、recipe 改版或換機量測造成的跳動，看起來就像製程偏移，可能誤 hold lot 或找錯機台。有了它才能把量測機台的貢獻分開、做 matching 與 MSA 追蹤。
+      錯對應：把製程機台對應到這裡（或反之），量測與製程的差異會被互換，結論完全相反。
+    en: |
+      **metro_tool_id (metrology tool)**: the metrology tool that measured this wafer.
+      Typical column names: metro_tool_id, metro_tool, meas_tool, metrology_tool, metro_eqp.
+      Why it matters: metrology tools in one fleet have offsets between them (tool matching). Without this field, a jump caused by a metrology PM, a calibration, a recipe revision or measuring on a different tool looks like a process shift, which can put lots on hold by mistake or send people to the wrong tool. With it, the metrology contribution can be separated and tracked for matching and MSA.
+      Wrong mapping: put the process tool here (or the reverse) and metrology and process differences swap places, so the conclusion is exactly backwards.
+  field.recipe_id:
+    zh: |
+      **recipe_id（Recipe）**：製程 recipe 名稱，或量測 recipe 名稱，視匯出來源而定；匯入前先確認是哪一種。
+      常見欄名：recipe_id、recipe、rcp、recipe_name。
+      用途：追溯與篩選。recipe 改版（製程條件、量測模型或 sampling plan 改變）通常造成階梯變化，SPC 的 Phase I 基準期要在改版後重建，並記錄在 e-log。
+      注意：本工具目前不會依 recipe 分圖；target 不同的 recipe 請分開匯入。量測機台匯出的 recipe 欄多半是量測 recipe，不要誤當成製程 recipe 去找 PE。
+    en: |
+      **recipe_id (recipe)**: the process recipe name, or the metrology recipe name, depending on the export; confirm which one before importing.
+      Typical column names: recipe_id, recipe, rcp, recipe_name.
+      Use: traceability and filtering. A recipe revision (process conditions, metrology model or sampling plan) usually causes a step change; rebuild the SPC Phase I baseline after it and record it in the e-log.
+      Note: the toolkit does not split charts by recipe; import recipes with different targets separately. The recipe column in a metrology tool's export is usually the metrology recipe; do not take it to the PE as if it were the process recipe.
+  field.process_step:
+    zh: |
+      **process_step（製程站點）**：量測對應的製程站點（route 中的 operation／step），例如 OX_DEP、WL_ETCH、CMP_POST。
+      常見欄名：process_step、step、operation、oper、layer、站點。
+      為什麼重要：同一個量測項目名稱可能出現在不同站點（例如 CMP 前後的膜厚、同一層 dep 後與 etch 後的 CD），意義與 target 完全不同。
+      注意：本工具依「參數名稱」分圖，不會自動依站點分開。若一份匯出含多個站點的同名參數，請分站點匯出，或在匯出時把站點放進參數名稱，否則 pre／post 數值會混在同一張管制圖。
+    en: |
+      **process_step (process step)**: the process step (route operation / step) the measurement belongs to, e.g. OX_DEP, WL_ETCH, CMP_POST.
+      Typical column names: process_step, step, operation, oper, layer, 站點.
+      Why it matters: the same measured-item name can appear at different steps (thickness before and after CMP, CD of one layer after dep and after etch) with entirely different meaning and target.
+      Note: the toolkit charts by parameter name and does not split by step. If one export holds same-named parameters from several steps, export each step separately or put the step into the parameter name at export, otherwise pre and post values share one control chart.
+  field.product:
+    zh: |
+      **product（產品）**：產品／device 代號（同一製程平台上的不同產品，例如不同容量或世代的記憶體）。
+      常見欄名：product、product_id、part、part_id、device。
+      為什麼重要：不同產品在同一站點可能有不同的 target 與 spec，混在同一張管制圖會變成雙峰分布、σ 被拉大、管制界限變寬而漏抓事件。
+      注意：本工具目前不會依 product 分圖；同一份匯出若有多個 target 不同的產品，請每個產品分開匯入。誤對應（例如對應到 lot 類型或 technology 欄）不影響計算，但會誤導追溯。
+    en: |
+      **product**: the product / device code (different products on the same process platform, e.g. memory of different densities or generations).
+      Typical column names: product, product_id, part, part_id, device.
+      Why it matters: different products can have different targets and specs at the same step; on one control chart they form a bimodal distribution, inflate σ and widen the limits, so events are missed.
+      Note: the toolkit does not split charts by product; if one export holds several products with different targets, import each product separately. A wrong mapping (e.g. lot type or a technology column) does not change any calculation but misleads traceability.
+  field.target:
+    zh: |
+      **target（目標值）**：spec 系統中此參數的目標值（nominal）。
+      常見欄名：target、tgt、nominal。
+      用途：存入資料集與 名稱_specs.json（每個參數取中位數）。和管制圖的 CL 比較，就知道製程偏離目標多少，是 re-target 或 APC 調整的依據。會依單位一起換算成 nm。
+      注意：target 是工程規格，CL 是由資料算出來的（Phase I 平均），兩者不同是正常的，差距才是重點。期間內 target 改版時，取中位數會失真，請以改版時間點分開匯入。
+    en: |
+      **target**: the parameter's target (nominal) from the spec system.
+      Typical column names: target, tgt, nominal.
+      Use: stored with the dataset and in name_specs.json (median per parameter). Compared with the control chart's CL it shows how far the process sits from target, the basis for re-targeting or an APC adjustment. Converted to nm with the values.
+      Note: the target is an engineering spec, the CL is computed from data (Phase I mean); they normally differ, and the gap is what matters. If the target was revised within the period, the median is misleading; import the data in two parts split at the revision.
+  field.lsl:
+    zh: |
+      **lsl（規格下限 Lower Spec Limit）**：spec 系統中的規格下限。超出即 out-of-spec，需要 disposition（hold、重工、報廢由 PIE／QE 判定）。它不是管制界限：LCL／UCL 是 SPC 由資料算出來的（CL ± 3σ），用來抓「製程變了」，通常比規格窄。
+      常見欄名：lsl、spec_low、low_spec、lower_spec、spec_lo。
+      用途：SPC 頁面在統計量為 wafer mean、且資料同時有 LSL 與 USL 時，以每個參數的中位數計算 Cp／Cpk／Pp／Ppk。會依單位一起換算成 nm。
+      陷阱：
+      - 把 LCL／UCL 或 warning limit 對應成 lsl／usl → Cpk 永遠接近 1，能力評估沒有意義。
+      - 單邊規格（只有 USL 或只有 LSL）時，本工具不計算能力指數。
+      - 規格常是針對每個 site，而這裡的能力指數用晶圓平均值計算，報告時要註明。
+      - LSL ≥ USL（上下限對調）時檢查報告會報錯。
+    en: |
+      **lsl (Lower Spec Limit)**: the lower spec limit from the spec system. Below it a wafer is out of spec and needs disposition (hold, rework or scrap, decided by PIE / QE). It is not a control limit: LCL / UCL are computed by SPC from the data (CL ± 3σ) to catch "the process changed", and are usually tighter than the spec.
+      Typical column names: lsl, spec_low, low_spec, lower_spec, spec_lo.
+      Use: when the statistic is wafer mean and both LSL and USL are present, the SPC page computes Cp / Cpk / Pp / Ppk from each parameter's median limits. Converted to nm with the values.
+      Traps:
+      - Mapping LCL / UCL or warning limits as lsl / usl → Cpk always comes out near 1 and the capability study means nothing.
+      - One-sided specs (USL only or LSL only): the toolkit does not compute capability indices.
+      - Specs often apply to each site, while these indices use wafer means; say so in the report.
+      - LSL ≥ USL (limits swapped) is reported as an error in the check report.
+  field.usl:
+    zh: |
+      **usl（規格上限 Upper Spec Limit）**：spec 系統中的規格上限，與 lsl 成對使用；同樣是工程規格，不是 SPC 的管制界限（UCL）。
+      常見欄名：usl、spec_high、high_spec、upper_spec、spec_hi。
+      用途與陷阱同 lsl：兩者都有才會計算能力指數；期間內規格改版時取中位數會混用新舊規格，請分開匯入；確認匯出中的規格是這個產品、這個站點的版本。規格屬於公司機密資料，只存在本機，不要貼到公開服務。
+    en: |
+      **usl (Upper Spec Limit)**: the upper spec limit from the spec system, used as a pair with lsl; also an engineering spec, not the SPC control limit (UCL).
+      Typical column names: usl, spec_high, high_spec, upper_spec, spec_hi.
+      Use and traps as for lsl: capability is computed only when both exist; if the spec was revised within the period, the median mixes old and new specs, so import the two parts separately; confirm the export carries the spec version for this product and step. Specs are confidential company data: keep them on this PC and never paste them into a public service.

@@ -35,13 +35,17 @@ ion implantation
 Latin hypercube sampling
 license
 lot
+moving range
 non-uniformity
+OCAP
 out of control
+out of spec
 PECVD
 physical vapor deposition
 Ppk
 precursor
 process capability
+process of record
 process simulation
 process window
 refractive index

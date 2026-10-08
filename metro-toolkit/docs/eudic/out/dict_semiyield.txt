@@ -35,13 +35,17 @@ ion implantation@<b>ion implantation</b>　<span style="color:#1c5cab">離子植
 Latin hypercube sampling@<b>Latin hypercube sampling</b>　<span style="color:#1c5cab">拉丁超立方抽樣</span><br>讓樣本均勻散佈於多維空間的抽樣法。<br><i>The first ten runs use Latin hypercube sampling.</i><br>前十次實驗使用拉丁超立方抽樣。<br><span style="color:#898781;font-size:smaller">semiyield</span>
 license@<b>license</b>　<span style="color:#1c5cab">授權條款</span><br>規定他人可否使用、修改、散布程式碼；沒有授權即保留所有權利。<br><i>Without a license file you may read the code but not reuse it.</i><br>沒有授權檔時，你可以閱讀程式碼，但不能重複使用。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, waferlens, sem-toolkit</span>
 lot@<b>lot</b>　<span style="color:#1c5cab">批（lot）</span><br>一起流動的一組晶圓，通常 25 片。<br><i>Five wafers per lot are sampled for metrology.</i><br>每批抽五片晶圓做量測。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, waferlens</span>
+moving range@<b>moving range</b>　<span style="color:#1c5cab">移動全距（MR）</span><br>相鄰兩點差的絕對值；平均移動全距 ÷ 1.128 用來估計短期 σ，是 I-MR 圖界限的基礎。<br><i>Sigma for the individuals chart comes from the average moving range, not the overall standard deviation.</i><br>個別值圖的 σ 來自平均移動全距，而不是整體標準差。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield</span>
 non-uniformity@<b>non-uniformity</b>　<span style="color:#1c5cab">不均勻度（NU）</span><br>常見定義：1σ/mean、range/mean、(max−min)/(2·mean)。<br><i>Always state which non-uniformity definition a report uses.</i><br>報告中一定要說明使用哪一種不均勻度定義。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, sem-toolkit</span>
+OCAP@<b>OCAP</b>　<span style="color:#1c5cab">異常處置計畫（OCAP）</span><br>Out-of-Control Action Plan：OOC 發生時的標準處置步驟（先確認量測、hold、通知、檢查機台、qual 後放行）。<br><i>The engineer followed the OCAP: re-measure, hold the lot, then notify the equipment engineer.</i><br>工程師依 OCAP 處理：重測、hold 這批，再通知設備工程師。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield</span>
 out of control@<b>out of control</b>　<span style="color:#1c5cab">失控（超出管制）</span><br>觸發管制圖規則的狀態，需調查原因。<br><i>An out-of-control point puts the chamber on hold.</i><br>一個失控點會讓腔體被暫停（hold）。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, waferlens</span>
+out of spec@<b>out of spec</b>　<span style="color:#1c5cab">超出規格（OOS）</span><br>量測值超出產品規格 LSL/USL；和 OOC（超出管制界限）不同，OOS 直接牽涉產品 disposition。<br><i>One site was out of spec, so the wafer needed a disposition even though the chart was in control.</i><br>有一個量測點超出規格，雖然管制圖在管制內，這片仍需要判定處置。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield</span>
 PECVD@<b>PECVD</b>　<span style="color:#1c5cab">電漿輔助化學氣相沉積</span><br>以電漿降低反應溫度的 CVD。<br><i>PECVD nitride is deposited at 250 to 350 degrees Celsius.</i><br>PECVD 氮化矽在攝氏 250 到 350 度之間沉積。<br><span style="color:#898781;font-size:smaller">semiyield, sem-toolkit</span>
 physical vapor deposition@<b>physical vapor deposition</b>　<span style="color:#1c5cab">物理氣相沉積（PVD）</span><br>以濺鍍等物理方式沉積金屬，方向性強。<br><i>Physical vapor deposition has poor step coverage in deep trenches.</i><br>物理氣相沉積在深溝槽中的階梯覆蓋率很差。<br><span style="color:#898781;font-size:smaller">semiyield, waferlens</span>
 Ppk@<b>Ppk</b>　<span style="color:#1c5cab">製程績效指標 Ppk</span><br>以整體（長期）標準差計算的能力指標。<br><i>Ppk is lower than Cpk when the process drifts between PMs.</i><br>製程在兩次 PM 之間漂移時，Ppk 會低於 Cpk。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield</span>
 precursor@<b>precursor</b>　<span style="color:#1c5cab">前驅物</span><br>CVD/ALD 中提供元素的反應氣體，如 SiH4、TMA。<br><i>SiH4 is the silicon precursor for PECVD nitride.</i><br>SiH4 是 PECVD 氮化矽的矽前驅物。<br><span style="color:#898781;font-size:smaller">sem-toolkit, semiyield</span>
 process capability@<b>process capability</b>　<span style="color:#1c5cab">製程能力</span><br>製程變異相對於規格寬度的能力，以 Cp/Cpk 表示。<br><i>Process capability is only meaningful for a process in control.</i><br>只有在製程受控時，製程能力才有意義。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield</span>
+process of record@<b>process of record</b>　<span style="color:#1c5cab">標準製程（POR）</span><br>Process of Record：目前正式發行、量產使用的製程與 recipe。<br><i>The confirmation runs compared the new recipe against the POR.</i><br>確認實驗把新配方與 POR 比較。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield</span>
 process simulation@<b>process simulation</b>　<span style="color:#1c5cab">製程模擬</span><br>以物理模型預測氧化、沉積、蝕刻、植入的結果。<br><i>Process simulation predicts oxide thickness from time and temperature.</i><br>製程模擬由時間與溫度預測氧化層厚度。<br><span style="color:#898781;font-size:smaller">semiyield</span>
 process window@<b>process window</b>　<span style="color:#1c5cab">製程窗口</span><br>所有輸出都符合規格的參數範圍。<br><i>The process window shrinks when the uniformity spec is tightened.</i><br>均勻性規格收緊時，製程窗口會縮小。<br><span style="color:#898781;font-size:smaller">semiyield, sem-toolkit</span>
 refractive index@<b>refractive index</b>　<span style="color:#1c5cab">折射率（n）</span><br>光在材料中速度的倒數比；SiO2 約 1.46，Si3N4 約 2.0。<br><i>A refractive index shift often signals a change in film composition.</i><br>折射率偏移常代表薄膜組成發生變化。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, sem-toolkit</span>
@@ -103,13 +107,17 @@ yield model@<b>yield model</b>　<span style="color:#1c5cab">良率模型</span>
 拉丁超立方抽樣@→ <b>Latin hypercube sampling</b>
 授權條款@→ <b>license</b>
 批@→ <b>lot</b>
+移動全距@→ <b>moving range</b>
 不均勻度@→ <b>non-uniformity</b>
+異常處置計畫@→ <b>OCAP</b>
 失控@→ <b>out of control</b>
+超出規格@→ <b>out of spec</b>
 電漿輔助化學氣相沉積@→ <b>PECVD</b>
 物理氣相沉積@→ <b>physical vapor deposition</b>
 製程績效指標 Ppk@→ <b>Ppk</b>
 前驅物@→ <b>precursor</b>
 製程能力@→ <b>process capability</b>
+標準製程@→ <b>process of record</b>
 製程模擬@→ <b>process simulation</b>
 製程窗口@→ <b>process window</b>
 折射率@→ <b>refractive index</b>

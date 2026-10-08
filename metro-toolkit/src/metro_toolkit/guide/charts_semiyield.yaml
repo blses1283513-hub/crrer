@@ -1,0 +1,577 @@
+# SemiYield charts, shown under each SemiYield figure by the launcher overlay (SemiYield's own files are never changed).
+# Template values per chart = the Facts.v keys of the matching reader in insights_semiyield.py (finding and status
+# always exist):
+#   sy_oxide        temp atm t_end x_end x0 slow
+#   sy_oxide_rate   r0 r1 ratio
+#   sy_implant      rp peak xj title
+#   sy_etch_t       t0 t1 r0 r1 ratio per10
+#   sy_etch_p       r_max sat
+#   sy_deposition   r0 r1 ratio title
+#   sy_trend        param drift sd drift_sigma first last
+#   sy_wafer_map    wafer mean min edge center
+#   sy_imr          param n n_viol first_viol cl ucl lcl sigma last_z
+#   sy_shap         top top_share second
+#   sy_bo           best i_best n gain flat
+# The Simulation charts use textbook models: they set measurement expectations and sensitivities; they are not a
+# calibrated process. The data charts use SemiYield's synthetic fab data.
+
+charts:
+  # ---------------------------------------------------------------------------------------------- Simulation: oxidation
+  sy_oxide:
+    page: Simulation
+    title:
+      zh: "熱氧化層成長曲線（Oxidation 分頁，Deal-Grove 模型）"
+      en: "Thermal oxide growth curve (Oxidation tab, Deal-Grove model)"
+    legend:
+      - item: "— 藍色實線 Thickness (nm) · blue line"
+        zh: "Deal-Grove 模型算出的氧化層厚度 x(t)，條件 {temp} °C、{atm}（dry＝乾氧 O₂、wet＝濕氧 H₂O 蒸氣）。起點＝Initial oxide thickness（本次 {x0} nm），終點＝Max time 時的厚度（{t_end} 分鐘 → {x_end} nm），與下方 Final Thickness 卡片相同。曲線的斜率就是成長速率（下一張圖）：前段接近直線＝線性區（Si/SiO₂ 介面反應限制），後段變平＝拋物線區（氧化劑擴散穿過氧化層的限制）；本次開始的斜率是結尾的 {slow} 倍。"
+        en: "Oxide thickness x(t) from the Deal-Grove model at {temp} °C, {atm} (dry = O₂, wet = H₂O steam). It starts at the initial oxide thickness ({x0} nm here) and ends at the Max-time thickness ({x_end} nm after {t_end} min), the same value as the Final Thickness card below. The slope of the curve is the growth rate (next chart): a straight early part = linear regime (limited by the reaction at the Si/SiO₂ interface), a flattening later part = parabolic regime (limited by oxidant diffusion through the oxide); here the starting slope is {slow}× the final slope."
+    axes:
+      zh: "X 軸＝氧化時間（分鐘，0 到 Max time）；Y 軸＝氧化層厚度（nm）。標題顯示溫度與氣氛。圖上只有爐管的恆溫氧化段：實際製程的升溫、降溫、進出爐（boat in/out）與 N₂ 退火段也會多長一點氧化層，這裡都沒有。下方 Final Thickness 卡片＝曲線終點。"
+      en: "X = oxidation time (min, 0 to Max time); Y = oxide thickness (nm). The title shows temperature and ambient. Only the isothermal oxidation step is modelled: in a real furnace the ramp-up, ramp-down, boat in/out and N₂ anneal also add some oxide; none of that is here. The Final Thickness card below = the end of the curve."
+    what:
+      zh: "Deal-Grove 模型：x² + A·x = B·(t + τ)。B 是拋物線速率常數、B/A 是線性速率常數，兩者都隨溫度呈 Arrhenius 關係（本模型 dry：B 約 1.23 eV、B/A 約 2.0 eV；wet：B 約 0.71 eV、B/A 約 2.05 eV），也大致和氧化劑分壓成正比；τ 用來換算起始氧化層。薄的時候（x ≪ A/2）x ≈ (B/A)·t，厚度和時間成正比；厚的時候（x ≫ A/2）x² ≈ B·t，厚度和 √t 成正比。濕氧快很多，因為 H₂O 在 SiO₂ 中的溶解度遠高於 O₂。對 Metro AE 而言，這張圖用來建立「量測期望值」與「靈敏度」：預期厚度多少、溫度或時間偏一點會差多少。⚠ SemiYield 用的是教科書常數（不分 <100>／<111>，不含摻雜濃度、HCl 與壓力效應），不是校正過的爐管；實際 POR 厚度與規格以該爐管的 qual 資料為準。"
+      en: "Deal-Grove model: x² + A·x = B·(t + τ). B is the parabolic rate constant and B/A the linear rate constant; both follow Arrhenius in temperature (in this model dry: B ≈ 1.23 eV, B/A ≈ 2.0 eV; wet: B ≈ 0.71 eV, B/A ≈ 2.05 eV) and scale roughly with oxidant partial pressure; τ accounts for the starting oxide. Thin oxide (x ≪ A/2): x ≈ (B/A)·t, thickness proportional to time. Thick oxide (x ≫ A/2): x² ≈ B·t, thickness proportional to √t. Wet oxidation is much faster because H₂O is far more soluble in SiO₂ than O₂. For a Metro AE the chart sets the measurement expectation and the sensitivity: what thickness to expect and how much a small temperature or time error changes it. ⚠ SemiYield uses textbook constants (no <100>/<111> difference, no doping, HCl or pressure effects); it is not a calibrated furnace. The real POR thickness and spec come from that furnace's qualification data."
+    read:
+      zh: "看三件事：(1) 形狀：開始斜率 ÷ 結尾斜率＝{slow}。接近 1＝整段都在線性區，厚度對溫度最敏感（B/A 活化能約 2 eV），也受表面狀況、晶向、底材摻雜影響（重摻 n+ 長得較快）；遠大於 1＝已進入拋物線區，對氧化劑分壓與氣氛較敏感。(2) 溫度靈敏度：本模型在 1000 °C dry、120 分鐘時，+10 °C 約多 9% 厚度；900 °C（線性區）約多 15%，爐管溫度偏 1–2 °C 就看得到。(3) 時間靈敏度：結尾速率（下一張圖）× 時間誤差。判讀實測時：實測和模型不同不代表異常，因為模型沒有校正；要比的是實測 vs 該爐管的 POR 與 SPC，模型只用來估算「這個偏差相當於幾 °C 或幾分鐘」。另外，乾氧薄膜（約 < 25 nm）實際初期長得比 Deal-Grove 預測快；記憶體的超薄閘極氧化層（常用 ISSG、RTO 或電漿氮化）不適用此模型。"
+      en: "Check three things: (1) Shape: starting slope ÷ final slope = {slow}. Close to 1 = linear regime throughout; thickness is most sensitive to temperature (B/A activation energy ≈ 2 eV) and also to surface condition, crystal orientation and substrate doping (heavily doped n+ grows faster). Much larger than 1 = parabolic regime; more sensitive to oxidant partial pressure and ambient. (2) Temperature sensitivity: in this model at 1000 °C dry for 120 min, +10 °C gives about +9% thickness; at 900 °C (linear regime) about +15%, so a furnace 1–2 °C off is visible. (3) Time sensitivity: final rate (next chart) × time error. When comparing with real data, a difference from the model is not an excursion, because the model is not calibrated; compare the measurement with that furnace's POR and SPC, and use the model only to estimate how many °C or minutes a deviation corresponds to. Also, thin dry oxide (below about 25 nm) really grows faster at first than Deal-Grove predicts, and the very thin gate oxides of memory devices (often ISSG, RTO or plasma-nitrided) are outside this model."
+    action:
+      act:
+        zh: "實際爐管厚度異常（監控片 OOS／OOC）時的 OCAP：(1) 先確認量測：同片在 SE 量測機台與 reference 機台重測，查 GOF 與膜層模型（介面層、n&k），確認監控片的前值（自然氧化層、pre-clean 後厚度）有扣除；(2) 看晶舟位置：所有 slot 一起偏 → 溫度設定／TC 校正、step 時間、氣體流量（濕氧的 H₂／O₂ 比、乾氧的水氣污染）、排氣壓力；只有上／中／下某一區偏 → 該 zone 的加熱器或 zone offset；片內邊緣偏厚 → 氣流與升降溫；(3) 用模型把厚度差換算成相當的 °C 或分鐘，協助 EE 縮小範圍；(4) hold 受影響 lot、inhibit 爐管，請 PE／PIE 評估 disposition（氧化層無法重工減薄，偏厚會影響 Cox 與 Vt）；(5) 修復後在上／中／下 slot 放監控片跑 qual，回到 POR 附近再 release。"
+        en: "OCAP for a real furnace thickness excursion (monitor wafer OOS / OOC): (1) verify the measurement first: re-measure the same wafer on the SE tool and a reference tool, check GOF and the film-stack model (interface layer, n&k), and confirm the monitor's pre-thickness (native oxide, post-clean) was subtracted; (2) look at boat position: all slots shifted → temperature setpoint / TC calibration, step time, gas flows (H₂/O₂ ratio for wet, moisture contamination for dry), exhaust pressure; only the top, centre or bottom zone → that zone's heater or zone offset; thick at the wafer edge → gas flow and ramps; (3) use the model to convert the thickness delta into equivalent °C or minutes so EE can narrow the search; (4) hold the affected lots, inhibit the furnace, ask PE / PIE to disposition (oxide cannot be reworked thinner; thick oxide shifts Cox and Vt); (5) after the fix, run qual with monitors in top / centre / bottom slots and release only when they are back near POR."
+      watch:
+        zh: "實測仍在規格內，但和預期的方向或大小不同，或操作點落在模型不可靠的區域（乾氧薄膜、超薄閘極氧化層）：不要拿模型數值當界限，只用它看靈敏度；增加監控片 slot 與量測點數（例如 9 → 49 點），和 EE 確認 TC 校正與 PM 時程，並在 SPC 點上加註解。"
+        en: "Measurement still in spec but not in the expected direction or size, or the operating point is where the model is unreliable (thin dry oxide, very thin gate oxide): do not use model numbers as limits, only as sensitivities; add monitor slots and sites (e.g. 9 → 49 points), check TC calibration and the PM schedule with EE, and comment the SPC points."
+      good:
+        zh: "用來設定量測期望值：SE recipe 的標稱厚度與合理範圍、量測點數、監控片放在哪些 slot。把溫度／時間靈敏度記在量測計畫裡，之後判讀異常時直接換算。規格由元件需求與爐管實際能力決定，不由模型決定。"
+        en: "Use it to set the measurement expectation: nominal thickness and plausible range in the SE recipe, number of sites, which slots carry monitor wafers. Keep the temperature / time sensitivities in the measurement plan so a later excursion can be converted directly. Specs come from device requirements and the furnace's real capability, not from the model."
+    record:
+      zh: "[Oxidation 模擬] {temp} °C {atm} · {t_end} 分鐘 · 起始 {x0} nm → 預期 {x_end} nm · 起訖斜率比 {slow} · 狀態 {status} · 實測（SE，＿＿點，slot ＿＿）：＿＿ nm · 差異 ＿＿%（≈ ＿＿ °C／＿＿ 分鐘）· 處置：＿＿"
+      en: "[Oxidation sim] {temp} °C {atm} · {t_end} min · start {x0} nm → expected {x_end} nm · start/end slope ratio {slow} · status {status} · measured (SE, ___ sites, slot ___): ___ nm · difference ___% (≈ ___ °C / ___ min) · action: ___"
+    roles:
+      RDA:
+        zh: "【氧化層厚度參考】{temp} °C {atm}、{t_end} 分鐘的模型預期約 {x_end} nm（教科書常數，未校正）。若做 TEM 切面，請回報量到的氧化層厚度；量測端會和 SE 比對，確認 SE 膜層模型（例如介面層）是否需要修正。"
+        en: "[Oxide thickness reference] The model expects about {x_end} nm for {temp} °C {atm}, {t_end} min (textbook constants, not calibrated). If you do a TEM cross-section, please report the measured oxide thickness; metrology will compare it with SE to see whether the SE film model (e.g. interface layer) needs correcting."
+      PE:
+        zh: "【氧化模擬】{finding}。依 Deal-Grove（教科書常數），溫度 +10 °C 會明顯增厚（1000 °C dry 約 +9%）。實測 ＿＿ nm，與 POR 差 ＿＿%，以模型換算約相當於 ＿＿ °C 或 ＿＿ 分鐘；請確認 recipe 溫度、時間與氣體條件是否有變更。量測端已先排除量測問題。"
+        en: "[Oxidation sim] {finding}. Per Deal-Grove (textbook constants), +10 °C noticeably thickens the oxide (about +9% at 1000 °C dry). Measured ___ nm, ___% from POR; the model puts that at about ___ °C or ___ min. Please check for changes in recipe temperature, time or gas conditions. Metrology was ruled out first."
+      EE:
+        zh: "【爐管確認】監控片厚度偏 ＿＿%，分布：所有 slot 一起偏／只有 ＿＿ zone。以模型（相差 10 °C 各跑一次）估算，此條件每 1 °C 約差 ＿＿% 厚度；請檢查 TC 校正、zone profile、step 時間與氣體流量（濕氧 H₂／O₂ 比、乾氧水氣）。需要時 inhibit 並在上／中／下 slot 跑 qual 片。"
+        en: "[Furnace check] Monitor thickness is ___% off, pattern: all slots / only the ___ zone. From the model (two runs 10 °C apart), 1 °C is worth about ___% thickness at these conditions; please check TC calibration, zone profile, step time and gas flows (H₂/O₂ ratio for wet, moisture for dry). Inhibit and run qual wafers in top / centre / bottom slots if needed."
+      PIE_YE:
+        zh: "【可能影響電性】氧化層厚度決定 Cox、Vt 與可靠度（TDDB）。此條件模型預期 {x_end} nm；實測偏差 ＿＿ nm（＿＿%）。請評估 Vt／C-V（WAT）風險與受影響 lot 的 disposition；偏厚無法重工。"
+        en: "[Possible electrical impact] Oxide thickness sets Cox, Vt and reliability (TDDB). The model expects {x_end} nm here; measured delta ___ nm (___%). Please assess Vt / C-V (WAT) risk and the disposition of the affected lots; thick oxide cannot be reworked."
+      MGR_QE:
+        zh: "【狀態】氧化模擬 {temp} °C {atm}：{status}。{finding}。用途：設定量測期望值與溫度／時間靈敏度，不是規格（模型未校正）。實測比對：＿＿；需要的決定：＿＿。"
+        en: "[Status] Oxidation sim {temp} °C {atm}: {status}. {finding}. Purpose: measurement expectation and temperature / time sensitivity, not a spec (model not calibrated). Comparison with measurement: ___; decision needed: ___."
+
+  sy_oxide_rate:
+    page: Simulation
+    title:
+      zh: "氧化成長速率 vs 時間（Oxidation 分頁，dx/dt）"
+      en: "Oxide growth rate vs time (Oxidation tab, dx/dt)"
+    legend:
+      - item: "— 橘色線 Growth rate · orange line"
+        zh: "瞬時成長速率 dx/dt（nm/min），由上一張厚度曲線以 ±0.1 分鐘數值微分得到，條件與上一張相同。從第二個時間點開始畫（不含 t = 0）。本次由 {r0} 降到 {r1} nm/min，相差 {ratio} 倍。"
+        en: "Instantaneous growth rate dx/dt (nm/min), a ±0.1-min numerical derivative of the thickness curve above, same conditions. It starts at the second time point (t = 0 is not drawn). Here it falls from {r0} to {r1} nm/min, a factor of {ratio}."
+    axes:
+      zh: "X 軸＝氧化時間（分鐘）；Y 軸＝成長速率（nm/min）。標題沒有溫度與氣氛，請看上一張圖的標題。曲線最右端的值＝步驟結束時每多 1 分鐘會多長的厚度。"
+      en: "X = oxidation time (min); Y = growth rate (nm/min). The title has no temperature or ambient; see the chart above. The value at the right end = how much oxide one extra minute adds at the end of the step."
+    what:
+      zh: "由 Deal-Grove 微分：dx/dt = B ÷ (2x + A)。剛開始（x ≈ 0）速率 ≈ B/A，受 Si/SiO₂ 介面反應限制；氧化層變厚後，氧化劑要擴散穿過更厚的 SiO₂，速率約與 1/x 成正比下降。起訖比 {ratio} ≈ (2·x_end + A) ÷ (2·x_start + A)，代表走進拋物線區多深。對 Metro AE：結尾速率就是「厚度對時間的靈敏度」，可以判斷一個厚度偏差能不能用時間誤差解釋，也能估計降溫或 boat out 時若晶圓仍在高溫會多長多少。⚠ 教科書常數，非校正值。"
+      en: "Differentiating Deal-Grove: dx/dt = B ÷ (2x + A). At the start (x ≈ 0) the rate ≈ B/A, limited by the reaction at the Si/SiO₂ interface; as the oxide thickens the oxidant must diffuse through more SiO₂ and the rate falls roughly as 1/x. The start/end ratio {ratio} ≈ (2·x_end + A) ÷ (2·x_start + A) shows how far into the parabolic regime the step goes. For a Metro AE the final rate is the thickness sensitivity to time: it tells whether a thickness deviation can be explained by a timing error, and how much extra oxide grows if the wafers stay hot during ramp-down or boat-out. ⚠ Textbook constants, not calibrated."
+    read:
+      zh: "好的讀法：曲線平滑、單調下降。{ratio} 接近 1（約 < 1.5）＝線性區，速率幾乎不變，厚度 ∝ 時間，對溫度（約 2 eV）、表面前處理、晶向與底材摻雜最敏感；{ratio} 很大＝拋物線區，厚度 ∝ √t，主要看 B：氧化劑分壓、乾／濕氣氛與溫度（dry 約 1.2 eV、wet 約 0.7 eV）。換算例：實測比 POR 厚 Δx nm，需要的時間誤差 ≈ Δx ÷ {r1} 分鐘；如果算出來要十幾分鐘、但 recipe 時間紀錄正確，原因就不是時間，而是溫度或氣氛。若 Initial oxide thickness > 0，開始速率會低於 B/A。"
+      en: "Read it like this: a smooth, monotonic decline. {ratio} near 1 (below about 1.5) = linear regime: the rate barely changes, thickness ∝ time, and it is most sensitive to temperature (≈ 2 eV), pre-clean surface condition, orientation and substrate doping. Large {ratio} = parabolic regime: thickness ∝ √t, governed by B: oxidant partial pressure, dry vs wet ambient and temperature (≈ 1.2 eV dry, ≈ 0.7 eV wet). Worked example: a measurement Δx nm thicker than POR needs a timing error of about Δx ÷ {r1} min; if that comes to ten-plus minutes while the recipe time log is correct, time is not the cause; look at temperature or ambient. With an initial oxide > 0 the starting rate is below B/A."
+    action:
+      act:
+        zh: "實際厚度異常時：用結尾速率 {r1} nm/min 把厚度差換算成分鐘，對照機台 step time 與實際溫度曲線（含升降溫、boat in/out 停留），判斷是時間型還是溫度／氣氛型；依 OCAP hold 受影響 lot、inhibit 爐管、請 EE 調 log，PE／PIE 評估 disposition，修復後以 qual 片確認再 release。"
+        en: "For a real thickness excursion: convert the delta into minutes with the final rate {r1} nm/min and compare with the tool's step time and actual temperature trace (including ramps and boat in/out dwell) to decide whether it is time-type or temperature / ambient-type; per the OCAP hold the affected lots, inhibit the furnace, ask EE to pull the logs and PE / PIE to disposition, and release only after qual wafers confirm the fix."
+      watch:
+        zh: "步驟結束時速率仍高（線性區、{ratio} 接近 1）：時間與溫度的小誤差會直接變成片間／批間厚度差。提高監控片抽樣，確認 recipe 時間解析度與升降溫一致性；和 PE 討論是否有更穩的條件（例如較低溫、較長時間，若元件允許）。"
+        en: "Rate still high at the end of the step (linear regime, {ratio} near 1): small time and temperature errors turn directly into wafer-to-wafer and lot-to-lot thickness spread. Raise monitor sampling, confirm recipe time resolution and ramp repeatability; discuss with PE whether a more robust condition exists (e.g. lower temperature and longer time, if the device allows)."
+      good:
+        zh: "速率曲線正常。把 {r1} nm/min（結尾每分鐘的厚度靈敏度）記入量測計畫，作為之後判讀厚度偏差的換算依據。"
+        en: "Rate curve as expected. Record {r1} nm/min (thickness per minute at the end of the step) in the measurement plan as the conversion factor for future thickness deviations."
+    record:
+      zh: "[Oxidation rate 模擬] 條件同厚度圖 · 速率 {r0} → {r1} nm/min（{ratio}×）· 時間靈敏度：結尾每 1 分鐘 ≈ {r1} nm · 狀態 {status} · 實測厚度差 ＿＿ nm ≈ ＿＿ 分鐘 · 判斷：時間型／溫度型／氣氛型 · 處置：＿＿"
+      en: "[Oxidation rate sim] same conditions as the thickness chart · rate {r0} → {r1} nm/min ({ratio}×) · time sensitivity: ≈ {r1} nm per minute at the end · status {status} · measured delta ___ nm ≈ ___ min · verdict: time / temperature / ambient type · action: ___"
+    roles:
+      RDA:
+        zh: "【氧化速率參考】{finding}。切面若看到局部氧化層較厚，先確認底材：重摻雜 n+ 區、多晶矽與 <111> 面在線性區長得比較快，這是物理現象，不一定是缺陷。量測端可提供同片的 SE 厚度作對照。"
+        en: "[Oxidation rate reference] {finding}. If a cross-section shows locally thicker oxide, check the substrate first: heavily doped n+ regions, polysilicon and <111> surfaces grow faster in the linear regime; that is physics, not necessarily a defect. Metrology can supply the SE thickness of the same wafer for comparison."
+      PE:
+        zh: "【氧化速率】{finding}。步驟結束時每多 1 分鐘約多長 {r1} nm，所以目前 ＿＿ nm 的偏差需要約 ＿＿ 分鐘的時間誤差才能解釋；若 recipe 時間紀錄正確，請優先查溫度與氣氛。"
+        en: "[Oxidation rate] {finding}. At the end of the step each extra minute adds about {r1} nm, so the current ___ nm deviation would need about ___ min of timing error; if the recipe time log is correct, please look at temperature and ambient first."
+      EE:
+        zh: "【爐管確認】請調出異常批的 step time 與實際溫度曲線（含升降溫、boat in/out）。依模型，恆溫段結束時速率約 {r1} nm/min；降溫或出爐時若在高溫停留較久，也會多長氧化層。需要時請提供 TC 校正紀錄與 zone profile。"
+        en: "[Furnace check] Please pull the step time and actual temperature trace (ramps, boat in/out) for the affected run. Per the model the rate at the end of the soak is about {r1} nm/min; a longer dwell at high temperature during ramp-down or boat-out also adds oxide. Please share TC calibration records and the zone profile if needed."
+      PIE_YE:
+        zh: "【製程穩健度】{finding}。結尾速率越高，時間與溫度的小誤差越容易讓厚度與 Vt 分布變寬。若需要更穩的條件，請和 PE 評估；量測端可提供片間／批間厚度變異。"
+        en: "[Process robustness] {finding}. The higher the final rate, the more small time and temperature errors widen the thickness and Vt distributions. Please assess with PE if a more robust condition is needed; metrology can supply wafer-to-wafer and lot-to-lot thickness variation."
+      MGR_QE:
+        zh: "【狀態】氧化速率模擬：{status}。{finding}。用途：把厚度偏差換算成時間誤差（每分鐘 ≈ {r1} nm），協助判讀爐管異常；教科書模型，未校正。目前無需決策。"
+        en: "[Status] Oxidation rate sim: {status}. {finding}. Purpose: converts a thickness deviation into a timing error (≈ {r1} nm per minute) to help judge furnace excursions; textbook model, not calibrated. No decision needed now."
+
+  # -------------------------------------------------------------------------------------------- Simulation: implantation
+  sy_implant:
+    page: Simulation
+    title:
+      zh: "離子植入摻雜分布（Implantation 分頁，濃度 vs 深度，對數 Y 軸）"
+      en: "Ion-implant dopant profile (Implantation tab, concentration vs depth, log y)"
+    legend:
+      - item: "— 綠色實線〈離子〉profile · green line (species profile)"
+        zh: "模型算出的植入後（未退火）摻雜濃度 N(x)。Gaussian：N(x) = Φ ÷ (√(2π)·ΔRp) · exp(−(x − Rp)² ÷ (2·ΔRp²))；Rp＝投影射程（峰值深度）、ΔRp＝投影射程標準差（straggle，寬度），由射程表依離子種類與能量內插。本次 {title}：峰值 {peak} cm⁻³ 在 {rp} nm。曲線下面積＝劑量 Φ。"
+        en: "Modelled as-implanted (not annealed) dopant concentration N(x). Gaussian: N(x) = Φ ÷ (√(2π)·ΔRp) · exp(−(x − Rp)² ÷ (2·ΔRp²)); Rp = projected range (peak depth), ΔRp = straggle (width), interpolated from range tables by species and energy. Here {title}: peak {peak} cm⁻³ at {rp} nm. The area under the curve = dose Φ."
+      - item: "┅ 紅色虛線 Background 背景濃度 · red dashed line"
+        zh: "Background doping 輸入值：基板或井原有的摻雜濃度。植入曲線降到這條線以下的深度就是 pn 接面（假設植入型態與背景相反；模型不檢查型態）。"
+        en: "The Background doping input: the doping already in the substrate or well. Where the implant curve drops below this line is the pn junction (assuming the implant is the opposite type; the model does not check types)."
+      - item: "┊ 橘色點線 xj 接面深度 · orange dotted line"
+        zh: "接面深度 xj = Rp + ΔRp·√(2·ln(N_peak ÷ N_B))，本次 {xj} nm；數值標在線旁，也顯示在 Junction Depth 卡片。峰值不超過背景時沒有這條線（卡片顯示 N/A）。⚠ 選 pearsoniv 時，這條線仍用 Gaussian 公式計算，可能和綠線實際穿過紅線的位置差很多（例如 50 keV 砷約差 20 nm），以交點為準。"
+        en: "Junction depth xj = Rp + ΔRp·√(2·ln(N_peak ÷ N_B)), here {xj} nm; the value is labelled on the line and shown on the Junction Depth card. No line when the peak never exceeds the background (card shows N/A). ⚠ With pearsoniv selected the line is still computed with the Gaussian formula and can sit well away from where the green curve really crosses the red line (about 20 nm for 50 keV arsenic); trust the crossing."
+    axes:
+      zh: "X 軸＝深度（nm，固定 0–600 nm）；Y 軸＝濃度（cm⁻³，對數軸，每一大格＝10 倍）。高能量的輕離子（例如 200–300 keV 硼）峰值會超出 600 nm，這時讀到的峰值深度 {rp} 只是圖的右邊界，不是 Rp。下方 Junction Depth 卡片＝xj。"
+      en: "X = depth (nm, fixed 0–600 nm); Y = concentration (cm⁻³, log axis, each decade = 10×). For high-energy light ions (e.g. 200–300 keV boron) the peak lies beyond 600 nm; the peak depth {rp} read here is then only the right edge of the chart, not Rp. The Junction Depth card below = xj."
+    what:
+      zh: "能量決定深度與寬度（Rp、ΔRp），劑量決定高度：峰值 ≈ 0.4·Φ ÷ ΔRp；重離子（As、Sb）射程淺而窄，硼深而寬。這是 as-implanted 分布：沒有退火擴散（含 TED）、活化率、channeling 尾巴與穿過 screen oxide 等效應，真實的 xj 退火後會更深。植入在產品上很難直接量，Metro AE 用這張圖設定各量測的期望值：SIMS（監控片的原子濃度分布、Rp、劑量、xj；深度範圍與偵測極限要涵蓋到背景以下）、退火後的四點探針片電阻 Rs（反映活化劑量 × 遷移率）、植入後的 thermal-wave（光調變反射）損傷量測（快速看劑量，須在退火前量），以及電性（Vt、接面漏電）。⚠ 教科書射程表，未校正。"
+      en: "Energy sets depth and width (Rp, ΔRp), dose sets height: peak ≈ 0.4·Φ ÷ ΔRp; heavy ions (As, Sb) are shallow and narrow, boron deep and wide. This is the as-implanted profile: no anneal diffusion (including TED), activation, channeling tail or screen-oxide effects, so the real xj after anneal is deeper. Implants are hard to measure directly on product, so a Metro AE uses this chart to set expectations for each measurement: SIMS (atomic profile, Rp, dose and xj on monitor wafers; depth range and detection limit must reach below the background), four-point-probe sheet resistance Rs after anneal (reflects activated dose × mobility), thermal-wave (photomodulated reflectance) damage measurement right after implant (a fast dose check, must be done before anneal), and electrical results (Vt, junction leakage). ⚠ Textbook range tables, not calibrated."
+    read:
+      zh: "好：峰值在該離子／能量預期的深度、峰值遠高於背景、有 xj 線。注意（watch）：沒有 xj 線＝峰值低於背景、不會形成接面；若本來就是 Vt 調整或補償植入沒關係，若應該形成接面，就是劑量、離子種類或背景設定錯。對數軸的陷阱：劑量差 2 倍只讓曲線上移 0.3 格，肉眼很難看出，所以劑量要靠 Rs、thermal-wave 等數字判斷，不靠看圖。同樣的讀法也適用於 SIMS 實測：峰值位置移動 → 能量問題（含雙電荷離子造成的能量污染）；位置不變只是高度變 → 劑量問題；尾巴比預期深 → channeling（tilt／twist、screen oxide、預非晶化）。"
+      en: "Good: the peak sits at the depth expected for the species / energy, well above the background, and there is an xj line. Watch: no xj line = the peak is below the background and no junction forms; fine for a Vt-adjust or compensation implant, but if a junction was intended the dose, species or background input is wrong. Log-axis trap: a 2× dose error moves the curve up only 0.3 decade, hard to see by eye, so judge dose from numbers (Rs, thermal-wave), not from the picture. The same reading applies to a real SIMS profile: peak position moved → energy problem (including energy contamination from doubly charged ions); same position, different height → dose problem; deeper tail than expected → channeling (tilt / twist, screen oxide, pre-amorphization)."
+    action:
+      act:
+        zh: "實際植入異常（Rs、thermal-wave 或 Vt OOC）時的 OCAP：(1) 先確認量測：4PP 探針狀況與量測機台 monitor、監控片的退火條件、thermal-wave 的量測時間點（植入後放置太久訊號會衰減）；(2) 用模型判斷是劑量型（只有高度）還是能量型（深度）；(3) hold 該時段植入的 lot、inhibit 植入機，請 EE 查劑量量測（Faraday、beam current 校正）、能量與質量分析、tilt／twist、掃描均勻性；(4) 送監控片做 SIMS 確認 profile；(5) PIE 依 WAT（Vt、漏電）評估 disposition；以劑量監控片重新 qual 後再 release。"
+        en: "OCAP for a real implant excursion (Rs, thermal-wave or Vt OOC): (1) verify the measurement first: 4PP probe condition and the metrology tool's monitor, the monitor wafer's anneal, the thermal-wave timing (the signal relaxes if the wafer waits too long after implant); (2) use the model to decide whether it is dose-type (height only) or energy-type (depth); (3) hold lots implanted in that window, inhibit the implanter, ask EE to check dose measurement (Faraday, beam-current calibration), energy and mass analysis, tilt / twist and scan uniformity; (4) send a monitor wafer for SIMS to confirm the profile; (5) PIE dispositions from WAT (Vt, leakage); re-qualify with dose monitors before release."
+      watch:
+        zh: "沒有接面（xj 線消失）：先確認這個植入的目的、Background 輸入是否正確（基板或井的濃度）。另外：選 pearsoniv 時以曲線交點為準；峰值在 600 nm 邊界時結果不完整；這是未退火分布，不可直接拿來訂 xj 規格。"
+        en: "No junction (no xj line): first confirm the purpose of the implant and that the Background input (substrate or well doping) is right. Also: with pearsoniv trust the curve crossing; a peak at the 600 nm edge means the result is incomplete; this is an as-implanted profile, so never set an xj spec from it directly."
+      good:
+        zh: "用 Rp、峰值與 xj 設定量測期望值：SIMS 深度範圍至少到 xj 以下、偵測極限低於背景；植入後先用 thermal-wave 快速確認，退火後用 Rs 例行監控，SIMS 定期確認 profile。記錄條件與預期值。"
+        en: "Use Rp, the peak and xj as measurement expectations: SIMS depth range past xj with a detection limit below the background; thermal-wave right after implant for a fast check, Rs after anneal for routine monitoring, SIMS periodically for the profile. Record the conditions and expected values."
+    record:
+      zh: "[Implant 模擬] {title} · Rp ≈ {rp} nm · 峰值 {peak} cm⁻³ · xj {xj} nm（未退火）· 狀態 {status} · 量測：TW ＿＿／Rs ＿＿ Ω/□／SIMS ＿＿ · 處置：＿＿"
+      en: "[Implant sim] {title} · Rp ≈ {rp} nm · peak {peak} cm⁻³ · xj {xj} nm (as-implanted) · status {status} · measured: TW ___ / Rs ___ Ω/sq / SIMS ___ · action: ___"
+    roles:
+      RDA:
+        zh: "【植入分布參考】{title}：峰值約在 {rp} nm、xj 約 {xj} nm（未退火的模型值）。若做 SIMS 或接面 stain 切面，深度範圍請涵蓋 xj 以下；接面漏電相關失效可在這個深度附近找植入損傷（例如退火後的 end-of-range 缺陷）。"
+        en: "[Implant profile reference] {title}: peak at about {rp} nm, xj about {xj} nm (as-implanted model values). For SIMS or a junction-stain cross-section, please cover depths past xj; for junction-leakage failures look for implant damage near this depth (e.g. end-of-range defects after anneal)."
+      PE:
+        zh: "【植入模擬】{finding}。教科書射程表，未含退火擴散與 channeling，實際 profile 請以 SIMS 監控片確認。若 Rs 或 thermal-wave 偏移，請先判斷是劑量型（峰值高低）還是能量型（峰值深淺），量測端可提供數據。"
+        en: "[Implant sim] {finding}. Textbook range tables, no anneal diffusion or channeling; please confirm the real profile with SIMS on a monitor wafer. If Rs or thermal-wave moved, first decide whether it is dose-type (peak height) or energy-type (peak depth); metrology can supply the data."
+      EE:
+        zh: "【植入機確認】{title}：峰值深度（約 {rp} nm）對應能量，峰值高度（{peak} cm⁻³）對應劑量。若 SIMS 顯示峰值變深或變淺，請查能量與質量分析（含雙電荷離子）；若只有高度不同，請查 Faraday 劑量量測、beam current 校正、掃描均勻性與 tilt／twist。"
+        en: "[Implanter check] {title}: peak depth (about {rp} nm) reflects energy, peak height ({peak} cm⁻³) reflects dose. If SIMS shows the peak deeper or shallower, check energy and mass analysis (including doubly charged ions); if only the height differs, check Faraday dose measurement, beam-current calibration, scan uniformity and tilt / twist."
+      PIE_YE:
+        zh: "【可能影響電性】{title}：xj ≈ {xj} nm（未退火，退火後會更深）。接面深度與峰值濃度影響 Vt、接面漏電與短通道效應；若量測顯示劑量或能量偏移，請評估受影響 lot 的 WAT 風險與 disposition。"
+        en: "[Possible electrical impact] {title}: xj ≈ {xj} nm (as-implanted; deeper after anneal). Junction depth and peak concentration drive Vt, junction leakage and short-channel effects; if measurements show a dose or energy shift, please assess WAT risk and the disposition of the affected lots."
+      MGR_QE:
+        zh: "【狀態】植入模擬 {title}：{status}。{finding}。用途：設定 SIMS／Rs／thermal-wave 的量測期望值；模型未校正，不作為規格。待決定：＿＿。"
+        en: "[Status] Implant sim {title}: {status}. {finding}. Purpose: expectations for SIMS / Rs / thermal-wave measurements; model not calibrated, not a spec. Decision needed: ___."
+
+  # ------------------------------------------------------------------------------------------------- Simulation: etching
+  sy_etch_t:
+    page: Simulation
+    title:
+      zh: "蝕刻速率 vs 溫度（Etching 分頁，Langmuir-Hinshelwood + Arrhenius）"
+      en: "Etch rate vs temperature (Etching tab, Langmuir-Hinshelwood + Arrhenius)"
+    legend:
+      - item: "— 紫色線 Etch rate vs T · purple line"
+        zh: "在左側 Pressure、Material 與 Etch mode 設定下，基板溫度 20–400 °C 的模型蝕刻速率。本次 {t0} → {t1} °C：{r0} → {r1} nm/min（{ratio} 倍），平均每升 10 °C 約 +{per10}%。"
+        en: "Modelled etch rate over substrate temperatures of 20–400 °C at the Pressure, Material and Etch mode set on the left. Here {t0} → {t1} °C: {r0} → {r1} nm/min ({ratio}×), on average about +{per10}% per 10 °C."
+    axes:
+      zh: "X 軸＝基板溫度（°C，固定 20–400，不跟 Temperature 滑桿走；滑桿只影響壓力圖與下方卡片）；Y 軸＝蝕刻速率（nm/min，線性軸）。下方三張卡片＝滑桿設定下的 SiO₂ 速率、Si 速率與 SiO₂/Si 選擇比。"
+      en: "X = substrate temperature (°C, fixed 20–400; the Temperature slider does not move it, it only drives the pressure chart and the cards below); Y = etch rate (nm/min, linear axis). The three cards below = SiO₂ rate, Si rate and SiO₂/Si selectivity at the slider settings."
+    what:
+      zh: "L-H 機制：反應物先吸附在表面再反應，R = k_s·θ，θ = KP ÷ (1 + KP)。k_s 隨溫度呈 Arrhenius 上升（本模型約 0.25–0.35 eV），吸附常數 K 為放熱吸附、溫度越高越小；所以表面接近飽和時表觀活化能 ≈ k_s 的活化能，覆蓋率低時較小。這是純熱化學的教科書模型：真實電漿蝕刻主要由離子通量與離子能量（RF bias）、自由基通量與聚合物沉積決定，絕對速率（例如 50 °C 時約 1 nm/min）不代表實際製程。但 ESC／chuck 溫度確實影響蝕刻速率、選擇比、側壁聚合物與 CD，所以 Metro AE 用這張圖理解「晶圓溫度的影響方向與大小」，例如 ESC 中心與邊緣的溫差會變成 ER／CD 的徑向分布。"
+      en: "L-H mechanism: the reactant adsorbs on the surface before reacting, R = k_s·θ with θ = KP ÷ (1 + KP). k_s rises with temperature (Arrhenius, about 0.25–0.35 eV here) while the adsorption constant K falls with temperature (exothermic adsorption); so near saturation the apparent activation energy ≈ that of k_s, and it is smaller at low coverage. It is a purely thermal-chemical textbook model: real plasma etch is dominated by ion flux and ion energy (RF bias), radical flux and polymer deposition, and the absolute rates (about 1 nm/min at 50 °C) do not represent a real process. Wafer (ESC / chuck) temperature still changes etch rate, selectivity, sidewall polymer and CD, so a Metro AE uses this chart for the direction and size of a wafer-temperature effect, e.g. a centre-to-edge ESC temperature difference turning into a radial ER / CD signature."
+    read:
+      zh: "Arrhenius 的「每 10 °C 增加幾 %」不是常數：低溫段比較大、高溫段比較小，{per10}% 是整段的平均。曲線越陡＝對晶圓溫度越敏感，ER 與 CD 的穩定度越依賴 ESC 溫控與 He 背面冷卻。比較不同材料：活化能不同，選擇比就會隨溫度改變；本模型中 Si 的活化能比 SiO₂ 大，溫度越高 SiO₂/Si 選擇比越低。two_reactant 模式的曲線還取決於 O₂ 壓力。真實製程的對應現象：閒置後的第一片（first-wafer effect，腔體與 chuck 尚未熱平衡）ER 不同；ESC zone 溫度異常會造成 center-edge 差。"
+      en: "The Arrhenius per-10-°C increase is not constant: larger at the cold end, smaller at the hot end; {per10}% is the average over the range. A steeper curve = more sensitivity to wafer temperature, so ER and CD stability depend more on ESC temperature control and He backside cooling. Comparing materials: different activation energies make selectivity change with temperature; in this model Si has the higher activation energy, so SiO₂/Si selectivity falls as temperature rises. In two_reactant mode the curve also depends on O₂ pressure. Real-process counterparts: the first wafer after idle (chamber and chuck not yet in thermal equilibrium) etches differently, and an ESC zone temperature fault shows up as a centre-to-edge difference."
+    action:
+      act:
+        zh: "實際 ER 監控異常（OOC／OOS）時的 OCAP：(1) 先確認量測：ER＝（前值 − 後值）÷ 時間，前後值要同一台 SE、同 recipe、同點位，查 GOF 與前值是否存在；(2) 若推測為溫度造成，用每 10 °C 約 {per10}% 粗估需要幾 °C 才能解釋偏差，判斷是否合理；(3) hold 受影響 lot、inhibit chamber，請 EE 查 ESC／chiller 溫度、He 背面壓力與漏率、edge ring 等耗材的 RF hours、上次 wet clean 與 seasoning、RF 功率與氣體流量；(4) PE／PIE 評估 under-etch（殘留、開路、Rc 上升）或 over-etch（CD 損失、底層損傷）的 disposition；(5) 修復後跑 ER 與均勻度 qual 再 release。"
+        en: "OCAP for a real ER monitor excursion (OOC / OOS): (1) verify the measurement first: ER = (pre − post) ÷ time, with pre and post on the same SE tool, recipe and sites; check GOF and that the pre-measurement exists; (2) if temperature is suspected, use about {per10}% per 10 °C to estimate how many °C the deviation needs and judge whether that is plausible; (3) hold the affected lots, inhibit the chamber, ask EE to check ESC / chiller temperature, He backside pressure and leak rate, RF hours of consumables such as the edge ring, the last wet clean and seasoning, RF power and gas flows; (4) PE / PIE disposition for under-etch (residue, opens, high Rc) or over-etch (CD loss, underlayer damage); (5) after the fix, run ER and uniformity qual before release."
+      watch:
+        zh: "ER 在規格內但緩慢漂移，或 center-edge 分布改變：查 ESC zone 溫度與 He 背面冷卻、耗材使用時數，提高 ER 監控頻率並加量邊緣點位；確認閒置後有跑 seasoning／dummy 片。"
+        en: "ER in spec but drifting slowly, or the centre-to-edge pattern changing: check ESC zone temperatures, He backside cooling and consumable hours, raise ER monitor frequency and add edge sites; confirm that seasoning / dummy wafers run after idle."
+      good:
+        zh: "用來理解溫度敏感度並規劃量測：空白片 ER 以 SE 前後量測（多點，同時看均勻度），圖案片用 CD-SEM／OCD 看 CD 與深度，必要時切面看 profile。ER 規格以該 chamber 的 qual 資料為準，不用模型的絕對值。"
+        en: "Use it to understand temperature sensitivity and plan the measurement: blanket ER by SE pre/post (multi-site, uniformity at the same time), patterned wafers by CD-SEM / OCD for CD and depth, cross-sections for profile when needed. ER specs come from the chamber's qual data, never from the model's absolute values."
+    record:
+      zh: "[Etch 模擬] 溫度掃描 {t0}–{t1} °C · 速率 {r0} → {r1} nm/min（{ratio}×）· 平均每 10 °C +{per10}% · 狀態 {status} · 實測 ER（SE 前後，＿＿點）：＿＿ nm/min · 均勻度 ＿＿% · 處置：＿＿"
+      en: "[Etch sim] temperature sweep {t0}–{t1} °C · rate {r0} → {r1} nm/min ({ratio}×) · average +{per10}% per 10 °C · status {status} · measured ER (SE pre/post, ___ sites): ___ nm/min · uniformity ___% · action: ___"
+    roles:
+      RDA:
+        zh: "【蝕刻溫度參考】若缺陷 review 看到 under-etch 殘留或 over-etch 損傷，且集中在特定半徑，可能和 ESC 溫度分布有關：此化學模型每 10 °C 約變 {per10}%。請提供缺陷的半徑分布，量測端可對照同片 ER／CD 的 center-edge 差異。"
+        en: "[Etch temperature reference] If defect review shows under-etch residue or over-etch damage concentrated at a certain radius, ESC temperature distribution may be involved: this chemistry model changes about {per10}% per 10 °C. Please share the radial distribution of the defects; metrology can compare it with the centre-to-edge ER / CD of the same wafers."
+      PE:
+        zh: "【蝕刻模擬】{finding}（L-H 教科書常數，絕對值不代表本廠製程）。本模型溫度越高 SiO₂/Si 選擇比越低。實測 ER ＿＿ nm/min，若要用溫度解釋約需 ＿＿ °C；請確認 ESC 溫度設定與 recipe 是否有變更。"
+        en: "[Etch sim] {finding} (L-H textbook constants; the absolute values do not represent our process). In this model SiO₂/Si selectivity falls as temperature rises. Measured ER ___ nm/min; explaining it by temperature would need about ___ °C. Please check for changes to the ESC temperature setpoint or recipe."
+      EE:
+        zh: "【Chamber 確認】ER 監控偏 ＿＿%。依模型溫度敏感度（每 10 °C 約 {per10}%），若為溫度造成約需 ＿＿ °C。請檢查 ESC／chiller 溫度、He 背面壓力與漏率、edge ring 等耗材 RF hours、上次 wet clean／seasoning；需要時 inhibit 並跑 ER qual。"
+        en: "[Chamber check] ER monitor is ___% off. With the model's temperature sensitivity (about {per10}% per 10 °C), a temperature cause would need about ___ °C. Please check ESC / chiller temperature, He backside pressure and leak rate, RF hours of the edge ring and other consumables, and the last wet clean / seasoning; inhibit and run ER qual if needed."
+      PIE_YE:
+        zh: "【可能影響電性】蝕刻速率偏差會造成 under-etch（開路、Rc 上升）或 over-etch（CD 損失、底層損傷）。此模擬的溫度敏感度約每 10 °C {per10}%；若 ER 監控有偏移，請評估受影響 lot 的電性（Rc、漏電）與 disposition。"
+        en: "[Possible electrical impact] An etch-rate deviation causes under-etch (opens, high Rc) or over-etch (CD loss, underlayer damage). This simulation shows about {per10}% per 10 °C; if the ER monitor moved, please assess the electrical risk (Rc, leakage) and disposition of the affected lots."
+      MGR_QE:
+        zh: "【狀態】蝕刻溫度模擬：{status}。{finding}。用途：解讀 ER 監控偏移時估算溫度的影響；模型未校正。待決定：＿＿。"
+        en: "[Status] Etch temperature sim: {status}. {finding}. Purpose: estimate the temperature contribution when an ER monitor moves; model not calibrated. Decision needed: ___."
+
+  sy_etch_p:
+    page: Simulation
+    title:
+      zh: "蝕刻速率 vs 壓力（Etching 分頁，Langmuir-Hinshelwood 飽和）"
+      en: "Etch rate vs pressure (Etching tab, Langmuir-Hinshelwood saturation)"
+    legend:
+      - item: "— 咖啡色線 Rate vs pressure · brown line"
+        zh: "在 Temperature 滑桿的溫度下（標題顯示），蝕刻氣體壓力 10–500 mTorr 的模型速率，最大 {r_max} nm/min。single 模式：R = k_s·KP ÷ (1 + KP)，低壓近似線性、高壓趨於飽和。two_reactant 模式：R = k·K_A·P_A·K_B·P_B ÷ (1 + K_A·P_A + K_B·P_B)²，X 軸是反應物 A 的壓力、O₂ 壓力固定，曲線可能先升後降。"
+        en: "Modelled rate over etchant pressures of 10–500 mTorr at the Temperature slider value (shown in the title); maximum {r_max} nm/min. single mode: R = k_s·KP ÷ (1 + KP), roughly linear at low pressure and saturating at high pressure. two_reactant mode: R = k·K_A·P_A·K_B·P_B ÷ (1 + K_A·P_A + K_B·P_B)², X is the pressure of reactant A with O₂ fixed, and the curve can rise and then fall."
+    axes:
+      zh: "X 軸＝蝕刻氣體壓力（mTorr，固定 10–500，不跟 Pressure 滑桿走）；Y 軸＝蝕刻速率（nm/min）。recipe 的操作壓力沒有畫在圖上，請自己在曲線上找到 Pressure 滑桿的位置。"
+      en: "X = etchant pressure (mTorr, fixed 10–500; the Pressure slider does not move it); Y = etch rate (nm/min). The recipe's operating pressure is not marked; find the Pressure slider value on the curve yourself."
+    what:
+      zh: "表面覆蓋率 θ = KP ÷ (1 + KP)：低壓時表面空位多，速率 ∝ 壓力（供應限制）；高壓時表面被反應物佔滿，速率 ≈ k_s，不再隨壓力增加（表面反應限制）。飽和度 {sat}%＝高壓端斜率比低壓端小多少：接近 100%＝飽和，ER 對壓力與流量漂移不敏感（窗口穩），但會對溫度與反應步驟（真實電漿中的離子通量）敏感。two_reactant：兩種反應物搶同一批表面位置，A 太多會把 B 擠掉，速率過峰值後下降；飽和度大於 100%＝高壓端斜率已經是負的（過了峰值），顯示「—」＝從最低壓就已經在下降。⚠ 真實電漿中壓力也會改變離子能量、電漿密度與均勻度，模型沒有這些；SemiYield 的 K 很大，曲線通常在很低壓就飽和，絕對速率也不代表實際製程。"
+      en: "Surface coverage θ = KP ÷ (1 + KP): at low pressure most sites are empty and the rate ∝ pressure (supply-limited); at high pressure the surface is full and the rate ≈ k_s, no longer rising with pressure (surface-reaction-limited). Saturation {sat}% = how much smaller the slope is at the high-pressure end than at the low end: near 100% = saturated, ER is insensitive to pressure and flow drift (a robust window) but sensitive to temperature and to the reaction step (ion flux in a real plasma). two_reactant: both reactants compete for the same sites, too much A crowds out B, and the rate falls after a peak; a saturation above 100% = the slope at the high end is already negative (past the peak); a dash = the rate falls from the lowest pressure on. ⚠ In a real plasma, pressure also changes ion energy, plasma density and uniformity, none of which is modelled; SemiYield's K is large, so the curve usually saturates at very low pressure, and the absolute rates do not represent a real process."
+    read:
+      zh: "飽和度比較的是圖的兩端（10 與 500 mTorr 附近），不是你的操作點；要看 recipe 壓力在曲線的哪一段。好（穩健）：操作點在平坦段（{sat} > 70% 時洞察會寫「在飽和區操作」），壓力計或流量的小漂移不會反映到 ER。注意：操作點在陡的線性段或膝點，ER 會跟著壓力與流量走；two_reactant 已過峰值時，增加氣體反而降低 ER，與直覺相反，調 recipe 時要小心。"
+      en: "Saturation compares the two ends of the chart (near 10 and 500 mTorr), not your operating point; check where the recipe pressure sits on the curve. Good (robust): the operating point is on the flat part (the insight says operating in saturation when {sat} > 70%), and small manometer or flow drifts do not show in ER. Watch: on the steep linear part or at the knee, ER follows pressure and flow; in two_reactant past the peak, more gas lowers ER, against intuition, so be careful when tuning the recipe."
+    action:
+      act:
+        zh: "實際 ER 異常且同時段 chamber 壓力、throttle valve 位置或流量有變化時：先確認量測（同 ER 監控的量測步驟），再依操作點判斷：線性區 → 請 EE 查壓力控制（manometer 校正、throttle valve）、MFC 流量與漏率；飽和區 → 壓力不太可能是主因，改查溫度、RF 與腔體狀況。依 OCAP hold 受影響 lot、inhibit chamber、PE／PIE 評估 disposition，修復後 qual 再 release。"
+        en: "Real ER excursion while chamber pressure, throttle-valve position or flows changed in the same window: verify the measurement first (as for any ER monitor), then judge by operating point: linear regime → ask EE to check pressure control (manometer calibration, throttle valve), MFC flows and leak rate; saturated → pressure is an unlikely cause, look at temperature, RF and chamber condition. Per the OCAP hold the affected lots, inhibit the chamber, have PE / PIE disposition, and qual before release."
+      watch:
+        zh: "操作點在膝點附近、線性段，或 two_reactant 峰值之後：ER 對壓力／流量敏感。請 EE 加強壓力與 MFC 的監控（FDC），提高 ER 監控頻率；建議 PE 在操作點附近做小範圍 DOE 確認真實斜率。"
+        en: "Operating point near the knee, on the linear part, or past the two_reactant peak: ER is sensitive to pressure / flow. Ask EE to tighten pressure and MFC monitoring (FDC) and raise ER monitor frequency; suggest PE run a small DOE around the operating point to confirm the real slope."
+      good:
+        zh: "操作在飽和區，ER 對壓力漂移不敏感。照常監控 ER 與均勻度；記錄最大速率 {r_max} nm/min 與飽和度 {sat}%。在飽和區時 ER 主要反映溫度與反應步驟，ER 漂移時優先查這些。"
+        en: "Operating in saturation, ER is insensitive to pressure drift. Monitor ER and uniformity as usual; record the maximum rate {r_max} nm/min and the saturation {sat}%. In saturation ER mainly reflects temperature and the reaction step, so check those first when ER drifts."
+    record:
+      zh: "[Etch 模擬] 壓力掃描 10–500 mTorr · 最大速率 {r_max} nm/min · 飽和度（高壓端斜率降低）{sat}% · 狀態 {status} · recipe 壓力 ＿＿ mTorr 位於：線性區／膝點／飽和區／峰值後 · 處置：＿＿"
+      en: "[Etch sim] pressure sweep 10–500 mTorr · max rate {r_max} nm/min · saturation (slope drop at high pressure) {sat}% · status {status} · recipe pressure ___ mTorr sits in: linear / knee / saturated / past peak · action: ___"
+    roles:
+      RDA:
+        zh: "【蝕刻壓力參考】{finding}。若 review 看到蝕刻殘留或 profile 異常集中在特定區域，量測端可提供該區的 ER／CD；操作在飽和區時，壓力漂移通常不是主因。"
+        en: "[Etch pressure reference] {finding}. If review finds etch residue or profile anomalies in a specific area, metrology can supply ER / CD there; when operating in saturation, pressure drift is usually not the cause."
+      PE:
+        zh: "【蝕刻模擬】L-H：最大速率 {r_max} nm/min，高壓端斜率比低壓端低 {sat}%。請確認 recipe 壓力落在曲線的哪一段：飽和區對壓力／流量不敏感；線性區或 two_reactant 峰值之後，ER 會隨壓力明顯變化。建議在操作點附近做小範圍 DOE 確認。"
+        en: "[Etch sim] L-H: max rate {r_max} nm/min, slope at high pressure {sat}% lower than at low pressure. Please check where the recipe pressure sits: saturated = insensitive to pressure / flow; on the linear part or past the two_reactant peak, ER moves noticeably with pressure. Suggest a small DOE around the operating point to confirm."
+      EE:
+        zh: "【Chamber 確認】若 ER 偏移且同時段壓力或 throttle valve 位置有變化：依模型，操作在飽和區（飽和度 {sat}%）時壓力影響小，請優先查溫度與 RF；若在線性區，請查 manometer 校正、MFC 流量與漏率。"
+        en: "[Chamber check] If ER moved together with pressure or throttle-valve position: per the model, in saturation ({sat}%) pressure has little effect, so check temperature and RF first; on the linear part, check manometer calibration, MFC flows and leak rate."
+      PIE_YE:
+        zh: "【製程穩健度】{finding}。操作點若在飽和區，片間 ER 變異主要來自溫度與腔體狀況；若不在，壓力控制會直接反映到 CD、蝕刻深度與電性。量測端可提供 ER 的片間變異。"
+        en: "[Process robustness] {finding}. If the operating point is saturated, wafer-to-wafer ER variation comes mainly from temperature and chamber condition; if not, pressure control feeds straight into CD, etch depth and electrical results. Metrology can supply wafer-to-wafer ER variation."
+      MGR_QE:
+        zh: "【狀態】蝕刻壓力模擬：{status}。{finding}。用途：評估 recipe 對壓力漂移的穩健度、協助 ER 異常分析；模型未校正。待決定：＿＿。"
+        en: "[Status] Etch pressure sim: {status}. {finding}. Purpose: judge how robust the recipe is to pressure drift and support ER excursion analysis; model not calibrated. Decision needed: ___."
+
+  # ---------------------------------------------------------------------------------------------- Simulation: deposition
+  sy_deposition:
+    page: Simulation
+    title:
+      zh: "沉積速率 vs 溫度（Deposition 分頁，LPCVD／PECVD／ALD／PVD，對數 Y 軸）"
+      en: "Deposition rate vs temperature (Deposition tab, LPCVD / PECVD / ALD / PVD, log y)"
+    legend:
+      - item: "— 青色線（無名稱）· cyan line (unnamed)"
+        zh: "所選製程與材料（{title}）在 300–900 °C 的模型速率 R = C·P·exp(−Ea ÷ k_B·T)。CVD／PVD 單位為 nm/min，ALD 為 nm/cycle（每循環成長量 GPC）。本次 300 → 900 °C：{r0} → {r1}（{ratio} 倍）。"
+        en: "Modelled rate for the chosen process and material ({title}) over 300–900 °C, R = C·P·exp(−Ea ÷ k_B·T). Units: nm/min for CVD / PVD, nm/cycle (growth per cycle, GPC) for ALD. Here 300 → 900 °C: {r0} → {r1} ({ratio}×)."
+    axes:
+      zh: "X 軸＝基板溫度（°C，固定 300–900，不跟 Temperature 滑桿走）；Y 軸＝速率（對數軸，每大格 10 倍）。Arrhenius 在 ln R 對 1/T 才是直線；這張圖 X 是 °C，所以曲線會慢慢彎。下方四張卡片（Deposited thickness、Step coverage、Non-uniformity、Film stress）＝滑桿設定下的值。"
+      en: "X = substrate temperature (°C, fixed 300–900; the Temperature slider does not move it); Y = rate (log axis, 10× per decade). Arrhenius is a straight line only for ln R vs 1/T; here X is in °C, so the curve bends gradually. The four cards below (Deposited thickness, Step coverage, Non-uniformity, Film stress) are at the slider settings."
+    what:
+      zh: "倍數 {ratio} 就是「溫度敏感度」，對應活化能：LPCVD（本模型 Ea 1.7–2.1 eV）倍數極大＝反應限制區，膜厚與均勻度由溫度均勻度決定，批次爐管會用 zone 溫度梯度補償氣體消耗；PECVD（約 0.5 eV）由電漿提供能量，敏感度中等；ALD（約 0.1 eV）幾乎平＝自限制表面反應，在 ALD window 內每循環成長量固定，厚度由循環數決定；PVD（約 0.05–0.08 eV）幾乎平，厚度由功率 × 時間與 target 壽命決定。⚠ 模型限制：純 Arrhenius，沒有 CVD 高溫的質傳限制區（實際速率會變平），沒有 ALD window 的上下邊界（低溫凝結或反應不完全、高溫前驅物分解變成 CVD 式成長），而且 300–900 °C 遠超過一般 ALD 的實際溫度；速率對每種製程都和壓力成正比（連 ALD、PVD 也是）。絕對值不代表實際製程，只看相對敏感度。"
+      en: "The factor {ratio} is the temperature sensitivity and maps to activation energy: LPCVD (Ea 1.7–2.1 eV here) has a huge factor = reaction-limited, so thickness and uniformity are set by temperature uniformity, and batch furnaces use zone temperature tilts to compensate gas depletion; PECVD (about 0.5 eV) gets energy from the plasma, moderate sensitivity; ALD (about 0.1 eV) is almost flat = self-limiting surface reactions, constant growth per cycle inside the ALD window, thickness set by the number of cycles; PVD (about 0.05–0.08 eV) is almost flat, thickness set by power × time and target life. ⚠ Model limits: pure Arrhenius, with no mass-transport-limited regime at high temperature for CVD (the real rate flattens) and no ALD window edges (condensation or incomplete reaction when cold, precursor decomposition into CVD-like growth when hot), and 300–900 °C reaches far beyond real ALD temperatures; the rate is proportional to pressure for every process, ALD and PVD included. Absolute values do not represent a real process; read only the relative sensitivity."
+    read:
+      zh: "倍數大（例如 > 100）：溫度主導膜厚，膜厚或均勻度漂移時先查溫度（加熱器、zone TC、pedestal 溫度）；批次爐管中「厚度 vs slot 位置」就是溫度分布的指紋。倍數約 1–3（ALD、PVD）：溫度幾乎不影響速率；真實 ALD 若每循環成長量隨溫度變，代表已經離開 window：偏厚且階梯覆蓋變差＝有 CVD 成分（前驅物分解或 purge 不足）。PVD 厚度偏移通常是功率、target 壽命（kWh）或 shield 狀況。操作溫度落在曲線陡的地方＝對溫度不穩健。"
+      en: "Large factor (e.g. > 100): temperature dominates thickness; when thickness or uniformity drifts, check temperature first (heater, zone TC, pedestal temperature); in a batch furnace the thickness-vs-slot profile is a fingerprint of the temperature profile. Factor around 1–3 (ALD, PVD): temperature barely changes the rate; in real ALD a growth per cycle that changes with temperature means you have left the window: thicker with worse step coverage = a CVD component (precursor decomposition or insufficient purge). PVD thickness shifts usually come from power, target life (kWh) or shield condition. An operating temperature on a steep part of the curve = not robust to temperature."
+    action:
+      act:
+        zh: "實際膜厚異常（OOC／OOS）時的 OCAP：(1) 先確認量測：介電膜用 SE（確認膜層模型、n&k、底層），超薄 ALD high-k 用 XRR／XRF 交叉確認，金屬用 Rs 或 XRF，並確認是同一量測機台與 recipe；(2) 依倍數決定先查什麼：高敏感度 → 溫度與壓力；ALD → 前驅物 canister 溫度與存量、pulse／purge 時間、閥件；PVD → 功率、target kWh、shield；(3) hold 受影響 lot、inhibit 機台、通知 EE；(4) PE／PIE 依電性（電容、漏電、Rc）評估 disposition；(5) qual 後再 release。"
+        en: "OCAP for a real film-thickness excursion (OOC / OOS): (1) verify the measurement first: SE for dielectrics (check film model, n&k, underlayer), XRR / XRF cross-check for very thin ALD high-k, Rs or XRF for metals, and confirm the same metrology tool and recipe; (2) let the factor decide what to check first: high sensitivity → temperature and pressure; ALD → precursor canister temperature and level, pulse / purge times, valves; PVD → power, target kWh, shield; (3) hold the affected lots, inhibit the tool, notify EE; (4) PE / PIE disposition from electrical results (capacitance, leakage, Rc); (5) qual before release."
+      watch:
+        zh: "平均膜厚正常但均勻度或分布改變（center-edge、批次爐管的 slot 位置）：對高敏感度製程這是溫度分布的訊號；增加量測點位與監控 slot，和 EE 確認 heater 與 TC。ALD 改溫度或換前驅物時，加做 TEM 切面確認保形性（step coverage）。"
+        en: "Mean thickness fine but uniformity or pattern changing (centre-to-edge, slot position in a batch furnace): for a high-sensitivity process that is a temperature-profile signal; add sites and monitor slots, check heaters and TCs with EE. When ALD temperature or precursor changes, add a TEM cross-section to confirm conformality (step coverage)."
+      good:
+        zh: "用倍數決定監控方式：高敏感度製程 → 每個 zone／slot 都放監控片、用多點膜厚 map；低敏感度（ALD、PVD）→ 重點放在循環數或功率 × 時間、前驅物與 target 狀態。記錄條件與預期敏感度；規格以實際 qual 資料為準。"
+        en: "Let the factor choose the monitoring: high sensitivity → monitors in every zone / slot and multi-site thickness maps; low sensitivity (ALD, PVD) → focus on cycle count or power × time, precursor and target condition. Record the conditions and expected sensitivity; specs come from real qual data."
+    record:
+      zh: "[Deposition 模擬] {title} · 300 → 900 °C 速率 {r0} → {r1}（{ratio}×；CVD／PVD nm/min、ALD nm/cycle）· 狀態 {status} · 實測厚度（SE／XRR／XRF／Rs）：＿＿ · 均勻度 ＿＿% · 處置：＿＿"
+      en: "[Deposition sim] {title} · rate 300 → 900 °C {r0} → {r1} ({ratio}×; nm/min for CVD / PVD, nm/cycle for ALD) · status {status} · measured thickness (SE / XRR / XRF / Rs): ___ · uniformity ___% · action: ___"
+    roles:
+      RDA:
+        zh: "【沉積參考】{title}：300 → 900 °C 速率變化 {ratio} 倍。若切面看到膜厚或階梯覆蓋不均（例如溝槽底部偏薄、開口處 overhang），請標示位置；ALD 若出現頂部厚、底部薄的 CVD 式沉積，可能是超出 ALD window 或 purge 不足。"
+        en: "[Deposition reference] {title}: the rate changes {ratio}× from 300 to 900 °C. If a cross-section shows uneven thickness or step coverage (thin at trench bottoms, overhang at the opening), please mark where; ALD that looks CVD-like (thick at the top, thin at the bottom) suggests operation outside the ALD window or insufficient purge."
+      PE:
+        zh: "【沉積模擬】{finding}（{r0} → {r1}，教科書參數）。只看溫度敏感度：倍數大＝反應限制，膜厚均勻度由溫度均勻度決定；倍數接近 1（ALD／PVD）＝厚度由循環數或功率 × 時間決定。實測 ＿＿，請確認 recipe 溫度與時間／循環數是否有變更。"
+        en: "[Deposition sim] {finding} ({r0} → {r1}, textbook parameters). Read only the temperature sensitivity: a large factor = reaction-limited, uniformity set by temperature uniformity; a factor near 1 (ALD / PVD) = thickness set by cycle count or power × time. Measured ___; please check for changes in recipe temperature and time / cycle count."
+      EE:
+        zh: "【機台確認】{title} 膜厚監控偏 ＿＿%。此製程溫度敏感度 {ratio}×（300 → 900 °C）：敏感度高時請先查 heater、zone TC 與 pedestal 溫度；ALD 請查前驅物 canister 溫度與存量、pulse／purge 時間與閥件；PVD 請查功率與 target 壽命。"
+        en: "[Tool check] {title} thickness monitor is ___% off. This process's temperature sensitivity is {ratio}× (300 → 900 °C): if high, check heaters, zone TCs and pedestal temperature first; for ALD check precursor canister temperature and level, pulse / purge times and valves; for PVD check power and target life."
+      PIE_YE:
+        zh: "【可能影響電性】{title}：膜厚與保形性影響電容、漏電與接觸電阻（例如 high-k 太薄漏電上升、barrier 覆蓋不足造成 Rc 異常）。模型溫度敏感度 {ratio}×；若實測偏移，請評估電性風險與 disposition。"
+        en: "[Possible electrical impact] {title}: thickness and conformality drive capacitance, leakage and contact resistance (e.g. thin high-k raises leakage, poor barrier coverage upsets Rc). Model temperature sensitivity {ratio}×; if the measurement moved, please assess electrical risk and disposition."
+      MGR_QE:
+        zh: "【狀態】沉積模擬 {title}：{status}。{finding}。用途：膜厚異常時決定優先檢查溫度、循環數或功率；模型未校正，不作為規格。待決定：＿＿。"
+        en: "[Status] Deposition sim {title}: {status}. {finding}. Purpose: decide whether to check temperature, cycle count or power first when thickness moves; model not calibrated, not a spec. Decision needed: ___."
+
+  # ----------------------------------------------------------------------------------------------------- Data Generator
+  sy_trend:
+    page: Data Generator
+    title:
+      zh: "製程參數趨勢（每批平均 vs lot 順序）"
+      en: "Process parameter trend (lot mean vs lot sequence)"
+    legend:
+      - item: "— 藍色線 每批平均 · blue line (lot mean)"
+        zh: "每個點＝一個 lot 內所有晶圓的 {param} 平均值（片數＝Wafers per lot），依 lot 順序連線。第一批 {first}、最後一批 {last}。平均 N 片會把晶圓間雜訊縮小 √N 倍（25 片約 5 倍），所以逐片 SPC 看不出的批間漂移在這裡看得見。"
+        en: "Each point = the mean {param} of all wafers in one lot (Wafers per lot), joined in lot order. First lot {first}, last lot {last}. Averaging N wafers shrinks wafer-to-wafer noise by √N (about 5× for 25 wafers), so lot-to-lot drift hidden in a per-wafer SPC chart becomes visible here."
+    axes:
+      zh: "X 軸＝lot_sequence（lot 順序，0＝第一批）；Y 軸＝{param} 的批平均，單位同參數（gate_oxide_thickness、poly_cd：nm；implant_dose：cm⁻²；anneal_temp：°C；metal_resistance：Ω/□；contact_resistance：Ω；yield：0–1）。圖上沒有管制界限，也沒有規格線。"
+      en: "X = lot_sequence (lot order, 0 = first lot); Y = lot mean of {param} in its unit (gate_oxide_thickness, poly_cd: nm; implant_dose: cm⁻²; anneal_temp: °C; metal_resistance: Ω/sq; contact_resistance: Ω; yield: 0–1). No control limits and no spec lines are drawn."
+    what:
+      zh: "合成資料產生器在每個 lot 對製程平均值做隨機漫步（每步標準差＝Drift rate × 製程 σ），並加入機台老化（age＝lot 序號 × Aging factor：etch_rate 下降、deposition_unif 變差），再加上晶圓間雜訊。趨勢圖用來分辨「慢慢移動」與「隨機雜訊」。實際廠內：每台機台／chamber 各畫一條批平均趨勢，並標上 PM、零件更換、recipe 變更與量測機台更換的時間點。⚠ 這是合成資料，用來練習判讀，不是實際製程。"
+      en: "The synthetic generator moves each process mean by a random walk per lot (step σ = Drift rate × process σ), adds equipment aging (age = lot index × Aging factor: etch_rate falls, deposition_unif worsens) and wafer-to-wafer noise. The trend chart separates slow movement from random noise. In a real fab: one lot-mean trend per tool / chamber, annotated with PMs, part swaps, recipe changes and metrology-tool changes. ⚠ Synthetic data, for practising interpretation, not a real process."
+    read:
+      zh: "洞察中的趨勢＝線性擬合從第一批到最後一批的變化 {drift}，除以短期 σ（相鄰兩批差的移動全距 ÷ 1.128）＝{drift_sigma} 倍；|倍數| > 3 → 注意（watch），代表系統性移動大於批間雜訊。批平均的整體標準差 {sd} 若明顯大於短期 σ，代表長期漂移主導（Ppk 會低於 Cpk）。圖樣：單向穩定斜率 → 老化（耗材、腔體累積物），PM 後應跳回；沒有固定方向的漫遊 → 平均值沒有被控制（需要 APC／run-to-run）；階梯 → 事件（PM、換零件、recipe、換量測機台）；鋸齒 → PM 週期。注意：隨機漫步在短期間也會像趨勢，要對照物理原因或更多 lot。"
+      en: "The insight's trend = the linear-fit change from first to last lot, {drift}, divided by the short-term σ (moving range of consecutive lot means ÷ 1.128) = {drift_sigma}×; |value| > 3 → watch: the systematic movement is larger than lot-to-lot noise. If the overall standard deviation of the lot means, {sd}, is clearly larger than the short-term σ, long-term drift dominates (Ppk will fall below Cpk). Patterns: steady one-way slope → aging (consumables, chamber build-up), should jump back after PM; wandering with no fixed direction → the mean is not controlled (needs APC / run-to-run); steps → events (PM, part swap, recipe change, metrology tool change); sawtooth → PM cycle. Note that a random walk can look like a trend over a short window; check against a physical cause or more lots."
+    action:
+      act:
+        zh: "趨勢已碰到規格或管制界限，或漂移明顯加快時（OCAP）：(1) 先確認量測：整段趨勢是同一台量測機台量的嗎？量測機台的 monitor／golden wafer 是否也在漂？換量測機台會造成假的階梯；(2) 對漂移期間的 lot 做 commonality（機台／chamber、PM、耗材批號、recipe 版本、進料）；(3) hold 超出界限的 lot，通知 EE 安排 PM 或調整，必要時 inhibit；(4) 和 PE 討論 APC target 修正；修復後 qual 再 release。"
+        en: "When the trend reaches a spec or control limit, or the drift speeds up (OCAP): (1) verify the measurement first: did one metrology tool measure the whole trend? Is the metrology tool's monitor / golden wafer drifting too? A metrology tool change creates a false step; (2) run commonality on the lots in the drift window (tool / chamber, PM, consumable lot, recipe version, incoming material); (3) hold lots beyond limits, ask EE to schedule a PM or adjustment and inhibit if needed; (4) discuss an APC target correction with PE; qual before release."
+      watch:
+        zh: "|趨勢| > 3 倍短期 σ 但仍在規格內：在趨勢圖上加註解、找原因（PM 時程、耗材使用時數），提高抽樣；用目前斜率預估還剩幾個 lot 會碰到規格（剩餘 lot ≈（規格 − 最後一批）÷ 每批漂移量），提早通知 EE 排 PM、PE 評估 APC。"
+        en: "|Trend| > 3 short-term σ but still in spec: annotate the chart, look for the cause (PM schedule, consumable hours), raise sampling; use the current slope to estimate how many lots remain before the spec is reached (lots left ≈ (spec − last lot) ÷ drift per lot) and warn EE to plan a PM and PE to consider APC."
+      good:
+        zh: "沒有明顯趨勢（|倍數| ≤ 3）。照常記錄；每月對照 PM 時間檢視一次批平均趨勢。"
+        en: "No significant trend (|value| ≤ 3). Record as usual; review the lot-mean trend against PM dates monthly."
+    record:
+      zh: "[Trend] {param} 批平均 · 第一批 {first} → 最後一批 {last} · 趨勢 {drift}（{drift_sigma}× 短期 σ）· 批平均整體 σ {sd} · 狀態 {status} · 可能原因（老化／PM 週期／漂移／量測）：＿＿ · 處置：＿＿"
+      en: "[Trend] {param} lot mean · first lot {first} → last lot {last} · trend {drift} ({drift_sigma}× short-term σ) · overall σ of lot means {sd} · status {status} · likely cause (aging / PM cycle / drift / metrology): ___ · action: ___"
+    roles:
+      RDA:
+        zh: "【趨勢通知】{param}：{finding}。若同期間缺陷數也上升（例如腔體累積物剝落成 particle），建議挑趨勢前段與後段各一個 lot 比較缺陷；量測端可提供 lot 清單。"
+        en: "[Trend notice] {param}: {finding}. If defect counts rose over the same period (e.g. chamber build-up flaking into particles), suggest comparing defects on one lot from the start and one from the end of the trend; metrology can provide the lot list."
+      PE:
+        zh: "【趨勢】{param}：{finding}（批平均整體 σ {sd}）。若方向持續，請評估是否需要 APC／recipe target 修正，並依目前斜率估算還剩幾個 lot 會碰到規格。量測端已確認不是量測機台漂移。"
+        en: "[Trend] {param}: {finding} (overall σ of lot means {sd}). If the direction persists, please assess an APC / recipe target correction and estimate from the slope how many lots remain before the spec. Metrology confirmed it is not a metrology-tool drift."
+      EE:
+        zh: "【機台確認】{param} 批平均從 {first} 走到 {last}（{drift_sigma}× 短期 σ）。單向緩慢變化多半是耗材或腔體老化：請對照 PM 時間、耗材 RF hours／使用次數，評估是否提前 PM。"
+        en: "[Tool check] {param} lot mean moved from {first} to {last} ({drift_sigma}× short-term σ). Slow one-way movement is usually consumable or chamber aging: please compare with PM dates and consumable RF hours / usage counts and decide whether to bring the PM forward."
+      PIE_YE:
+        zh: "【可能影響良率】{param} 有批間漂移：{finding}。持續漂移會讓 Ppk 低於 Cpk、分布變寬；請評估對電性／良率的影響，並確認後段 lot 是否需要加強監控。"
+        en: "[Possible yield impact] {param} shows lot-to-lot drift: {finding}. Continued drift pushes Ppk below Cpk and widens the distribution; please assess the electrical / yield impact and whether later lots need tighter monitoring."
+      MGR_QE:
+        zh: "【狀態】{param} 趨勢：{status}。{finding}。已採取：註記並追蹤、量測確認、通知 EE 對照 PM；待決定：是否提前 PM 或啟用 APC 修正。"
+        en: "[Status] {param} trend: {status}. {finding}. Done: annotated and tracked, measurement verified, EE asked to compare with PMs. Decision needed: bring the PM forward or apply an APC correction."
+
+  sy_wafer_map:
+    page: Data Generator
+    title:
+      zh: "晶圓局部良率圖（wafer map，RdYlGn 熱圖）"
+      en: "Local yield wafer map (RdYlGn heatmap)"
+    legend:
+      - item: "▦ 彩色方格 · coloured cells (RdYlGn)"
+        zh: "每一格＝晶圓上一個位置的局部良率（0–1）：綠＝高、黃＝中、紅＝低。色階固定 0–1，不同晶圓的顏色可以直接比較。本片 {wafer}：平均 {mean}、最低 {min}。"
+        en: "Each cell = local yield at one position on the wafer (0–1): green = high, yellow = middle, red = low. The colour scale is fixed at 0–1, so colours are comparable between wafers. This wafer {wafer}: mean {mean}, lowest {min}."
+      - item: "■ 四角紅色 · red corners"
+        zh: "晶圓圓形以外的格子（沒有晶粒，原本是 NaN）被畫成 0，所以四角是紅色。那不是不良，是「晶圓外」；判讀與計算都只看圓內（洞察的平均與最低已排除這些格子）。"
+        en: "Cells outside the wafer circle (no dies; originally NaN) are drawn as 0, so the corners are red. That is not a failure, it is off-wafer; read and compute only inside the circle (the insight's mean and lowest already exclude them)."
+      - item: "▮ 右側色條 · colour bar"
+        zh: "數值與顏色的對照：0（紅）→ 0.5（黃）→ 1（綠）。"
+        en: "Value-to-colour key: 0 (red) → 0.5 (yellow) → 1 (green)."
+    axes:
+      zh: "X／Y＝格子的行／列編號（50 × 50 格，像圖片一樣 Y 往下增加），不是 mm，也不是晶粒座標。洞察的「中心」＝半徑 35% 以內，「邊緣」＝半徑 75% 以外。"
+      en: "X / Y = grid column / row index (50 × 50 cells, Y increasing downward as in an image), not mm and not die coordinates. In the insight, centre = within 35% of the radius, edge = beyond 75% of the radius."
+    what:
+      zh: "產生器把「徑向項」（中心高、往邊緣以 r² 下降；顯示的這張用固定強度 0.05）乘上「隨機局部缺陷損失」（指數分布，平均約 2%）。實際廠內對應的是 CP 測試的晶粒 bin map、量測的膜厚／CD map 或缺陷檢測 map。Metro AE 用空間圖樣（signature）找製程原因：徑向＝溫度、氣流或電漿的 center-edge 不均；邊緣環＝edge ring、bevel、ESC 邊緣或 edge exclusion；半邊或斜向梯度＝傾斜、氣流不對稱；群聚＝particle；直線或弧線＝刮傷、搬送；重複圖樣＝光罩。⚠ 這張圖是示意：每次依晶圓名稱重新產生，和資料表的 yield 欄位不是同一個模型（資料 yield 多在 0.999，這張平均約 0.95），重新啟動後同一片也可能長得不一樣。"
+      en: "The generator multiplies a radial term (high in the centre, falling with r² toward the edge; the map shown uses a fixed strength of 0.05) by random local defect loss (exponential, about 2% on average). The real-fab counterpart is a probe (CP) die bin map, a metrology thickness / CD map or a defect inspection map. A Metro AE reads spatial signatures for process causes: radial = centre-to-edge temperature, gas flow or plasma non-uniformity; edge ring = edge ring, bevel, ESC edge or edge exclusion; half-wafer or tilted gradient = tilt, asymmetric gas flow; clusters = particles; lines or arcs = scratches, handling; repeating pattern = reticle. ⚠ This map is illustrative: it is regenerated from the wafer name, it does not come from the same model as the yield column in the table (that yield is mostly 0.999; this map averages about 0.95), and the same wafer may look different after a restart."
+    read:
+      zh: "好：圓內一片綠、沒有結構，邊緣 ≈ 中心。本片中心 {center} vs 邊緣 {edge}：中心 − 邊緣 > 0.1 → 注意（watch），代表邊緣良率損失。分散、孤立的紅格＝隨機缺陷（Poisson），反映缺陷密度，不是製程 signature；成片、成環、成線才是系統性圖樣。一片上看到的圖樣，要確認在多片重複（同 lot、同 chamber、同 slot）才算系統性。Select wafer 只列出前 50 片。"
+      en: "Good: uniformly green inside the circle, no structure, edge ≈ centre. Here centre {center} vs edge {edge}: centre − edge > 0.1 → watch, meaning edge yield loss. Scattered, isolated red cells = random defects (Poisson), reflecting defect density, not a process signature; patches, rings and lines are the systematic patterns. A pattern seen on one wafer counts as systematic only when it repeats on other wafers (same lot, chamber or slot). Select wafer lists only the first 50 wafers."
+    action:
+      act:
+        zh: "實際 bin map 在多片出現強烈系統性圖樣，或良率低於管制界限時：(1) 做 commonality（機台、chamber、slot、時間）；(2) 疊對同片的量測 map（膜厚、CD、overlay）與缺陷 map，找空間相關；(3) 依 OCAP hold 受影響 lot，請 EE 檢查對應零件（edge ring、ESC、bevel、晶圓置中）；(4) RDA 在紅區與綠區各挑晶粒做失效分析比較；(5) PIE 評估 disposition。"
+        en: "When a real bin map shows a strong systematic pattern on several wafers, or yield falls below its control limit: (1) run commonality (tool, chamber, slot, time); (2) overlay the same wafers' metrology maps (thickness, CD, overlay) and defect maps to find spatial correlation; (3) per the OCAP hold the affected lots and ask EE to check the related parts (edge ring, ESC, bevel, wafer centering); (4) RDA picks dies from red and green areas for comparative failure analysis; (5) PIE dispositions."
+      watch:
+        zh: "中心 − 邊緣 > 0.1：補量邊緣點位（膜厚、CD，在 edge exclusion 內側加點），確認同 chamber 其他晶圓是否重複，和 EE 確認 edge ring／ESC 的使用時數；在紀錄中標示圖樣類型。"
+        en: "Centre − edge > 0.1: add edge sites to the metrology (thickness, CD, just inside the edge exclusion), check whether other wafers from the same chamber repeat it, check edge ring / ESC hours with EE; note the pattern type in the record."
+      good:
+        zh: "沒有系統性圖樣，中心與邊緣接近。記錄平均與最低值即可。"
+        en: "No systematic pattern, centre and edge close. Record the mean and lowest value."
+    record:
+      zh: "[Wafer map] {wafer} · 平均局部良率 {mean} · 最低 {min} · 中心 {center} vs 邊緣 {edge} · 狀態 {status} · 圖樣（徑向／邊緣環／群聚／刮傷／無）：＿＿ · 同 chamber 其他片：＿＿ · 處置：＿＿"
+      en: "[Wafer map] {wafer} · mean local yield {mean} · lowest {min} · centre {center} vs edge {edge} · status {status} · pattern (radial / edge ring / cluster / scratch / none): ___ · other wafers, same chamber: ___ · action: ___"
+    roles:
+      RDA:
+        zh: "【Wafer map】{wafer}：{finding}。建議在最低區域（最低 {min}）與中心高良率區各挑晶粒做比較分析；若邊緣較差，請優先看邊緣的缺陷 review 與切面。量測端可提供同片的膜厚／CD map 供對位。"
+        en: "[Wafer map] {wafer}: {finding}. Suggest picking dies from the lowest area (lowest {min}) and from the high-yield centre for comparison; if the edge is worse, start with edge defect review and cross-sections. Metrology can provide the same wafer's thickness / CD maps for overlay."
+      PE:
+        zh: "【Wafer map】{wafer} 中心 {center} vs 邊緣 {edge}。若邊緣偏低在多片重複，可能是 center-edge 製程不均（溫度、氣流、電漿分布）；量測端會補邊緣點位的膜厚／CD 供比對。"
+        en: "[Wafer map] {wafer} centre {center} vs edge {edge}. If low edge yield repeats on several wafers, a centre-to-edge process non-uniformity (temperature, gas flow, plasma distribution) is likely; metrology will add edge sites for thickness / CD comparison."
+      EE:
+        zh: "【機台確認】{wafer} 呈現中心 {center}／邊緣 {edge}。若同一 chamber 多片都是邊緣偏低，請檢查 edge ring／focus ring 使用時數、ESC 狀況、晶圓置中（centering）與 bevel 相關零件。"
+        en: "[Tool check] {wafer} shows centre {center} / edge {edge}. If several wafers from the same chamber are low at the edge, please check edge ring / focus ring hours, ESC condition, wafer centering and bevel-related parts."
+      PIE_YE:
+        zh: "【可能影響良率】{wafer}：{finding}。邊緣與中心的差距直接影響可出貨晶粒數；請評估是否為系統性（多片、同機台），並決定是否 hold 或擴大抽樣。"
+        en: "[Possible yield impact] {wafer}: {finding}. The centre-to-edge gap directly changes the number of good dies; please assess whether it is systematic (several wafers, same tool) and decide on hold or wider sampling."
+      MGR_QE:
+        zh: "【狀態】Wafer map {wafer}：{status}。{finding}。已採取：與量測 map 比對、通知 EE；待決定：是否擴大檢查同機台的其他晶圓。"
+        en: "[Status] Wafer map {wafer}: {status}. {finding}. Done: compared with metrology maps, EE notified. Decision needed: whether to extend the check to other wafers from the same tool."
+
+  # ------------------------------------------------------------------------------------------------------ SPC Dashboard
+  sy_imr:
+    page: SPC Dashboard
+    title:
+      zh: "I-MR 管制圖（個別值，Western Electric 規則）與製程能力"
+      en: "I-MR control chart (individuals, Western Electric rules) and capability"
+    legend:
+      - item: "●— 藍色線＋點（參數名稱）· blue line + dots (parameter name)"
+        zh: "每一點＝一筆資料，依資料列的順序排列（使用產生的資料時＝一片晶圓，同一 lot 的晶圓連續排列）。本圖 {param} 共 {n} 點；最後一點離 CL {last_z}σ。"
+        en: "One point per data row, in row order (with generated data = one wafer, the wafers of a lot in sequence). Here {param}, {n} points; the last point is {last_z}σ from the CL."
+      - item: "— 綠色實線 CL 中心線 · green solid line"
+        zh: "中心線＝全部 {n} 點的平均值 {cl}。點應該隨機落在兩側。"
+        en: "Centre line = mean of all {n} points, {cl}. Points should scatter randomly on both sides."
+      - item: "┅ 紅色虛線 UCL / LCL 管制界限 (±3σ) · red dashed lines"
+        zh: "UCL／LCL＝CL ± 3σ＝{ucl}／{lcl}；σ ≈ {sigma}，由移動全距估計（MR̄ ÷ 1.128，短期變異）。由資料本身算出，代表製程自己的聲音，**不是規格**。SemiYield 用同一批資料算界限又判斷違規（沒有分 Phase I／Phase II）。"
+        en: "UCL / LCL = CL ± 3σ = {ucl} / {lcl}; σ ≈ {sigma}, estimated from the moving range (MR̄ ÷ 1.128, short-term variation). Computed from the data itself: the voice of the process, **not the spec**. SemiYield sets the limits and judges violations on the same data (no Phase I / Phase II split)."
+      - item: "● 紅色點 WE violation 違規點 · red markers"
+        zh: "違反 Western Electric 規則的點，共 {n_viol} 點，第一個在 #{first_viol}。SemiYield 檢查 8 條：(1) 1 點超出 3σ；(2) 連續 3 點中 2 點超過同側 2σ；(3) 連續 5 點中 4 點超過同側 1σ；(4) 連續 8 點在同側；(5) 連續 6 點持續上升或下降；(6) 連續 15 點都在 1σ 內（分層）；(7) 連續 14 點上下交替；(8) 連續 8 點都在 1σ 外（混合）。紅點標在違規連續段的最後一點。"
+        en: "Points that break a Western Electric rule: {n_viol} points, the first at #{first_viol}. SemiYield checks 8 rules: (1) 1 point beyond 3σ; (2) 2 of 3 beyond 2σ on the same side; (3) 4 of 5 beyond 1σ on the same side; (4) 8 in a row on one side; (5) 6 in a row rising or falling; (6) 15 in a row within 1σ (stratification); (7) 14 in a row alternating up and down; (8) 8 in a row beyond 1σ (mixture). The red marker sits on the last point of the violating run."
+    axes:
+      zh: "X 軸＝Observation 觀測序號（資料列順序，從 0 起算；不是時間戳記）；Y 軸＝{param}，單位同參數。Capability 卡片：Cp、Cpk 用短期 σ（移動全距，潛在能力）；Pp、Ppk 用全部資料的標準差（含漂移，實際表現）；Sigma level＝平均值到最近規格界限的距離（以短期 σ 計）＝3 × Cpk。全部依上方 USL／LSL 框計算：launcher 會填入建議值（方法顯示在框下方）；SemiYield 原本的預設是資料的 0.5／99.5 百分位，不是規格，算出的 Cp 永遠約 0.9。違規表 Out-of-Control Signals：Index＝觀測序號（同 X 軸）、Rule＝規則編號、Description＝說明；同一點違反多條規則會出現多列，沒有違規時顯示綠色訊息。"
+      en: "X = Observation (row order, from 0; not a timestamp); Y = {param} in the parameter's unit. Capability tiles: Cp and Cpk use the short-term σ (moving range, potential capability); Pp and Ppk use the standard deviation of all data (including drift, actual performance); Sigma level = distance from the mean to the nearest spec limit in short-term σ = 3 × Cpk. All are computed from the USL / LSL boxes above: the launcher fills in suggested values (method shown under the boxes); SemiYield's own default is the 0.5 / 99.5 percentile of the data, which is not a spec and always gives Cp ≈ 0.9. Violations table (Out-of-Control Signals): Index = observation number (same as the X axis), Rule = rule number, Description = text; a point that breaks several rules appears on several rows, and with no violations a green message is shown instead."
+    what:
+      zh: "I-MR 用在每次只有一個值的資料（每片一點）。σ 由相鄰兩點的差估計，只反映短期（片與片之間）變異，所以批間漂移不會把界限撐寬，而會以連續同側或趨勢（規則 2–5）的形式出現。管制圖回答「製程穩不穩定（in control）」；Cpk 回答「相對規格夠不夠好（capable）」。這是兩個不同的問題：製程可以穩定但能力不足（Cpk < 1.33），也可以能力足夠但不穩定。"
+      en: "I-MR is for data with one value per occasion (one point per wafer). σ comes from differences between neighbouring points and reflects only short-term (wafer-to-wafer) variation, so lot-to-lot drift does not widen the limits; it appears as runs or trends (rules 2–5). The control chart answers 'is the process stable (in control)?'; Cpk answers 'is it good enough against the spec (capable)?'. They are different questions: a process can be stable but not capable (Cpk < 1.33), or capable but not stable."
+    read:
+      zh: "好：點隨機分布在 CL 兩側、最近 5 點沒有紅點、Cpk ≥ 1.33 且 Pp／Ppk 接近 Cp／Cpk。需處理（act）：最近 5 點內有紅點＝現在進行中的異常。注意（watch）：只有較舊的紅點、最近 5 點已回到管制內。依規則判斷原因：規則 1＝突發事件或量測 flier；規則 2／3＝平均值偏移；規則 4＝持續偏移；規則 5＝趨勢、漂移；規則 6＝分層（界限太寬，可能混了兩個 chamber）；規則 7＝兩台機台交替或 APC 過度調整；規則 8＝兩個族群混合。假警報：8 條規則一起用在上千點時，完全穩定的常態資料也會有約 2–3% 的點被標紅（規則 1 單獨約 0.27%），要看是否成群、成型，不是數紅點。非常態參數（例如 yield 集中在 0.999、上限為 1，或 defect_density）用 ±3σ 的 I-MR 幾乎每點都會被標紅，不適用。Pp 明顯低於 Cp＝批間漂移。"
+      en: "Good: points scatter randomly around the CL, no red markers in the last 5 points, Cpk ≥ 1.33 and Pp / Ppk close to Cp / Cpk. Act: a red marker within the last 5 points = an event in progress. Watch: only older red markers, the last 5 points back in control. Read the cause from the rule: rule 1 = sudden event or metrology flier; rules 2 / 3 = mean shift; rule 4 = sustained shift; rule 5 = trend, drift; rule 6 = stratification (limits too wide, perhaps two chambers mixed); rule 7 = two tools alternating or APC over-adjusting; rule 8 = two populations mixed. False alarms: with all 8 rules on thousands of points, perfectly stable normal data still gets about 2–3% of points marked red (rule 1 alone about 0.27%), so look for clusters and patterns rather than counting markers. Non-normal parameters (e.g. yield piled up at 0.999 with a ceiling of 1, or defect_density) get almost every point marked by a ±3σ I-MR; the chart does not suit them. Pp clearly below Cp = lot-to-lot drift."
+    action:
+      act:
+        zh: "OCAP：(1) 先確認量測：同一片在同一台／reference 機台重測，查 GOF、對焦、量測機台的 monitor 片 → 若是量測問題，交量測端處理、產品放行；(2) 確認是真的製程偏移 → 從最近違規點所屬的 lot 起 hold，通知 EE 檢查機台（PM 紀錄、零件更換、警報）並視情況 inhibit；(3) 通知 PE／PIE 評估受影響晶圓的 disposition；(4) 修復後跑 qual 片，確認回到 CL（{cl}）附近再 release。"
+        en: "OCAP: (1) verify the measurement first: re-measure the same wafer on the same and on a reference tool, check GOF, focus and the metrology tool's monitor wafer → if it is metrology, fix it there and release product; (2) if the process really moved → hold from the lot of the most recent violation, ask EE to check the tool (PM log, part swaps, alarms) and inhibit if needed; (3) ask PE / PIE to disposition the affected wafers; (4) after the fix, run qual wafers and release only when they are back near the CL ({cl})."
+      watch:
+        zh: "不必停機，但要追：在 SPC 點上加註解（已知原因或「調查中」），看違規的規則類型與違規點屬於哪些 lot／chamber（commonality），提高抽樣；若 Cpk < 1.33（以真實規格計算），與 PE 討論是否需要調整 target 或縮小變異。"
+        en: "No tool-down needed, but follow up: comment the SPC points (known cause or 'under investigation'), check the rule types and which lots / chambers the violations belong to (commonality), raise sampling; if Cpk < 1.33 (against the real spec), discuss with PE whether to re-target or reduce variation."
+      good:
+        zh: "製程穩定。照常記錄；PM 或 recipe 變更後，用變更後的基準期（Phase I）重新計算界限，不要用含異常的全部資料。"
+        en: "Process is stable. Record as usual; after a PM or recipe change, recompute the limits from a post-change baseline (Phase I), not from all data including excursions."
+    record:
+      zh: "[SPC I-MR] {param} · {n} 點 · CL {cl} · UCL／LCL {ucl}／{lcl}（σ {sigma}）· 違規 {n_viol} 點（第一個 #{first_viol}）· 最後一點 {last_z}σ · 狀態 {status} · Cpk ＿＿／Ppk ＿＿（USL／LSL 來源：＿＿）· 處置：＿＿"
+      en: "[SPC I-MR] {param} · {n} points · CL {cl} · UCL / LCL {ucl} / {lcl} (σ {sigma}) · {n_viol} violation points (first #{first_viol}) · last point {last_z}σ · status {status} · Cpk ___ / Ppk ___ (USL / LSL source: ___) · action: ___"
+    roles:
+      RDA:
+        zh: "【SPC 通知】{param}：{finding}。若需確認是否伴隨缺陷，建議從違規點（第一個 #{first_viol}）對應的晶圓開始 review；量測端可提供晶圓 ID 與 site 座標。"
+        en: "[SPC notice] {param}: {finding}. If you need to check for related defects, start the review with the wafers behind the violations (first #{first_viol}); metrology can provide wafer IDs and site coordinates."
+      PE:
+        zh: "【SPC】{param} I-MR：{finding}。CL {cl}，界限 {lcl}–{ucl}，最後一點 {last_z}σ。請確認期間的 recipe／APC 變更與進料差異；Cpk／Ppk 請以實際規格判斷（不是資料百分位）。量測端已先排除量測問題。"
+        en: "[SPC] {param} I-MR: {finding}. CL {cl}, limits {lcl}–{ucl}, last point {last_z}σ. Please check recipe / APC changes and incoming material in that window; judge Cpk / Ppk against the real spec (not data percentiles). Escalated only after metrology was ruled out."
+      EE:
+        zh: "【機台確認】{param} 有 {n_viol} 個 WE 違規點（第一個 #{first_viol}）。請對照該時間點的 PM、零件更換與機台警報；規則 1（單點超出）多為突發事件，規則 4／5（同側、趨勢）多為漂移或老化。需要時 inhibit 並跑 qual 片。"
+        en: "[Tool check] {param} has {n_viol} WE violation points (first #{first_viol}). Please compare with PMs, part swaps and alarms around that time; rule 1 (single point out) usually means a sudden event, rules 4 / 5 (runs, trends) drift or aging. Inhibit and run qual wafers if needed."
+      PIE_YE:
+        zh: "【可能影響良率】{param}：{finding}。受影響範圍從違規點 #{first_viol} 起；請評估電性／良率風險與受影響 lot 的 disposition。Cpk（實際規格）＿＿。"
+        en: "[Possible yield impact] {param}: {finding}. Exposure starts at violation #{first_viol}; please assess electrical / yield risk and the disposition of the affected lots. Cpk (real spec) ___."
+      MGR_QE:
+        zh: "【狀態】{param} SPC：{status}。{finding}。已採取：量測確認、通知 EE／PE；待決定：受影響 lot 的 disposition。紀錄：e-log 與 SPC 註解已更新。"
+        en: "[Status] {param} SPC: {status}. {finding}. Done: measurement verified, EE / PE notified. Decision needed: disposition of the affected lots. Records: e-log and SPC comments updated."
+
+  # --------------------------------------------------------------------------------------------------- Yield Prediction
+  sy_shap:
+    page: Yield Prediction
+    title:
+      zh: "SHAP 特徵重要度（良率預測模型，平均 |SHAP|）"
+      en: "SHAP feature importance (yield model, mean |SHAP|)"
+    legend:
+      - item: "▬ 藍色橫條 · blue horizontal bars"
+        zh: "每條＝一個製程參數的平均 |SHAP|：在測試集（最新的晶圓）上，這個參數讓模型預測良率偏離平均預測值的平均幅度（取絕對值，不分正負）。由上到下由大到小；最上面是 {top}（佔總和 {top_share}%），其次 {second}。"
+        en: "Each bar = one process parameter's mean |SHAP|: on the test set (the newest wafers), how far on average this parameter moves the predicted yield away from the average prediction (absolute value, sign ignored). Sorted with the largest at the top; the top bar is {top} ({top_share}% of the total), then {second}."
+    axes:
+      zh: "X 軸＝Mean |SHAP value|，單位同良率（0–1；0.001＝0.1% 良率）；Y 軸＝9 個製程參數。上方的 R²、RMSE、MAE 卡片是模型在測試集的準確度，先看它們再看 SHAP。"
+      en: "X = mean |SHAP value| in yield units (0–1; 0.001 = 0.1% yield); Y = the 9 process parameters. The R², RMSE and MAE cards above are the model's accuracy on the test set; read them before the SHAP bars."
+    what:
+      zh: "SHAP（Shapley 值）把每一次預測拆成各參數的貢獻；取絕對值平均就是整體重要度。SemiYield 用 TreeExplainer 算集成模型中的隨機森林成員（不是整個 stacking 集成），資料是測試集（依時間最後的晶圓）。它解釋的是「模型」，不是「製程」：代表關聯，不是因果，也不顯示方向（偏高好還是偏低好）。SemiYield 產生器的答案是已知的：良率由 gate_oxide_thickness、poly_cd、contact_resistance（超出 ±3σ 才扣參數良率）與 defect_density（Murphy 模型；defect_density 本身又隨閘極氧化層偏差與機台老化上升）決定，可以用來檢查模型有沒有學對。"
+      en: "SHAP (Shapley values) splits each prediction into per-parameter contributions; the mean absolute value is the global importance. SemiYield runs TreeExplainer on the random-forest member of the ensemble (not on the whole stacked ensemble), on the test set (the last wafers in time). It explains the model, not the process: association, not causation, and it shows no direction (whether high or low is better). In SemiYield's generator the answer is known: yield is driven by gate_oxide_thickness, poly_cd and contact_resistance (parametric yield drops only beyond ±3σ) and by defect_density (Murphy model; defect_density itself rises with gate-oxide deviation and equipment age), so you can check whether the model learned the right thing."
+    read:
+      zh: "先確認模型可信：R² 太低（例如 < 0.5）時 SHAP 排名沒有意義。再看排名是否合理、是否集中（{top} 佔 {top_share}%）。陷阱：(1) 相關的參數會分攤或互換重要度（defect_density 部分是由閘極氧化層偏差算出來的）；(2) 代理變數：會隨時間或機台老化漂移的參數（etch_rate、deposition_unif）可能吸收「老化」的效果；(3) 很小的條可能只是雜訊：不在良率公式裡的參數（例如 metal_resistance）也可能分到幾 %；(4) 控制得很好的關鍵參數變異小，SHAP 反而小：低 SHAP 不代表可以放寬管控；(5) 這裡 yield 多在 0.999，所以數值都很小。"
+      en: "First check that the model is credible: with a low R² (e.g. < 0.5) the SHAP ranking means nothing. Then check that the ranking makes sense and how concentrated it is ({top} holds {top_share}%). Traps: (1) correlated parameters share or swap importance (defect_density is partly computed from gate-oxide deviation); (2) proxies: parameters that drift with time or equipment age (etch_rate, deposition_unif) can absorb an aging effect; (3) tiny bars may be noise: a parameter not in the yield formula (e.g. metal_resistance) can still get a few %; (4) a critical parameter that is tightly controlled varies little and so gets a small SHAP: low SHAP is no reason to relax its control; (5) yield is mostly 0.999 here, so all values are small."
+    action:
+      act:
+        zh: "若 SHAP 指向的參數同時有真實的良率損失：不要只憑 SHAP 改製程。(1) 確認該參數的量測可信：MSA／GR&R、量測機台匹配、抽樣點位（量測機台的 offset 也會造成假關聯）；(2) commonality 與物理機制；(3) split lot／DOE：刻意改變 {top}、其他條件固定；(4) 確認後才調整 target、規格或抽樣，並走變更管理。"
+        en: "If the parameter SHAP points to coincides with a real yield loss: do not change the process on SHAP alone. (1) Confirm the parameter's measurement: MSA / GR&R, metrology tool matching, sampling sites (a metrology tool offset can create a false association); (2) commonality and a physical mechanism; (3) split lot / DOE: vary {top} on purpose with everything else fixed; (4) only then adjust target, spec or sampling, through change control."
+      watch:
+        zh: "模型 R² 低，或排名第一的參數在物理上說不通：檢查資料（缺值、離群值、時間順序、單位），檢查是否為代理變數，增加資料後重新訓練；確認前不據此下結論。"
+        en: "Model R² low, or the top parameter makes no physical sense: check the data (missing values, outliers, time order, units), check for proxies, retrain with more data; draw no conclusion until confirmed."
+      good:
+        zh: "SHAP＝關聯：用排名決定量測監控與實驗的優先順序：確認 {top} 與 {second} 的 MSA，提高它們的 SPC 抽樣與管控，並提出 split lot 驗證計畫。記錄模型 R² 與排名。"
+        en: "SHAP = association: use the ranking to prioritise metrology and experiments: confirm MSA for {top} and {second}, tighten their SPC sampling and control, and propose a split-lot verification plan. Record the model R² and the ranking."
+    record:
+      zh: "[SHAP] 良率模型 R² ＿＿ · 最重要 {top}（{top_share}% 總 |SHAP|）· 其次 {second} · 狀態 {status} · 量測 MSA：＿＿ · split lot／DOE 計畫：＿＿"
+      en: "[SHAP] yield model R² ___ · top {top} ({top_share}% of total |SHAP|) · next {second} · status {status} · metrology MSA: ___ · split lot / DOE plan: ___"
+    roles:
+      RDA:
+        zh: "【良率模型】{finding}。若要做失效分析，建議挑 {top} 偏高與偏低的晶圓各幾片比較，確認是否有對應的失效模式；這只是統計關聯，物理證據要靠 FA。"
+        en: "[Yield model] {finding}. For failure analysis, suggest comparing a few wafers with high and low {top} to see whether a matching failure mode exists; this is only a statistical association, the physical evidence has to come from FA."
+      PE:
+        zh: "【SHAP】排名：{top}（{top_share}%）＞ {second}。這是模型的關聯，不是因果；建議用 split lot 刻意改變 {top}（其他條件固定）確認影響，再決定是否調整 target 或規格。量測端會先確認 {top} 的 GR&R 與機台匹配。"
+        en: "[SHAP] Ranking: {top} ({top_share}%) > {second}. This is a model association, not causation; suggest a split lot that varies {top} on purpose (everything else fixed) before deciding on target or spec changes. Metrology will first confirm GR&R and tool matching for {top}."
+      EE:
+        zh: "【資料需求】良率模型把 {top} 列為最重要參數。若 {top} 的變異主要來自特定機台／chamber，請協助提供機台別資料與 PM 紀錄，以判斷關聯是來自機台差異還是時間漂移。"
+        en: "[Data request] The yield model ranks {top} as most important. If {top} varies mainly by tool / chamber, please share per-tool data and PM records so we can tell whether the association comes from a tool difference or from drift over time."
+      PIE_YE:
+        zh: "【良率模型】{finding}。建議：(1) 先確認模型 R² 足夠；(2) 以 split lot／DOE 驗證 {top} 與 {second}；(3) 驗證前不據此做 disposition 或改規格。"
+        en: "[Yield model] {finding}. Suggest: (1) confirm the model R² is adequate; (2) verify {top} and {second} with a split lot / DOE; (3) no disposition or spec change based on this until verified."
+      MGR_QE:
+        zh: "【狀態】良率模型 SHAP：最重要參數 {top}（{top_share}%），其次 {second}。屬關聯分析，尚未證實因果；下一步：量測 MSA 確認與 split lot 驗證，需要核准實驗晶圓。"
+        en: "[Status] Yield model SHAP: top parameter {top} ({top_share}%), then {second}. Association only, causation not yet shown; next: metrology MSA check and split-lot verification, which needs approval for experimental wafers."
+
+  # -------------------------------------------------------------------------------------------------- Process Optimizer
+  sy_bo:
+    page: Process Optimizer
+    title:
+      zh: "貝氏最佳化收斂圖（Bayesian optimization convergence）"
+      en: "Bayesian optimization convergence"
+    legend:
+      - item: "● 淺藍色點 Observations · light-blue dots"
+        zh: "每一次實驗（評估一次目標函數，相當於跑一片實驗晶圓）的良率，共 {n} 次。第 0–4 次是 Latin hypercube 隨機起始點（探索）；之後每次由高斯過程（GP）代理模型加 Expected Improvement（EI）挑下一個條件。"
+        en: "Yield from each experiment (one objective evaluation, equivalent to one experimental wafer), {n} in total. Iterations 0–4 are Latin-hypercube random start points (exploration); after that each condition is chosen by a Gaussian-process (GP) surrogate with Expected Improvement (EI)."
+      - item: "— 深藍色線 Best so far · dark-blue line"
+        zh: "到目前為止的最佳觀測值（累積最大值），只會上升或持平。最佳 {best} 出現在第 {i_best} 次，之後 {flat} 次沒有再改善。"
+        en: "Best value observed so far (running maximum); it only rises or stays flat. The best, {best}, came at iteration {i_best}, with no improvement in the {flat} iterations since."
+    axes:
+      zh: "X 軸＝Iteration 實驗次序（從 0 起算，含 5 個起始點）；Y 軸＝Yield（示範公式的良率，0–1）。上方卡片＝最佳條件（gate_oxide_time、anneal_temp）與 Best Yield。下方製程窗口表 Process Window (95% of optimum)：以最佳點為中心，每次只改一個參數（另一個固定在最佳點），找 GP 預測良率 ≥ 95% × 最佳觀測良率的範圍；這是單參數切面，不是兩參數同時變動的聯合窗口，若邊界剛好等於搜尋上下限，真正的窗口可能更寬。"
+      en: "X = iteration (from 0, including the 5 start points); Y = yield (from the demo formula, 0–1). The cards above = best condition (gate_oxide_time, anneal_temp) and Best Yield. The Process Window (95% of optimum) table below: centred on the best point, one parameter at a time (the other held at the best point), the range where the GP-predicted yield ≥ 95% × the best observed yield; it is a one-parameter cut, not a joint window with both parameters moving, and a bound equal to the search limit means the real window may be wider."
+    what:
+      zh: "貝氏最佳化用 GP 建立「條件 → 良率」的代理模型（含不確定度），EI 在「利用」（往預測高的地方試）與「探索」（往不確定的地方試）之間取捨，用最少的實驗找到最佳條件。⚠ 此頁的良率是示範公式：二次曲面，最高 0.95 固定在你輸入範圍的正中央，再加上 σ = 0.02 的隨機雜訊；不是製程資料。實際應用時每一點是一片 split 晶圓，量測雜訊（製程＋量測重複性）會直接影響結論。"
+      en: "Bayesian optimization builds a GP surrogate of condition → yield (with uncertainty); EI trades off exploitation (try where the prediction is high) and exploration (try where it is uncertain) to find the optimum in few experiments. ⚠ The yield on this page is a demo formula: a quadratic surface whose maximum, 0.95, always sits at the centre of the bounds you enter, plus random noise with σ = 0.02; it is not process data. In real use each point is a split wafer, and measurement noise (process plus metrology repeatability) directly affects the conclusion."
+    read:
+      zh: "好的收斂：起始點之後最佳值很快上升，然後變平；後段的點多半靠近最佳值（利用），偶爾出現低點是 EI 在探索，不是失敗。最佳值出現在最後 3 次以內（{flat} < 3）→ 注意：可能還沒收斂，要多跑幾次。最佳值出現在第 0–4 次＝貝氏最佳化沒有贏過隨機起始點（改善 {gain} 為 0）。小於雜訊的改善（示範中約 0.02；實務上是量測＋製程重複性）不算數。示範的真實最高是 0.95，Best Yield 高於 0.95 就是雜訊造成的高估（winner's curse），確認實驗的結果通常會比它低。若起始點之後的點幾乎停在同一個值附近、看不出結構，可能是沒有安裝 GP 套件，最佳化器在重複同一點。用預設範圍（50–200 s、900–1100 °C）且最佳值約 0.95 時，示範的真實 95% 窗口約 102–148 s、960–1040 °C，可用來檢查窗口表。"
+      en: "Good convergence: best-so-far rises quickly after the start points, then flattens; later points mostly sit near the best (exploitation), and the occasional low point is EI exploring, not a failure. Best found within the last 3 iterations ({flat} < 3) → watch: it may not have converged; run more iterations. Best found at iterations 0–4 = Bayesian optimization never beat the random start points (improvement {gain} is 0). An improvement smaller than the noise (about 0.02 in the demo; in practice metrology plus process repeatability) does not count. The demo's true maximum is 0.95, so a Best Yield above 0.95 is overestimated by noise (winner's curse) and a confirmation run will usually come in lower. If the points after the start sit at almost the same value with no structure, the GP package may be missing and the optimizer is repeating one point. With the default bounds (50–200 s, 900–1100 °C) and a best near 0.95, the demo's true 95% window is about 102–148 s and 960–1040 °C, a check for the window table."
+    action:
+      act:
+        zh: "（實際製程）採用新條件前：(1) 確認實驗：最佳條件與 POR 各跑數片（例如 ≥ 3 片），差異要大於量測與製程重複性；(2) 驗證窗口邊界（兩參數同時偏移的角落也要試）；(3) 檢查其他參數與副作用（膜厚、CD、Vt、缺陷）；(4) 走變更管理（ECN／MOC），並以新條件重建 SPC 基準。確認前維持 POR。"
+        en: "(Real process) Before adopting a new condition: (1) confirmation runs: several wafers (e.g. ≥ 3) at the best condition and at POR, and the difference must exceed metrology and process repeatability; (2) verify the window edges (including corners where both parameters move); (3) check other parameters and side effects (thickness, CD, Vt, defects); (4) go through change control (ECN / MOC) and rebuild the SPC baseline for the new condition. Stay on POR until confirmed."
+      watch:
+        zh: "最佳值才剛出現（{flat} < 3）：多跑幾次，或在最佳點附近縮小範圍再跑，直到最佳值不再上升；先不要凍結條件。"
+        en: "The best is recent ({flat} < 3): run more iterations, or narrow the bounds around the best point and run again, until the best stops rising; do not freeze the condition yet."
+      good:
+        zh: "已收斂（最佳值之後 {flat} 次沒有改善）。下一步是確認實驗，而不是直接採用：比較最佳條件與 POR，看窗口表的寬度（越寬越好量產），並為新條件規劃量測監控（SPC 基準、抽樣）。"
+        en: "Converged (no improvement in {flat} iterations after the best). The next step is confirmation, not adoption: compare the best condition with POR, check the window table width (wider = easier to run in production), and plan metrology monitoring for the new condition (SPC baseline, sampling)."
+    record:
+      zh: "[BO] {n} 次實驗 · 最佳 {best} @ 第 {i_best} 次 · 之後 {flat} 次未改善 · 起始點後改善 {gain} · 狀態 {status} · 窗口（95%）：gate_oxide_time ＿＿–＿＿ s、anneal_temp ＿＿–＿＿ °C · 確認實驗（最佳 vs POR，各 ＿＿ 片）：＿＿"
+      en: "[BO] {n} experiments · best {best} at iteration {i_best} · no improvement for {flat} since · gain after start points {gain} · status {status} · window (95%): gate_oxide_time ___–___ s, anneal_temp ___–___ °C · confirmation (best vs POR, ___ wafers each): ___"
+    roles:
+      RDA:
+        zh: "【製程最佳化】{finding}。新條件做確認實驗時，請協助比較最佳條件與 POR 晶圓的缺陷數與型態，確認良率改善不是以缺陷增加為代價。"
+        en: "[Process optimization] {finding}. When the new condition goes into confirmation runs, please compare defect counts and types between best-condition and POR wafers to make sure the yield gain does not come with more defects."
+      PE:
+        zh: "【貝氏最佳化】最佳 {best} 出現在第 {i_best} 次（共 {n} 次），之後 {flat} 次未改善，起始點後改善 {gain}。此頁為示範公式；實際應用時建議最佳條件與 POR 各跑 ≥ 3 片確認，改善需大於量測與製程重複性才算數。"
+        en: "[Bayesian optimization] Best {best} at iteration {i_best} (of {n}), no improvement in {flat} since, gain after the start points {gain}. This page uses a demo formula; in real use run ≥ 3 wafers each at the best condition and at POR, and count the gain only if it exceeds metrology and process repeatability."
+      EE:
+        zh: "【機台確認】最佳化建議的新條件（gate oxide time、anneal temp）需要機台能穩定執行：請確認設定值在機台能力與校正範圍內，並安排確認實驗的機台與時間。"
+        en: "[Tool check] The new condition (gate oxide time, anneal temp) must run stably on the tool: please confirm the setpoints are within the tool's capability and calibrated range, and schedule tool time for the confirmation runs."
+      PIE_YE:
+        zh: "【最佳化結果】{finding}。採用前需要確認實驗與窗口驗證（窗口表只是單參數切面），並確認其他電性參數不受影響；確認前不變更 POR。"
+        en: "[Optimization result] {finding}. Before adoption we need confirmation runs and window verification (the window table is only a one-parameter cut), and other electrical parameters must be unaffected; POR stays until confirmed."
+      MGR_QE:
+        zh: "【狀態】製程最佳化：{status}。{finding}。下一步：確認實驗（最佳 vs POR），通過後走變更管理；需要核准實驗晶圓與機台時間。"
+        en: "[Status] Process optimization: {status}. {finding}. Next: confirmation runs (best vs POR), then change control if they pass; approval needed for experimental wafers and tool time."

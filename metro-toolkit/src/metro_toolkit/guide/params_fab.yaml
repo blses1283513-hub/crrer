@@ -1,0 +1,245 @@
+# Fab simulator page controls, KPI tiles and table columns (incl. the wafer-map pattern classifier).
+# The shared control-chart keys (spc.chart, spc.rules, spc.stat, spc.phase1, spc.ewma_lambda, spc.cusum_k,
+# spc.cusum_h) live in params_spc.yaml and are reused by "Score my detection".
+# Each entry: zh and en, written as a Metro AE would explain it: definition, typical setting, effect, traps.
+# All data on this page is SIMULATED practice data with an answer key (config/fab_sim.yaml).
+
+params:
+  fab.scenario:
+    zh: |
+      **Scenario 情境**：要注入哪些事件。所有事件都寫進答案（answer key），先自己用 Wafer map／SPC 找，再回來對答案。數值為 config/fab_sim.yaml 的預設。
+      - **baseline 正常生產**：沒有注入事件，只有自然變異（chamber offset、PM 之間的漂移、隨機缺陷，少量 scratch／cluster 圖樣）。用來認識「正常時的誤警報有多少」。
+      - **chamber_shift 單一 chamber 偏移**：GATE_OX 的 RTP02-B 從第 30 批起 8 批，閘極氧化層 +0.025 nm（約 2σ）。突發事件，I-MR 就抓得到；只有走該 chamber 的晶圓良率下降。
+      - **slow_drift 慢漂移**：CAP_HK 的 ALD01-A 從第 20 批起 30 批，high-k 厚度每批 +0.003 nm（每批約 0.1σ）。像消耗品老化，EWMA／CUSUM 的強項。
+      - **metrology_offset 量測機台偏差**：量測機台 FT02 從第 25 批起量 gate_ox_thk 多 0.030 nm。**只影響量測值，產品沒變，良率不會掉**。SPC 會看到偏移，但依 metro_tool_id 分組才看得出是量測問題（gauge vs process）；正確處置是修量測機台，絕不是調製程。
+      - **particle_event 微粒事件**：TIN_DEP 的 CVD02 從第 40 批起 4 批，killer defect 密度 ×6、邊緣環圖樣。良率掉、die map 出現 edge ring、inline defect_density 上升。
+      - **edge_bowl 片內形狀改變**：WL_ETCH 的 ETC01-C 從第 18 批起 12 批，中心與邊緣 CD 差加大 1.2 nm。平均值可能幾乎不動，要看片內 1σ %；邊緣／中心的晶粒 parametric 失效。
+      - **recipe_change 配方變更**：WL_LITHO 所有機台從第 45 批起曝光 CD +0.35 nm，傳到蝕刻後 CD（wl_cd_etch）。所有機台同時偏 → 不是機台問題，查變更管理（recipe 版本）。
+      - **mixed 綜合練習**：上面五種事件同時存在（偏移、從第 12 批就開始的漂移、量測偏差、微粒事件、bowl），時間互相重疊，最接近真實情況。
+      - **pattern_zoo 圖樣大全**：沒有事件，但約 60% 晶圓帶空間缺陷圖樣（scratch、cluster、center、edge_ring 各 15%），用來練習晶圓圖樣分類（分類器也是用另一個種子的 pattern_zoo 訓練）。
+    en: |
+      **Scenario**: which events to inject. Every event is written to the answer key: find them yourself on the Wafer map / SPC pages first, then come back and check. Values are the defaults in config/fab_sim.yaml.
+      - **baseline**: no injected events, only natural variation (chamber offsets, drift between PMs, random defects with a few scratch / cluster patterns). Use it to learn how many false alarms "normal" produces.
+      - **chamber_shift**: on GATE_OX chamber RTP02-B, from lot 30 for 8 lots, gate oxide +0.025 nm (about 2σ). A sudden event that I-MR catches; only wafers that ran on that chamber lose yield.
+      - **slow_drift**: on CAP_HK chamber ALD01-A, from lot 20 for 30 lots, high-k thickness +0.003 nm per lot (about 0.1σ per lot). Like consumable wear; the strength of EWMA / CUSUM.
+      - **metrology_offset**: metrology tool FT02 reads gate_ox_thk 0.030 nm high from lot 25. **Only the measurement moves; the product is unchanged and yield does not drop.** SPC sees a shift, but only grouping by metro_tool_id shows it is the gauge, not the process; the right fix is the metrology tool, never a process adjustment.
+      - **particle_event**: on TIN_DEP tool CVD02, from lot 40 for 4 lots, killer-defect density ×6 with an edge-ring pattern. Yield drops, die maps show an edge ring, inline defect_density rises.
+      - **edge_bowl**: on WL_ETCH chamber ETC01-C, from lot 18 for 12 lots, the centre-to-edge CD difference grows by 1.2 nm. The mean may barely move; watch within-wafer 1σ %; edge / centre dies fail parametrically.
+      - **recipe_change**: on WL_LITHO, all tools, from lot 45, litho CD +0.35 nm, carried into the etched CD (wl_cd_etch). All tools move together → not a tool problem; check change control (recipe version).
+      - **mixed**: the five events above together (shift, a drift that starts at lot 12, metrology offset, particle event, bowl), overlapping in time: the closest to real life.
+      - **pattern_zoo**: no events, but about 60 % of wafers carry a spatial defect pattern (scratch, cluster, center, edge_ring at 15 % each), for practising wafer-map pattern classification (the classifier itself is trained on pattern_zoo with a different seed).
+  fab.lots:
+    zh: |
+      **Lots 批數**：要模擬幾批（20–120，預設 60）。每批 25 片，每批只量測 5 片（槽位 1、6、13、18、25），批與批間隔 3 小時；每片都有 e-test 與良率。
+      - 批數越多 → 資料越多、Phase I 之後可監控的點越多，但模擬與計分較慢。
+      - 陷阱：事件是用固定的批次序號定義的（例如 mixed 的微粒事件從第 50 批開始）。批數太少時，事件根本不會發生，答案裡會顯示「量測不到」。
+    en: |
+      **Lots**: how many lots to simulate (20–120, default 60). 25 wafers per lot, only 5 measured per lot (slots 1, 6, 13, 18, 25), 3 hours between lots; every wafer has e-test and yield.
+      - More lots → more data and more Phase II points to monitor, but slower simulation and scoring.
+      - Trap: events are defined at fixed lot indices (e.g. the particle event in mixed starts at lot 50). With too few lots the event never happens and the answer key shows it as not observable.
+  fab.seed:
+    zh: |
+      **Seed 亂數種子**：同樣的情境＋批數＋種子 → 完全相同的資料（可重現，方便和同事對答案）。換種子 → 同一個情境的另一次「實現」：chamber offset、PM 時間點、缺陷位置都不同。
+      想確認某個管制圖設定是不是真的比較好，用 2–3 個種子各跑一次，不要只看一次的結果。
+    en: |
+      **Seed**: same scenario + lots + seed → identical data (reproducible, handy for comparing answers with colleagues). A different seed → another realisation of the same scenario: different chamber offsets, PM timing and defect positions.
+      To check whether a chart setup is really better, run 2–3 seeds; never judge from a single run.
+  fab.name:
+    zh: |
+      **資料集名稱**：存檔名稱，預設為 sim_ 加上情境名稱（例如 sim_mixed）。存成一般的匯入資料集（會出現在左側資料來源，Wafer map／SPC 頁可直接用），旁邊另存答案檔（_truth_wafers.csv、_truth_events.csv、_dies.csv、_truth.json）。
+      同名會直接覆蓋；英數、底線、連字號以外的字元會換成底線。想保留不同種子的結果，請用不同名稱（例如加上種子號碼）。
+    en: |
+      **Dataset name**: file name, default sim_ plus the scenario name (e.g. sim_mixed). Saved as a normal imported dataset (it appears in the sidebar data source and works on the Wafer map / SPC pages), with the answer-key files next to it (_truth_wafers.csv, _truth_events.csv, _dies.csv, _truth.json).
+      The same name overwrites the old files; characters other than letters, digits, underscore and hyphen become underscores. To keep runs with different seeds, use different names (e.g. append the seed).
+  fab.sy_names:
+    zh: |
+      **用 SemiYield 欄位名稱**：把 gate_ox_thk → gate_oxide_thickness、wl_cd_etch → poly_cd、rs_ohm_sq → metal_resistance，讓 SemiYield 的 Yield Prediction 可以直接讀。
+      只改欄位名稱、不改數值；答案檔仍保留原名並記錄對照表。這只是為了相容，poly_cd 在這裡其實是字元線蝕刻 CD。
+    en: |
+      **Use SemiYield column names**: renames gate_ox_thk → gate_oxide_thickness, wl_cd_etch → poly_cd, rs_ohm_sq → metal_resistance so SemiYield's Yield Prediction can read the dataset directly.
+      Names only, values unchanged; the answer key keeps the original names and stores the mapping. This is for compatibility only: poly_cd here is really the word-line etch CD.
+  fab.generate:
+    zh: |
+      **產生並儲存**：依目前的情境、批數、種子跑模擬並存檔，左側資料來源會自動切到這份資料。
+      建議流程：產生 → 先到 Wafer map／SPC 頁自己找問題（不要先看答案）→ 回來用「計算分數」與「比較管制圖」對答案。
+    en: |
+      **Generate and save**: runs the simulation with the current scenario, lots and seed, saves it and switches the sidebar data source to it.
+      Suggested flow: generate → look for problems yourself on the Wafer map / SPC pages (without peeking at the answer) → come back and check with "Score" and "Compare charts".
+  fab.pick:
+    zh: |
+      **檢視的模擬資料**：本頁所有 KPI、圖表、分類與分數都用這份資料。清單只列有答案檔的模擬資料集（一般匯入的資料沒有答案，不會出現）。
+    en: |
+      **Simulated dataset to view**: every KPI, chart, classification and score on this page uses it. Only simulated datasets with an answer key are listed (imported data has no answer and does not appear).
+  fab.m_wafers:
+    zh: "**晶圓**：總片數＝批數 × 25。每片都有 e-test 與良率，但只有 5/25 有線上量測（抽樣），所以 SPC 看到的只是其中五分之一。"
+    en: "**Wafers**: total count = lots × 25. Every wafer has e-test and yield, but only 5 of 25 have inline metrology (sampling), so SPC sees only one fifth of them."
+  fab.m_lots:
+    zh: "**批**：批數。批次序號從 0 起算（lot_id = D + 序號 + 1），答案中事件的起訖批也用這套序號。"
+    en: "**Lots**: number of lots. Lot index counts from 0 (lot_id = D + index + 1); event start and end lots in the answer key use the same index."
+  fab.m_mean_yield:
+    zh: "**平均良率**：所有晶圓良率（好晶粒 ÷ 總晶粒）的平均。本模擬在沒有事件時約 90% 上下，主要損失是隨機 killer defect。和 baseline 情境比較，就知道事件吃掉多少良率。"
+    en: "**Mean yield**: average wafer yield (good dies ÷ all dies) over all wafers. Without events this simulation sits around 90 %, mostly lost to random killer defects. Compare with the baseline scenario to see how much the events cost."
+  fab.m_yield_sd:
+    zh: "**良率標準差**：晶圓之間的良率標準差（個百分點），包含批間、批內（chamber 差）與缺陷的隨機性。平均值正常但標準差很大 → 少數晶圓非常差（局部 excursion 或缺陷圖樣），到 die map 從良率最低的晶圓看起。注意它和良率趨勢圖的「批間 sd」不同。"
+    en: "**Yield sd**: wafer-to-wafer standard deviation of yield (percentage points), including lot-to-lot, within-lot (chamber) and defect randomness. Normal mean but large sd → a few very bad wafers (a local excursion or defect patterns); start from the lowest-yield wafers on the die map. Not the same as the lot-to-lot sd in the yield trend."
+  fab.m_events:
+    zh: "**注入事件**：答案中注入的事件數。細節在最下方「看答案」；建議先自己找，找完再打開。"
+    en: "**Injected events**: number of events in the answer key. Details are in the answer key at the bottom; find them yourself before opening it."
+  fab.wafer_select:
+    zh: |
+      **晶圓（良率最低的在前）**：選一片晶圓畫 die map。清單依良率由低到高排序，從最差的看起最快找到問題。
+      也要挑一片良率正常的當對照：先知道「正常的 map 長什麼樣」，才看得出異常的位置與圖樣。
+    en: |
+      **Wafer (lowest yield first)**: pick a wafer for the die map. The list is sorted by yield, lowest first, so the worst wafers come up first.
+      Also pick a normal wafer as a reference: you only recognise an abnormal location or pattern once you know what a normal map looks like.
+  fab.score:
+    zh: |
+      **計算分數**：用目前選的管制圖設定（圖種、WE 規則、統計量、Phase I、λ／k／h）對每個參數、每個 chamber 跑一次 SPC，再和答案比對：抓到哪些事件、晚了幾片、誤警報多少。
+      計分會用到答案，但不會改變資料；可以改設定重算，比較不同設定的差別。
+    en: |
+      **Score**: runs SPC with the current chart setup (chart type, WE rules, statistics, Phase I, λ / k / h) on every parameter and chamber, then compares with the answer key: which events were caught, how many wafers late, how many false alarms.
+      Scoring uses the answer key but never changes the data; change the setup and re-score to compare.
+  fab.m_detected:
+    zh: "**抓到的事件 x / 可觀測**：可觀測＝至少有一片受影響的晶圓被量測到。完全沒被量測到的事件不算進分母（抽樣盲點，不是 SPC 的錯），但它們仍然是真實風險，要在答案表中看 status。"
+    en: "**Events caught x / observable**: observable = at least one affected wafer was measured. Events never measured are left out of the denominator (a sampling blind spot, not an SPC failure), but they are still a real risk: check their status in the answer table."
+  fab.m_delay:
+    zh: "**中位延遲**：被抓到的事件中，事件開始後第幾片被量測到的受影響晶圓才被標記（0＝第一片就抓到），取中位數，單位是量測晶圓。抽樣 5/25 時，1 片量測晶圓約代表 5 片產品暴露。中位數會蓋掉最慢的事件，請搭配逐事件表看。"
+    en: "**Median delay**: for the events caught, how many measured affected wafers passed before one was flagged (0 = the first one), as a median, in measured wafers. With 5 of 25 sampled, one measured wafer means about 5 product wafers exposed. The median hides the slowest event, so read it with the per-event table."
+  fab.m_false_alarm:
+    zh: "**誤警報率**：被標記、但不屬於任何注入事件的點 ÷ 全部點數。注意：PM 之間的自然漂移、事件傳到下游參數或電測的訊號也會被算進來，它們是真實的製程行為，只是不是注入的事件。WE1 理論上每點約 0.27%，實際會更高。每一次誤警報都代表一次 hold、重測或機台確認的成本。"
+    en: "**False-alarm rate**: flagged points that belong to no injected event ÷ all points. Note: natural drift between PMs and signals an event passes on to downstream parameters or e-test are counted too; they are real process behaviour, just not injected events. WE1 in theory flags about 0.27 % of points; real rates are higher. Every false alarm costs a hold, a re-measurement or a tool check."
+  fab.m_flagged:
+    zh: "**被標記的點**：所有被管制圖標記的點數（真警報＋誤警報；同一參數、同一片晶圓只算一次）。這就是工作量：依 OCAP，每一點都要有人確認與註解。"
+    en: "**Flagged points**: all points flagged by the charts (true + false alarms; one per parameter and wafer). This is the workload: under the OCAP, every point needs someone to check and comment it."
+  fab.compare:
+    zh: |
+      **比較管制圖**：同一份資料、同樣的統計量與 Phase I，用四種常見設定各跑一次：I-MR rule 1、I-MR WE 1-4、EWMA λ=0.2、CUSUM k=0.5 h=5。
+      輸出速度 vs 誤警報散佈圖、每個事件的延遲橫條圖與總表，讓你依失效模式選圖，而不是憑習慣。
+    en: |
+      **Compare charts**: runs four common setups on the same data, statistics and Phase I: I-MR rule 1, I-MR WE 1-4, EWMA λ=0.2, CUSUM k=0.5 h=5.
+      Outputs a speed-vs-false-alarm scatter, per-event delay bars and a summary table, so you choose the chart by failure mode rather than by habit.
+  fab.col.id:
+    zh: "**id**：事件編號 E1、E2…，依情境定義的順序。"
+    en: "**id**: event number E1, E2…, in the order the scenario defines them."
+  fab.col.type:
+    zh: |
+      **type 事件類型**：
+      - **shift**：某 chamber／機台平均值突然偏移。
+      - **drift**：每批慢慢增加的漂移（消耗品、沉積速率）。
+      - **bowl**：片內形狀改變（中心與邊緣差），平均值可能不動。
+      - **recipe**：某站所有機台一起偏（配方變更），可能傳到下一站。
+      - **metro_offset**：量測機台偏差，只影響量測值，產品沒變。
+      - **defects**：killer defect 密度暴增，帶空間圖樣。
+    en: |
+      **type (event type)**:
+      - **shift**: a chamber's / tool's mean jumps.
+      - **drift**: a ramp that grows lot by lot (consumables, deposition rate).
+      - **bowl**: within-wafer shape change (centre vs edge); the mean may not move.
+      - **recipe**: every tool of a step moves together (recipe change), possibly carried into the next step.
+      - **metro_offset**: metrology-tool bias; only the measured value moves, the product does not.
+      - **defects**: a burst of killer-defect density with a spatial pattern.
+  fab.col.where:
+    zh: "**where 位置**：事件發生的 chamber（例如 RTP02-B）、機台（例如 CVD02）、量測機台（例如 FT02）或 all（該站所有機台）。這就是 commonality 分析應該找到的答案。"
+    en: "**where**: the chamber (e.g. RTP02-B), tool (e.g. CVD02), metrology tool (e.g. FT02) or all (every tool of the step) where the event happened. This is what a commonality analysis should find."
+  fab.col.lots:
+    zh: "**lots 批次範圍**：事件起訖的批次序號（從 0 起算，和良率趨勢圖的 X 軸同一套；lot_id = 序號 + 1，例如 30 = D0031）。模擬批數比結束批少時，事件會在資料結尾就停止。"
+    en: "**lots**: first–last lot index of the event (counted from 0, same as the yield-trend X axis; lot_id = index + 1, e.g. 30 = D0031). If the run has fewer lots than the end lot, the event simply stops at the end of the data."
+  fab.col.parameter:
+    zh: "**parameter**：用來評估這個事件的量測參數；事件影響多個參數時，取最早抓到的那一個（例如曝光 recipe 變更也看 wl_cd_etch；缺陷事件看 defect_density 或每片都有的 yield）。"
+    en: "**parameter**: the measured parameter used to judge this event; when an event touches several parameters, the one that caught it first is shown (e.g. a litho recipe change is also checked on wl_cd_etch; a defect event on defect_density or on yield, which every wafer has)."
+  fab.col.observable:
+    zh: "**observable 可觀測片數**：受影響、而且有被這個參數量測到的晶圓片數。0 → 量測不到（抽樣盲點）。固定抽樣槽位可能永遠量不到某些 chamber，數字很小時延遲也一定很粗。"
+    en: "**observable**: number of affected wafers that were measured on this parameter. 0 → not observable (sampling blind spot). Fixed sampling slots can miss some chambers entirely; with a small number, the delay is necessarily coarse."
+  fab.col.detected:
+    zh: "**detected 是否抓到**：至少一片受影響的量測晶圓被管制圖標記 → True。"
+    en: "**detected**: True when at least one measured affected wafer was flagged by a chart."
+  fab.col.delay_wafers:
+    zh: "**delay_wafers 延遲（片）**：受影響的量測晶圓依時間排序，第一個被標記的是第幾片（0＝第一片就抓到）；沒抓到則空白。乘以約 5 ≈ 期間暴露的產品片數。"
+    en: "**delay_wafers**: with the measured affected wafers in time order, the position of the first flagged one (0 = the first); blank when not caught. Multiply by about 5 ≈ product wafers exposed in the meantime."
+  fab.col.caught_by:
+    zh: "**caught_by**：第一個標記來自哪個統計量：mean（平均值偏移）或 nu_1sigma_pct（片內形狀／均勻度改變）。由此可分辨是「水準」還是「形狀」的問題。"
+    en: "**caught_by**: which statistic raised the first flag: mean (level shift) or nu_1sigma_pct (within-wafer shape / uniformity change). It tells a level problem from a shape problem."
+  fab.col.status:
+    zh: "**status 狀態**：detected 抓到；missed 有量測到受影響晶圓卻沒抓到（管制圖要改）；not observable (no measured wafer) 受影響晶圓一片都沒被量測（抽樣要改）。"
+    en: "**status**: detected; missed = affected wafers were measured but never flagged (fix the chart); not observable (no measured wafer) = not one affected wafer was measured (fix the sampling)."
+  fab.col.yield_impact_pct:
+    zh: "**yield_impact_pct 良率影響（%）**：受影響晶圓的良率，和「同樣晶圓、同樣亂數但沒有事件」相比的差（個百分點，負值＝損失）。盡量只用沒被其他事件影響的晶圓計算。metro_offset 一定是 0：產品沒變。抓到一個良率影響 0 的事件很好，但處置對象是量測，不是製程。"
+    en: "**yield_impact_pct**: yield of the affected wafers minus the same wafers simulated with the same random draws but no event (percentage points, negative = loss), computed where possible on wafers no other event touched. metro_offset is always 0: the product did not change. Catching a zero-impact event is good, but the fix belongs to metrology, not the process."
+  pat.min_defects:
+    zh: |
+      **最少缺陷晶粒數**（0–40，預設 16）：缺陷失效晶粒少於這個數的晶圓直接判為 random。缺陷很少時，任何形狀都可能是巧合。
+      - 調高 → 誤報少，但小圖樣（短刮痕、小群聚、輕微邊緣環）會漏掉。
+      - 調低 → 小圖樣抓得到，但更多 random 晶圓被判成有圖樣，浪費 review／FA 產能。
+      和管制圖的靈敏度一樣，是「漏判 vs 誤報」的取捨。本模擬一般晶圓約有 30–40 顆缺陷失效（約 620 顆中的 6–7%）。
+    en: |
+      **Minimum defect dies** (0–40, default 16): wafers with fewer defect-fail dies than this are called random. With few defects, any shape can be chance.
+      - Higher → fewer false calls, but small patterns (short scratch, small cluster, faint edge ring) are missed.
+      - Lower → small patterns are caught, but more random wafers are called patterned, wasting review / FA capacity.
+      Like chart sensitivity, it trades misses against false calls. A typical wafer in this simulation has about 30–40 defect-fail dies (6–7 % of about 620).
+  pat.run:
+    zh: |
+      **分類並打分數**：用另一組 pattern_zoo 模擬晶圓訓練的最近中心分類器，判斷這份資料每一片晶圓的缺陷圖樣，再和答案比對（混淆矩陣、正確率、召回、精確）。
+      訓練資料不包含被打分數的晶圓，所以結果代表「沒看過的新資料」上的表現。
+    en: |
+      **Classify and score**: a nearest-centroid classifier trained on a separate pattern_zoo simulation calls the defect pattern of every wafer in this dataset, then the calls are compared with the answer key (confusion matrix, accuracy, recall, precision).
+      The scored wafers are never in the training data, so the result reflects performance on unseen data.
+  pat.m_accuracy:
+    zh: "**正確率 accuracy**：判斷和答案相同的晶圓比例。≥ 90% 好、75–90% 注意、< 75% 需處理。陷阱：大部分晶圓是 random，全部判 random 也能有很高的正確率；一定要一起看有圖樣晶圓的召回與各類別 precision。"
+    en: "**Accuracy**: share of wafers whose call matches the answer. ≥ 90 % good, 75–90 % watch, < 75 % act. Trap: most wafers are random, so calling everything random still scores high; always read it together with recall on patterned wafers and per-class precision."
+  pat.m_n_pattern:
+    zh: "**有圖樣的晶圓**：答案中不是 random 的晶圓數 / 總片數，也就是基數（base rate）。基數很低時，即使誤判率很小，誤報片數也可能比真的有圖樣的還多。"
+    en: "**Patterned wafers**: wafers whose answer is not random / all wafers, i.e. the base rate. When it is low, even a small error rate can produce more false calls than real patterns."
+  pat.m_recall:
+    zh: "**有圖樣晶圓的召回**：真的有空間圖樣的晶圓中，被判到正確圖樣的比例。漏判的晶圓＝本來可以提早追到機台的 excursion 被放過。"
+    en: "**Recall on patterned wafers**: share of truly patterned wafers called the correct pattern. Each miss is an excursion that could have been traced to a tool earlier but slipped through."
+  pat.wafer:
+    zh: "**看晶圓的缺陷圖**：選一片晶圓檢查分類結果。有判錯的晶圓時，清單只列判錯的，方便找出分類器的弱點；全部判對時列出全部。"
+    en: "**Wafer defect map**: pick a wafer to inspect its call. When there are misclassified wafers, only those are listed, to expose the classifier's weak spots; when every call is right, all wafers are listed."
+  pat.col.pattern:
+    zh: "**pattern 圖樣**：random 隨機、edge_ring 邊緣環、center 中心、scratch 刮痕、cluster 群聚。"
+    en: "**pattern**: random, edge_ring, center, scratch, cluster."
+  pat.col.n:
+    zh: "**n**：答案中屬於這個圖樣的晶圓數。n 小的類別，召回與精確都很不穩定（1 片就差好幾個百分點）。"
+    en: "**n**: number of wafers of this pattern in the answer key. For small n, recall and precision are unstable (one wafer moves them by several points)."
+  pat.col.recall:
+    zh: "**召回 % recall**：真的是這個圖樣的晶圓中，被判對的比例。低 → 這類圖樣常被漏掉（excursion 晚發現）。"
+    en: "**Recall %**: of the wafers truly of this pattern, the share called correctly. Low → this pattern is often missed (excursions found late)."
+  pat.col.precision:
+    zh: "**精確 % precision**：被判成這個圖樣的晶圓中，真的是的比例。低 → 這類判斷常是誤報，送 FA 前要人工確認。"
+    en: "**Precision %**: of the wafers called this pattern, the share that truly are. Low → these calls are often false; confirm by eye before sending to FA."
+  pat.feat.n_fail:
+    zh: "**n_fail**：本片 killer defect 失效的晶粒數（不含 parametric 失效）。少於最少缺陷晶粒數就直接判 random；顆數少時其他特徵都很吵。"
+    en: "**n_fail**: number of dies killed by defects on this wafer (parametric fails excluded). Below the minimum defect-die count the wafer is called random; with few dies every other feature is noisy."
+  pat.feat.fail_rate:
+    zh: "**fail_rate**：缺陷失效晶粒比例＝n_fail ÷ 總晶粒數。代表這片「多髒」，不代表形狀；分類器不直接用它，其他特徵都已經除以它，所以髒的晶圓和乾淨的晶圓只要形狀相同，特徵就相近。"
+    en: "**fail_rate**: defect-fail share = n_fail ÷ all dies. It says how dirty the wafer is, not its shape; the classifier does not use it directly, and every other feature is divided by it, so a dirty and a clean wafer with the same shape look alike."
+  pat.feat.ring_0:
+    zh: "**ring_0**：中心圓（正規化半徑 0–0.35）的缺陷失效率 ÷ 全片失效率。1＝和平均一樣；明顯 > 1 → 中心型（showerhead、旋塗中心、中心溫度）。"
+    en: "**ring_0**: defect-fail rate in the central disc (normalised radius 0–0.35) ÷ the wafer's overall rate. 1 = average; well above 1 → centre-type (showerhead, spin-coat centre, centre temperature)."
+  pat.feat.ring_1:
+    zh: "**ring_1**：第二環（正規化半徑 0.35–0.6）的失效率 ÷ 全片失效率。中心型圖樣擴散時也會偏高。"
+    en: "**ring_1**: fail rate in the second ring (normalised radius 0.35–0.6) ÷ overall rate. Also rises when a centre pattern spreads out."
+  pat.feat.ring_2:
+    zh: "**ring_2**：第三環（正規化半徑 0.6–0.8）的失效率 ÷ 全片失效率。中段環；邊緣型或中心型時通常 < 1。"
+    en: "**ring_2**: fail rate in the third ring (normalised radius 0.6–0.8) ÷ overall rate. The mid-radius ring; usually below 1 for edge or centre patterns."
+  pat.feat.ring_3:
+    zh: "**ring_3**：第四環（正規化半徑 0.8–0.9）的失效率 ÷ 全片失效率。邊緣型圖樣較寬時會偏高。"
+    en: "**ring_3**: fail rate in the fourth ring (normalised radius 0.8–0.9) ÷ overall rate. Rises when an edge pattern is wide."
+  pat.feat.ring_4:
+    zh: "**ring_4**：最外環（正規化半徑 0.9–1.0）的失效率 ÷ 全片失效率。明顯 > 1 → 邊緣環（edge ring／bevel／clamp、邊緣製程）。"
+    en: "**ring_4**: fail rate in the outermost ring (normalised radius 0.9–1.0) ÷ overall rate. Well above 1 → edge ring (edge / focus ring, bevel, clamp, edge processing)."
+  pat.feat.edge_center:
+    zh: "**edge_center**：ln（外圈 r ≥ 0.8R 的失效率 ÷ 內圈 r < 0.6R 的失效率）。0＝一樣；> 0 邊緣多；< 0 中心多。ln 2 ≈ 0.7 代表多一倍。"
+    en: "**edge_center**: ln(fail rate at r ≥ 0.8R ÷ fail rate at r < 0.6R). 0 = equal; > 0 edge-heavy; < 0 centre-heavy. ln 2 ≈ 0.7 means twice as many."
+  pat.feat.line_score:
+    zh: "**line_score**：所有角度（每 5°）、寬 14 mm 的直線帶中，失效率最高的那一條 ÷ 全片失效率。高 → 刮痕（robot、handling、CMP）。因為是在很多條帶中取最大值，random 晶圓也不會是 1（缺陷越少越高），要和同樣缺陷數的晶圓比。"
+    en: "**line_score**: the highest fail rate among straight 14 mm-wide bands at every angle (5° steps) ÷ overall rate. High → scratch (robot, handling, CMP). Because it is a maximum over many bands, even a random wafer is above 1 (higher with fewer defects); compare wafers with similar defect counts."
+  pat.feat.peak_score:
+    zh: "**peak_score**：所有 25 mm 半徑鄰域中，失效率最高的那一區 ÷ 全片失效率。高 → 群聚或中心型（局部微粒、液滴）。和 line_score 一樣是取最大值，random 晶圓也會 > 1。"
+    en: "**peak_score**: the highest fail rate in any 25 mm-radius neighbourhood ÷ overall rate. High → cluster or centre (local particles, droplets). Like line_score it is a maximum, so random wafers are above 1 too."
+  pat.feat.line_vs_peak:
+    zh: "**line_vs_peak**：ln（line_score ÷ peak_score）。> 0 → 細長（刮痕）；< 0 → 一團（群聚、中心）。用來分辨「一條線」還是「一坨」。"
+    en: "**line_vs_peak**: ln(line_score ÷ peak_score). > 0 → elongated (scratch); < 0 → compact (cluster, centre). Separates a line from a blob."
+  pat.feat.neighbour_ratio:
+    zh: "**neighbour_ratio**：失效晶粒的 8 個相鄰晶粒也失效的機率 ÷ 全片失效率。約 1＝隨機；> 1 → 缺陷互相黏在一起（群聚、刮痕、邊緣環）。"
+    en: "**neighbour_ratio**: probability that one of a failing die's 8 neighbours also fails ÷ overall rate. About 1 = random; > 1 → failures stick together (cluster, scratch, edge ring)."

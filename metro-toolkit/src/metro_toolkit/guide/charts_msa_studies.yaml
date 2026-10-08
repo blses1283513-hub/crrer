@@ -1,0 +1,213 @@
+# MSA page (Gauge R&R, tool matching) and Recipe studies page (precision vs thickness, thickness / n correlation).
+# Template values (from insights.py):
+#   msa_grr            {grr_sv} {pt} {ndc} {verdict} {repeat_sv} {reprod_sv} {dominant} {part_sv}
+#   msa_matching       {tool} {offset} {spec} {slope} {slope_tol} {sd_diff} {verdict}
+#   study_sensitivity  {t_thin} {prec_r_thin} {prec_s_thin} {ratio} {t_ok}
+#   study_tn           {t_bad} {sA_thin} {sA_thick} {ratio} {limit}
+#   always available   {finding} {status}
+# Status thresholds (insights.py): GR&R headline (P/T when spec limits are given) >= 30 % act, >= 10 % or ndc < 5 watch;
+# matching not matched act, |offset| > 0.5 x spec watch; reflectometry precision > 0.05 nm at the thinnest film watch;
+# sigma(A) > 0.01 watch.
+
+charts:
+  msa_grr:
+    page: MSA
+    title: {zh: "量測系統 Gauge R&R（變異分量，% study variation）", en: "Gauge R&R of the measurement system (variance components, % study variation)"}
+    legend:
+      - item: "▬ 藍色長條 · blue bars — % study variation 研究變異 %"
+        zh: "每個變異分量一條，長度＝100 × σ分量 ÷ σ總（% study variation，簡稱 %SV），條尾數字為數值。由上而下：**repeatability 重複性**（同一台機台重複量同一片的雜訊）、**reproducibility 再現性**（換一台機台的差異＋機台 × 晶圓交互作用）、**gauge_rr 量測系統總變異**（前兩者平方和開根號）、**part_to_part 晶圓間變異**（研究晶圓之間真實的厚度差，也就是製程變異）。"
+        en: "One bar per variance component; length = 100 × σ component ÷ σ total (% study variation, %SV), with the value printed at the bar end. Top to bottom: **repeatability** (noise when the same tool measures the same wafer again), **reproducibility** (the difference when another tool measures, plus the tool × wafer interaction), **gauge_rr** (total measurement-system variation, root-sum-square of the two), **part_to_part** (the real thickness difference between the study wafers, i.e. process variation)."
+      - item: "│ 綠色直線 · green vertical line — 10% acceptable 可接受"
+        zh: "10 % 門檻：gauge_rr 長條在這條線左邊 → 量測系統可接受（AIAG 準則 < 10 %）。repeatability／reproducibility 長條本身也應遠小於它。"
+        en: "10 % guide: a gauge_rr bar left of this line → measurement system acceptable (AIAG criterion < 10 %). The repeatability and reproducibility bars should sit well below it too."
+      - item: "│ 紅色直線 · red vertical line — 30% unacceptable 不可接受"
+        zh: "30 % 門檻：gauge_rr 長條超過這條線 → 不可接受；10–30 % 之間為有條件接受（視參數重要度與改善成本，需主管／QE 簽核並記錄）。注意：圖上是 %SV，而 KPI 的 verdict 在有規格時是用 P/T 判定，兩者可能不同。"
+        en: "30 % guide: a gauge_rr bar beyond this line → unacceptable; 10–30 % is conditionally acceptable (depending on how critical the parameter is and the cost of improvement, with manager / QE sign-off on record). Note: the chart shows %SV, while the verdict tile uses P/T when spec limits are given, so the two can disagree."
+    axes:
+      zh: "X 軸＝% study variation（各分量的 σ 佔總 σ 的百分比，0–100 %）；Y 軸＝變異分量。%SV 是 σ 的比例，**不能直接相加**：gauge_rr² = repeatability² + reproducibility²，gauge_rr² + part_to_part² = 100²。KPI：%GRR (study var) = gauge_rr 長條的值；P/T = 6σ_GRR ÷ (USL − LSL) × 100；ndc = ⌊1.41 × σ_part ÷ σ_GRR⌋（可分辨的等級數）；verdict 為判定（有規格時依 P/T）。本頁的 operator＝量測機台，part＝晶圓。"
+      en: "X = % study variation (each component's σ as a share of the total σ, 0–100 %); Y = variance component. %SV is a ratio of σ and **does not add up**: gauge_rr² = repeatability² + reproducibility², and gauge_rr² + part_to_part² = 100². Tiles: %GRR (study var) = the gauge_rr bar; P/T = 6σ_GRR ÷ (USL − LSL) × 100; ndc = ⌊1.41 × σ_part ÷ σ_GRR⌋ (number of distinct categories); verdict (based on P/T when spec limits are given). On this page operator = metrology tool and part = wafer."
+    what:
+      zh: "GR&R（Gauge Repeatability & Reproducibility）回答「量測系統夠不夠好，SPC 與規格判定能不能相信」。用 ANOVA 法（AIAG MSA）把總變異拆成三塊：重複性（單一機台自己的雜訊）、再現性（機台之間的差異）、晶圓間的真實差異。觀察到的變異 = 製程變異 + 量測變異；量測變異太大時，SPC 界限被撐寬、Cpk 被低估，靠近規格邊緣的晶圓也會被誤判（好片判成 OOS、壞片被放行）。新機台、新 recipe、PM／換零件、軟體升級後都要做，通過才能 release 量產量測。"
+      en: "GR&R (Gauge Repeatability & Reproducibility) answers 'is the measurement system good enough to trust SPC and spec decisions?'. The ANOVA method (AIAG MSA) splits the total variation into three parts: repeatability (one tool's own noise), reproducibility (the difference between tools) and the real wafer-to-wafer difference. Observed variation = process variation + measurement variation; when measurement variation is large, SPC limits widen, Cpk is underestimated and wafers near the spec edge are misjudged (good wafers called OOS, bad ones released). Run it for every new tool, new recipe, PM or part swap and software upgrade, and pass it before releasing the tool for production measurement."
+    read:
+      zh: "好：gauge_rr < 10 %、P/T < 10 %、ndc ≥ 5，part_to_part 接近 100 %。有條件：10–30 %。不可接受：≥ 30 %，或 ndc < 5（分辨不出 5 個以上的等級，SPC 看到的多半是量測雜訊）。再看主因：(1) **repeatability 為主** → 單台機台的雜訊：對焦、stage 定位／晶圓放置、pattern recognition、光源（lamp）老化、光斑（spot size）大於量測區或壓到圖案邊緣、訊號太弱（膜太薄或技術選錯）；(2) **reproducibility 為主** → 機台之間有 offset：calibration 不同、recipe 複製錯誤（n,k 檔、波長範圍、入射角、fit 邊界、site 座標）、軟體版本不同 → 接著做 tool matching；(3) ANOVA 的機台 × 晶圓交互作用顯著（已併入 reproducibility）→ 機台差異隨晶圓而變，常是比例偏差（厚度越厚差越多）或特定 site 定位問題。陷阱：重複量測若沒有 load/unload，量到的只是 static repeatability，會低估量產時的 dynamic 精度；研究晶圓的厚度範圍太窄 → %SV 與 ndc 很難看但機台其實沒問題（改看 P/T），範圍刻意拉太寬則讓 %SV 看起來過於漂亮。"
+      en: "Good: gauge_rr < 10 %, P/T < 10 %, ndc ≥ 5, part_to_part close to 100 %. Conditional: 10–30 %. Unacceptable: ≥ 30 %, or ndc < 5 (fewer than 5 distinguishable categories, so most of what SPC sees is measurement noise). Then look at the dominant part: (1) **repeatability dominates** → noise of the single tool: focus, stage positioning / wafer placement, pattern recognition, lamp ageing, spot size larger than the measurement pad or clipping a pattern edge, weak signal (film too thin or the wrong technique); (2) **reproducibility dominates** → offsets between tools: different calibration, recipe-copy errors (n,k file, wavelength range, angle of incidence, fit bounds, site coordinates), different software versions → follow up with tool matching; (3) a significant tool × wafer interaction in the ANOVA (included in reproducibility) → the tool difference changes from wafer to wafer, typically a proportional bias (larger difference on thicker films) or a site-positioning problem. Traps: replicates taken without load/unload measure only static repeatability and underestimate the dynamic precision seen in production; study wafers with too narrow a thickness range make %SV and ndc look bad even when the tool is fine (judge by P/T instead), while an artificially wide range makes %SV look better than it is."
+    action:
+      act:
+        zh: "P/T（或無規格時的 %GRR）≥ 30 %，判定 {verdict}：這個量測系統不能用來做產品判定或 SPC。(1) 先確認研究本身：晶圓涵蓋製程範圍、每格重複次數相同、資料沒有 site 或晶圓對錯；(2) 依主因（{dominant}）處理：重複性 → 請 EE 檢查對焦、stage、lamp、calibration 並跑監控片；再現性 → 比對各機台的 recipe 版本與 calibration 紀錄，用 golden wafer 重新 calibration；技術本身靈敏度不足時改用合適的技術（例如超薄膜改 SE）；(3) 該機台／recipe 先 inhibit 量產量測，或改派到已通過的機台；(4) 修正後重做完整 GR&R，通過才 release。"
+        en: "P/T (or %GRR when there is no spec) ≥ 30 %, verdict {verdict}: this measurement system cannot be used for product decisions or SPC. (1) Check the study itself first: wafers span the process range, equal replicates in every cell, no site or wafer mix-ups in the data; (2) work on the dominant part ({dominant}): repeatability → ask EE to check focus, stage, lamp and calibration and run the monitor wafer; reproducibility → compare recipe versions and calibration records across tools and re-calibrate with the golden wafer; if the technique itself lacks sensitivity, move to a suitable one (e.g. SE for ultra-thin films); (3) inhibit the tool / recipe for production measurement or route product to a qualified tool; (4) after the fix, repeat the full GR&R and release only when it passes."
+      watch:
+        zh: "10–30 %（或 ndc < 5）：有條件接受。記錄接受理由並取得主管／QE 簽核；判讀 SPC 時記得界限有一部分是量測雜訊；靠近規格邊緣的晶圓建議重測或加 guard band。排定改善（每點多次平均、改善對焦與 site 定位、統一各機台 recipe），下次 PM 後重做 GR&R。"
+        en: "10–30 % (or ndc < 5): conditionally acceptable. Record the rationale and get manager / QE sign-off; when reading SPC, remember part of the limits is measurement noise; re-measure or apply a guard band to wafers near the spec edge. Schedule improvements (more averaging per site, better focus and site positioning, one recipe across all tools) and repeat the GR&R after the next PM."
+      good:
+        zh: "< 10 % 且 ndc ≥ 5：量測系統可用於 SPC 與產品判定。存檔 MSA 報告；之後用 reference wafer 每日監控（long-term stability）確認能力維持，PM、換零件、軟體升級或 recipe 變更後重做。"
+        en: "< 10 % and ndc ≥ 5: the measurement system is fit for SPC and product decisions. File the MSA report; then keep a daily reference-wafer monitor (long-term stability) to show the capability holds, and repeat after PMs, part swaps, software upgrades or recipe changes."
+    record:
+      zh: "[MSA GR&R] recipe：＿＿ · 機台：＿＿ · %GRR(SV) {grr_sv}% · P/T {pt}% · ndc {ndc} · 判定 {verdict} · repeatability {repeat_sv}% / reproducibility {reprod_sv}% / part {part_sv}% · 主因 {dominant} · 狀態 {status} · 處置：＿＿"
+      en: "[MSA GR&R] recipe: ___ · tools: ___ · %GRR(SV) {grr_sv}% · P/T {pt}% · ndc {ndc} · verdict {verdict} · repeatability {repeat_sv}% / reproducibility {reprod_sv}% / part {part_sv}% · dominant {dominant} · status {status} · action: ___"
+    roles:
+      RDA:
+        zh: "【量測能力通知】厚度 GR&R：%GRR {grr_sv}%、P/T {pt}%、ndc {ndc}（{verdict}）。若要用 inline 量測值挑 FA／TEM 樣品或和缺陷做相關，小於量測雜訊的厚度差是分辨不出來的。ndc < 5 時，建議以 TEM 或參考量測確認，不要只依 inline 值排序取樣。"
+        en: "[Gauge capability notice] Thickness GR&R: %GRR {grr_sv}%, P/T {pt}%, ndc {ndc} ({verdict}). If you use inline values to pick FA / TEM samples or to correlate with defects, thickness differences smaller than the measurement noise cannot be resolved. With ndc below 5, please confirm with TEM or reference metrology rather than ranking samples by the inline value alone."
+      PE:
+        zh: "【MSA】厚度量測 GR&R：{finding}。量測雜訊佔規格 {pt}%（P/T），SPC 看到的變異有一部分來自量測，Cpk 會因此被低估。主因為 {dominant}；量測端改善完成前，建議不要依這個量測值微調 recipe target 或判讀小幅的 split 差異。"
+        en: "[MSA] Thickness GR&R: {finding}. Measurement noise uses {pt}% of the spec (P/T), so part of the variation on SPC comes from metrology and Cpk is underestimated. The dominant part is {dominant}; until metrology has fixed it, please do not re-target the recipe or judge small split differences on these values."
+      EE:
+        zh: "【機台檢查請求】GR&R 判定 {verdict}（P/T {pt}%），主因為 {dominant}（repeatability {repeat_sv}%、reproducibility {reprod_sv}%）。若以重複性為主，請檢查對焦、stage／晶圓放置、lamp 時數與自動 calibration；若以再現性為主，請比對各台的 calibration 紀錄與最近 PM。修正後請跑 reference wafer，我們再重做 GR&R。"
+        en: "[Tool check request] GR&R verdict {verdict} (P/T {pt}%), dominated by {dominant} (repeatability {repeat_sv}%, reproducibility {reprod_sv}%). If repeatability dominates, please check focus, stage / wafer placement, lamp hours and auto-calibration; if reproducibility dominates, please compare calibration records and recent PMs across the tools. After the fix, run the reference wafer and we will repeat the GR&R."
+      PIE_YE:
+        zh: "【量測可信度】厚度量測 P/T = {pt}%、ndc = {ndc}（{verdict}）。量測佔規格的比例越高，靠近規格邊緣的晶圓越容易誤判；在量測能力改善前，邊緣晶圓的 disposition 建議加 guard band 或重測確認，做電性／良率相關分析時也請把量測雜訊納入考量。"
+        en: "[Measurement confidence] Thickness metrology P/T = {pt}%, ndc = {ndc} ({verdict}). The larger the share of the spec taken by measurement noise, the more likely wafers near the spec edge are misjudged; until capability improves, please apply a guard band or a confirmation re-measurement before dispositioning edge wafers, and allow for measurement noise in electrical / yield correlations."
+      MGR_QE:
+        zh: "【狀態】量測系統 GR&R：{status}。%GRR {grr_sv}%、P/T {pt}%、ndc {ndc} → {verdict}；主因 {dominant}。已完成：ANOVA GR&R 與主因判讀；待決定：機台／recipe 是否 release 量產量測（10–30 % 需簽核有條件接受）。紀錄：MSA 報告與 e-log 已更新。"
+        en: "[Status] Measurement-system GR&R: {status}. %GRR {grr_sv}%, P/T {pt}%, ndc {ndc} → {verdict}; dominated by {dominant}. Done: ANOVA GR&R and root-part analysis. Decision needed: release of the tool / recipe for production measurement (10–30 % needs a signed conditional acceptance). Records: MSA report and e-log updated."
+
+  msa_matching:
+    page: MSA
+    title: {zh: "量測機台匹配（Bland-Altman 差值圖＋fleet matching 表）", en: "Tool matching (Bland-Altman difference plot + fleet-matching table)"}
+    legend:
+      - item: "● 藍點 · blue dots — site difference 各點差值"
+        zh: "同一片、同一 site 在兩台機台的差值（FT02 − FT01），每個 site 一點（合成範例為 5 片 × 49 點）。完全匹配時，點應以 0 為中心、隨機分布成一條水平帶。"
+        en: "Difference between the two tools on the same wafer and site (FT02 − FT01), one dot per site (5 wafers × 49 sites in the synthetic example). For matched tools the dots form a random horizontal band centred on 0."
+      - item: "━ 紅色水平線 · red horizontal lines — ±matching spec 匹配規格"
+        zh: "±匹配規格（±{spec} nm，limits.yaml 的 matching_offset_spec）：平均偏差的等價區間，TOST 判定用。它限制的是**平均偏差**，不是每一個點；少數點落在外面不代表不匹配，但大量點在外面表示差值的分散（sd_difference）也有問題。"
+        en: "±matching spec (±{spec} nm, matching_offset_spec in limits.yaml): the equivalence margin for the mean offset, used by the TOST. It limits the **mean offset**, not every single dot; a few dots outside do not mean the tools are unmatched, but many dots outside mean the scatter of the differences (sd_difference) is a problem too."
+      - item: "┄ 灰色虛線 · grey dashed line — mean offset 平均偏差"
+        zh: "所有 site 差值的平均＝{tool} 對參考機台的平均偏差（{offset} nm）。離 0 越遠，系統性 offset 越大（calibration、recipe 差異）；越接近紅線，越接近規格。"
+        en: "Mean of all site differences = mean offset of {tool} against the reference tool ({offset} nm). The further from 0, the larger the systematic offset (calibration, recipe difference); the closer to a red line, the closer to the spec."
+    axes:
+      zh: "X 軸＝參考機台 FT01 在該 site 的量測值（nm）；Y 軸＝FT02 − FT01 差值（nm）。（傳統 Bland-Altman 的 X 是兩台的平均；參考機台夠準時，用參考機台當 X 的判讀方式相同。）表格每列是一台候選機台對參考機台：n 配對點數、mean_offset 平均偏差、sd_difference 差值標準差、deming_slope Deming 斜率、offset_equivalent 偏差是否通過 TOST 等價、slope_ok 斜率是否在 1 ± 容許值內、matched 兩者都通過。"
+      en: "X = reference tool FT01 value at the site (nm); Y = FT02 − FT01 difference (nm). (A classic Bland-Altman plot uses the mean of the two tools on X; when the reference tool is accurate, using it on X reads the same way.) Each table row is one candidate tool against the reference: n paired points, mean_offset, sd_difference (standard deviation of the differences), deming_slope, offset_equivalent (offset passes the TOST equivalence test), slope_ok (slope within 1 ± tolerance), matched (both pass)."
+    what:
+      zh: "Tool matching 回答「同一片晶圓換一台量測機台，結果是否一樣」。不匹配的 fleet 會讓 SPC 隨量測機台跳動，看起來像製程偏移，其實只是換了量測機台。兩個問題分開判：(1) **offset**：平均差是否「實務上為 0」→ 用等價檢定 TOST：平均差的 90 % 信賴區間必須完全落在 ±規格內。**t-test 不顯著（p > 0.05）不能證明匹配**：點少、雜訊大時 t-test 本來就不顯著；反過來 site 數很多時，0.01 nm 的差也會「顯著」，但實務上無所謂。(2) **slope**：兩台在整個厚度範圍是否同步變化 → 用 Deming regression（兩台都有量測雜訊，一般最小平方法會把斜率估得偏小）。Fleet matching 是每台都對同一台參考機台（或 fleet 中位數）比，而不是串連比較：A≈B、B≈C 不保證 A≈C。"
+      en: "Tool matching answers 'does the same wafer give the same result on another metrology tool?'. An unmatched fleet makes SPC jump with the metrology tool, which looks like a process shift but is only a change of measurement tool. Two questions are judged separately: (1) **offset**: is the mean difference practically zero? → equivalence test (TOST): the 90 % confidence interval of the mean difference must sit entirely inside ±spec. **A non-significant t-test (p > 0.05) does not prove matching**: with few points or high noise a t-test is never significant; conversely, with many sites even a 0.01 nm difference becomes 'significant' while being practically irrelevant. (2) **slope**: do the tools track each other across the thickness range? → Deming regression (both tools have measurement noise, so ordinary least squares biases the slope low). Fleet matching compares every tool with one reference tool (or the fleet median), never in a chain: A≈B and B≈C does not guarantee A≈C."
+    read:
+      zh: "好：藍點以灰色虛線為中心、虛線貼近 0、點形成水平帶、表格 matched = True。壞的型態：(1) 整條帶子平移（灰線離 0）→ 固定 offset：calibration、參考片定值、recipe 的 n,k 或模型不同；(2) 帶子傾斜（一端高一端低）→ 比例偏差，Deming 斜率偏離 1：波長或入射角 calibration、色散模型不同，膜越厚差越多；(3) 帶子很寬（sd_difference 大）→ 個別 site 不一致：site 座標或 pattern recognition 偏移、兩台 spot size 不同而膜不均勻、邊緣 site、重複性差；(4) 依晶圓成群 → 兩次量測之間膜面有變化（吸附水氣／AMC、表面氧化），兩台要在短時間內量完並交錯量測順序（FT01 → FT02 → FT01）。注意：合成研究的厚度只涵蓋約 95–105 nm；斜率的準確度取決於範圍，驗證斜率請用涵蓋製程窗口（最好更寬）的多片晶圓。"
+      en: "Good: blue dots centred on the grey dashed line, the dashed line close to 0, a horizontal band, matched = True in the table. Bad patterns: (1) the whole band shifted (grey line away from 0) → constant offset: calibration, reference-wafer certified value, different n,k or model in the recipe; (2) a tilted band (one end high, the other low) → proportional bias, Deming slope away from 1: wavelength or angle-of-incidence calibration, different dispersion model; the thicker the film, the larger the difference; (3) a wide band (large sd_difference) → site-level disagreement: site coordinates or pattern-recognition offset, different spot sizes on a non-uniform film, edge sites, poor repeatability; (4) clusters by wafer → the film surface changed between the two measurements (moisture / AMC adsorption, surface oxidation); measure on both tools within a short window and alternate the order (FT01 → FT02 → FT01). Note: the synthetic study covers only about 95–105 nm; slope accuracy depends on the range, so verify the slope with several wafers that span the process window (ideally wider)."
+    action:
+      act:
+        zh: "不匹配（{verdict}）：{tool} 的平均偏差 {offset} nm（規格 ±{spec}）或 Deming 斜率 {slope}（容許 1 ± {slope_tol}）超出。(1) {tool} 這個 recipe 先 inhibit 量產量測或改派到參考機台，已在 {tool} 量的 lot 標記待確認；(2) 用同一片 golden／reference wafer 在兩台量同一 site，疊圖比較原始訊號（反射率光譜或 Ψ/Δ）：原始訊號一致但厚度不同 → recipe／模型差異（比對 n,k 檔、波長範圍、入射角、fit 邊界、軟體版本，最常見是 recipe 複製錯誤）；原始訊號就不同 → 硬體／calibration，請 EE 重新 calibration 並檢查光源、入射角、對焦；(3) 修正後重跑 matching（TOST＋Deming），通過才 release，並回頭評估受影響 lot 的資料與 disposition。"
+        en: "Not matched ({verdict}): {tool} has a mean offset of {offset} nm (spec ±{spec}) or a Deming slope of {slope} (allowed 1 ± {slope_tol}) out of tolerance. (1) Inhibit {tool} for production measurement on this recipe or route product to the reference tool, and flag lots already measured on {tool} for review; (2) measure the same site of one golden / reference wafer on both tools and overlay the raw signal (reflectance spectrum or Ψ/Δ): same raw signal but different thickness → recipe / model difference (compare n,k file, wavelength range, angle of incidence, fit bounds, software version; a recipe-copy error is the most common cause); raw signal already different → hardware / calibration, ask EE to re-calibrate and check the lamp, angle of incidence and focus; (3) after the fix, rerun matching (TOST + Deming), release only when it passes, and review the data and disposition of the affected lots."
+      watch:
+        zh: "通過等價檢定，但平均偏差 {offset} nm 已超過規格（±{spec}）的一半：記錄並追蹤。提高 {tool} 與參考機台的交叉量測頻率（每日 reference wafer），觀察 offset 是否持續變大；下次 PM 時安排重新 calibration；若 SPC 依量測機台分組，留意 {tool} 的 CL 是否已偏移。"
+        en: "Equivalence passes, but the mean offset of {offset} nm is more than half the spec (±{spec}): record and track. Increase cross-checks between {tool} and the reference tool (daily reference wafer) and watch whether the offset keeps growing; plan a re-calibration at the next PM; if SPC is grouped by metrology tool, check whether the CL of {tool} has already shifted."
+      good:
+        zh: "匹配，且偏差小於規格的一半。照常記錄；以每日 reference wafer 監控每台機台（long-term stability），PM、換光源、軟體升級或 recipe 變更後重做 matching。"
+        en: "Matched, with an offset below half the spec. Record as usual; monitor every tool with the daily reference wafer (long-term stability), and repeat matching after PMs, lamp changes, software upgrades or recipe changes."
+    record:
+      zh: "[MSA Matching] {tool} vs 參考機台 · recipe：＿＿ · 平均偏差 {offset} nm（規格 ±{spec}，TOST）· Deming 斜率 {slope}（1 ± {slope_tol}）· sd_diff {sd_diff} nm · 判定 {verdict} · 狀態 {status} · 處置：＿＿"
+      en: "[MSA Matching] {tool} vs reference tool · recipe: ___ · mean offset {offset} nm (spec ±{spec}, TOST) · Deming slope {slope} (1 ± {slope_tol}) · sd_diff {sd_diff} nm · verdict {verdict} · status {status} · action: ___"
+    roles:
+      RDA:
+        zh: "【量測機台差異】{tool} 對參考機台：平均偏差 {offset} nm（規格 ±{spec}），判定 {verdict}。若您在比較不同 lot／不同時間的厚度與缺陷關係，請先確認各片是在哪一台量測機台量的；機台不匹配時，看到的厚度差可能來自量測機台，而不是製程。"
+        en: "[Metrology tool difference] {tool} vs the reference tool: mean offset {offset} nm (spec ±{spec}), verdict {verdict}. If you are comparing thickness with defects across lots or over time, please first check which metrology tool measured each wafer; with unmatched tools, an apparent thickness difference may come from the metrology tool rather than the process."
+      PE:
+        zh: "【Tool matching】{finding}。差值分散 sd = {sd_diff} nm。若 SPC 在量測機台切換的時間點出現 shift，請先扣除這個量測 offset 再找製程原因；不匹配期間，建議產品固定在參考機台量測。"
+        en: "[Tool matching] {finding}. Scatter of the differences sd = {sd_diff} nm. If SPC shows a shift when the metrology tool changes, please remove this measurement offset before looking for a process cause; while the tools are unmatched, we suggest measuring product on the reference tool only."
+      EE:
+        zh: "【Calibration 請求】{tool} matching 判定 {verdict}：平均偏差 {offset} nm（規格 ±{spec}）、Deming 斜率 {slope}（容許 1 ± {slope_tol}）。請用 golden wafer 檢查並重新 calibration，確認光源、入射角、對焦與最近的 PM 紀錄；量測端會同步比對 recipe 是否與參考機台一致。修正後請通知我們重跑 matching。"
+        en: "[Calibration request] {tool} matching verdict {verdict}: mean offset {offset} nm (spec ±{spec}), Deming slope {slope} (allowed 1 ± {slope_tol}). Please check and re-calibrate with the golden wafer, and review the lamp, angle of incidence, focus and recent PM records; metrology will check in parallel that the recipe is identical to the reference tool. Please let us know after the fix so we can rerun matching."
+      PIE_YE:
+        zh: "【資料一致性】{tool} 與參考機台的厚度平均差 {offset} nm（規格 ±{spec}），判定 {verdict}。在 {tool} 量測、且接近規格邊緣的 lot，disposition 前請以參考機台重測確認；跨機台合併資料做良率相關分析時，也請先扣除或分開這個 offset。"
+        en: "[Data consistency] Mean thickness difference between {tool} and the reference tool is {offset} nm (spec ±{spec}), verdict {verdict}. For lots measured on {tool} near the spec edge, please confirm on the reference tool before disposition; when pooling data across tools for yield correlation, remove this offset or keep the tools separate."
+      MGR_QE:
+        zh: "【狀態】量測機台 matching：{status}。{finding}。已完成：TOST 等價檢定與 Deming 斜率檢定；待決定：{tool} 是否 release 量產量測（不匹配時維持 inhibit，至重新 calibration 並重測通過）。紀錄：matching 報告與 e-log 已更新。"
+        en: "[Status] Metrology tool matching: {status}. {finding}. Done: TOST equivalence and Deming slope tests. Decision needed: release of {tool} for production measurement (if unmatched, it stays inhibited until re-calibrated and re-tested). Records: matching report and e-log updated."
+
+  study_sensitivity:
+    page: Recipe studies
+    title: {zh: "量測精度 vs 膜厚（反射儀 vs 橢偏儀 SE）", en: "Measurement precision vs film thickness (reflectometry vs SE)"}
+    legend:
+      - item: "━ 藍線 · blue line — reflectometry 反射儀"
+        zh: "反射率光譜（垂直入射，只量光強度）估計的 1σ 厚度精度，每個研究厚度一點。超薄膜時反射率對厚度幾乎不敏感，曲線往左上翹（精度變差）。"
+        en: "Estimated 1σ thickness precision from the reflectance spectrum (normal incidence, intensity only), one point per studied thickness. On ultra-thin films reflectance hardly changes with thickness, so the curve rises to the left (worse precision)."
+      - item: "━ 橘線 · orange line — SE 65/70/75° 橢偏儀"
+        zh: "光譜橢偏儀（SE）在 65°、70°、75° 三個入射角量 Ψ/Δ 估計的 1σ 精度。Δ（p、s 偏振的相位差）對超薄膜厚度非常敏感，所以在薄膜區精度仍然很好。"
+        en: "Estimated 1σ precision of spectroscopic ellipsometry (SE) measuring Ψ/Δ at 65°, 70° and 75° angle of incidence. Δ (the phase difference between p and s polarisation) is very sensitive to ultra-thin film thickness, so precision stays good in the thin-film range."
+    axes:
+      zh: "X 軸＝SiO2 厚度（nm，對數座標，1–200 nm）；Y 軸＝估計的 1σ 厚度精度（nm，對數座標，越低越好；差一格＝10 倍）。估計方式：厚度每變 1 nm 造成的訊號變化 ÷ 訊號雜訊，再除以 √資料點數；假設只浮動厚度、n,k 已知、雜訊為白雜訊（反射儀 0.002、SE 0.0007）。"
+      en: "X = SiO2 thickness (nm, log scale, 1–200 nm); Y = estimated 1σ thickness precision (nm, log scale, lower is better; one decade = 10×). Estimate: signal change per nm of thickness ÷ signal noise, divided by √(number of data points); assumes only thickness floats, n,k are known and the noise is white (reflectometry 0.002, SE 0.0007)."
+    what:
+      zh: "Recipe 開發時先問「這個技術在這個厚度還量得到嗎？」。精度要對規格看：P/T = 6σ ÷ 公差 ≤ 10 %，例如 ±1.5 nm 的規格需要 σ ≤ 0.05 nm；3 nm high-k 若規格 ±0.15 nm，則需要 σ ≤ 0.005 nm。這張圖告訴你每個厚度下哪種技術做得到，用來決定 recipe 用反射儀還是 SE，以及每種技術最薄能做到多少。"
+      en: "In recipe development the first question is 'can this technique still measure at this thickness?'. Precision must be judged against the spec: P/T = 6σ ÷ tolerance ≤ 10 %, so a ±1.5 nm spec needs σ ≤ 0.05 nm, and a 3 nm high-k film with a ±0.15 nm spec needs σ ≤ 0.005 nm. This chart shows which technique can do it at each thickness, to decide between reflectometry and SE for a recipe and how thin each technique can go."
+    read:
+      zh: "兩條線的距離＝SE 相對反射儀的優勢。超薄膜（約 10 nm 以下）：薄膜主要改變反射光的相位，而反射儀量的是強度 |r|²，只看到很小的變化 → 精度差；SE 直接量 p、s 的相位差 Δ，Δ 隨厚度近似線性且變化大 → 精度好約兩個數量級。多個入射角（涵蓋 Si 的 Brewster 角附近）提高敏感度，也有助於把厚度和 n 分開。厚膜（數十 nm 以上）有干涉條紋可用，反射儀便宜、快、光斑小，通常就夠。曲線的小起伏來自干涉條紋位置，屬正常。注意：這是理想化估計（只有訊號雜訊），實際 dynamic 精度還包含對焦、stage、load/unload 與膜面吸附（超薄氧化層在空氣中會吸附水氣／有機物，量值隨等待時間增加），所以用它比較技術、找轉折厚度，不要當成機台規格；最後仍要用真實晶圓做 static／dynamic repeatability 與 GR&R 驗證。"
+      en: "The gap between the lines = the advantage of SE over reflectometry. Ultra-thin films (below about 10 nm): the film mainly changes the phase of the reflected light, while reflectometry measures intensity |r|² and sees only a tiny change → poor precision; SE measures the p–s phase difference Δ directly, and Δ changes strongly and almost linearly with thickness → about two orders of magnitude better precision. Several angles of incidence (around the Brewster angle of Si) raise sensitivity and help separate thickness from n. Thick films (tens of nm and above) give interference fringes, and reflectometry, being cheap, fast and small-spot, is usually enough. Small wiggles in the curves come from the fringe positions and are normal. Caution: this is an idealised estimate (signal noise only); real dynamic precision also includes focus, stage, load/unload and surface adsorption (ultra-thin oxide picks up moisture / organics in air and reads thicker with queue time), so use it to compare techniques and find the crossover thickness, not as a tool spec; confirm with static / dynamic repeatability and GR&R on real wafers."
+    action:
+      act:
+        zh: "若現行 POR recipe 的技術在產品厚度下 P/T ≥ 30 %（例如超薄閘極氧化層或 high-k 仍用反射儀）：這是量測能力不足，不是製程問題。把 recipe 改到 SE（或其他夠靈敏的技術），新 recipe 完成 GR&R 與 matching 後才 release，並回頭檢查用舊 recipe 做的 SPC 判讀與 disposition 是否有誤判。"
+        en: "If the POR recipe's technique gives P/T ≥ 30 % at the product thickness (e.g. ultra-thin gate oxide or high-k still on reflectometry): this is a metrology capability gap, not a process problem. Move the recipe to SE (or another sensitive enough technique), release the new recipe only after GR&R and matching, and review whether SPC calls and dispositions made with the old recipe were wrong."
+      watch:
+        zh: "最薄的 {t_thin} nm 處，反射儀精度 ≈ {prec_r_thin} nm（> 0.05 nm），要到 {t_ok} nm 以上才低於 0.05 nm（— 表示研究範圍內都達不到）；SE ≈ {prec_s_thin} nm，好 {ratio} 倍。比 {t_ok} nm 薄的膜請用 SE recipe；若因產能或光斑限制只能用反射儀，先用實際規格算 P/T 是否可接受，並記錄理由。"
+        en: "At the thinnest film, {t_thin} nm, reflectometry precision ≈ {prec_r_thin} nm (> 0.05 nm) and only drops below 0.05 nm from {t_ok} nm (— means not within the studied range); SE ≈ {prec_s_thin} nm, {ratio}× better. Use an SE recipe for films thinner than {t_ok} nm; if throughput or spot size forces reflectometry, first check that P/T against the real spec is acceptable and record the rationale."
+      good:
+        zh: "最薄的 {t_thin} nm 處，反射儀精度已 < 0.05 nm，兩種技術都可用。依光斑大小（量測區尺寸）、產能、量測時間與成本選擇；選定後仍要做 GR&R 與 matching。"
+        en: "At the thinnest film, {t_thin} nm, reflectometry precision is already < 0.05 nm, so both techniques work. Choose by spot size (measurement pad size), throughput, move-acquire-measure time and cost; the chosen recipe still needs GR&R and matching."
+    record:
+      zh: "[Recipe study] 精度 vs 厚度 · {t_thin} nm：反射儀 {prec_r_thin} nm / SE {prec_s_thin} nm（SE 好 {ratio} 倍）· 反射儀 < 0.05 nm 的最薄厚度 {t_ok} nm · 狀態 {status} · 決定：＿＿"
+      en: "[Recipe study] precision vs thickness · at {t_thin} nm: reflectometry {prec_r_thin} nm / SE {prec_s_thin} nm (SE {ratio}× better) · thinnest film with reflectometry < 0.05 nm: {t_ok} nm · status {status} · decision: ___"
+    roles:
+      RDA:
+        zh: "【量測技術說明】在 {t_thin} nm 這類超薄膜，反射儀的厚度精度只有約 {prec_r_thin} nm，SE 約 {prec_s_thin} nm。比 {t_ok} nm 薄的膜，做缺陷／失效相關性時請用 SE 或 TEM 的厚度，反射儀上的小差異多半是雜訊。"
+        en: "[Metrology technique note] On ultra-thin films such as {t_thin} nm, reflectometry thickness precision is only about {prec_r_thin} nm versus about {prec_s_thin} nm for SE. For films thinner than {t_ok} nm, please use SE or TEM thickness for defect / failure correlation; small differences on reflectometry are mostly noise."
+      PE:
+        zh: "【Recipe 建議】{finding}。{t_ok} nm 以下的膜，POR 厚度量測建議使用 SE recipe；若現行是反射儀，SPC 看到的變異可能大多是量測雜訊。需要的話，我們可以用 SE 重量一批，確認真實的製程變異。"
+        en: "[Recipe recommendation] {finding}. For films below {t_ok} nm we recommend an SE recipe for POR thickness measurement; if reflectometry is used today, much of the variation on SPC may be measurement noise. If useful, we can re-measure a lot on SE to show the real process variation."
+      EE:
+        zh: "【機台配置】{t_ok} nm 以下的膜需要多角度 SE（65/70/75°）才達得到所需精度。請確認 SE 機台的入射角 calibration 與每日監控狀態，以及量測產能是否足夠；這些 recipe 不要派到只有反射儀的機台。"
+        en: "[Tool allocation] Films below {t_ok} nm need multi-angle SE (65/70/75°) to reach the required precision. Please confirm the angle-of-incidence calibration and daily monitor status of the SE tools and that there is enough capacity; these recipes should not be routed to reflectometry-only tools."
+      PIE_YE:
+        zh: "【量測能力】超薄膜在 {t_thin} nm 時，反射儀精度 ≈ {prec_r_thin} nm、SE ≈ {prec_s_thin} nm（差 {ratio} 倍）。若要把電性（例如 EOT、Vt）和膜厚做相關，請使用 SE 量測資料；反射儀資料在 {t_ok} nm 以下解析不出這麼小的差異。"
+        en: "[Measurement capability] At {t_thin} nm, reflectometry precision ≈ {prec_r_thin} nm versus SE ≈ {prec_s_thin} nm ({ratio}× apart). To correlate electrical results (e.g. EOT, Vt) with film thickness, please use SE data; reflectometry cannot resolve such small differences below {t_ok} nm."
+      MGR_QE:
+        zh: "【狀態】量測技術評估：{status}。{finding}。建議：{t_ok} nm 以下的膜量產 recipe 使用 SE；待決定：SE 產能分配與 recipe 轉移時程。新 recipe 上線前會完成 GR&R 與 matching，並依變更管理紀錄。"
+        en: "[Status] Metrology technique assessment: {status}. {finding}. Recommendation: production recipes for films below {t_ok} nm use SE. Decision needed: SE capacity allocation and the recipe transfer schedule. New recipes will pass GR&R and matching before release and be recorded under change control."
+
+  study_tn:
+    page: Recipe studies
+    title: {zh: "厚度與折射率 n 的相關性（同時浮動時 n 的不確定度）", en: "Thickness–n correlation (uncertainty of n when floated with thickness)"}
+    legend:
+      - item: "●━ 藍線＋點 · blue line + markers — σ(A) when n is floated 浮動 n 的不確定度"
+        zh: "每個厚度一點：厚度和 Cauchy A 一起浮動擬合（SE 65/70/75°）時，A 的 1σ 標準誤差（由擬合的共變異矩陣得到）。Cauchy 色散 n(λ) = A + B/λ²，A 約等於長波長的 n，所以 σ(A) ≈ n 的不確定度。越低越好。"
+        en: "One point per thickness: the 1σ standard error of Cauchy A when it is floated together with thickness (SE 65/70/75°), from the fit's covariance matrix. With Cauchy dispersion n(λ) = A + B/λ², A is roughly n at long wavelength, so σ(A) ≈ the uncertainty of n. Lower is better."
+      - item: "┄ 紅色虛線 · red dashed line — 0.01 reference limit 參考門檻"
+        zh: "σ(A) = {limit} 的參考門檻。高於這條線，n 已無法從這片膜本身可靠地量出，recipe 應固定 n。量級感：SiO2 的 n 錯 0.01，厚度約錯 1 %（3 nm 膜約 0.03 nm）。"
+        en: "Reference limit σ(A) = {limit}. Above this line n can no longer be measured reliably from the film itself and the recipe should fix n. For scale: an n error of 0.01 on SiO2 gives about a 1 % thickness error (about 0.03 nm on a 3 nm film)."
+    axes:
+      zh: "X 軸＝膜厚（nm，對數座標，2–200 nm）；Y 軸＝σ(A)（無單位，對數座標）。表格：thickness_nm 膜厚、corr_t_n 厚度與 A 的相關係數絕對值、t_error_nm 厚度擬合誤差（擬合值 − 真值）、t_stderr_nm 厚度的 1σ 標準誤差、A_error A 的擬合誤差、A_stderr A 的 1σ 標準誤差（＝圖上的值）。"
+      en: "X = film thickness (nm, log scale, 2–200 nm); Y = σ(A) (dimensionless, log scale). Table: thickness_nm, corr_t_n (absolute correlation between thickness and A), t_error_nm (fitted − true thickness), t_stderr_nm (1σ standard error of thickness), A_error (fitted − true A), A_stderr (1σ standard error of A = the plotted value)."
+    what:
+      zh: "超薄膜的量測訊號主要反映「厚度 × 光學對比（n）」的乘積：厚一點、n 小一點，和薄一點、n 大一點，光譜幾乎一樣。所以同時浮動厚度和 n 時，兩者高度相關（corr 接近 1）、n 的不確定度暴增。厚膜有干涉條紋，條紋的位置和間距分別約束 n 和厚度，兩者才能同時量。這張圖找出「多薄以下必須固定 n」。"
+      en: "On an ultra-thin film the signal mainly reflects the product 'thickness × optical contrast (n)': slightly thicker with a lower n looks almost the same as slightly thinner with a higher n. So when thickness and n float together they are highly correlated (corr close to 1) and the uncertainty of n explodes. Thick films produce interference fringes whose position and spacing constrain n and thickness separately, so both can be measured. This chart finds the thickness below which n must be fixed."
+    read:
+      zh: "看曲線：由右往左上升，薄膜端比厚膜端差 {ratio} 倍（{sA_thin} vs {sA_thick}）；穿過紅線的厚度就是必須固定 n 的轉折點。好：σ(A) 遠低於紅線，厚度與 n 可同時浮動（例如需要監控組成時）。表格也要看：corr_t_n > 0.9 表示厚度與 n 互相牽動，即使 σ(A) 低於門檻，n 的任何系統誤差（模型、B 係數、表面層）也會直接轉成厚度誤差；t_error 與 A_error 若遠大於對應的 stderr，代表有偏差（模型或局部最小值），不只是雜訊。陷阱：薄膜上 n 錯了，GOF 幾乎不變（擬合看起來仍然很好），所以 GOF 好不代表 n 對。固定 n 的作法：在同製程的厚膜或 reference wafer 上量好 n,k，再寫入薄膜 recipe。製程本身會改變 n 的膜（SiON 的含氮量、high-k 的組成／結晶），固定 n 會把組成變化誤判成厚度變化，需另外用厚膜監控片等方式監控組成。"
+      en: "Read the curve: it rises from right to left, with the thin end {ratio}× worse than the thick end ({sA_thin} vs {sA_thick}); the thickness where it crosses the red line is where n must be fixed. Good: σ(A) far below the red line, so thickness and n can float together (e.g. when composition needs monitoring). Check the table too: corr_t_n > 0.9 means thickness and n pull on each other, so even with σ(A) under the limit any systematic error in n (model, B coefficient, surface layer) turns directly into a thickness error; t_error and A_error much larger than their stderr mean a bias (model or local minimum), not just noise. Trap: on a thin film a wrong n barely changes the GOF (the fit still looks good), so a good GOF does not prove n is right. How to fix n: measure n,k on a thick film of the same process or on a reference wafer and write it into the thin-film recipe. For films whose n changes with the process (nitrogen content of SiON, composition / crystallinity of high-k), fixing n turns a composition change into a fake thickness change, so monitor composition separately, e.g. with a thick-film monitor wafer."
+    action:
+      act:
+        zh: "若現行量產 recipe 在薄膜上同時浮動 n 與厚度，且 SPC 的厚度跳動與擬合出的 n 同步變化：厚度數據不可信。改為固定 n（用厚膜或 reference wafer 量好的 n,k），新 recipe 完成 GR&R 與 matching 後 release，並與 PE／PIE 評估既有數據與 disposition 是否受影響。"
+        en: "If a production recipe floats n together with thickness on a thin film and the thickness jumps on SPC move together with the fitted n: the thickness data cannot be trusted. Fix n (n,k measured on a thick film or reference wafer), release the new recipe after GR&R and matching, and assess with PE / PIE whether existing data and dispositions are affected."
+      watch:
+        zh: "σ(A) 在 ≤ {t_bad} nm 時超過 {limit}：這些厚度的 recipe 請固定 n（n,k 由厚膜或 reference wafer 量得），只浮動厚度。把 n,k 檔版本寫進 recipe 文件並在整個 fleet 統一，避免 recipe 複製錯誤造成機台間 offset。"
+        en: "σ(A) exceeds {limit} up to {t_bad} nm: recipes at these thicknesses should fix n (n,k from a thick film or reference wafer) and float thickness only. Put the n,k file version in the recipe document and keep it identical across the fleet, so a recipe-copy error does not create a tool-to-tool offset."
+      good:
+        zh: "所有厚度的 σ(A) 都低於 {limit}（最薄處 {sA_thin}）：統計上 n 可以和厚度一起浮動。但若 corr_t_n 仍接近 1，n 的系統誤差還是會轉成厚度誤差；量產 recipe 對超薄膜通常仍固定 n 以求穩定，並用厚膜監控 n。"
+        en: "σ(A) stays below {limit} at every thickness ({sA_thin} at the thinnest): statistically n may float with thickness. But while corr_t_n is still close to 1, systematic errors in n still turn into thickness errors; production recipes for ultra-thin films usually fix n anyway for stability and monitor n on a thick film."
+    record:
+      zh: "[Recipe study] 厚度–n 相關性 · σ(A)：最薄 {sA_thin} / 最厚 {sA_thick}（差 {ratio} 倍）· 門檻 {limit} · σ(A) 超過門檻的最大厚度 {t_bad} nm · 狀態 {status} · recipe 決定（固定 n／浮動 n）：＿＿"
+      en: "[Recipe study] thickness–n correlation · σ(A): thinnest {sA_thin} / thickest {sA_thick} ({ratio}× apart) · limit {limit} · largest thickness with σ(A) above the limit: {t_bad} nm · status {status} · recipe decision (fix n / float n): ___"
+    roles:
+      RDA:
+        zh: "【量測模型說明】超薄膜無法同時準確量出厚度與折射率 n（最薄處 σ(n) ≈ {sA_thin}），recipe 會固定 n、只報厚度。若 FA 發現膜的組成改變（例如含氮量不同），該片的 inline 厚度可能有偏差，請以 TEM 厚度為準並回饋量測端。"
+        en: "[Measurement model note] On ultra-thin films thickness and refractive index n cannot both be measured accurately (σ(n) ≈ {sA_thin} at the thinnest film), so the recipe fixes n and reports thickness only. If FA finds a change in film composition (e.g. different nitrogen content), the inline thickness of that wafer may be biased; please take the TEM thickness as reference and let metrology know."
+      PE:
+        zh: "【Recipe 設計】{finding}。超薄膜 recipe 建議固定 n（由同製程厚膜量得），只浮動厚度。若製程變更會改變膜的組成（n），請事先通知量測端更新 n,k 或增加組成監控，否則組成變化會被誤判為厚度變化。"
+        en: "[Recipe design] {finding}. For ultra-thin films we recommend fixing n (measured on a thick film of the same process) and floating thickness only. If a process change will alter film composition (n), please tell metrology in advance so we can update n,k or add a composition monitor; otherwise a composition change will be read as a thickness change."
+      EE:
+        zh: "【Recipe 一致性】超薄膜 recipe 會固定 n（同時浮動時最薄處 σ(A) ≈ {sA_thin}，參考門檻 {limit}），所以 n,k 檔必須在所有量測機台一致。recipe 轉移、機台複製或軟體升級時，請協助確認 n,k 檔版本相同；這類差異不會觸發任何警報，只會以機台間 offset 出現。"
+        en: "[Recipe consistency] Ultra-thin-film recipes fix n (σ(A) ≈ {sA_thin} at the thinnest film when floated, reference limit {limit}), so the n,k file must be identical on every metrology tool. During recipe transfer, tool cloning or software upgrades, please help confirm the n,k file versions match; this kind of difference raises no alarm and only shows up as a tool-to-tool offset."
+      PIE_YE:
+        zh: "【厚度數據解讀】超薄膜的 inline 厚度是在固定 n 的假設下算出（若同時浮動 n，最薄處 σ(A) ≈ {sA_thin}）。n 偏 0.01 約造成 1 % 厚度誤差，而且 GOF 看不出來；和電性（C-V 的 EOT 等）做相關時，若製程造成組成（n）變化，兩者可能出現看似矛盾的結果，請一起評估。"
+        en: "[Reading thickness data] Inline thickness on ultra-thin films is calculated with n fixed (σ(A) ≈ {sA_thin} at the thinnest film if floated). An n error of 0.01 gives about a 1 % thickness error that the GOF does not reveal; when correlating with electrical data (e.g. C-V EOT), a process-induced composition (n) change can make the two look contradictory, so please review them together."
+      MGR_QE:
+        zh: "【狀態】厚度–n 相關性研究：{status}。{finding}。建議：超薄膜量產 recipe 固定 n（n,k 由厚膜／reference wafer 取得），組成變化另行監控；σ(A) 超過門檻的最大厚度 {t_bad} nm（— 表示所有厚度都在門檻內）。recipe 變更將依變更管理完成 GR&R 與 matching 後 release。"
+        en: "[Status] Thickness–n correlation study: {status}. {finding}. Recommendation: production recipes for ultra-thin films fix n (n,k from a thick film / reference wafer) and composition is monitored separately; largest thickness with σ(A) above the limit: {t_bad} nm (— means every thickness is within the limit). Any recipe change will be released under change control after GR&R and matching."

@@ -1,0 +1,396 @@
+# Fab simulator page. Template values (from insights.fab_*):
+#   fab_yield_trend  {mean_yield} {lot_sd} {worst_lot} {worst_yield} {n_low} {low_lots} {change_pp}
+#   fab_die_map      {wafer} {yield} {fleet_yield} {main_cause} {main_share} {n_fail} {edge_share} {pattern} {step} {chamber}
+#   fab_patterns     {accuracy} {n_pattern} {recall_pattern} {worst_class} {worst_recall} {false_calls} {min_defects}
+#   fab_defect_map   {wafer} {true} {pred} {conf} {n_fail} {correct}
+#   fab_tradeoff     {fastest} {fastest_delay} {quietest} {quietest_fa} {n_obs} {best_all} {best_all_fa}
+#   fab_event_delay  {slowest_event} {slowest_best} {missed} {unobservable}
+#   fab_drivers      {top_cause} {top_loss} {total_loss} {corr_top} {top1_match} {spearman}
+#   every chart      {finding} {status}
+# All data on this page is SIMULATED practice data with an answer key (config/fab_sim.yaml).
+
+charts:
+  fab_yield_trend:
+    page: Fab simulator
+    title: {zh: "每批平均良率趨勢（每片晶圓都有 e-test 與良率）", en: "Lot mean yield trend (every wafer has e-test and yield)"}
+    legend:
+      - item: "● 藍線＋點 lot mean yield 每批平均良率 · blue line + dots"
+        zh: "每批一點＝該批 25 片晶圓 sort 良率的平均。良率每一片都有（量測只抽 25 片中的 5 片），所以這是覆蓋最完整的訊號，但也是最晚的訊號：要等整段製程跑完、做完 e-test 與 sort 才看得到。"
+        en: "One dot per lot = mean sort yield of its 25 wafers. Every wafer has a yield (metrology samples only 5 of 25), so this is the most complete signal, but also the latest: it exists only after the whole route, e-test and sort."
+      - item: "— 灰線 median 中位數 · grey line"
+        zh: "所有批平均良率的中位數＝這段期間的「正常水準」。用中位數而不用平均值，是因為少數 excursion 批拉不動它。"
+        en: "Median of all lot means = the normal level for this period. The median is used instead of the mean so that a few excursion lots cannot drag it down."
+      - item: "┄ 紅色虛線 median − 3σ alert 警戒線 · red dashed line"
+        zh: "警戒線＝中位數 − 3 × 穩健 σ（σ = 1.4826 × MAD；MAD 是各批與中位數之差的絕對值的中位數）。穩健 σ 不會被 excursion 批本身撐大，所以真正的低良率批會清楚落在線下。低於這條線的批視為良率 excursion（本資料 {n_low} 批：{low_lots}）。"
+        en: "Alert line = median − 3 × robust σ (σ = 1.4826 × MAD, the median absolute deviation of the lot means from their median). A robust σ is not inflated by the excursion lots themselves, so truly low lots fall clearly below it. Lots under the line are treated as a yield excursion (here {n_low}: {low_lots})."
+    axes:
+      zh: "X 軸＝批次序號 lot index（依投片順序，從 0 起算；lot_id = D + 序號 + 1，例如序號 30 = D0031；答案中事件的 start_lot 也用同一套序號）；Y 軸＝批平均良率（%，好晶粒數 ÷ 總晶粒數；每片約 620 顆 1 cm² 晶粒）。"
+      en: "X = lot index (start order, counted from 0; lot_id = D + index + 1, e.g. index 30 = D0031; the start_lot of events in the answer key uses the same index); Y = lot mean yield (%, good dies ÷ all dies; about 620 dies of 1 cm² per wafer)."
+    what:
+      zh: "良率是所有製程問題的「最終結算」：任何一站把晶粒推出元件窗口（parametric），或帶進 killer defect，最後都會在這裡變成 yield loss。這張圖回答兩個問題：(1) 有沒有某幾批突然掉下來（excursion，要追是哪一站、哪台機台）；(2) 整體水準是不是慢慢變差（趨勢，常是漂移、消耗品老化或某個變更）。它看不出原因、也看不出位置：原因要靠 commonality 分析，位置要看 die map。量測機台偏差（metrology offset）不會出現在這張圖，因為產品本身沒有改變。這是模擬練習資料，答案已知。"
+      en: "Yield is the final bill for every process problem: any step that pushes dies out of the device window (parametric) or adds killer defects ends up here as yield loss. The chart answers two questions: (1) did some lots suddenly drop (an excursion: find the step and the tool); (2) is the overall level slowly getting worse (a trend: often drift, consumable wear or a change). It shows neither cause nor location: the cause comes from commonality analysis, the location from the die maps. A metrology offset never appears here, because the product itself did not change. This is simulated practice data with a known answer."
+    read:
+      zh: "好：點在中位數附近隨機上下、沒有批落在紅線下、最前 1/4 與最後 1/4 的批相差 ≤ 2 個百分點。壞：(1) 連續幾批落在紅線下 → 有時間窗口的 excursion，第一批就是問題開始的時間點；(2) 單獨一批很低 → 該批特有的事件（某一次機台、handling 意外、短暫的微粒事件）；(3) 一路下滑或階梯式下降，|最後 1/4 − 最前 1/4| > 2 pp → 漂移或某個變更；(4) 規律的鋸齒 → PM 週期。注意批平均是 25 片的平均：如果兩個 chamber 只有一個出問題，只有約一半晶圓受影響，下降看起來只剩一半深，要到 die map、依 chamber 分組確認。良率是製程後好幾天才出來，要用 lot genealogy 把低良率批對回每一站實際的製程時間與機台。"
+      en: "Good: dots scatter randomly around the median, no lot below the red line, first and last quarter of lots within 2 percentage points. Bad: (1) several consecutive lots below the red line → an excursion with a time window; its first lot dates the start of the problem; (2) one isolated low lot → something specific to that lot (one tool pass, a handling incident, a short particle event); (3) a steady decline or a step down, |last quarter − first quarter| > 2 pp → drift or a change; (4) a regular saw-tooth → the PM cycle. Remember a lot mean averages 25 wafers: if only one of two chambers is bad, only about half the wafers are hit and the dip looks half as deep, so confirm on the die maps and by chamber. Yield arrives days after processing: use lot genealogy to map low lots back to the actual process time and tool of each step."
+    action:
+      act:
+        zh: "Yield excursion 處理：(1) 先排除測試端：sort 程式、probe card、測試機台有沒有變更（測試問題會造成假性掉良率），同批的 e-test 是否同步異常；(2) 對低良率批 {low_lots} 做 commonality：逐站比對這些批和正常批走過的機台／chamber／時間窗口／recipe 版本（lot genealogy），找出共同點；(3) 打開最低批 {worst_lot} 的 die map，判斷損失是 parametric（某站超窗）還是 defect（空間圖樣）；(4) 鎖定嫌疑機台後 → 請 EE inhibit，hold 同時段經過該機台、還在線上的 WIP，由 PIE／YE 決定 disposition；(5) 開異常單／excursion report（8D），記錄起訖批、受影響片數與良率損失。"
+        en: "Yield excursion handling: (1) rule out the test side first: sort program, probe card or tester changes (test problems fake a yield drop); check whether e-test of the same lots moved too; (2) run commonality on the low lots {low_lots}: step by step, compare the tools / chambers / time windows / recipe versions they used against normal lots (lot genealogy) and find what they share; (3) open the die map of the worst lot {worst_lot} to see whether the loss is parametric (a step out of window) or defect (a spatial pattern); (4) once a suspect tool is found → EE inhibits it, hold the WIP that went through that tool in the same window, and PIE / YE decide the disposition; (5) open an excursion report (8D) with first and last lot, wafers affected and yield lost."
+      watch:
+        zh: "沒有單批 excursion，但水準在移動（最後 1/4 − 最前 1/4 = {change_pp} pp）：把良率依各站機台／chamber 分組比較，看是不是某一條路徑在變差；對照 PM 週期與消耗品壽命；請 PE 確認這段期間的 recipe 或進料變更。持續追蹤接下來 2–3 週（或 N 批），必要時提高 inline 抽樣。"
+        en: "No single-lot excursion, but the level is moving (last quarter − first quarter = {change_pp} pp): split yield by tool / chamber at each step to see whether one path is getting worse; compare with PM cycles and consumable life; ask PE about recipe or incoming-material changes in that window. Keep tracking for the next 2–3 weeks (or N lots) and raise inline sampling if needed."
+      good:
+        zh: "良率穩定在中位數附近。照常記錄（週報）。SPC 出現 OOC 時，回來這張圖確認是否已經影響良率：OOC 不一定會掉良率，掉良率也不一定先有 OOC。"
+        en: "Yield is stable around the median. Record as usual (weekly report). When SPC goes OOC, come back here to check whether yield is already affected: an OOC does not always cost yield, and a yield drop does not always come with an OOC first."
+    record:
+      zh: "[Yield] 平均良率 {mean_yield}% · 批間 sd {lot_sd} pp · 最低 {worst_lot}（{worst_yield}%）· 低於 median − 3σ：{n_low} 批（{low_lots}）· 最後 − 最前 1/4：{change_pp} pp · 狀態 {status} · commonality：＿＿ · 處置：＿＿"
+      en: "[Yield] mean yield {mean_yield}% · lot-to-lot sd {lot_sd} pp · lowest {worst_lot} ({worst_yield}%) · below median − 3σ: {n_low} lots ({low_lots}) · last − first quarter: {change_pp} pp · status {status} · commonality: ___ · action: ___"
+    roles:
+      RDA:
+        zh: "【良率 excursion】{finding}。請優先拉 {worst_lot} 的低良率晶圓，對照 bin map 與 inline defect review，判斷是 killer defect 還是 parametric fail；若有空間圖樣，請標出位置與缺陷類型，我們會用來縮小可疑製程站。"
+        en: "[Yield excursion] {finding}. Please start with the low-yield wafers of {worst_lot}: compare the bin map with the inline defect review to tell killer defects from parametric fails; if there is a spatial pattern, mark its location and defect type so we can narrow down the suspect steps."
+      PE:
+        zh: "【良率趨勢】{finding}。低良率批：{low_lots}；最後 1/4 與最前 1/4 差 {change_pp} pp。請確認這段期間是否有 recipe 版本、進料或製程條件變更；commonality 結果出來後會同步嫌疑站點與機台。"
+        en: "[Yield trend] {finding}. Low lots: {low_lots}; last vs first quarter: {change_pp} pp. Please check for recipe version, incoming-material or process-condition changes in this window; we will share the suspect steps and tools once commonality is done."
+      EE:
+        zh: "【機台 commonality】低良率批 {low_lots}（最低 {worst_lot}，{worst_yield}%）。正在逐站比對這些批走過的機台／chamber；請先提供同時段的 PM、零件更換與機台警報紀錄。若鎖定機台，請準備 inhibit 與 qual 片。"
+        en: "[Tool commonality] Low lots {low_lots} (lowest {worst_lot}, {worst_yield}%). We are comparing the tools / chambers these lots used, step by step; please send the PM, part-swap and alarm history for the same window. If a tool is confirmed, please be ready to inhibit it and run qual wafers."
+      PIE_YE:
+        zh: "【良率影響】平均良率 {mean_yield}%，{n_low} 批低於 median − 3σ（{low_lots}），最低 {worst_lot} {worst_yield}%。請評估是否需要 hold 同時段的 WIP，以及受影響批的 disposition；die map 與 commonality 結果隨後提供。"
+        en: "[Yield impact] Mean yield {mean_yield}%; {n_low} lots below median − 3σ ({low_lots}), lowest {worst_lot} at {worst_yield}%. Please assess whether to hold WIP from the same window and the disposition of the affected lots; die maps and commonality results will follow."
+      MGR_QE:
+        zh: "【狀態】良率趨勢：{status}。{finding}。進行中：commonality 與 die map 判讀；待決定：低良率批的 disposition、是否開 excursion report（8D）。紀錄：e-log 已更新。"
+        en: "[Status] Yield trend: {status}. {finding}. In progress: commonality and die-map review. Decision needed: disposition of the low lots and whether to open an excursion report (8D). Records: e-log updated."
+
+  fab_die_map:
+    page: Fab simulator
+    title: {zh: "晶圓 die map：每顆晶粒的失效原因", en: "Die map: the fail cause of every die"}
+    legend:
+      - item: "■ 淺灰 pass 良品 · light grey"
+        zh: "通過所有檢查的好晶粒。圖例括號內的數字是該類晶粒的顆數（以下各類相同）。每片約 620 顆 1 cm² 晶粒，良率＝良品數 ÷ 總晶粒數。顏色固定跟著原因走，不會因為換晶圓而改變。"
+        en: "Good dies that pass every check. The number in brackets in the plot legend is the die count of that class (same for every class below). About 620 dies of 1 cm² per wafer; yield = good dies ÷ all dies. Each colour is fixed to its cause and never changes between wafers."
+      - item: "■ defect 缺陷 · killer defect"
+        zh: "被 killer defect 打死的晶粒（微粒、殘留、刮傷等）。缺陷由 inline inspection 站 TIN_DEP 代表（只有量測晶圓有 defect_density），但在 TIN_DEP 之後被看到，不代表一定是 TIN_DEP 造成：前面任何一站都可能帶進來，要看各站 inspection 的 adder。缺陷是群聚分布（負二項），所以常成團或成圖樣。"
+        en: "Dies killed by a killer defect (particle, residue, scratch...). Defects are represented by the inline inspection step TIN_DEP (only measured wafers have defect_density), but being seen after TIN_DEP does not mean TIN_DEP caused it: any earlier step can bring it in, so check the adders at each inspection step. Defects are clustered (negative binomial), so they often come in clumps or patterns."
+      - item: "■ gate_ox_thk 閘極氧化層超窗"
+        zh: "該位置的閘極氧化層厚度超出元件窗口（預設 2.935–3.065 nm）→ Vt 偏移（本模擬約 40 mV／Å），電晶體特性超規。"
+        en: "Gate-oxide thickness at this location is outside the device window (default 2.935–3.065 nm) → Vt shift (about 40 mV per Å in this simulation), transistor out of spec."
+      - item: "■ hk_thk high-k 厚度超窗"
+        zh: "high-k 覆蓋層厚度超出元件窗口（預設 4.90–5.10 nm）→ 等效氧化層厚度（EOT）、Vt 與漏電改變。"
+        en: "High-k cap thickness outside the device window (default 4.90–5.10 nm) → equivalent oxide thickness (EOT), Vt and leakage change."
+      - item: "■ tin_thk TiN 厚度超窗"
+        zh: "TiN 厚度超出元件窗口（預設 9.0–11.0 nm）→ 片電阻 Rs（≈ ρ ÷ 厚度）與功函數改變。"
+        en: "TiN thickness outside the device window (default 9.0–11.0 nm) → sheet resistance Rs (≈ ρ ÷ thickness) and work function change."
+      - item: "■ wl_cd_etch 字元線蝕刻 CD 超窗"
+        zh: "字元線蝕刻後線寬超出元件窗口（預設 17.25–18.75 nm）。蝕刻 CD 繼承曝光 CD 的偏差（litho → etch）。太窄 → 字元線電阻高、斷線風險；太寬 → 相鄰線短路（bridge）。"
+        en: "Post-etch word-line CD outside the device window (default 17.25–18.75 nm). Etched CD inherits the litho CD deviation (litho → etch). Too narrow → high word-line resistance, risk of opens; too wide → shorts to the neighbour line (bridging)."
+      - item: "■ ild_thk ILD 厚度超窗"
+        zh: "CMP 後層間介電層（ILD）厚度超出元件窗口（預設 290–312 nm）→ 太薄：寄生電容、後段蝕刻穿透風險；太厚：contact／via 蝕刻不足、開路。"
+        en: "Post-CMP inter-layer dielectric (ILD) thickness outside the device window (default 290–312 nm) → too thin: parasitic capacitance, punch-through risk in later etches; too thick: under-etched contacts / vias, opens."
+      - item: "◯ 灰圈 wafer edge 晶圓邊緣 · grey circle"
+        zh: "晶圓實體邊緣（半徑 150 mm）。最外 3 mm 是 edge exclusion，只有完整落在有效半徑內的位置才有晶粒，所以晶粒和灰圈之間會有空隙。"
+        en: "Physical wafer edge (radius 150 mm). The outer 3 mm is edge exclusion and only fully usable die sites carry a die, so there is a gap between the dies and the grey circle."
+    axes:
+      zh: "X、Y 軸＝晶粒中心座標（mm，晶圓中心為 0）；每個方塊＝一顆 10 × 10 mm 晶粒。標題：晶圓 ID、良率、答案中的缺陷圖樣（random／edge_ring／center／scratch／cluster）。每顆晶粒只標一個原因：依製程順序第一個超窗的站（GATE_OX → CAP_HK → TIN_DEP → WL_ETCH → ILD_CMP），參數都正常才標 defect，類似 sort bin 的優先順序，所以後段的問題可能被前段蓋掉。"
+      en: "X, Y = die centre coordinates (mm, wafer centre = 0); each square = one 10 × 10 mm die. Title: wafer ID, yield and the defect pattern from the answer key (random / edge_ring / center / scratch / cluster). Each die shows one cause only: the first step in route order that is out of window (GATE_OX → CAP_HK → TIN_DEP → WL_ETCH → ILD_CMP); a die is marked defect only if every parameter is in window. This works like sort-bin priority, so a later problem can be hidden behind an earlier one."
+    what:
+      zh: "Die map 把一個良率數字「攤開」到每一顆晶粒：同樣 85% 的良率，失效集中在外圈、集中在中心、排成一直線或隨機散布，代表完全不同的根因。顏色分成兩大類損失：parametric（某站厚度／CD 超出元件窗口，通常和片內分布形狀 bowl、edge roll-off 有關，會跟著 chamber 走）與 defect（killer defect，跟著微粒來源與 handling 走）。真實 fab 的 sort bin map 只告訴你哪一個電性測項失敗，不會直接寫是哪一站造成的；這裡的顏色是模擬器的答案。練習時先用位置和 commonality 自己推論，再對答案。"
+      en: "A die map spreads one yield number across every die: the same 85 % yield with failures in the outer ring, in the centre, along a straight line or scattered at random points to completely different root causes. The colours split the loss into two families: parametric (a step's thickness / CD outside the device window, usually tied to the within-wafer shape such as bowl or edge roll-off, and following the chamber) and defect (killer defects, following the particle source and handling). In a real fab the sort bin map only tells you which electrical test failed, never which step caused it; the colours here are the simulator's answer. Practise by reasoning from location and commonality first, then check the answer."
+    read:
+      zh: "好：失效少、顏色雜、位置隨機，良率接近全部平均 {fleet_yield}%。壞：(1) 外圈一整圈失效（本片失效落在 r > 0.85R 的比例 {edge_share}%；外圈面積約占 28%，明顯高於此 → 邊緣型）→ edge ring／focus ring 磨耗、bevel 殘留、夾持（clamp）、邊緣附近的沉積或 CMP 邊緣滾降；(2) 中心一團 → showerhead 氣流、旋塗中心、中心溫度；(3) 一直線 → 機械手臂／handling、CMP 刮傷；(4) 局部一團 → 局部微粒、液滴、噴濺；(5) 同一種 parametric 顏色排成環狀或集中中心 → 該站片內分布把邊緣或中心推出窗口：晶圓平均可能仍在 SPC 管制內，問題在形狀（看片內 1σ %）。主因占比 {main_share}% 高 → 單一原因；多種顏色平均分布 → 多個小問題或整體窗口偏緊（marginal）。"
+      en: "Good: few failures, mixed colours, random positions, yield close to the fleet mean of {fleet_yield}%. Bad: (1) a full ring of failures at the edge (here {edge_share}% of failures sit at r > 0.85R; the outer ring is about 28 % of the area, so clearly more than that → edge-type) → edge / focus ring wear, bevel residue, clamping, deposition or CMP roll-off near the edge; (2) a blob in the centre → showerhead flow, spin-coat centre, centre temperature; (3) a straight line → robot / handling, CMP scratch; (4) a local clump → local particles, droplets, splashes; (5) one parametric colour forming a ring or a centre spot → that step's within-wafer profile pushes the edge or centre out of window: the wafer mean may still be in SPC control; the problem is the shape (check within-wafer 1σ %). A high main-cause share ({main_share}%) → one cause; many colours spread evenly → several small problems or a generally marginal window."
+    action:
+      act:
+        zh: "{wafer} 良率 {yield}% 低於全部平均 − 2σ：(1) 依主因決定方向：主因是 parametric（{main_cause}）→ 查站 {step} 的 chamber {chamber}：SPC、片內 1σ %、最近的 PM；主因是 defect → 查 inline inspection 與缺陷圖樣，安排 review／SEM；(2) 用 lot genealogy 找同批、同 chamber、同時段的其他晶圓，看是否同樣低良率（commonality），決定 hold 範圍；(3) 若是系統性空間圖樣，拉片給 RDA 做 FA，並請 EE 檢查對應硬體（edge ring、showerhead、robot、CMP pad／conditioner）；(4) 開異常單並記錄。"
+        en: "{wafer} yield {yield}% is below fleet mean − 2σ: (1) let the main cause set the direction: parametric ({main_cause}) → check step {step}, chamber {chamber}: SPC, within-wafer 1σ %, recent PM; defect → check inline inspection and the defect pattern and schedule review / SEM; (2) use lot genealogy to pull other wafers from the same lot, chamber and time window and see whether they are low too (commonality), which sets the hold scope; (3) for a systematic spatial pattern, send wafers to RDA for FA and ask EE to check the matching hardware (edge ring, showerhead, robot, CMP pad / conditioner); (4) open an excursion record."
+      watch:
+        zh: "良率介於全部平均 − 1σ 和 − 2σ 之間：追蹤同 chamber 的下一批是否重複同樣顏色、同樣位置；若同一種 parametric 原因反覆出現在邊緣或中心，即使 SPC 平均值在管制內，也請 PE 評估該站的片內均勻度與 target 置中。"
+        en: "Yield is between fleet mean − 1σ and − 2σ: watch whether the next lots on the same chamber repeat the same colour in the same place; if one parametric cause keeps appearing at the edge or centre, ask PE to review that step's within-wafer uniformity and target centring, even if the SPC mean is in control."
+      good:
+        zh: "良率在正常範圍。可以當對照片（reference wafer），和低良率片並排比較位置與原因。"
+        en: "Yield is in the normal range. Use it as a reference wafer and compare it side by side with low-yield wafers."
+    record:
+      zh: "[Die map] {wafer} · 良率 {yield}%（全部 {fleet_yield}%）· 失效 {n_fail} 顆 · 主因 {main_cause} {main_share}%（站 {step}，chamber {chamber}）· 外圈占比 {edge_share}% · 缺陷圖樣 {pattern} · 狀態 {status} · 處置：＿＿"
+      en: "[Die map] {wafer} · yield {yield}% (fleet {fleet_yield}%) · {n_fail} failing dies · main cause {main_cause} {main_share}% (step {step}, chamber {chamber}) · outer-ring share {edge_share}% · defect pattern {pattern} · status {status} · action: ___"
+    roles:
+      RDA:
+        zh: "【Die map】{wafer}：{n_fail} 顆失效，主因 {main_cause}（{main_share}%），外圈占比 {edge_share}%，缺陷圖樣 {pattern}。請依圖樣挑位置做 review／SEM（外圈與中心各取幾顆），失效晶粒座標可由量測端提供。"
+        en: "[Die map] {wafer}: {n_fail} failing dies, main cause {main_cause} ({main_share}%), outer-ring share {edge_share}%, defect pattern {pattern}. Please pick review / SEM sites by the pattern (a few dies at the edge and in the centre); metrology can provide the coordinates of the failing dies."
+      PE:
+        zh: "【Die map】{finding}。若主因是 parametric，代表站 {step} 的片內分布（中心／邊緣）把部分晶粒推出元件窗口，晶圓平均值可能仍在 SPC 管制內；請評估片內均勻度與 target 置中。"
+        en: "[Die map] {finding}. If the main cause is parametric, the within-wafer profile (centre / edge) at step {step} is pushing some dies out of the device window while the wafer mean may still be in SPC control; please review within-wafer uniformity and target centring."
+      EE:
+        zh: "【機台確認】{wafer} 主因 {main_cause}，對應站 {step}、chamber {chamber}，外圈失效占 {edge_share}%。請檢查該 chamber 最近的 PM 與邊緣／中心相關硬體（edge ring、showerhead、加熱器、clamp），並確認同 chamber 其他晶圓是否相同。"
+        en: "[Tool check] {wafer}: main cause {main_cause}, step {step}, chamber {chamber}; {edge_share}% of failures in the outer ring. Please check the chamber's recent PM and edge / centre hardware (edge ring, showerhead, heater, clamp), and whether other wafers from the same chamber look the same."
+      PIE_YE:
+        zh: "【良率】{wafer} 良率 {yield}%（全部平均 {fleet_yield}%），主因 {main_cause}（{main_share}%）。請評估同 chamber {chamber}、同時段其他晶圓的風險與 disposition；commonality 進行中。"
+        en: "[Yield] {wafer} yield {yield}% (fleet mean {fleet_yield}%), main cause {main_cause} ({main_share}%). Please assess the risk and disposition of other wafers from chamber {chamber} in the same window; commonality is in progress."
+      MGR_QE:
+        zh: "【狀態】{wafer} die map：{status}。主因 {main_cause}（站 {step}／chamber {chamber}）。下一步：commonality 確認範圍、RDA review；待決定：是否 hold 同 chamber 的 WIP。"
+        en: "[Status] {wafer} die map: {status}. Main cause {main_cause} (step {step} / chamber {chamber}). Next: commonality to set the scope, RDA review. Decision needed: whether to hold WIP from the same chamber."
+
+  fab_patterns:
+    page: Fab simulator
+    title: {zh: "晶圓圖樣分類器：混淆矩陣與各類別表現", en: "Wafer-map pattern classifier: confusion matrix and per-class performance"}
+    legend:
+      - item: "▦ 藍色深淺 cell colour = % of row"
+        zh: "格子顏色＝該格晶圓數占「該列（真實圖樣）」的百分比，0–100%，越深越多。對角線深 → 分得對；對角線以外的深色格子 → 系統性混淆（例如 cluster 被判成 center）。"
+        en: "Cell colour = the cell's wafer count as a percentage of its row (the true pattern), 0–100 %, darker = more. A dark diagonal → correct calls; dark cells off the diagonal → systematic confusion (e.g. cluster called center)."
+      - item: "123 格內數字 · number in each cell"
+        zh: "晶圓數（片）。顏色看比例、數字看規模：random 列通常有上千片，1% 的誤判就是十幾片要送 review 的晶圓。"
+        en: "Wafer count. Read proportion from the colour and scale from the number: the random row usually holds over a thousand wafers, so a 1 % error is already a dozen or more wafers sent to review."
+      - item: "表格 recall／precision · per-class table"
+        zh: "每個圖樣的 n（真實片數）、recall 召回（真的是這個圖樣、被判對的比例）、precision 精確（被判成這個圖樣、真的是的比例）。n = 0 的類別沒有 recall。"
+        en: "Per pattern: n (true wafer count), recall (share of wafers truly of this pattern that were called correctly), precision (share of wafers called this pattern that truly are). Classes with n = 0 have no recall."
+      - item: "清單 pattern descriptions · 圖樣說明"
+        zh: "各圖樣的典型根因：edge_ring 邊緣環 → 邊緣製程／bevel／夾持；center 中心 → showerhead／旋塗中心／中心溫度；scratch 刮痕 → robot／handling／CMP；cluster 群聚 → 局部微粒／液滴；random 隨機 → 看整體缺陷密度。"
+        en: "Typical root cause per pattern: edge_ring → edge processing / bevel / clamping; center → showerhead / spin-coat centre / centre temperature; scratch → robot / handling / CMP; cluster → local particles / droplets; random → follow overall defect density."
+    axes:
+      zh: "列（Y）＝真實圖樣（答案）；欄（X）＝分類器判斷。分類器只看 killer defect 失效的晶粒（不看 parametric 失效），計算可解讀的空間特徵（徑向分布、直線、群聚），再用最近中心（nearest centroid）判斷；訓練資料是另一組 pattern_zoo 模擬晶圓，不包含被打分數的這份資料。缺陷失效晶粒少於 {min_defects} 顆的晶圓直接判為 random。"
+      en: "Rows (Y) = true pattern (answer key); columns (X) = the classifier's call. The classifier looks only at dies killed by defects (not parametric fails), computes readable spatial features (radial profile, lines, clustering) and assigns the nearest centroid; it is trained on a separate pattern_zoo simulation that never includes the dataset being scored. Wafers with fewer than {min_defects} defect-fail dies are called random directly."
+    what:
+      zh: "自動分類的目的是讓工程師不用一片一片看 map：從上千片晶圓先篩出少數「有系統性空間圖樣」的晶圓，送 RDA／FA 並做機台 commonality。這張圖告訴你這個篩選器能不能信：漏判＝excursion 晚發現；誤報＝浪費 review／SEM／FA 產能，久了大家就不再相信警報。這是模擬資料，答案已知，所以能算正確率；真實 fab 的「答案」來自人工 review 標註，本身也有誤差。"
+      en: "Automatic classification saves engineers from looking at every map: out of a thousand wafers it pre-selects the few with a systematic spatial pattern, which go to RDA / FA and tool commonality. This chart tells you whether that filter can be trusted: misses = excursions found late; false calls = wasted review / SEM / FA capacity, and over time nobody trusts the alarms. This is simulated data with a known answer, so accuracy can be computed; in a real fab the \"answer\" comes from manual review labels, which carry their own errors."
+    read:
+      zh: "先看整體正確率（{accuracy}%；≥ 90% 好、75–90% 注意、< 75% 需處理），但不要只看它：生產中大部分晶圓是 random，分類器全部判 random 也能有很高的正確率。要一起看：(1) 有圖樣晶圓的召回（{n_pattern} 片中判對 {recall_pattern}%）；(2) 最弱類別 {worst_class}（召回 {worst_recall}%）；(3) random 列被判成有圖樣的片數（誤報 {false_calls} 片）與各類別的 precision。基數效應（base rate）：random 很多時，即使只有 2–3% 誤判，誤報片數也可能比真正有圖樣的還多，precision 就會很低。常見混淆：靠近中心的 cluster ↔ center；短刮痕 ↔ cluster；缺陷很少的晶圓，任何形狀都可能只是巧合。"
+      en: "Start with overall accuracy ({accuracy}%; ≥ 90 % good, 75–90 % watch, < 75 % act), but never stop there: most production wafers are random, so a classifier that calls everything random still scores high. Also check: (1) recall on patterned wafers ({recall_pattern}% of {n_pattern} called correctly); (2) the weakest class, {worst_class} (recall {worst_recall}%); (3) how many random wafers were called patterned (false calls: {false_calls}) and the per-class precision. Base rate: when random wafers dominate, even a 2–3 % error rate can produce more false calls than real patterns, and precision drops. Typical confusions: a cluster near the centre ↔ center; a short scratch ↔ cluster; on wafers with few defects any shape can be chance."
+    action:
+      act:
+        zh: "正確率 < 75%：不要用這個分類結果做決策或自動開單。(1) 確認訓練資料和現在的產品一致（晶粒尺寸、晶圓圖格、缺陷密度）；(2) 看混淆矩陣最大的非對角格，針對那兩類補訓練樣本或加特徵；(3) 檢討最少缺陷晶粒數門檻（目前 {min_defects}）；(4) 改善前，判為有圖樣的晶圓一律人工 review 確認。"
+        en: "Accuracy < 75 %: do not use these calls for decisions or automatic excursion tickets. (1) Check that the training data matches the current product (die size, die grid, defect density); (2) find the largest off-diagonal cell and add training wafers or features for that pair of classes; (3) review the minimum defect-die threshold (now {min_defects}); (4) until it improves, confirm every patterned call by manual review."
+      watch:
+        zh: "正確率 75–90%：可當初篩工具，但判為有圖樣的晶圓要人工確認後才送 FA；特別注意 {worst_class}（召回 {worst_recall}%），以及 {false_calls} 片誤報占用的 review 產能。"
+        en: "Accuracy 75–90 %: usable as a pre-screen, but confirm patterned calls manually before sending them to FA; watch {worst_class} (recall {worst_recall}%) and the review capacity taken by {false_calls} false calls."
+      good:
+        zh: "正確率 ≥ 90%：可以當日常初篩。仍要看 precision（高正確率不代表誤報少），定期抽查一部分判為 random 的晶圓，並在缺陷密度、製程或產品改變後重新驗證。"
+        en: "Accuracy ≥ 90 %: fine as a daily pre-screen. Still check precision (high accuracy does not mean few false calls), audit a sample of random calls regularly, and re-validate after defect density, process or product changes."
+    record:
+      zh: "[Pattern classifier] 正確率 {accuracy}% · 有圖樣晶圓 {n_pattern} 片，召回 {recall_pattern}% · 最弱 {worst_class}（{worst_recall}%）· 誤報 {false_calls} 片 · 最少缺陷晶粒數 {min_defects} · 狀態 {status} · 調整：＿＿"
+      en: "[Pattern classifier] accuracy {accuracy}% · {n_pattern} patterned wafers, recall {recall_pattern}% · weakest {worst_class} ({worst_recall}%) · {false_calls} false calls · min defect dies {min_defects} · status {status} · change: ___"
+    roles:
+      RDA:
+        zh: "【圖樣分類】{finding}。目前有 {false_calls} 片其實是 random 卻被判成有圖樣，送 review 前會先人工確認；{worst_class} 最容易漏判，若 review 時看到請回饋標註，我們用來改善分類器。"
+        en: "[Pattern classification] {finding}. {false_calls} random wafers are currently called patterned, so we confirm by eye before sending them to review; {worst_class} is missed most often, so please feed back any you see during review and we will use the labels to improve the classifier."
+      PE:
+        zh: "【圖樣分類】正確率 {accuracy}%，有圖樣晶圓 {n_pattern} 片、召回 {recall_pattern}%。分類只看 killer defect 的空間分布；parametric 超窗的形狀（bowl、edge roll）請另外看 die map 與片內 1σ %。"
+        en: "[Pattern classification] Accuracy {accuracy}%, {n_pattern} patterned wafers, recall {recall_pattern}%. The classifier looks only at the spatial layout of killer defects; for parametric shapes (bowl, edge roll) please use the die map and within-wafer 1σ %."
+      EE:
+        zh: "【圖樣 → 硬體】有圖樣的晶圓會依圖樣對到可疑硬體：edge_ring → edge ring／bevel／clamp；center → showerhead／中心溫度；scratch → robot／handling／CMP；cluster → 局部微粒源。分類器目前正確率 {accuracy}%，{worst_class} 較弱，排查機台前會先人工確認圖樣。"
+        en: "[Pattern → hardware] Patterned wafers point to suspect hardware: edge_ring → edge ring / bevel / clamp; center → showerhead / centre temperature; scratch → robot / handling / CMP; cluster → a local particle source. Classifier accuracy is {accuracy}% and {worst_class} is weak, so patterns are confirmed by eye before any tool troubleshooting."
+      PIE_YE:
+        zh: "【分類效能】{finding}。若要用於自動 hold 或 disposition，建議先提高門檻並人工確認；目前最少缺陷晶粒數為 {min_defects}。"
+        en: "[Classifier performance] {finding}. Before using it for automatic hold or disposition, raise the threshold and confirm manually; the current minimum defect-die count is {min_defects}."
+      MGR_QE:
+        zh: "【狀態】圖樣分類器：{status}（正確率 {accuracy}%）。風險：{false_calls} 片誤報占用 FA 產能、{worst_class} 召回只有 {worst_recall}%。待決定：直接用於日常初篩，或先改善。"
+        en: "[Status] Pattern classifier: {status} (accuracy {accuracy}%). Risks: {false_calls} false calls consume FA capacity; {worst_class} recall is only {worst_recall}%. Decision needed: use it as a daily pre-screen now, or improve it first."
+
+  fab_defect_map:
+    page: Fab simulator
+    title: {zh: "單片缺陷圖與分類結果", en: "Defect map of one wafer and the classifier's call"}
+    legend:
+      - item: "■ 灰色方塊 other dies 其他晶粒 · grey squares"
+        zh: "沒有 killer defect 的晶粒：包含良品，也包含 parametric 超窗的失效晶粒（這張圖只看缺陷，所以它們也畫成灰色）。"
+        en: "Dies without a killer defect: good dies and also parametric fails (this map shows defects only, so those are grey as well)."
+      - item: "■ 橘色方塊 defect fails 缺陷失效 (n) · orange squares"
+        zh: "被 killer defect 打死的晶粒，括號內為顆數（本片 {n_fail} 顆）。分類器只用這些晶粒的位置判斷圖樣。"
+        en: "Dies killed by a killer defect; the number in brackets is the count (this wafer: {n_fail}). The classifier uses only the positions of these dies."
+      - item: "◯ 灰圈 wafer edge 晶圓邊緣 · grey circle"
+        zh: "晶圓實體邊緣（半徑 150 mm）。用來判斷失效是不是貼著邊緣（edge_ring）。"
+        en: "Physical wafer edge (radius 150 mm). Use it to judge whether failures hug the edge (edge_ring)."
+    axes:
+      zh: "X、Y 軸＝晶粒中心座標（mm，晶圓中心為 0），每格一顆 10 × 10 mm 晶粒。標題：晶圓 ID、真實圖樣（答案 {true}）、分類器判斷（{pred}）、信心 {conf}（0–1＝最近類別中心與第二近類別中心的距離差 ÷ 第二近的距離；0 表示兩類一樣像，等於丟銅板）。右側表格＝本片的特徵值。晶圓清單只列判錯的晶圓（全部判對時列出全部）。"
+      en: "X, Y = die centre coordinates (mm, wafer centre = 0); each square is one 10 × 10 mm die. Title: wafer ID, true pattern (answer {true}), the classifier's call ({pred}) and confidence {conf} (0–1 = gap between the nearest and second-nearest class centroid ÷ the second-nearest distance; 0 means both classes fit equally well, a coin flip). Table on the right = this wafer's feature values. The wafer list shows only misclassified wafers (all wafers when every call is right)."
+    what:
+      zh: "這裡是把分類結果攤開來檢查的地方：分類器說這片是 {pred}，你用眼睛看這張圖同不同意。工程師不是要「相信」分類器，而是用它排出要看的晶圓。系統性圖樣（edge_ring、center、scratch、cluster）代表有一個特定來源：某個硬體、某個 handling 步驟或某次事件，可以追；random 代表整體缺陷密度（D0）的問題，要看趨勢與清潔度，而不是找單一機台。"
+      en: "This is where you inspect one call in detail: the classifier says this wafer is {pred}; look at the map and decide whether you agree. Engineers do not trust the classifier; they use it to rank which wafers to look at. A systematic pattern (edge_ring, center, scratch, cluster) means one specific source: a piece of hardware, a handling step or an event, which can be traced; random means an overall defect-density (D0) problem, handled through trends and cleanliness rather than a single tool."
+    read:
+      zh: "先看缺陷顆數：本片 {n_fail} 顆；顆數少時任何形狀都可能是巧合，信心也會低。再用位置對特徵：失效貼外圈成環 → ring_4、edge_center 高；中心一團 → ring_0 高；一條直線（任何角度）→ line_score 高、line_vs_peak > 0；局部一團 → peak_score、neighbour_ratio 高、line_vs_peak < 0；random 晶圓的 neighbour_ratio 約 1。判錯的典型原因：圖樣只占少數晶粒、被大量背景隨機缺陷淹沒；cluster 剛好落在中心而被判成 center；短刮痕被判成 cluster。信心 < 0.2 的判斷視為「不確定」，要人工確認。"
+      en: "First check the defect count: {n_fail} on this wafer; with few defects any shape can be chance and confidence is low. Then match location to features: failures hugging the edge in a ring → high ring_4 and edge_center; a blob in the centre → high ring_0; a straight line at any angle → high line_score, line_vs_peak > 0; a local clump → high peak_score and neighbour_ratio, line_vs_peak < 0; on a random wafer neighbour_ratio is about 1. Typical reasons for a wrong call: the pattern covers only a few dies and drowns in background random defects; a cluster that happens to sit in the centre is called center; a short scratch is called cluster. Treat any call with confidence < 0.2 as uncertain and confirm it by eye."
+    action:
+      act:
+        zh: "判為 {pred} 且信心 {conf} ≥ 0.2：視為系統性空間圖樣。(1) 送 RDA review／SEM，依圖樣挑點（外圈、中心、刮痕沿線、群聚中心）；(2) 做機台 commonality：同圖樣的其他晶圓是否走過同一台 robot、同一個 chamber、同一台 CMP 或同一個 clean；(3) 依圖樣請 EE 檢查對應硬體（edge ring／bevel／clamp、showerhead／中心溫度、robot end effector／CMP pad、局部微粒源）；(4) 同時段多片出現時，hold 相關 WIP。"
+        en: "Called {pred} with confidence {conf} ≥ 0.2: treat it as a systematic spatial signature. (1) Send it to RDA for review / SEM, sampling by the pattern (outer ring, centre, along the scratch, cluster centre); (2) run tool commonality: did other wafers with the same pattern go through the same robot, chamber, CMP tool or clean; (3) ask EE to check the matching hardware (edge ring / bevel / clamp, showerhead / centre temperature, robot end effector / CMP pad, a local particle source); (4) if several wafers in the same window show it, hold the related WIP."
+      watch:
+        zh: "判為 {pred} 但信心 {conf} < 0.2：證據不足。人工看圖確認，並檢查同 lot、同 chamber 的其他晶圓是否有相同圖樣；多片重複出現就升級處理。"
+        en: "Called {pred} but confidence {conf} < 0.2: weak evidence. Confirm by eye and check other wafers from the same lot and chamber for the same pattern; escalate if it repeats on several wafers."
+      good:
+        zh: "判為 random：沒有空間特徵，不必找單一硬體；追蹤整體缺陷密度（D0）趨勢與 inline inspection 結果即可。"
+        en: "Called random: no spatial signature, so no single piece of hardware to chase; follow the overall defect-density (D0) trend and the inline inspection results."
+    record:
+      zh: "[Defect map] {wafer} · 缺陷失效 {n_fail} 顆 · 判斷 {pred}（信心 {conf}）· 答案 {true} → {correct} · 狀態 {status} · review／FA：＿＿ · commonality：＿＿"
+      en: "[Defect map] {wafer} · {n_fail} defect fails · called {pred} (confidence {conf}) · answer {true} → {correct} · status {status} · review / FA: ___ · commonality: ___"
+    roles:
+      RDA:
+        zh: "【FA 請求】{wafer}：分類器判為 {pred}（信心 {conf}），缺陷失效 {n_fail} 顆。請依圖樣位置安排 review／SEM，確認缺陷類型（微粒、刮傷、殘留）；若人工判讀和分類不同，請回饋以修正標註。"
+        en: "[FA request] {wafer}: called {pred} (confidence {conf}), {n_fail} defect fails. Please schedule review / SEM at the pattern locations and classify the defect type (particle, scratch, residue); if your reading differs from the call, please feed it back so we can correct the labels."
+      PE:
+        zh: "【缺陷圖樣】{wafer} 判為 {pred}（信心 {conf}）。若圖樣和某站製程有關（例如 edge_ring 對沉積／CMP 的邊緣、center 對旋塗或噴頭），請確認該站近期條件；機台 commonality 進行中。"
+        en: "[Defect pattern] {wafer} called {pred} (confidence {conf}). If the pattern is linked to a process step (e.g. edge_ring to deposition / CMP edge behaviour, center to spin-coat or showerhead), please check that step's recent conditions; tool commonality is in progress."
+      EE:
+        zh: "【硬體排查】{wafer} 出現 {pred} 圖樣（信心 {conf}，{n_fail} 顆缺陷失效）。請依圖樣檢查對應硬體：edge_ring → edge ring／bevel／clamp；center → showerhead、中心溫度；scratch → robot、end effector、CMP；cluster → 局部微粒源。commonality 結果會附上可疑機台。"
+        en: "[Hardware check] {wafer} shows a {pred} pattern (confidence {conf}, {n_fail} defect fails). Please check the matching hardware: edge_ring → edge ring / bevel / clamp; center → showerhead, centre temperature; scratch → robot, end effector, CMP; cluster → a local particle source. The commonality result with suspect tools will follow."
+      PIE_YE:
+        zh: "【良率風險】{wafer}：{finding}。若同一圖樣在多片重複出現，請評估受影響批的 disposition；只有單片且信心低時先觀察。"
+        en: "[Yield risk] {wafer}: {finding}. If the same pattern repeats on several wafers, please assess the disposition of the affected lots; for a single wafer with low confidence, monitor first."
+      MGR_QE:
+        zh: "【狀態】{wafer} 缺陷圖樣：{status}。判為 {pred}（信心 {conf}），與答案比對：{correct}。下一步：RDA review 與 commonality；待決定：是否 hold 同時段 WIP。"
+        en: "[Status] {wafer} defect pattern: {status}. Called {pred} (confidence {conf}); against the answer key: {correct}. Next: RDA review and commonality. Decision needed: whether to hold WIP from the same window."
+
+  fab_tradeoff:
+    page: Fab simulator
+    title: {zh: "速度 vs 誤警報：四種管制圖設定", en: "Speed vs false alarms: four control-chart setups"}
+    legend:
+      - item: "● 藍 I-MR rule 1 · blue"
+        zh: "I-MR 個別值圖，只用 WE1（單點超出 ±3σ）。最安靜的基準設定；對大的突跳快，對小偏移與慢漂移慢。"
+        en: "Individuals (I-MR) chart with WE1 only (one point beyond ±3σ). The quietest baseline setup; fast for large jumps, slow for small shifts and slow drift."
+      - item: "● 橘 I-MR WE 1-4 · orange"
+        zh: "I-MR 加上 WE1–WE4 全部規則。中小偏移抓得比較快，但誤警報明顯增加。"
+        en: "I-MR with all four Western Electric rules. Catches small and moderate shifts sooner, at the cost of clearly more false alarms."
+      - item: "● 綠 EWMA λ=0.2 · green"
+        zh: "EWMA，λ = 0.2、L = 3。把歷史加權平均，對 0.5–1.5σ 的小偏移與漂移敏感；對單點突跳較慢。"
+        en: "EWMA with λ = 0.2 and L = 3. A weighted memory of history, sensitive to 0.5–1.5σ shifts and drift; slower for single spikes."
+      - item: "● 黃 CUSUM k=0.5 h=5 · yellow"
+        zh: "CUSUM，k = 0.5σ、h = 5σ。對持續的小偏移最敏感；在本工具的計分方式下，警報後會一直維持在界外，被標記的點很多，誤警報率通常最高。"
+        en: "CUSUM with k = 0.5σ and h = 5σ. Most sensitive to small persistent shifts; with this tool's scoring it stays out of limits after an alarm, so it flags many points and usually has the highest false-alarm rate."
+    axes:
+      zh: "X 軸＝誤警報率（%）＝被標記、但不屬於任何注入事件的點 ÷ 全部點數（每個參數、每片量測晶圓一點）；Y 軸＝中位偵測延遲（片）＝每個可觀測事件從開始後，第幾片「被量測到的受影響晶圓」才被標記（0＝第一片就抓到），取所有被抓到事件的中位數。四種設定用同一份資料、同樣的統計量與 Phase I 點數，依參數、依 chamber 分開畫管制圖。一個事件都沒抓到的設定沒有延遲值，不會出現在圖上。顏色固定跟著設定走。"
+      en: "X = false-alarm rate (%) = flagged points that belong to no injected event ÷ all points (one point per parameter per measured wafer); Y = median detection delay (wafers) = for each observable event, how many measured affected wafers passed before one was flagged (0 = the first one), median over the events caught. All four setups use the same data, statistics and Phase I length, with one chart per parameter and per chamber. A setup that catches no event has no delay and is not plotted. Each colour is fixed to its setup."
+    what:
+      zh: "管制圖不是越敏感越好，而是兩種代價的取捨：(1) 延遲＝從事件開始到被抓到之間，所有流過的產品都暴露在風險中；量測只抽 25 片中的 5 片，延遲 1 片量測晶圓約代表 5 片產品；(2) 誤警報＝每一次 OOC 都要有人停下來查：hold、重測、甚至機台 down，消耗產能與工程時間，誤警報太多還會讓產線習慣性忽略 OOC（警報疲乏）。這張圖把四種常見設定放在一起，讓你用數據而不是習慣選圖。這是模擬練習資料，事件已知。"
+      en: "A control chart is not better just because it is more sensitive; it trades two costs: (1) delay = every product wafer that runs between the start of an event and its detection is exposed; with 5 of 25 wafers measured, one measured wafer of delay is about 5 product wafers; (2) false alarms = every OOC makes someone stop and check: hold, re-measure, even tool down, which costs capacity and engineering time, and too many false alarms teach the line to ignore OOCs (alarm fatigue). This chart puts four common setups side by side so you choose with data, not habit. This is simulated practice data with known events."
+    read:
+      zh: "左下角＝又快又安靜，是理想位置；左上＝安靜但慢；右下＝快但吵。先看哪些設定抓到全部 {n_obs} 個可觀測事件，再從中挑誤警報最低的（本資料：{best_all}，誤警報 {best_all_fa}%）。最快 {fastest}（中位延遲 {fastest_delay} 片）；最安靜 {quietest}（{quietest_fa}%）。注意：(1) 中位延遲會蓋掉最慢的那個事件，要搭配右邊的逐事件延遲圖；(2) 這裡的「誤警報」是相對於答案定義的：PM 之間的自然漂移、事件傳到下游參數或電測的訊號也會被算進去，它們不一定是假的，只是不是這次注入的事件；(3) WE1 理論上的隨機誤報只有 0.27%，實際會更高，因為真實製程不是完美的常態、獨立、穩定。"
+      en: "Lower left = fast and quiet, the ideal; upper left = quiet but slow; lower right = fast but noisy. First find the setups that catch all {n_obs} observable events, then pick the one with the fewest false alarms among them (here {best_all}, {best_all_fa}% false alarms). Fastest: {fastest} (median delay {fastest_delay} wafers); quietest: {quietest} ({quietest_fa}%). Notes: (1) the median delay hides the slowest event, so read it together with the per-event delay chart; (2) \"false alarm\" is defined against the answer key: natural drift between PMs and signals an event passes on to downstream parameters or e-test are counted too; they are not necessarily fake, just not the injected events; (3) WE1 in theory false-alarms on only 0.27 % of points, but real processes are never perfectly normal, independent and stable, so the real rate is higher."
+    action:
+      act:
+        zh: "沒有任何設定抓到全部可觀測事件：(1) 從逐事件延遲圖找出被漏掉的事件類型（例如慢漂移、只改變片內形狀的 bowl）；(2) 依失效模式選圖：慢漂移加 EWMA／CUSUM，形狀改變加片內 1σ % 統計量，量測偏差改依量測機台分組；(3) 檢查 Phase I 是否已經包含事件（基準期被污染）；(4) 考慮提高抽樣或增加量測點：事件根本沒被量到時，再好的管制圖也抓不到。"
+        en: "No setup catches every observable event: (1) use the per-event delay chart to find the event types that are missed (e.g. slow drift, a bowl that changes only the within-wafer shape); (2) choose the chart by failure mode: add EWMA / CUSUM for slow drift, the within-wafer 1σ % statistic for shape changes, grouping by metrology tool for measurement offsets; (3) check whether Phase I already contains an event (contaminated baseline); (4) consider more sampling or more sites: no chart can catch an event that is never measured."
+      watch:
+        zh: "能抓到全部事件的設定中，最安靜的 {best_all} 誤警報仍有 {best_all_fa}%（> 5%）：大約每 20 點就有一次要處理的假警報，產線難以承受。考慮分層：關鍵參數用敏感設定、其他參數只用 WE1；或對已知的 PM 漂移做補償（依 PM 後片數校正、PM 後重建 Phase I），把誤警報降下來。"
+        en: "Among setups that catch every event, the quietest, {best_all}, still has {best_all_fa}% false alarms (> 5 %): roughly one alarm to work on every 20 points, which the line cannot sustain. Consider tiering: sensitive setups for critical parameters, WE1 only for the rest; or compensate known PM drift (correct by wafers since PM, rebuild Phase I after each PM) to bring false alarms down."
+      good:
+        zh: "{best_all} 抓到全部 {n_obs} 個事件，誤警報 {best_all_fa}%（≤ 5%）。可作為這類失效模式的預設設定；仍要定期用新的情境（不同事件類型、大小）重新驗證。"
+        en: "{best_all} catches all {n_obs} events with {best_all_fa}% false alarms (≤ 5 %). It can be the default for these failure modes; re-validate it regularly with new scenarios (other event types and sizes)."
+    record:
+      zh: "[Chart compare] 可觀測事件 {n_obs} · 全抓且最安靜 {best_all}（誤警報 {best_all_fa}%）· 最快 {fastest}（中位延遲 {fastest_delay} 片）· 最安靜 {quietest}（{quietest_fa}%）· 狀態 {status} · 採用設定：＿＿"
+      en: "[Chart compare] observable events {n_obs} · catches all and quietest {best_all} ({best_all_fa}% false alarms) · fastest {fastest} (median delay {fastest_delay} wafers) · quietest {quietest} ({quietest_fa}%) · status {status} · setup adopted: ___"
+    roles:
+      RDA:
+        zh: "【管制圖設定】{finding}。若改用較敏感的設定，OOC 觸發的 review 需求會增加（誤警報約 {best_all_fa}%），請評估 review／SEM 產能是否足夠。"
+        en: "[Chart setup] {finding}. A more sensitive setup will raise OOC-driven review requests (about {best_all_fa}% false alarms); please check whether review / SEM capacity can absorb it."
+      PE:
+        zh: "【管制圖選擇】{finding}。建議依失效模式選圖：突跳用 I-MR，慢漂移用 EWMA／CUSUM。最快 {fastest}（中位延遲 {fastest_delay} 片）、最安靜 {quietest}（誤警報 {quietest_fa}%）；請確認關鍵參數要採用哪一種。"
+        en: "[Chart choice] {finding}. Suggest choosing by failure mode: I-MR for jumps, EWMA / CUSUM for slow drift. Fastest {fastest} (median delay {fastest_delay} wafers), quietest {quietest} ({quietest_fa}% false alarms); please confirm which one to use for the critical parameters."
+      EE:
+        zh: "【OOC 頻率】若採用 {best_all}，預估誤警報約 {best_all_fa}%，機台因 OOC 被要求確認的次數會增加。部分誤警報來自 PM 之間的自然漂移；若能提供 PM 時間表，可在管制圖上補償或於 PM 後重建基準。"
+        en: "[OOC frequency] With {best_all}, expect about {best_all_fa}% false alarms, so tools will be asked to check OOCs more often. Part of these come from natural drift between PMs; with the PM schedule we can compensate on the chart or rebuild the baseline after each PM."
+      PIE_YE:
+        zh: "【偵測速度 vs 風險】{finding}。延遲 1 片量測晶圓約等於 5 片產品暴露；最快的 {fastest} 中位延遲 {fastest_delay} 片。請一起決定關鍵參數可接受的延遲與誤警報。"
+        en: "[Detection speed vs risk] {finding}. One measured wafer of delay means about 5 product wafers exposed; the fastest, {fastest}, has a median delay of {fastest_delay} wafers. Let us agree on the acceptable delay and false-alarm rate for the critical parameters."
+      MGR_QE:
+        zh: "【需要決定】管制圖設定比較：{status}。{finding}。取捨：越快抓到 → 越少產品受影響，但誤警報（停機、重測、工程時間）越多。可全抓且最安靜的設定：{best_all}（誤警報 {best_all_fa}%）；核准後更新 OCAP 與 SPC 設定。"
+        en: "[Decision needed] Chart setup comparison: {status}. {finding}. Trade-off: earlier detection → less product affected, but more false alarms (tool down, re-measurement, engineering time). Quietest setup that catches everything: {best_all} ({best_all_fa}% false alarms); OCAP and SPC settings will be updated after approval."
+
+  fab_event_delay:
+    page: Fab simulator
+    title: {zh: "每個事件的偵測延遲（依管制圖設定分組）", en: "Detection delay per event, by chart setup"}
+    legend:
+      - item: "▬ 彩色橫條（顏色＝設定）· coloured bars"
+        zh: "每個事件一組橫條，每種設定一條，顏色和左邊的散佈圖一致：藍 I-MR rule 1、橘 I-MR WE 1-4、綠 EWMA λ=0.2、黃 CUSUM k=0.5 h=5。條越短＝越快抓到。"
+        en: "One group of bars per event, one bar per setup, coloured as in the scatter chart: blue I-MR rule 1, orange I-MR WE 1-4, green EWMA λ=0.2, yellow CUSUM k=0.5 h=5. Shorter bar = caught sooner."
+      - item: "123 條末數字 · number at the bar end"
+        zh: "延遲片數：事件開始後，第幾片被量測到的受影響晶圓才被標記；0＝第一片就抓到（條長為 0，但會寫數字 0）。"
+        en: "Delay in wafers: how many measured affected wafers passed before one was flagged; 0 = the first one (zero-length bar, labelled 0)."
+      - item: "未抓到 missed"
+        zh: "有量測到受影響的晶圓，但這個設定從頭到尾都沒標記 → 管制圖失效。條長也是 0，一定要看文字，不要只看條長！"
+        en: "Affected wafers were measured, but this setup never flagged one → the chart failed. The bar is also zero-length, so always read the label, not just the bar length."
+      - item: "量測不到 not observable"
+        zh: "受影響的晶圓一片都沒有被量測到（抽樣盲點：25 片只量 5 片），任何管制圖都不可能抓到。這不是 SPC 的失敗，而是抽樣計畫的問題。"
+        en: "Not one affected wafer was measured (sampling blind spot: only 5 of 25 wafers are measured), so no chart could ever catch it. This is not an SPC failure; it is a sampling-plan problem."
+    axes:
+      zh: "Y 軸＝事件（ID＋類型，例如 E1 shift）；X 軸＝延遲（片，量測晶圓數）。事件類型：shift 突然偏移、drift 慢漂移、bowl 片內形狀改變、recipe 配方變更（所有機台）、metro_offset 量測機台偏差（產品沒變）、defects 缺陷暴增。延遲只在被量測到的受影響晶圓上數；缺陷事件也能從每片都有的 sort 良率看到。"
+      en: "Y = event (ID + type, e.g. E1 shift); X = delay (wafers, counted in measured wafers). Event types: shift (sudden offset), drift (slow ramp), bowl (within-wafer shape change), recipe (recipe change on all tools), metro_offset (metrology-tool bias, product unchanged), defects (defect burst). Delay counts only measured affected wafers; defect events can also be seen in the sort yield, which every wafer has."
+    what:
+      zh: "左圖的中位延遲把所有事件平均掉了；這張圖逐一列出：哪一種事件被哪一種圖抓得快、哪一個事件大家都慢、哪一個根本沒人抓到。延遲直接等於產品暴露：抽樣比 1/5 時，延遲 10 片量測晶圓約代表 50 片產品已經流過有問題的機台；量測若還要排隊、結果晚出來，暴露得更多。"
+      en: "The median delay in the scatter chart averages all events together; this chart lists them one by one: which event type each chart catches quickly, which event is slow for everyone, and which one nobody catches. Delay is product exposure: at a 1-in-5 sampling ratio, a delay of 10 measured wafers means about 50 product wafers have already run through the faulty tool, and more if metrology queues delay the result."
+    read:
+      zh: "好：每個事件至少有一種設定在 10 片內抓到，沒有「未抓到」。典型模式：shift（突跳）→ 各設定都快，I-MR 就夠；drift（慢漂移，尤其從 Phase I 期間就開始時）→ I-MR rule 1 最慢，EWMA／CUSUM／WE2–4 較快；bowl（只改變形狀）→ 要有片內 1σ % 統計量才看得到；metro_offset → 會被抓到，但正確處置是修量測機台而不是調製程（依 metro_tool_id 分組即可確認）；not observable → 改抽樣（輪換槽位，讓每個 chamber 都被量到。例如本模擬的蝕刻機台有 3 個 chamber，固定槽位 1、6、13、18、25 剛好永遠量不到 B chamber）。本資料最慢：{slowest_event}（最快的設定也要 {slowest_best} 片）；全部沒抓到：{missed}；量測不到：{unobservable}。"
+      en: "Good: every event is caught within 10 wafers by at least one setup, and nothing is missed. Typical patterns: shift (jump) → every setup is fast, I-MR is enough; drift (slow ramp, especially one that starts during Phase I) → I-MR rule 1 is slowest, EWMA / CUSUM / WE2–4 are faster; bowl (shape only) → needs the within-wafer 1σ % statistic to be seen; metro_offset → gets caught, but the right fix is the metrology tool, not the process (grouping by metro_tool_id confirms it); not observable → change the sampling (rotate slots so every chamber gets measured; e.g. the etch tools in this simulation have 3 chambers, and the fixed slots 1, 6, 13, 18, 25 never land on chamber B). In this data, slowest: {slowest_event} (even the best setup needs {slowest_best} wafers); missed by all: {missed}; not observable: {unobservable}."
+    action:
+      act:
+        zh: "{missed} 所有設定都沒抓到：(1) 確認事件影響的參數與統計量有沒有被畫在管制圖上（例如只看平均值會漏掉 bowl）；(2) 確認 Phase I 是否包含事件（基準被污染，事件被「學進去」）；(3) 針對該失效模式加上對應的管制圖或統計量；(4) 回頭用良率與 die map 檢查這段期間的產品，補做 disposition。"
+        en: "{missed} missed by every setup: (1) check that the affected parameter and statistic are on a chart at all (e.g. watching only the mean misses a bowl); (2) check whether Phase I contains the event (contaminated baseline: the event was learned as normal); (3) add the chart or statistic that fits this failure mode; (4) go back through yield and die maps for product from that window and complete the disposition."
+      watch:
+        zh: "{slowest_event} 最快也要 {slowest_best} 片量測晶圓（> 10）才被抓到，期間的產品約為這個數字的 5 倍：對這類失效模式加入 EWMA／CUSUM 或 WE2–4；檢查抽樣頻率；評估偵測前已流過的產品是否需要追溯 disposition。"
+        en: "{slowest_event} needs at least {slowest_best} measured wafers (> 10) to be caught, so roughly five times that many product wafers ran in between: add EWMA / CUSUM or WE2–4 for this failure mode, review the sampling frequency, and assess whether product that ran before detection needs a retroactive disposition."
+      good:
+        zh: "每個事件都在 10 片量測晶圓內被至少一種設定抓到。記錄每類事件最快的設定，作為 OCAP 中選圖的依據。"
+        en: "Every event is caught within 10 measured wafers by at least one setup. Record the fastest setup per event type as the basis for chart selection in the OCAP."
+    record:
+      zh: "[Event delay] 最慢 {slowest_event}（最快的設定 {slowest_best} 片）· 全部沒抓到：{missed} · 量測不到：{unobservable} · 狀態 {status} · 改善：＿＿"
+      en: "[Event delay] slowest {slowest_event} (best setup {slowest_best} wafers) · missed by all: {missed} · not observable: {unobservable} · status {status} · improvement: ___"
+    roles:
+      RDA:
+        zh: "【偵測延遲】{finding}。延遲期間流過的晶圓可能帶有相同問題；若要回溯 review，建議從事件開始的批次起取樣，而不是從第一個 OOC 的晶圓開始。"
+        en: "[Detection delay] {finding}. Wafers that ran during the delay may carry the same problem; for a retroactive review, sample from the lot where the event started, not from the first OOC wafer."
+      PE:
+        zh: "【偵測延遲】{slowest_event} 最快也要 {slowest_best} 片量測晶圓才被抓到；全部沒抓到：{missed}。請一起檢討這類失效模式的管制圖與統計量（例如慢漂移用 EWMA、形狀改變看片內 1σ %）。"
+        en: "[Detection delay] {slowest_event} needs at least {slowest_best} measured wafers to be caught; missed by all: {missed}. Let us review the chart and statistic for this failure mode (e.g. EWMA for slow drift, within-wafer 1σ % for shape changes)."
+      EE:
+        zh: "【抽樣與機台】量測不到的事件：{unobservable}。固定的量測槽位可能永遠只量到某些 chamber；請協助確認各 chamber 的晶圓分配規則，我們會調整抽樣讓每個 chamber 都被覆蓋。"
+        en: "[Sampling and tools] Events never measured: {unobservable}. Fixed metrology slots can keep landing on the same chambers; please confirm how wafers are assigned to chambers so we can adjust sampling to cover every chamber."
+      PIE_YE:
+        zh: "【產品暴露】{finding}。延遲 1 片量測晶圓約等於 5 片產品；請評估 {slowest_event} 延遲期間的產品是否需要追溯 hold 或加測電性。"
+        en: "[Product exposure] {finding}. One measured wafer of delay is about 5 product wafers; please assess whether product that ran during the {slowest_event} delay needs a retroactive hold or extra electrical test."
+      MGR_QE:
+        zh: "【狀態】逐事件偵測：{status}。全部沒抓到：{missed}；量測不到：{unobservable}；最慢 {slowest_event}（{slowest_best} 片）。待決定：是否調整抽樣計畫與管制圖設定，並更新 OCAP。"
+        en: "[Status] Per-event detection: {status}. Missed by all: {missed}; not observable: {unobservable}; slowest {slowest_event} ({slowest_best} wafers). Decision needed: whether to change the sampling plan and chart setup and update the OCAP."
+
+  fab_drivers:
+    page: Fab simulator
+    title: {zh: "答案：真正的良率損失來源 vs 簡單相關性排名", en: "Answer key: true yield-loss drivers vs a simple correlation ranking"}
+    legend:
+      - item: "▬ 藍色橫條 · blue bars"
+        zh: "每個原因的平均良率損失（個百分點，pp）＝所有晶圓被這個原因判為失效的晶粒比例的平均。由 die map 直接計算（模擬器知道每顆晶粒為什麼失效），是「真正的答案」，由大到小排列。"
+        en: "Average yield loss per cause (percentage points, pp) = the share of dies failed by that cause, averaged over all wafers. Computed directly from the die maps (the simulator knows why every die failed), so this is the true answer, sorted largest first."
+      - item: "文字 correlation vs truth · text below"
+        zh: "用量測晶圓的晶圓平均值和良率算 Spearman 相關（取絕對值）排名，和真正的損失排名比較：第一名是否相同（{top1_match}），以及兩個排名的等級相關 ρ（{spearman}；1＝完全一致、0＝無關、負值＝相反）。"
+        en: "A ranking by Spearman correlation (absolute value) between wafer means of the measured wafers and yield, compared with the true loss ranking: whether the top cause matches ({top1_match}) and the rank correlation ρ between the two rankings ({spearman}; 1 = identical, 0 = unrelated, negative = reversed)."
+    axes:
+      zh: "X 軸＝平均良率損失（%，即個百分點）；Y 軸＝原因：defect_density（killer defect）與各站參數（gate_ox_thk、hk_thk、tin_thk、wl_cd_etch、ild_thk）。每顆失效晶粒只算一個原因，所以全部加總 {total_loss} pp ≈ 100% − 平均良率。"
+      en: "X = average yield loss (%, i.e. percentage points); Y = cause: defect_density (killer defects) and the step parameters (gate_ox_thk, hk_thk, tin_thk, wl_cd_etch, ild_thk). Each failing die counts toward one cause only, so the total {total_loss} pp ≈ 100 % − mean yield."
+    what:
+      zh: "這是模擬器才有的標準答案：真正讓良率掉的是什麼、各掉多少。它的用途是驗證你的分析方法（相關性、SHAP、機器學習排名）到底有沒有指向真正的原因。真實 fab 沒有這張圖，因果只能靠分批實驗（split lot）、DOE 或 FA 確認。這是模擬練習資料。"
+      en: "This is the answer only a simulator can give: what really costs yield and how much. Use it to validate your analysis method (correlation, SHAP, machine-learning rankings): does it point at the real cause? A real fab has no such chart; causation can only be confirmed by split lots, DOE or FA. This is simulated practice data."
+    read:
+      zh: "最大來源 {top_cause}：{top_loss} pp（全部 {total_loss} pp）。相關性排名第一是 {corr_top}，和答案{top1_match}。相關性常常指錯，原因：(1) 只看量測過的晶圓（25 片中 5 片）和晶圓平均值，只發生在部分晶粒的問題（邊緣超窗、局部缺陷）不會改變平均值；(2) killer defect 大多是隨機的，和任何量測參數都不相關，卻常是最大損失；(3) 參數之間互相連動（例如曝光 CD 傳到蝕刻 CD），相關會被分攤或轉嫁；(4) 同一段時間一起變化的參數（PM、漂移）會產生假相關；(5) 量測偏差改變量測值但不改變良率，會稀釋相關。預設缺陷密度 D0 約 0.07/cm²、1 cm² 晶粒，用負二項良率模型 Y = (1 + A·D0/α)^−α 估算，缺陷損失約 6–7 pp，所以 defect 常是第一名。"
+      en: "Largest source: {top_cause}, {top_loss} pp (all causes {total_loss} pp). The correlation ranking puts {corr_top} first; top-1 vs the truth: {top1_match}. Correlation often points the wrong way because: (1) it uses only measured wafers (5 of 25) and wafer means, so problems confined to some dies (edge out of window, local defects) do not move the mean; (2) killer defects are mostly random and correlate with no measured parameter, yet are often the largest loss; (3) parameters are linked (litho CD carries into etch CD), so correlation is shared or shifted between them; (4) parameters that move together in time (PM, drift) produce spurious correlation; (5) a metrology offset moves the measured value but not yield, diluting the correlation. With the default defect density D0 ≈ 0.07 /cm² and 1 cm² dies, the negative-binomial yield model Y = (1 + A·D0/α)^−α gives about 6–7 pp of defect loss, which is why defect is usually first."
+    action:
+      act:
+        zh: "最大損失 {top_cause} > 5 pp：列為良率改善第一優先（yield loss Pareto 第一名）。若是 defect → 做缺陷 Pareto（依 inline inspection 分類與 review 結果），改善清潔度與微粒來源；若是 parametric → 檢討該站的製程窗口、片內均勻度與 target 置中，並用 split lot／DOE 驗證改善效果。"
+        en: "Largest loss {top_cause} > 5 pp: make it the top yield-improvement item (first on the yield-loss Pareto). If it is defect → build a defect Pareto (by inline inspection class and review results) and work on cleanliness and particle sources; if parametric → review that step's process window, within-wafer uniformity and target centring, and verify the improvement with a split lot / DOE."
+      watch:
+        zh: "相關性第一名 {corr_top} 和真正原因不同：不要依相關性直接改製程。用 split lot 或 DOE 驗證因果；把分析改成 die-level（失效位置對應量測點），或加入未量測晶圓的資訊（e-test、良率、inline inspection）。"
+        en: "The correlation's top cause, {corr_top}, is not the true one: do not change the process on correlation alone. Confirm causation with a split lot or DOE; move the analysis to die level (fail locations matched to measurement sites) or add information from unmeasured wafers (e-test, yield, inline inspection)."
+      good:
+        zh: "最大損失 ≤ 5 pp，且相關性排名第一和答案相同：這個分析方法在這類情境可信，但仍需在其他情境驗證。"
+        en: "Largest loss ≤ 5 pp and the correlation's top cause matches the truth: the method is credible for this kind of scenario, but validate it on other scenarios too."
+    record:
+      zh: "[Yield drivers] 最大損失 {top_cause} {top_loss} pp（全部 {total_loss} pp）· 相關性第一 {corr_top}（與答案{top1_match}，ρ = {spearman}）· 狀態 {status} · 驗證方法：＿＿"
+      en: "[Yield drivers] largest loss {top_cause} {top_loss} pp (all causes {total_loss} pp) · correlation top-1 {corr_top} (vs truth: {top1_match}, ρ = {spearman}) · status {status} · verification: ___"
+    roles:
+      RDA:
+        zh: "【良率 Pareto】最大損失來源 {top_cause}（{top_loss} pp）。若是 defect，請提供 inline inspection 與 review 的缺陷分類 Pareto，讓我們把損失對應到具體的缺陷類型與製程站。"
+        en: "[Yield Pareto] Largest loss source {top_cause} ({top_loss} pp). If it is defect, please share the defect-class Pareto from inline inspection and review so we can map the loss to specific defect types and steps."
+      PE:
+        zh: "【良率損失來源】{finding}。相關性第一名是 {corr_top}（和答案{top1_match}）；相關不等於因果，若要調整製程，請先用 split lot／DOE 驗證。"
+        en: "[Yield-loss drivers] {finding}. The correlation ranking puts {corr_top} first (vs truth: {top1_match}); correlation is not causation, so please confirm with a split lot / DOE before changing the process."
+      EE:
+        zh: "【良率 Pareto】主要損失 {top_cause}（{top_loss} pp）。若是 defect，請一起檢視各機台的 particle monitor 與 PM 後的清潔狀況；若是 parametric，相關機台的 chamber matching 與片內均勻度是優先項目。"
+        en: "[Yield Pareto] Main loss {top_cause} ({top_loss} pp). If it is defect, let us review each tool's particle monitors and post-PM cleanliness together; if parametric, chamber matching and within-wafer uniformity on the related tools come first."
+      PIE_YE:
+        zh: "【良率損失分解】總損失 {total_loss} pp，最大項 {top_cause} {top_loss} pp。簡單相關性排名和答案的等級相關 ρ = {spearman}，第一名{top1_match}。建議改善計畫依真正損失排序，並用 split lot 驗證。"
+        en: "[Yield-loss breakdown] Total loss {total_loss} pp, largest {top_cause} at {top_loss} pp. Rank correlation between the simple correlation ranking and the truth: ρ = {spearman}; top-1 vs truth: {top1_match}. Suggest ranking the improvement plan by true loss and verifying with split lots."
+      MGR_QE:
+        zh: "【狀態】良率損失來源：{status}。最大項 {top_cause}（{top_loss} pp，總計 {total_loss} pp）。提醒：相關性分析第一名為 {corr_top}（與答案{top1_match}），決策前需要實驗驗證。本頁為模擬練習資料的答案。"
+        en: "[Status] Yield-loss drivers: {status}. Largest item {top_cause} ({top_loss} pp, total {total_loss} pp). Note: correlation analysis ranks {corr_top} first (vs truth: {top1_match}), so decisions need experimental confirmation. This page shows the answer key of simulated practice data."

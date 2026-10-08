@@ -23,8 +23,11 @@ center-to-edge
 central composite design
 chamber
 chamber matching
+change control
+commonality analysis
 confirmation run
 confusion matrix
+containment
 contour plot
 control chart
 control limits
@@ -41,18 +44,22 @@ design resolution
 desirability function
 detection delay
 dispersion model
+disposition
 drift
 dynamic repeatability
+e-log
 edge exclusion
 edge ring
 edge roll-off
 editable install
 environment variable
 equivalence test
+escalation
 EWMA chart
 excursion
 extinction coefficient
 false alarm
+false call
 film stack
 film thickness
 floated parameter
@@ -62,12 +69,15 @@ full factorial design
 gate oxide
 gauge R&R
 global search
+golden wafer
 goodness of fit
 ground truth
 growth per cycle
 hard mask
 high-k dielectric
+hold
 individuals and moving range chart
+inhibit
 interfacial layer
 interference fringe
 interpolation
@@ -84,14 +94,17 @@ measurement system analysis
 metrology
 model-based fitting
 monitor wafer
+moving range
 nearest centroid classifier
 non-uniformity
 notch
 number of distinct categories
+OCAP
 offset
 ONO stack
 optical constants
 out of control
+out of spec
 overlay
 parameter correlation
 Phase I
@@ -102,9 +115,11 @@ precision-to-tolerance ratio
 predicted R-squared
 preventive maintenance
 process capability
+process of record
 process step
 Psi and Delta
 purge
+qual
 radial profile
 recall
 recipe

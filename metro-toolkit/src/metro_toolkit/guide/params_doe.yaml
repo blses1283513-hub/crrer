@@ -1,0 +1,410 @@
+# DOE / recipe optimizer page: controls, KPI tiles and coefficient-table columns.
+# Each entry: zh and en, written as a Metro AE would explain it: definition, typical setting, effect, traps.
+
+params:
+  doe.process:
+    zh: |
+      **製程 Process**：選擇要做 DOE 的虛擬機台，或上傳自己的 DOE 結果。
+      - **ALD high-k 介電層**：因子 cycles 循環數（40–60）、temp_c 溫度（240–330 °C）、purge_s 清洗時間（0.5–4.0 s）；回應 thickness 膜厚（預設目標 5.0 ± 0.15 nm）、nu_pct 片內不均勻度（越小越好）、time_min 每片製程時間（越小越好，權重較低）。物理：膜厚 = GPC × 循環數；在 ALD 溫度視窗內 GPC 平坦，視窗外上升（低溫凝結、高溫前驅物分解）；purge 太短 → 殘留前驅物造成寄生 CVD → 變厚又不均勻；purge 越長，產能越差。
+      - **CVD TiN 金屬層**：因子 time_s 時間（40–120 s）、temp_c 溫度（500–650 °C）、pressure_torr 壓力（1–10 Torr）；回應 thickness 膜厚（預設目標 10.0 ± 0.3 nm）、nu_pct。物理：低溫為反應控制（Arrhenius，對溫度敏感，加熱器溫度分布反映在 NU），高溫為質傳控制（受壓力限制，氣體沿晶圓耗盡 → 不均勻）。
+      - **我的 DOE 結果（上傳 CSV）**：用自己在 fab 跑的 DOE 數據建模與最佳化；沒有確認實驗與答案卷。
+      虛擬機台的物理與數字都是教科書等級的示意，不是任何實際配方；每次跑貨都有 run-to-run 雜訊，隱藏的真實曲面就是答案卷。
+    en: |
+      **Process**: the virtual tool to run the DOE on, or upload your own DOE results.
+      - **ALD high-k dielectric**: factors cycles (40–60), temp_c temperature (240–330 °C), purge_s purge time (0.5–4.0 s); responses thickness (default target 5.0 ± 0.15 nm), nu_pct within-wafer non-uniformity (minimise) and time_min process time per wafer (minimise, lower weight). Physics: thickness = GPC × cycles; GPC is flat inside the ALD temperature window and rises outside it (condensation at low temperature, precursor decomposition at high temperature); too short a purge leaves precursor behind → parasitic CVD → thicker and less uniform; a longer purge costs throughput.
+      - **CVD TiN metal**: factors time_s (40–120 s), temp_c (500–650 °C), pressure_torr (1–10 Torr); responses thickness (default target 10.0 ± 0.3 nm) and nu_pct. Physics: reaction limited at low temperature (Arrhenius, temperature sensitive, the heater profile shows up in NU), transport limited at high temperature (limited by pressure, gas depletion across the wafer → non-uniform).
+      - **My DOE results (upload CSV)**: model and optimise DOE data you ran in the fab; no confirmation runs or answer key.
+      The virtual tools' physics and numbers are textbook illustrations, not any real recipe; every run carries run-to-run noise, and the hidden true surface is the answer key.
+  doe.upload:
+    zh: |
+      **上傳 DOE 結果 CSV**：每列 = 一次實驗（一片晶圓），欄位 = 因子設定 + 回應量測值。
+      - 因子填**實際跑的設定值**（實際單位）；某片和計畫不同時，填實際值並註記。
+      - 回應用晶圓層級的摘要值（平均、片內 1σ %、全距等），全部用同一台量測機台、同一個量測 recipe。
+      - 重複的晶圓各自一列，不要先平均（保留 pure error）。
+      - 只使用數值欄位；文字欄（wafer ID、slot）會被忽略，但建議保留在檔案裡以便追溯。
+      - 因子範圍取資料的最小值／最大值（編碼 −1…+1），所以一個打錯的設定值會扭曲整個編碼。
+      - 檔案只在這次瀏覽中使用，不會存檔。上傳的資料沒有確認實驗與答案卷（工具無法替你跑貨）。
+    en: |
+      **Upload DOE results CSV**: one row = one run (one wafer); columns = factor settings + response measurements.
+      - Enter the **settings actually run** (real units); if a wafer deviated from the plan, enter the actual value and note it.
+      - Responses are wafer-level summaries (mean, within-wafer 1σ %, range, etc.), all from the same metrology tool and metrology recipe.
+      - Replicate wafers get their own rows; do not average them first (keep the pure error).
+      - Only numeric columns are used; text columns (wafer ID, slot) are ignored, but keep them in the file for traceability.
+      - Factor ranges come from the data's min / max (coded −1 … +1), so one mistyped setting distorts the whole coding.
+      - The file is used only in this browser session and is not stored. Uploaded data has no confirmation runs or answer key (the tool cannot run your recipe).
+  doe.factor_cols:
+    zh: |
+      **因子欄位 Factor columns**：哪些數值欄是實驗中刻意改變的設定（溫度、壓力、時間、流量、功率…）。
+      - 預設選前三個數值欄，**一定要檢查**：如果上傳的是本頁下載的 run sheet，前兩欄是 run_order、std_order，不是因子；`__coded` 欄是同一因子的編碼值，不要重複選。
+      - 只選真的有改變、有規劃的因子。把量測值或隨時間自然變化的量（例如 chamber 累積膜厚）當成因子，會和真正的因子相關，標準誤變大、結論變模糊。
+      - 兩水準的類別因子（例如 chamber A／B）可先編成 0／1 數值；它只有兩個水準，所以不會有平方項。
+      - 因子之間應盡量不相關（正交）；從生產資料撿來的非設計數據常常高度相關，模型很難分開各因子的效果。
+    en: |
+      **Factor columns**: the numeric columns that are settings you deliberately changed (temperature, pressure, time, flow, power …).
+      - The default picks the first three numeric columns, so **always check it**: in a run sheet downloaded from this page the first two are run_order and std_order, which are not factors, and the `__coded` columns are the coded copies of the factors; do not select them as well.
+      - Select only factors that were really varied as planned. Using a measured value or something that drifts by itself (e.g. accumulated chamber deposition) as a factor correlates it with the real factors, inflating standard errors and blurring the conclusions.
+      - A two-level categorical factor (e.g. chamber A / B) can be entered as 0 / 1; with only two levels it gets no square term.
+      - Factors should be as uncorrelated (orthogonal) as possible; happenstance production data is often highly correlated, and the model cannot separate the factors' effects.
+  doe.response_cols:
+    zh: |
+      **回應欄位 Response columns**：要建模型的量測結果，每個回應各建一個模型、在 Pareto 各一個分頁（例如 thickness 膜厚、nu_pct 不均勻度、Rs 片電阻、折射率、應力）。
+      - 預設目標全部是「越小越好」，最佳 = 資料最小值、不可接受 = 資料最大值；**請到最佳化區改成真正的目標**，否則最差的那一片會變成 d = 0 的界線。
+      - 量測雜訊必須明顯小於要看的效應：先確認 MSA（%GRR、ndc）；若量測雜訊佔了 RMSE 的大部分，DOE 看到的是量測機台，不是製程。
+      - 變異會隨大小改變的回應（例如缺陷數、比例），可先在檔案中做轉換（log、平方根）再上傳。
+    en: |
+      **Response columns**: the measured results to model; each response gets its own model and its own tab on the Pareto (e.g. thickness, nu_pct non-uniformity, Rs sheet resistance, refractive index, stress).
+      - Every response defaults to 'minimise' with best = data minimum and unacceptable = data maximum; **set the real goals under Optimise**, otherwise your worst wafer becomes the d = 0 limit.
+      - Metrology noise must be clearly smaller than the effects you want to see: check the MSA first (%GRR, ndc); if metrology noise makes up most of the RMSE, the DOE is studying the metrology tool, not the process.
+      - For responses whose variance changes with level (e.g. defect counts, fractions), transform them in the file (log, square root) before uploading.
+  doe.factors:
+    zh: |
+      **要研究的因子**：這次 DOE 要改變的因子；沒選的因子固定在範圍中間值（跑貨、確認實驗與答案卷都一樣）。
+      - 因子越多，實驗次數越多：2 水準全因子 = 2^k 次 + 中心點（3 因子 8 次 + 中心點）；面心 CCD = 2^k + 2k + 中心點（3 因子 8 + 6 + 4 = 18 次）。
+      - 典型流程：先用全部候選因子做篩選設計，刪掉對所有回應都不顯著、也沒有參與顯著交互作用的因子，再對剩下 2–4 個因子做回應曲面（CCD／Box-Behnken）。
+      - 被固定的因子和其他因子之間的交互作用看不到；最佳配方只在「它固定在中間值」的條件下成立。
+      - 部分因子設計需要至少 3 個因子，Box-Behnken 需要 3–5 個因子。
+    en: |
+      **Factors to study**: the factors this DOE varies; unselected factors are held at the centre of their range (for the runs, the confirmation and the answer key alike).
+      - More factors means more runs: 2-level full factorial = 2^k runs + centre points (3 factors: 8 + centre points); face-centred CCD = 2^k + 2k + centre points (3 factors: 8 + 6 + 4 = 18 runs).
+      - Typical flow: screen all candidate factors first, drop those that are not significant for any response and take part in no significant interaction, then run a response-surface design (CCD / Box-Behnken) on the remaining 2–4 factors.
+      - Interactions between a fixed factor and the others are invisible; the optimum holds only with that factor at its centre value.
+      - A fractional design needs at least 3 factors; Box-Behnken needs 3–5.
+  doe.design:
+    zh: |
+      **設計 Design**：實驗點怎麼排。先問自己：這次要**篩選**（哪些因子重要）還是**最佳化**（最佳點在哪裡）？
+      - **2 水準全因子 2^k + 中心點**：每個因子只有低／高兩個水準，估得到所有主效應與交互作用；中心點可檢查「有沒有彎曲」，但分不出是哪個因子彎曲（角落點平方後全是 1、中心點全是 0，所有平方項是同一欄）。用途：篩選、特性化。
+      - **部分因子 2^(k−p) + 中心點**：只跑全因子的 1/2、1/4…，次數少，但有**混淆（aliasing）**：某些效應分不開，只能估它們的和。**解析度 Resolution**：III = 主效應與二因子交互作用混淆（3 因子半因子 C = AB 就是 III，只適合教學或很多因子的初篩）；IV = 主效應乾淨，但二因子交互作用彼此混淆（4 因子 D = ABC）；V = 主效應與二因子交互作用都乾淨（5 因子 E = ABCD）。頁面會列出混淆關係；需要時用 fold-over（反轉補跑）解混淆。
+      - **面心 CCD（中心合成，α = 1）**：角落點 + 每個因子兩個軸點（落在範圍的邊界面上）+ 中心點；每個因子 3 個水準，可估完整二次模型，是最常用的最佳化設計。α = 1 讓所有設定都在機台允許範圍內（可旋轉 CCD 的軸點會超出範圍）；也可以在已經跑完的 2 水準 + 中心點之後**補跑軸點**，擴充成 CCD（分兩個 block）。
+      - **Box-Behnken**：每兩個因子在 ±1、其他在中心，再加中心點；3–5 個因子。**不跑所有因子同時在極端的角落**，適合角落條件有風險時（例如高溫 + 長時間可能剝離或超出機台能力）；代價是角落附近的預測較不準。
+      - **3 水準全因子 3^k**：每個組合都跑，3 因子 27 次、4 因子 81 次；資訊最完整但最貴，通常只用在 2 個因子或跑貨成本很低時。
+    en: |
+      **Design**: how the runs are laid out. First ask: is this **screening** (which factors matter) or **optimisation** (where is the optimum)?
+      - **2-level full factorial 2^k + centre points**: each factor only at low / high; estimates every main effect and interaction; centre points show whether there is curvature but not which factor bends (at the corners every square is 1 and at the centre 0, so all square terms are the same column). Use: screening, characterisation.
+      - **Fractional factorial 2^(k−p) + centre points**: runs only 1/2, 1/4 … of the full factorial, so fewer runs, but with **aliasing**: some effects cannot be separated and only their sum is estimated. **Resolution**: III = main effects aliased with two-factor interactions (the 3-factor half fraction C = AB is resolution III, good only for teaching or first screening of many factors); IV = main effects clear but two-factor interactions aliased with each other (4 factors, D = ABC); V = main effects and two-factor interactions all clear (5 factors, E = ABCD). The page lists the alias structure; de-alias with a fold-over when needed.
+      - **Face-centred CCD (central composite, α = 1)**: corners + two axial points per factor (on the faces of the range) + centre points; 3 levels per factor, estimates the full quadratic model; the most common optimisation design. α = 1 keeps every setting inside the tool's allowed range (a rotatable CCD puts the axial points outside it), and you can **add the axial points later** to a 2-level + centre design you already ran, turning it into a CCD (two blocks).
+      - **Box-Behnken**: each pair of factors at ±1 with the others at the centre, plus centre points; 3–5 factors. It **never runs all factors at their extremes together**, which suits cases where the corners are risky (e.g. high temperature + long time may cause peeling or exceed the tool's capability); the price is less precise prediction near the corners.
+      - **3-level full factorial 3^k**: every combination; 27 runs for 3 factors, 81 for 4; the most complete information but the most expensive, usually only for 2 factors or when runs are cheap.
+  doe.center:
+    zh: |
+      **中心點 Center points**：所有因子都在中間值的重複實驗，典型 3–6 點（本頁預設 4）。
+      - **pure error 純誤差**：同一條件重複跑，得到不依賴模型的雜訊估計，p 值與 lack-of-fit 才有根據。
+      - **彎曲檢查**：比較角落點平均與中心點平均；差異顯著 = 回應在中間不是直線（2 水準設計只能知道「有彎曲」）。
+      - **穩定度檢查**：中心點分散在 run order 的前、中、後；若中心點本身有趨勢 → 實驗期間機台或量測在漂移。
+      - 中心點必須是**獨立的跑貨**（不同晶圓、分開執行），同一片量 4 次不算。
+      - 3 水準全因子本身已含一個中心點，本頁不會再為它加中心點。
+      - CCD 的中心點太少 → 中心附近預測不穩；太多 → 浪費晶圓。
+    en: |
+      **Center points**: replicate runs with every factor at its centre value; typically 3–6 (4 by default here).
+      - **Pure error**: repeated runs at one condition give a noise estimate that does not depend on the model, which is what gives the p-values and the lack-of-fit check a sound basis.
+      - **Curvature check**: compare the corner average with the centre average; a significant difference = the response is not linear through the middle (a 2-level design can only tell that curvature exists).
+      - **Stability check**: spread the centre points over the start, middle and end of the run order; a trend in the centre points themselves → the tool or the metrology drifted during the experiment.
+      - Centre points must be **independent runs** (different wafers, run separately); measuring one wafer 4 times does not count.
+      - A 3-level full factorial already contains one centre run, and this page adds no extra centre points to it.
+      - Too few centre points in a CCD → unstable prediction near the centre; too many → wasted wafers.
+  doe.reps:
+    zh: |
+      **重複 Replicates**：整個設計重複跑幾次（1–4）；2 = 實驗數加倍。
+      - 用途：雜訊大、要看的效應小時，提高檢定力。經驗公式（2 水準設計、α = 0.05、檢定力 80%）：要偵測低→高的變化 Δ，總實驗數約需 N ≈ 32 ×（σ／Δ）²；Δ = 2σ → 約 8 次，Δ = 1σ → 約 32 次。
+      - **真正的重複** = 新的晶圓、重新跑一次 recipe；同一片多量幾次只是量測重複（repeat），只降低量測雜訊，不能估計製程雜訊（偽重複 pseudo-replication）。
+      - 重複的實驗也一起隨機排序，不要把同一條件連續跑。
+      - 先考慮加中心點：比較便宜，同樣提供 pure error。
+    en: |
+      **Replicates**: how many times the whole design is run (1–4); 2 = twice the runs.
+      - Use: more power when the noise is large relative to the effect you need to see. Rule of thumb (2-level design, α = 0.05, 80 % power): to detect a low → high change Δ you need about N ≈ 32 × (σ / Δ)² runs in total; Δ = 2σ → about 8 runs, Δ = 1σ → about 32.
+      - A **true replicate** = a new wafer with the recipe run again; measuring the same wafer several times is only a measurement repeat, which reduces metrology noise but cannot estimate process noise (pseudo-replication).
+      - Replicate runs are randomised together with everything else; never run the same condition back to back.
+      - Consider centre points first: cheaper, and they also give pure error.
+  doe.seed:
+    zh: |
+      **seed 亂數種子**：決定隨機的 run order；在虛擬機台上也決定雜訊（跑貨用 seed + 100，確認實驗用 seed + 999）。
+      - 同一個 seed → 同樣的順序與同樣的雜訊，結果可重現。
+      - 換 seed 等於「同一個實驗計畫換一天重跑」：看結論（顯著項、建議配方）會不會因雜訊而改變，是體會統計不確定性的好方法。
+      - 真實 DOE 也要把 seed（或隨機順序本身）記進 DOE 紀錄，讓 run order 可追溯。
+    en: |
+      **seed**: sets the random run order; on the virtual tool it also sets the noise (seed + 100 for the runs, seed + 999 for the confirmation).
+      - Same seed → same order and same noise, so results are reproducible.
+      - A new seed is like re-running the same plan on another day: watch whether the conclusions (significant terms, suggested recipe) change because of noise; a good way to feel statistical uncertainty.
+      - In a real DOE, record the seed (or the random order itself) in the DOE record so the run order is traceable.
+  doe.sheet:
+    zh: |
+      **Run sheet 實驗表**：交給跑貨（或開 split lot）用的表。
+      - **run_order**：實際執行順序（已隨機）。照這個順序跑，機台漂移、chamber seasoning、量測漂移、queue time 等時間效應才不會和某個因子綁在一起（混淆）。
+      - **std_order**：標準順序（Yates order，第一個因子變化最快），方便對照設計本身。
+      - **因子欄位**：實際設定值（單位同因子）。
+      - **`__coded` 欄**（例如 temp_c__coded）：編碼值，−1 = 低、0 = 中心、+1 = 高；分析都用編碼值。
+      - **point**：corner 角落點（所有因子都在 ±1）、center 中心點（全部 0）、axial/edge 軸點／邊點（部分因子在 0，例如 CCD 的軸點、Box-Behnken 的邊中點、3 水準設計的中間水準點）。
+      若某個因子很難改（例如溫度要長時間升降溫與穩定），完全隨機不實際時，常改用 split-plot（分割區）設計，但分析方法也要跟著改；本頁的分析假設完全隨機。實際跑貨時記下每列對應的 wafer ID、slot、chamber 與時間。
+    en: |
+      **Run sheet**: the table to hand over for the runs (or the split-lot instruction).
+      - **run_order**: the actual execution order (randomised). Following it keeps time effects (tool drift, chamber seasoning, metrology drift, queue time) from being tied to, i.e. aliased with, any factor.
+      - **std_order**: standard (Yates) order, first factor changing fastest; for reading the design itself.
+      - **Factor columns**: real settings, in the factor's unit.
+      - **`__coded` columns** (e.g. temp_c__coded): coded values, −1 = low, 0 = centre, +1 = high; the analysis uses these.
+      - **point**: corner (every factor at ±1), center (all at 0), axial/edge (some factors at 0, e.g. CCD axial points, Box-Behnken edge midpoints, mid-level points of a 3-level design).
+      If a factor is hard to change (e.g. temperature needs a long ramp and stabilisation) and full randomisation is impractical, a split-plot design is common, but the analysis must change with it; this page assumes full randomisation. When running, record the wafer ID, slot, chamber and time for every row.
+  doe.download:
+    zh: |
+      **下載 run sheet (CSV)**：UTF-8 含 BOM，Excel 直接開中文不會亂碼；檔名含製程與設計代號。
+      - 附在 DOE 申請或 split lot 指示裡，照 run_order 跑貨。
+      - 跑完後在每列加上回應欄位（一片一列），用「我的 DOE 結果（上傳 CSV）」上傳分析；上傳時不要把 run_order、std_order 或 `__coded` 欄選成因子。
+    en: |
+      **Download run sheet (CSV)**: UTF-8 with BOM, so Excel opens the Chinese text correctly; the file name contains the process and design codes.
+      - Attach it to the DOE request or split-lot instruction and run in run_order.
+      - After the runs, add the response columns (one row per wafer) and upload it under 'My DOE results (upload CSV)'; when uploading, do not select run_order, std_order or the `__coded` columns as factors.
+  doe.run:
+    zh: |
+      **在虛擬機台上執行**：把 run sheet 每一列跑在虛擬機台上：隱藏的真實曲面 + run-to-run 雜訊，得到每一片的量測結果。
+      - 雜訊種子 = seed + 100：同樣的設定按幾次都得到同樣的數據；換 seed 才是「重跑」。
+      - 改了因子、設計、中心點、重複或 seed，之前的結果就作廢，要再按一次。
+      - time_min（每片製程時間）由配方直接算出，沒有雜訊。
+      - 在真實 fab 對應的是：開 split lot、照 run order 跑貨、用同一台量測機台與同一個量測 recipe 量測。
+    en: |
+      **Run on the virtual tool**: runs every row of the run sheet on the virtual tool (hidden true surface + run-to-run noise) and returns each wafer's measured results.
+      - Noise seed = seed + 100: pressing it again with the same settings gives the same data; only a new seed is a real re-run.
+      - Changing the factors, design, centre points, replicates or seed invalidates the previous results; press it again.
+      - time_min (process time per wafer) is calculated directly from the recipe and has no noise.
+      - The real-fab equivalent: open a split lot, run in run order, and measure on one metrology tool with one metrology recipe.
+  doe.model:
+    zh: |
+      **模型 Model**：用哪些項擬合每個回應（編碼單位的最小平方法）。
+      - **線性**：截距 + 主效應（A、B、C）。只描述平面，適合篩選。
+      - **線性 + 交互作用**：再加所有二因子交互作用（A × B…）。2 水準設計能估到這一階。
+      - **二次（含彎曲）**：再加平方項（A²…），描述彎曲與範圍內的最高／最低點；需要 3 水準設計（CCD、Box-Behnken、3^k）。3 個因子共 10 項，實驗數要多於 10 才有殘差自由度。
+      設計估不到的項會自動移除並顯示警告（2 水準因子的平方項、互相混淆的項）。選法：從設計能支援的最完整模型開始，看 Pareto 與預測 R²；降一階後預測 R² 反而變好 → 原模型過度擬合。若選線性／交互作用模型時出現紅色彎曲警告，請改用二次模型（或改設計）。
+    en: |
+      **Model**: which terms are fitted for each response (least squares in coded units).
+      - **Linear**: intercept + main effects (A, B, C). Describes a plane only; for screening.
+      - **Linear + interaction**: adds every two-factor interaction (A × B …). This is as far as a 2-level design can go.
+      - **Quadratic (with curvature)**: adds the square terms (A² …) to describe curvature and maxima / minima inside the range; needs a 3-level design (CCD, Box-Behnken, 3^k). With 3 factors that is 10 terms, so more than 10 runs are needed to leave residual degrees of freedom.
+      Terms the design cannot estimate are removed automatically with a warning (squares of 2-level factors, aliased terms). How to choose: start from the fullest model the design supports and check the Pareto and predicted R²; if stepping down one order improves predicted R², the bigger model was over-fitted. If a red curvature warning appears with the linear / interaction model, switch to quadratic (or change the design).
+  doe.r2:
+    zh: |
+      **R²（決定係數）** = 1 − SSE／SST：模型解釋了 DOE 各次實驗之間多少比例的變異。
+      - 只要加項，R² 就只升不降，所以**不能單獨用來判斷模型好壞**。
+      - 因子效應遠大於雜訊時，好的製程模型常 > 0.9。
+      - R² 低不一定是錯：可能所有因子的影響都小於雜訊（製程在這個範圍內很穩健），但這種模型無法用來找配方。
+      - 沒有雜訊的計算型回應（time_min）R² = 1.000。
+    en: |
+      **R² (coefficient of determination)** = 1 − SSE / SST: the share of the run-to-run variation in the DOE that the model explains.
+      - It never drops when terms are added, so it **cannot judge a model on its own**.
+      - When factor effects are much larger than the noise, a good process model is often above 0.9.
+      - A low R² is not necessarily wrong: every factor's effect may be smaller than the noise (the process is robust over this range), but such a model cannot pick a recipe.
+      - A calculated response without noise (time_min) shows R² = 1.000.
+  doe.r2_adj:
+    zh: |
+      **調整 R²（adjusted R²）** = 1 −〔SSE／(n − p)〕÷〔SST／(n − 1)〕，n = 實驗數、p = 模型項數。
+      依模型項數懲罰：加入沒用的項時會下降，用來比較不同大小的模型。和 R² 差很多 → 模型裡有很多不重要的項。
+    en: |
+      **Adjusted R²** = 1 − (SSE / (n − p)) ÷ (SST / (n − 1)), with n = number of runs and p = number of model terms.
+      Penalises the number of terms: it drops when a useless term is added, so use it to compare models of different size. A large gap to R² → the model carries many unimportant terms.
+  doe.r2_pred:
+    zh: |
+      **預測 R²（predicted R²）** = 1 − PRESS／SST。PRESS = 每次實驗「拿掉自己、用其他實驗建模、再預測自己」的誤差平方和（留一法 leave-one-out）。
+      - 最誠實的指標：代表模型預測**沒跑過的配方**有多準，而這正是最佳化要做的事。
+      - **< 0.5 → 不可用來決定配方**（狀態「需處理」）；殘差自由度 ≤ 0 時顯示「—」。
+      - **調整 R² − 預測 R² > 0.2 → 注意**：過度擬合，或有一次實驗（異常片、高 leverage 點）主導了模型。
+      - 可以是負值：比直接用平均值預測還差。
+    en: |
+      **Predicted R²** = 1 − PRESS / SST. PRESS = the sum of squared errors when each run is left out, the model is fitted to the others, and the left-out run is predicted (leave-one-out).
+      - The most honest metric: how well the model predicts **recipes it has not seen**, which is exactly what the optimisation does.
+      - **< 0.5 → do not use it to set a recipe** (status 'act'); shown as '—' when residual dof ≤ 0.
+      - **Adjusted − predicted R² > 0.2 → watch**: over-fit, or one run (a bad wafer, a high-leverage point) dominates the model.
+      - It can be negative: worse than simply predicting the average.
+  doe.rmse:
+    zh: |
+      **殘差 RMSE** = √〔SSE／(n − p)〕，單位同回應：模型的殘差標準差 ≈ run-to-run 雜訊（機台 + 量測）+ 模型沒描述到的部分（lack of fit）。
+      - 和**量測重複性**（MSA）比：RMSE 應明顯大於量測雜訊；兩者接近 → DOE 被量測能力限制，先改善量測（點數、recipe）。
+      - 和**中心點標準差**（pure error）比：RMSE 明顯較大 → 模型缺項或形式不對。
+      - 和**容許範圍**比：± 容許小於約 3 × RMSE 時，即使完美置中，Cpk 也 < 1，會有晶圓落在窗口外。
+      - 確認實驗用它判斷是否吻合預測：|確認平均 − 預測| ≤ 2 × RMSE。
+    en: |
+      **Residual RMSE** = √(SSE / (n − p)), in the response's unit: the model's residual standard deviation ≈ run-to-run noise (tool + metrology) + whatever the model does not describe (lack of fit).
+      - Against **metrology repeatability** (MSA): the RMSE should be clearly larger than the metrology noise; if they are close, the DOE is limited by the measurement, so improve it first (sites, recipe).
+      - Against the **centre-point standard deviation** (pure error): a clearly larger RMSE → missing terms or the wrong model form.
+      - Against the **tolerance**: if ± tolerance is less than about 3 × RMSE, Cpk is below 1 even when perfectly centred, and wafers will fall outside the window.
+      - The confirmation check uses it: |confirmation mean − predicted| ≤ 2 × RMSE.
+  doe.col.term:
+    zh: |
+      **term 模型項**
+      - **intercept 截距**：設計中心（所有編碼值 = 0）的預測值。
+      - **A**（因子名稱）：主效應。
+      - **A × B**：交互作用，A 的效果隨 B 的設定改變。
+      - **A²**：平方項（彎曲）。
+      名稱用的是因子欄位名稱，例如 temp_c、cycles × purge_s、temp_c²。
+    en: |
+      **term**
+      - **intercept**: the prediction at the design centre (all coded values = 0).
+      - **A** (factor name): main effect.
+      - **A × B**: interaction; the effect of A changes with the setting of B.
+      - **A²**: square term (curvature).
+      Names use the factor column names, e.g. temp_c, cycles × purge_s, temp_c².
+  doe.col.coef:
+    zh: |
+      **coef 係數（編碼單位）**：單位同回應。
+      - 主效應：因子從中心（0）移到高水準（+1）時回應的變化；**低→高的完整效應 = 2 × coef**（其他項為 0 時）。
+      - 交互作用 A × B：B 在 +1 時 A 的斜率多 coef，B 在 −1 時少 coef。
+      - 平方項 A²：正 = U 形（有最低點），負 = 倒 U 形（有最高點）。
+      - 編碼單位讓不同單位的因子可以比較；要換成中心點附近的實際斜率，除以半範圍（例如溫度 240–330 °C，半範圍 45 °C）。
+      實務意義：把 2 × coef 和規格寬度比；顯著但遠小於規格的效應，可以視為不重要。
+    en: |
+      **coef (coded units)**: in the response's unit.
+      - Main effect: the change in the response from the centre (0) to the high level (+1); **the full low → high effect = 2 × coef** (with the other terms at 0).
+      - Interaction A × B: A's slope is larger by coef with B at +1 and smaller by coef with B at −1.
+      - Square term A²: positive = U shape (a minimum), negative = inverted U (a maximum).
+      - Coded units make factors with different units comparable; for the real-unit slope at the centre, divide by the half range (e.g. 240–330 °C has a half range of 45 °C).
+      Practical meaning: compare 2 × coef with the spec width; an effect that is significant but far smaller than the spec can be treated as unimportant.
+  doe.col.std_err:
+    zh: |
+      **std_err 標準誤**：係數估計的不確定性 = √（MSE × (XᵀX)⁻¹ 的對角線）。
+      - 由雜訊（RMSE）與設計（實驗次數、點的位置）決定，不受係數大小影響：同一個正交設計中，所有主效應的標準誤相同。
+      - 面心 CCD 中，平方項的標準誤比主效應大（每個因子只有 3 個水準，中間水準的點較少）。
+      - 某些項的標準誤特別大 → 因子之間相關（非正交，常見於上傳的非設計數據），或該項幾乎無法估計。
+      - 約略的 95% 信賴區間 = coef ± 臨界 t × std_err。
+    en: |
+      **std_err (standard error)**: the uncertainty of the coefficient estimate = √(MSE × diagonal of (XᵀX)⁻¹).
+      - Set by the noise (RMSE) and the design (number of runs, where the points sit), not by the size of the coefficient: in one orthogonal design all main effects have the same standard error.
+      - In a face-centred CCD the square terms have larger standard errors than the main effects (only 3 levels per factor, fewer points at the middle level).
+      - Some terms with much larger standard errors → correlated factors (non-orthogonal, common in uploaded non-designed data) or a term that can barely be estimated.
+      - Approximate 95 % confidence interval = coef ± critical t × std_err.
+  doe.col.t:
+    zh: "**t** = coef ÷ std_err：係數是它自身不確定性的幾倍。Pareto 圖畫的就是 |t|（標準化效應）。|t| 超過臨界值（自由度 8 時約 2.31，自由度很大時趨近 1.96）→ p < 0.05。正負號 = 方向。"
+    en: "**t** = coef ÷ std_err: how many times its own uncertainty the coefficient is. The Pareto plots |t| (the standardised effect). |t| above the critical value (about 2.31 at 8 dof, approaching 1.96 with many dof) → p < 0.05. The sign gives the direction."
+  doe.col.p:
+    zh: |
+      **p 值**：假如這一項的真實效應是 0，還會看到這麼大（或更大）|t| 的機率（雙尾，自由度 = 實驗數 − 模型項數）。p < 0.05 視為顯著。
+      - **顯著 ≠ 重要**：雜訊很小時，微小的效應也會顯著；要看 2 × coef 相對於規格／容許範圍。
+      - **不顯著 ≠ 沒有影響**：可能只是次數不夠（檢定力不足）。
+      - **多重比較**：一個二次模型同時檢定約 10 項，就算全部沒有效果，平均每 20 項也會有 1 項 p < 0.05。
+      - **階層原則**：交互作用或平方項顯著時，保留它的主效應，不論 p 值多少。
+      - 殘差自由度只有 1–2 時 p 值很不穩；計算型回應（沒有雜訊，例如 time_min）的 p 值幾乎都 ≈ 0，沒有意義。
+    en: |
+      **p-value**: if this term's true effect were 0, the probability of seeing a |t| this large or larger (two-sided, dof = runs − model terms). p < 0.05 is called significant.
+      - **Significant ≠ important**: with very low noise even tiny effects become significant; judge 2 × coef against the spec or tolerance.
+      - **Not significant ≠ no effect**: there may simply be too few runs (low power).
+      - **Multiple testing**: a quadratic model tests about 10 terms at once; even if none had an effect, about 1 in 20 would show p < 0.05 by chance.
+      - **Hierarchy**: when an interaction or square term is significant, keep its main effects whatever their p-values.
+      - With only 1–2 residual dof the p-values are unstable; for a calculated response without noise (e.g. time_min) almost every p ≈ 0 and means nothing.
+  doe.goal:
+    zh: |
+      **目標 Goal**：每個回應要「打到目標值」、「越小越好」或「越大越好」，決定它的滿意度函數 d（0 = 不可接受、1 = 完美；Derringer–Suich）。
+      - **target 打到目標值**：膜厚、CD、折射率等有中心值的規格。d 在目標值 = 1，往兩側線性下降，到 ± 容許時 = 0。
+      - **minimize 越小越好**：不均勻度、製程時間、缺陷、電阻率、雜質。
+      - **maximize 越大越好**：產能、崩潰電壓、階梯覆蓋率（step coverage）、沉積速率。
+      目標要和 PE／PIE 一起訂，代表的是整合需求，不是 DOE 數據的範圍。
+    en: |
+      **Goal**: for each response, hit a target, minimise or maximise; it defines the response's desirability function d (0 = unacceptable, 1 = perfect; Derringer–Suich).
+      - **target**: specs with a centre value such as thickness, CD, refractive index. d = 1 on target, falling linearly on both sides to 0 at ± tolerance.
+      - **minimize**: non-uniformity, process time, defects, resistivity, impurities.
+      - **maximize**: throughput, breakdown voltage, step coverage, deposition rate.
+      Set the goals with PE / PIE: they represent integration needs, not the range of the DOE data.
+  doe.target:
+    zh: "**目標值 Target**：要打到的值，單位同回應。通常用 POR／規格中心（整合要求的目標），不是規格上下限。"
+    en: "**Target**: the value to hit, in the response's unit. Usually the POR / spec centre (the integration target), not a spec limit."
+  doe.tol:
+    zh: |
+      **容許 ±（Tolerance）**：離目標多遠時滿意度降到 0。d = 1 − |y − 目標| ÷ 容許，所以只有剛好在目標上 d = 1，偏離半個容許 d = 0.5。
+      - 常設為規格半寬，或更嚴的內部窗口。
+      - 太寬 → 最佳化不在乎置中；太窄 → 幾乎到處 D = 0。
+      - 容許小於約 3 × RMSE 時，即使置中，晶圓間雜訊也會讓 Cpk < 1。
+      - 確認實驗的「可接受」= 確認平均在目標 ± 容許之內。
+    en: |
+      **Tolerance ±**: how far from target the desirability falls to 0. d = 1 − |y − target| ÷ tolerance, so only exactly on target is d = 1, and half a tolerance away d = 0.5.
+      - Usually the spec half-width or a tighter internal window.
+      - Too wide → the optimiser does not care about centring; too narrow → D = 0 almost everywhere.
+      - With a tolerance below about 3 × RMSE, wafer-to-wafer noise gives Cpk < 1 even when centred.
+      - 'Acceptable' in the confirmation table = the confirmation mean is within target ± tolerance.
+  doe.best:
+    zh: "**最佳（d = 1）**：越小／越大越好的回應，達到這個值就是滿分，再好也不加分。設成實際上「非常好」的值（例如 NU 0.5%），而不是物理極限 0；設得太理想，所有配方的 d 都會偏低，看起來都不夠好。"
+    en: "**Best (d = 1)**: for a minimise / maximise response, reaching this value earns full marks and anything better earns nothing extra. Set it to a realistic 'excellent' value (e.g. NU 0.5 %), not the physical limit of 0; set it too ambitiously and every recipe's d looks low."
+  doe.worst:
+    zh: "**不可接受（d = 0）**：達到或超過這個值（越大越好型則是低於），這個回應就不可接受，整體 D 也變成 0，不論其他回應多好。通常設在規格界限或整合可容忍的上限（例如 NU 3%、每片 10 分鐘）。確認實驗的「可接受」就是確認平均優於這個值。"
+    en: "**Unacceptable (d = 0)**: at or beyond this value (below it for a maximise response) the response is unacceptable and the overall D becomes 0, however good the other responses are. Usually the spec limit or the most integration can tolerate (e.g. NU 3 %, 10 minutes per wafer). 'Acceptable' in the confirmation table means the confirmation mean is better than this value."
+  doe.weight:
+    zh: |
+      **權重 Weight**（0.1–3.0）：這個回應在整體滿意度 D 中的重要程度；D = 加權幾何平均 = (Π dᵢ^wᵢ)^(1／Σwᵢ)。
+      - 權重大 → 最佳化更優先照顧它；例：ALD 的 time_min 預設 0.3，代表產能次要於膜厚與均勻度。
+      - 權重**不會**改變「可接受」：任何 d = 0 仍讓 D = 0。
+      - 權重是管理決策：和 PE／PIE 一起決定並寫進 DOE 報告；改權重看建議配方怎麼移動，可以了解取捨有多敏感。
+    en: |
+      **Weight** (0.1–3.0): the importance of this response in the overall desirability D, a weighted geometric mean = (Π dᵢ^wᵢ)^(1 / Σwᵢ).
+      - Higher weight → the optimiser favours this response more; e.g. ALD time_min defaults to 0.3, meaning throughput ranks below thickness and uniformity.
+      - Weight does **not** change acceptability: any d = 0 still makes D = 0.
+      - Weights are a management decision: agree them with PE / PIE and write them into the DOE report; changing a weight and watching the suggested recipe move shows how sensitive the trade-off is.
+  doe.factor_setting:
+    zh: |
+      **建議設定值**（每個因子一格）：最佳化在實驗範圍內（編碼 −1…+1，先格點搜尋再局部細調）找到 D 最高的點，換回實際單位。
+      - 只在測過的範圍內搜尋，**不外插**；若某因子落在範圍上下限（等高線的判讀會標出），真正的最佳點可能在範圍外。
+      - 跑之前四捨五入到機台可設定的解析度：ALD cycles 必須是整數、溫度到 1 °C、時間到 0.1 s 等，並確認修整後預測仍然好。
+      - 這是模型預測的最佳點，不是量測結果。
+    en: |
+      **Suggested setting** (one tile per factor): the point with the highest D found inside the tested range (coded −1 … +1, grid search then local refinement), converted back to real units.
+      - The search covers only the tested range, **no extrapolation**; if a factor sits on its low or high limit (flagged in the contour reading), the true optimum may lie outside.
+      - Before running, round to the tool's setpoint resolution (ALD cycles must be an integer, temperature to 1 °C, time to 0.1 s, etc.) and check that the prediction is still good after rounding.
+      - It is the model's predicted optimum, not a measurement.
+  doe.D:
+    zh: |
+      **預測整體滿意度 D**：建議配方的 D（0–1），由模型預測值算出，不是量測。
+      - 0 = 至少一個回應不可接受（狀態「需處理」）；1 = 全部完美。
+      - **< 0.6 → 注意**：目標之間有明顯取捨。
+      - D 是相對於你設定的目標、容許與權重，改了目標 D 就變；不能拿不同目標設定下的 D 互相比較。
+      - 模型挑出的最佳點通常偏樂觀，真實 D 往往較低，所以要做確認實驗。
+    en: |
+      **Predicted overall desirability D**: D (0–1) of the suggested recipe, computed from model predictions, not measurements.
+      - 0 = at least one response unacceptable (status 'act'); 1 = everything perfect.
+      - **< 0.6 → watch**: the goals clearly trade off.
+      - D is relative to the goals, tolerances and weights you set; change them and D changes, so never compare D values from different goal settings.
+      - The optimum the model picks is usually optimistic and the true D is often lower: that is why confirmation runs are needed.
+  doe.contour_x:
+    zh: "**等高線 x**：放在橫軸的因子。通常選 Pareto 上最重要的因子，或有顯著交互作用的那一對（A × B 顯著時，A 和 B 一起看最有資訊）。"
+    en: "**Contour x**: the factor on the horizontal axis. Usually the most important factor on the Pareto, or one of a pair with a significant interaction (when A × B is significant, viewing A and B together is the most informative)."
+  doe.contour_y:
+    zh: "**等高線 y**：放在縱軸的因子（不能和 x 相同）。其他沒放上圖的因子固定在建議配方的值；只看一個切面可能誤導，換幾組 x／y 看看。"
+    en: "**Contour y**: the factor on the vertical axis (cannot be the same as x). Factors not on the map are held at the suggested recipe; a single slice can mislead, so try a few x / y pairs."
+  doe.contour_show:
+    zh: |
+      **顯示**：等高線畫什麼。
+      - **整體滿意度 D**：所有目標合在一起的甜蜜點與製程窗口（深色 = 好）。
+      - **單一回應**（例如 thickness、nu_pct）：看這個回應怎麼隨兩個因子變化。等高線越密 = 對設定值越敏感；目標型回應看「目標值那條線」通過哪裡；越小越好的回應，深色反而是差的。
+      把各回應輪流看，就能解釋 D 的形狀：是哪一個回應在限制窗口。
+    en: |
+      **Show**: what the contour displays.
+      - **Overall desirability D**: the sweet spot and process window for all goals combined (dark = good).
+      - **A single response** (e.g. thickness, nu_pct): how that response changes with the two factors. Denser contour lines = more sensitive to the setpoints; for a target response, look where the target-value line runs; for a minimise response, dark means worse.
+      Stepping through the responses explains the shape of D: which response is limiting the window.
+  doe.n_conf:
+    zh: |
+      **確認實驗片數**（1–10，預設 3）：在建議配方跑幾片新晶圓來驗證預測。
+      - **至少 3 片**：才能同時估計平均與晶圓間標準差；1 片分不出雜訊和模型誤差。
+      - 片數越多，平均越準（標準誤 = σ／√n）。
+      - 確認實驗只是第一關；qual 需要更多批、更多天、所有 chamber。
+      - 實務上同批放一片 POR 對照片，用來區分「當天整體偏移」和「配方效果」。
+    en: |
+      **Confirmation wafers** (1–10, default 3): how many new wafers to run at the suggested recipe to test the prediction.
+      - **At least 3**: needed to estimate both the mean and the wafer-to-wafer standard deviation; 1 wafer cannot separate noise from model error.
+      - More wafers make the mean more precise (standard error = σ / √n).
+      - Confirmation is only the first gate; the qual needs more lots, more days and every chamber.
+      - In practice, put a POR control wafer in the same lot to separate a whole-day shift from the recipe effect.
+  doe.confirm:
+    zh: |
+      **在建議配方跑確認實驗**：用建議配方（其他因子固定在中間值）在虛擬機台上跑 n 片新晶圓，雜訊和 DOE 獨立（seed + 999），結果顯示在確認實驗表。
+      - 先把目標與模型定案再按：之後若改了目標、權重或模型，建議配方會改變，請再按一次重跑確認實驗，表格不會自動重跑。
+      - 真實 fab：用獨立的 lot 或 split，前後站走 POR 流程、用同一個量測 recipe，並附 POR 對照片；記錄實際設定值與 chamber。
+    en: |
+      **Run confirmation at the suggested recipe**: runs n new wafers at the suggested recipe (other factors at their centre) on the virtual tool, with noise independent of the DOE (seed + 999); the results appear in the confirmation table.
+      - Finalise the goals and the model before pressing it: if you later change goals, weights or the model, the suggested recipe changes, so press it again to re-run the confirmation; the table does not re-run by itself.
+      - Real fab: use a separate lot or split, with the POR flow before and after this step, the same metrology recipe and a POR control wafer; record the actual setpoints and chamber.
+  doe.true_D:
+    zh: |
+      **你的配方真實滿意度（答案卷）**：只有虛擬機台有。用沒有雜訊的真實曲面、你目前的目標與權重，算出你建議配方的真實 D；標籤裡是同樣因子（其他因子固定在中間值）的真實最佳 D，下方顯示你的配方 = 真實最佳的幾 %。
+      - 接近真實最佳 → 設計與模型抓到了物理。
+      - 明顯較低 → 找原因：設計估不到彎曲（2 水準、部分因子）、二次模型描述不了的物理（ALD purge 太短時指數型的寄生 CVD、CVD 的反應／質傳轉換）、雜訊、最佳點在邊界。
+      - 真實 D = 0：至少一個回應其實不可接受，即使模型預測可以。
+      - 換 seed 重做，可以看到同一個計畫因雜訊而得到的配方差多少。
+      真實 fab 沒有答案卷：確認實驗與 qual 才是證據。
+    en: |
+      **Your recipe's true desirability (answer key)**: virtual tool only. The true D of your suggested recipe, computed on the noise-free true surface with your current goals and weights; the label gives the true optimum D over the same factors (others fixed at their centre), and the caption shows your recipe as a percentage of it.
+      - Close to the true optimum → the design and model captured the physics.
+      - Clearly lower → find out why: a design that cannot estimate curvature (2-level, fractional), physics a quadratic cannot describe (exponential parasitic CVD at too short an ALD purge, the CVD reaction/transport transition), noise, an optimum on the range edge.
+      - True D = 0: at least one response is in fact unacceptable, even if the model predicted otherwise.
+      - Repeat with another seed to see how much the recipe from the same plan varies because of noise.
+      A real fab has no answer key: confirmation runs and the qual are the evidence.

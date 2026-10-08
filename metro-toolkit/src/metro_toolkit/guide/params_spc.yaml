@@ -1,0 +1,128 @@
+# Control-chart and capability parameters (SPC page and Fab simulator "Score my detection").
+# Each entry: zh and en, written as a Metro AE would explain it: definition, typical setting, effect, traps.
+
+params:
+  spc.param:
+    zh: |
+      **Parameter 量測項目**：要做 SPC 的量測參數（例如 gate_ox_thk 閘極氧化層厚度、wl_cd_etch 蝕刻後線寬）。
+      每個參數各自有管制界限，不要把不同 recipe／不同產品的同一參數混在一張圖。
+    en: |
+      **Parameter**: the measured item to chart (e.g. gate_ox_thk gate-oxide thickness, wl_cd_etch post-etch CD).
+      Each parameter has its own limits; never mix the same parameter from different recipes or products on one chart.
+  spc.stat:
+    zh: |
+      **Statistic 統計量**：每片晶圓畫成一個點時，用哪個數字代表它。
+      - **wafer mean 晶圓平均值**：看整片的厚度／CD 是否偏離目標（offset、漂移）。
+      - **within-wafer 1σ % 片內 1σ %**（= 片內標準差 ÷ 平均 × 100，也叫 NU% 不均勻度）：看形狀是否改變（bowl、邊緣滾降、tilt）。平均值不動、但均勻度變差的事件只會出現在這張圖。
+      - **range 片內全距**（max − min）：對單一異常點最敏感，常用於 CMP、蝕刻。
+      實務上 mean 與 1σ % 兩張都要看。
+    en: |
+      **Statistic**: which number represents a wafer when it becomes one point.
+      - **wafer mean**: is the whole wafer off target (offset, drift)?
+      - **within-wafer 1σ %** (= within-wafer std ÷ mean × 100, also called NU %, non-uniformity): did the shape change (bowl, edge roll-off, tilt)? Events that leave the mean untouched but worsen uniformity show up only here.
+      - **range** (max − min): most sensitive to a single bad site; common for CMP and etch.
+      In practice, watch both mean and 1σ %.
+  spc.group:
+    zh: |
+      **Group by 分組**：每個群組畫一張管制圖、算自己的界限。
+      - **chamber_id**：最常用。各 chamber 有固定 offset，分開才能抓到單一 chamber 的偏移。
+      - **tool_id**：整台機台（多個 chamber）一起看。
+      - **metro_tool_id 量測機台**：用來抓「量測機台本身」的偏差（不同量測機台結果不同 → 匹配問題，而不是製程）。
+    en: |
+      **Group by**: one chart, with its own limits, per group.
+      - **chamber_id**: the usual choice. Chambers have fixed offsets; separate charts catch a single chamber's shift.
+      - **tool_id**: the whole tool (several chambers) together.
+      - **metro_tool_id**: to catch the *metrology* tool itself (results differ by metrology tool → a matching problem, not the process).
+  spc.chart:
+    zh: |
+      **Chart 管制圖種類**
+      - **IMR（Individuals & Moving Range，個別值－移動全距圖）**：每片一點，界限 = CL ± 3σ，σ 由相鄰兩點差（移動全距 MR̄/1.128）估計。對**大的突跳**最快，最常用；對小而持續的偏移（< 1.5σ）反應慢。
+      - **EWMA（Exponentially Weighted Moving Average，指數加權移動平均）**：每點 = λ × 新值 + (1−λ) × 前一點，等於把歷史加權平均。對**小偏移、慢漂移**（0.5–1.5σ）比 IMR 快很多；代價是對單點突跳較慢、而且平滑後的點不是原始值。
+      - **CUSUM（Cumulative Sum，累積和）**：把「偏離目標超過 k 的部分」一路累加，累積超過 h 就警報。對**持續的小偏移**最靈敏，還能從累積開始的位置推估偏移何時發生；但在本工具的計分方式下，警報後會一直維持在界外，被標記的點很多。
+      經驗法則：機台突發事件用 IMR；消耗品老化、慢漂移用 EWMA 或 CUSUM。
+    en: |
+      **Chart type**
+      - **IMR (Individuals & Moving Range)**: one point per wafer, limits = CL ± 3σ, with σ from consecutive differences (MR̄ / 1.128). Fastest for **large jumps** and the most common; slow for small sustained shifts (< 1.5σ).
+      - **EWMA (Exponentially Weighted Moving Average)**: each point = λ × new value + (1 − λ) × previous point, a weighted memory of history. Much faster than IMR for **small shifts and slow drift** (0.5–1.5σ); slower for single spikes, and the plotted points are smoothed, not raw values.
+      - **CUSUM (Cumulative Sum)**: accumulates the part of each deviation larger than k and alarms when the sum passes h. Most sensitive to **small persistent shifts**, and where the sum starts rising tells you when the shift began; with this tool's scoring it stays out of limits after an alarm, so it flags many points.
+      Rule of thumb: IMR for sudden tool events; EWMA or CUSUM for consumable wear and slow drift.
+  spc.rules:
+    zh: |
+      **WE 規則（Western Electric rules）**：判斷「不是隨機」的規則，σ 為短期 σ，區域以 CL 為中心：
+      - **WE1**：1 點超出 ±3σ（突發大事件；隨機誤報率約 0.27%）。
+      - **WE2**：連續 3 點中有 2 點超出同側 2σ（中等偏移）。
+      - **WE3**：連續 5 點中有 4 點超出同側 1σ（小偏移）。
+      - **WE4**：連續 8 點在 CL 同一側（持續的小偏移）。
+      規則越多，抓得越快，但誤警報越多（全開時隨機誤報約 1–2% 每點）。常見做法：WE1 一定開；WE2–4 依參數重要度決定。只用在 IMR；EWMA／CUSUM 有自己的判斷界限。
+    en: |
+      **WE rules (Western Electric)**: tests for "not random", using short-term σ and zones around the CL:
+      - **WE1**: 1 point beyond ±3σ (sudden big event; random false-alarm rate ≈ 0.27 %).
+      - **WE2**: 2 of 3 consecutive points beyond 2σ on the same side (moderate shift).
+      - **WE3**: 4 of 5 consecutive points beyond 1σ on the same side (small shift).
+      - **WE4**: 8 points in a row on one side of the CL (sustained small shift).
+      More rules catch events sooner but raise more false alarms (all four on: roughly 1–2 % of points by chance). Common practice: WE1 always on; WE2–4 by how critical the parameter is. Used for IMR only; EWMA / CUSUM have their own decision limits.
+  spc.phase1:
+    zh: |
+      **Phase I 點數（基準期）**：用前 N 點算 CL 與 σ（管制界限），之後的點（Phase II）拿來和它比較。
+      - 典型 20–30 點；太少 → σ 估不準、界限亂跳；太多 → 若基準期裡已經有事件，界限被拉寬、事件被「學進去」而抓不到。
+      - 基準期必須是「乾淨、穩定、代表正常生產」的資料；PM、recipe 變更或量測機台更換後要重建。
+      - 在 Fab simulator 的 mixed 情境，漂移從第 12 批開始，落在基準期內 → 這就是它很晚才被抓到的原因之一。
+    en: |
+      **Phase I points (baseline)**: the first N points set the CL and σ (control limits); later points (Phase II) are judged against them.
+      - Typically 20–30 points; too few → unstable σ and jumpy limits; too many → if the baseline already contains an event, the limits widen and the event is "learned" and missed.
+      - The baseline must be clean, stable, normal production; rebuild it after a PM, a recipe change or a metrology-tool change.
+      - In the Fab simulator's mixed scenario the drift starts at lot 12, inside the baseline: one reason it is caught so late.
+  spc.ewma_lambda:
+    zh: |
+      **EWMA λ（權重）**：新點佔的比例，0 < λ ≤ 1。
+      - λ 小（0.05–0.2）：記憶長、對小漂移靈敏，但對突跳反應慢；最常用 0.2（搭配 L = 3）或 0.1（L ≈ 2.8）。
+      - λ = 1：等於 IMR 的個別值圖。
+      界限會隨時間變寬，約 1/λ 點後穩定。
+    en: |
+      **EWMA λ (weight)**: share given to the newest point, 0 < λ ≤ 1.
+      - Small λ (0.05–0.2): long memory, sensitive to small drift, slower to react to jumps; 0.2 (with L = 3) or 0.1 (L ≈ 2.8) are the usual choices.
+      - λ = 1: the same as an individuals chart.
+      Limits widen over the first ~1/λ points, then settle.
+  spc.cusum_k:
+    zh: |
+      **CUSUM k（參考值，以 σ 為單位）**：每點只有「偏離目標超過 k」的部分才被累加。通常設為**想抓的偏移大小的一半**：要抓 1σ 的偏移 → k = 0.5。k 越小越靈敏，但越容易誤報。
+    en: |
+      **CUSUM k (reference value, in σ)**: only the part of each deviation beyond k is accumulated. Usually **half the shift you want to catch**: to catch a 1σ shift use k = 0.5. Smaller k is more sensitive but alarms more often by chance.
+  spc.cusum_h:
+    zh: |
+      **CUSUM h（決策界限，以 σ 為單位）**：累積和超過 h 就警報。常用 h = 4–5（k = 0.5 時，正常製程平均約 370–900 點才誤報一次，ARL₀）。h 越小越快抓到，但誤報越多。
+    en: |
+      **CUSUM h (decision interval, in σ)**: alarm when the cumulative sum exceeds h. h = 4–5 is common (with k = 0.5 an in-control process false-alarms about once every 370–900 points, ARL₀). Smaller h detects sooner but raises more false alarms.
+  spc.col.points:
+    zh: "**points**：這個群組的點數（晶圓數）。少於約 20 點時，界限與 Cpk 都不穩定。"
+    en: "**points**: number of points (wafers) in the group. Below ~20 points, limits and Cpk are unstable."
+  spc.col.violations:
+    zh: "**violations**：被標記為 OOC 的點數（同一點違反多條規則只算一次）。"
+    en: "**violations**: number of OOC points (a point breaking several rules counts once)."
+  spc.col.cl:
+    zh: "**CL**：中心線＝Phase I 平均值。各 chamber 的 CL 差＝chamber offset，是 chamber matching 的依據。"
+    en: "**CL**: centre line = Phase I mean. The difference between chamber CLs is the chamber offset, the basis for chamber matching."
+  spc.col.sigma:
+    zh: "**σ short-term 短期 σ**：由移動全距估計（MR̄/1.128），只反映相鄰晶圓之間的變化，不受慢漂移影響；管制界限用它。"
+    en: "**σ short-term**: from the moving range (MR̄ / 1.128); reflects wafer-to-wafer change only and ignores slow drift; the control limits use it."
+  cap.Cp:
+    zh: "**Cp 潛在製程能力** = (USL − LSL) ÷ 6σ短期。只看變異大小、不管有沒有置中。≥ 1.33 為一般要求，≥ 1.67 為關鍵參數要求。"
+    en: "**Cp (potential capability)** = (USL − LSL) ÷ 6σ short-term. Spread only, ignores centring. ≥ 1.33 is the usual requirement, ≥ 1.67 for critical parameters."
+  cap.Cpk:
+    zh: "**Cpk 製程能力指數** = min(USL − 平均, 平均 − LSL) ÷ 3σ短期。同時考慮變異與置中；Cpk 1.0 ≈ 0.27% 超規，1.33 ≈ 63 ppm。Cp 高但 Cpk 低 → 偏離中心，調 target 就能改善。"
+    en: "**Cpk (capability index)** = min(USL − mean, mean − LSL) ÷ 3σ short-term. Covers spread and centring; Cpk 1.0 ≈ 0.27 % out of spec, 1.33 ≈ 63 ppm. High Cp but low Cpk → off-centre; re-targeting fixes it."
+  cap.Pp:
+    zh: "**Pp 製程績效** = (USL − LSL) ÷ 6σ整體。σ整體包含漂移、chamber 差異等長期變異；Pp 明顯小於 Cp → 製程有長期變異（漂移、批間差）。"
+    en: "**Pp (process performance)** = (USL − LSL) ÷ 6σ overall. Overall σ includes drift and chamber differences; Pp well below Cp → long-term variation (drift, lot-to-lot)."
+  cap.Ppk:
+    zh: "**Ppk** = min(USL − 平均, 平均 − LSL) ÷ 3σ整體。客戶實際看到的能力；Cpk 與 Ppk 差很多 → 先處理漂移與批間差。"
+    en: "**Ppk** = min(USL − mean, mean − LSL) ÷ 3σ overall. The capability the customer actually sees; a large Cpk–Ppk gap → fix drift and lot-to-lot variation first."
+  cap.sigma_within:
+    zh: "**sigma_within 短期 σ**：移動全距估計，Cp／Cpk 使用。"
+    en: "**sigma_within (short-term σ)**: from the moving range; used by Cp / Cpk."
+  cap.sigma_overall:
+    zh: "**sigma_overall 整體 σ**：所有點的標準差，Pp／Ppk 使用。"
+    en: "**sigma_overall**: standard deviation of all points; used by Pp / Ppk."
+  cap.mean:
+    zh: "**mean 平均**：該群組所有晶圓平均值的平均；和規格中心比較可看出是否需要調 target。"
+    en: "**mean**: average of the group's wafer means; compare with the spec centre to see whether re-targeting is needed."

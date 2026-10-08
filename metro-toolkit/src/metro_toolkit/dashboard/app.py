@@ -65,6 +65,8 @@ from metro_toolkit.ingest import (  # noqa: E402
     save_dataset,
     save_profile,
 )
+from metro_toolkit.guide import insights as gi  # noqa: E402
+from metro_toolkit.guide.render import H, explain, language_switch  # noqa: E402
 from metro_toolkit.ingest.mapping import LONG_ONLY  # noqa: E402
 from metro_toolkit.schema import validate  # noqa: E402
 from metro_toolkit.wafer import interpolate_map, radial_profile, uniformity_metrics, zernike_decompose  # noqa: E402
@@ -78,6 +80,22 @@ from metro_toolkit.wafer.patterns import (  # noqa: E402
 )
 
 st.set_page_config(page_title="metro-toolkit", layout="wide")
+
+
+def legend_line(fig: go.Figure, name: str, color: str, dash: str = "solid", width: float = 1.5) -> None:
+    """Legend entry for a reference line drawn as a shape (shapes have no legend of their own)."""
+    fig.add_scatter(x=[None], y=[None], mode="lines", name=name, line=dict(color=color, dash=dash, width=width),
+                    hoverinfo="skip")
+
+
+def legend_marker(fig: go.Figure, name: str, color: str, symbol: str = "square", size: int = 10, line=None) -> None:
+    fig.add_scatter(x=[None], y=[None], mode="markers", name=name, hoverinfo="skip",
+                    marker=dict(symbol=symbol, size=size, color=color, line=line or dict(width=0)))
+
+
+def col_help(df: pd.DataFrame, keys: dict) -> dict:
+    """column_config giving table columns a "?" explanation: {column: guide key}."""
+    return {c: st.column_config.Column(help=H(k)) for c, k in keys.items() if c in df.columns and H(k)}
 
 
 def layout(fig: go.Figure, title: str, xlab: str, ylab: str, height: int = 380) -> go.Figure:
@@ -113,8 +131,7 @@ def get_data() -> pd.DataFrame | None:
     options = [SAMPLE] + [f"匯入：{n}" for n in imported] + [UPLOAD]
     active = st.session_state.get("dataset")
     index = options.index(f"匯入：{active}") if active and f"匯入：{active}" in options else 0
-    choice = st.sidebar.selectbox("資料來源 Data source", options, index=index,
-                                  help="在 **Data import** 頁面匯入自己的檔案後，會出現在這個清單。")
+    choice = st.sidebar.selectbox("資料來源 Data source", options, index=index, help=H("data.source"), key=f"data_source_{active}")
     if choice == SAMPLE:
         st.session_state.pop("dataset", None)
         return sample_data()
@@ -122,7 +139,7 @@ def get_data() -> pd.DataFrame | None:
         name = choice.split("：", 1)[1]
         st.session_state["dataset"] = name
         return load_dataset(name)
-    up = st.sidebar.file_uploader("Measurement CSV (standard schema)", type="csv")
+    up = st.sidebar.file_uploader("Measurement CSV (standard schema)", type="csv", help=H("data.upload_standard"), key="data_upload_std")
     if up is None:
         st.sidebar.caption("請上傳已是標準欄位名稱的 CSV；其他格式請用 Data import 頁面。")
         return None
@@ -144,9 +161,11 @@ def page_import():
     st.header("Data import 資料匯入")
     st.info(f"🔒 匯入的資料只會存在這台電腦：`{import_dir()}`（已排除在 git 之外，不會上傳 GitHub）。"
             "公司資料請只在公司允許的電腦上使用。")
-    fmt = st.radio("檔案格式", ["CSV / Excel", "SECOM（secom.data + secom_labels.data）"], horizontal=True)
+    fmt = st.radio("檔案格式", ["CSV / Excel", "SECOM（secom.data + secom_labels.data）"], horizontal=True,
+                   help=H("import.format"), key="import_format")
     if fmt.startswith("CSV"):
-        up = st.file_uploader("上傳量測資料（CSV、TXT、Excel）", type=["csv", "txt", "tsv", "xlsx", "xlsm", "xls", "data"])
+        up = st.file_uploader("上傳量測資料（CSV、TXT、Excel）", type=["csv", "txt", "tsv", "xlsx", "xlsm", "xls", "data"],
+                              help=H("import.upload"), key="import_upload")
         if up is None:
             st.markdown(
                 "支援兩種表格：\n"
@@ -156,13 +175,13 @@ def page_import():
             return
         sheet = None
         if up.name.lower().endswith((".xlsx", ".xlsm", ".xls")):
-            sheet = st.selectbox("工作表 Sheet", excel_sheets(up))
+            sheet = st.selectbox("工作表 Sheet", excel_sheets(up), help=H("import.sheet"), key=f"import_sheet_{up.name}")
         raw = read_table(up, up.name, sheet)
         default_name = Path(up.name).stem
     else:
         c1, c2 = st.columns(2)
-        d = c1.file_uploader("secom.data", type=["data", "txt"])
-        lab = c2.file_uploader("secom_labels.data", type=["data", "txt"])
+        d = c1.file_uploader("secom.data", type=["data", "txt"], help=H("import.secom_data"), key="import_secom_data")
+        lab = c2.file_uploader("secom_labels.data", type=["data", "txt"], help=H("import.secom_labels"), key="import_secom_labels")
         if d is None or lab is None:
             st.markdown("UCI SECOM 是真實晶圓廠的公開資料（1567 筆 × 590 個感測器，含合格／失效標籤）。"
                         "下載：https://archive.ics.uci.edu/dataset/179/secom ，解壓後上傳這兩個檔案。")
@@ -173,15 +192,14 @@ def page_import():
     st.dataframe(raw.head(15), hide_index=True)
 
     profiles = list_profiles()
-    prof = st.selectbox("套用已儲存的欄位對應設定（profile）", ["（自動判斷）"] + profiles,
-                        help="同一台機台或同一種匯出格式，第一次對應好並儲存，下次選它即可。")
+    prof = st.selectbox("套用已儲存的欄位對應設定（profile）", ["（自動判斷）"] + profiles, help=H("import.profile"), key="import_profile")
     saved = load_profile(prof) if prof != "（自動判斷）" else None
     guess = {k: v for k, v in (saved.mapping if saved else guess_mapping(raw.columns)).items() if v in raw.columns}
     layout0 = saved.layout if saved else detect_layout(guess)
 
     st.subheader("1. 表格格式")
     layout = st.radio("每一列代表什麼？", ["long", "wide"], index=0 if layout0 == "long" else 1, horizontal=True,
-                      format_func={"long": "一個量測值（long）", "wide": "一片晶圓（wide）"}.get)
+                      format_func={"long": "一個量測值（long）", "wide": "一片晶圓（wide）"}.get, help=H("import.layout"), key=f"import_layout_{default_name}_{prof}")
 
     st.subheader("2. 欄位對應")
     st.caption("已自動猜測，請確認或修改。沒有的欄位選「（無）」。")
@@ -192,7 +210,7 @@ def page_import():
         options = ["（無）"] + list(raw.columns)
         cur = guess.get(f)
         sel = cols[i % 3].selectbox(f"{f}（{FIELDS[f][0]}）", options, index=options.index(cur) if cur in options else 0,
-                                    key=f"map_{layout}_{f}")
+                                    key=f"map_{layout}_{f}", help=H(f"field.{f}"))
         if sel != "（無）":
             mapping[f] = sel
     used = list(mapping.values())
@@ -211,6 +229,7 @@ def page_import():
             if r["source"] in prev:
                 for k in ("name", "unit", "include"):
                     table.at[i, k] = prev[r["source"]].get(k, r[k])
+    st.caption("參數表 Parameter table", help=H("import.params_table"))
     edited = st.data_editor(
         table, hide_index=True, key=f"params_{layout}_{len(table)}",
         column_config={
@@ -219,7 +238,7 @@ def page_import():
             "unit": st.column_config.TextColumn("單位", help="長度單位寫 nm、Å（或 A）、µm（或 um）即可自動換算"),
             "include": st.column_config.CheckboxColumn("匯入"),
         })
-    to_nm = st.checkbox("長度單位（Å、µm）自動換算成 nm", value=saved.to_nm if saved else True)
+    to_nm = st.checkbox("長度單位（Å、µm）自動換算成 nm", value=saved.to_nm if saved else True, help=H("import.to_nm"), key=f"import_to_nm_{prof}")
     st.caption("若要在 SemiYield 的 Yield Prediction 使用，請把良率欄位命名為 `yield`，製程參數可改名為 "
                "`gate_oxide_thickness`、`poly_cd`、`implant_dose`、`anneal_temp`、`metal_resistance`、"
                "`contact_resistance`、`etch_rate`、`deposition_unif`、`defect_density`。")
@@ -235,11 +254,11 @@ def page_import():
     st.subheader("4. 檢查報告")
     sm = rep["summary"]
     k = st.columns(5)
-    k[0].metric("資料列", f"{sm['rows']:,}")
-    k[1].metric("批 lots", sm["lots"])
-    k[2].metric("晶圓 wafers", sm["wafers"])
-    k[3].metric("參數", sm["parameters"])
-    k[4].metric("每片量測點", f"{sm['sites_per_wafer']:.0f}")
+    k[0].metric("資料列", f"{sm['rows']:,}", help=H("import.m_rows"))
+    k[1].metric("批 lots", sm["lots"], help=H("import.m_lots"))
+    k[2].metric("晶圓 wafers", sm["wafers"], help=H("import.m_wafers"))
+    k[3].metric("參數", sm["parameters"], help=H("import.m_params"))
+    k[4].metric("每片量測點", f"{sm['sites_per_wafer']:.0f}", help=H("import.m_sites"))
     st.caption(f"時間範圍：{sm['time_span']}")
     for issue in rep["issues"]:
         {"error": st.error, "warning": st.warning, "info": st.info}[issue["level"]](issue["message"])
@@ -249,10 +268,11 @@ def page_import():
     st.subheader("5. 儲存並使用")
     has_error = any(i["level"] == "error" for i in rep["issues"])
     c1, c2 = st.columns(2)
-    name = c1.text_input("資料集名稱", value=default_name)
-    keep_profile = c2.checkbox("同時儲存欄位對應設定（profile）", value=True)
-    profile_name = c2.text_input("設定名稱", value=prof if saved else default_name, disabled=not keep_profile)
-    if st.button("儲存並使用", type="primary", disabled=has_error):
+    name = c1.text_input("資料集名稱", value=default_name, help=H("import.name"), key=f"import_name_{default_name}")
+    keep_profile = c2.checkbox("同時儲存欄位對應設定（profile）", value=True, help=H("import.keep_profile"), key="import_keep_profile")
+    profile_name = c2.text_input("設定名稱", value=prof if saved else default_name, disabled=not keep_profile,
+                                 help=H("import.profile_name"), key=f"import_profile_name_{default_name}_{prof}")
+    if st.button("儲存並使用", type="primary", disabled=has_error, help=H("import.save"), key="import_save"):
         paths = save_dataset(name, long_df)
         if keep_profile:
             save_profile(profile_name, spec)
@@ -266,7 +286,7 @@ def page_import():
 def page_stack():
     st.header("Film stack & fit explorer")
     cfg = films_cfg()
-    name = st.selectbox("Stack (config/films.yaml)", list(cfg["stacks"]))
+    name = st.selectbox("Stack (config/films.yaml)", list(cfg["stacks"]), help=H("stack.select"), key="stack_select")
     stack, recipe = load_stack(name, cfg)
     st.caption(recipe.get("description", ""))
     wl = wavelengths(cfg)
@@ -276,20 +296,20 @@ def page_stack():
     for i, layer in enumerate(stack.layers):
         t0 = layer.thickness_nm
         true_t.append(cols[i].number_input(f"True L{i} {layer.name} (nm)", 0.0, 2000.0, float(t0), step=max(t0 / 50, 0.05),
-                                           format="%.2f"))
-    technique = cols[-1].radio("Technique", ["reflectometry", "se"], index=0 if recipe.get("technique") != "se" else 1)
+                                           format="%.2f", help=H("stack.true_thickness"), key=f"stack_true_{name}_{i}"))
+    technique = cols[-1].radio("Technique", ["reflectometry", "se"], index=0 if recipe.get("technique") != "se" else 1,
+                               help=H("stack.technique"), key=f"stack_technique_{name}")
     truth = stack.copy_with(true_t)
 
     c1, c2 = st.columns(2)
     if technique == "reflectometry":
-        noise = c1.slider("Reflectance noise (1σ)", 0.0, 0.01, 0.002, 0.0005, format="%.4f")
+        noise = c1.slider("Reflectance noise (1σ)", 0.0, 0.01, 0.002, 0.0005, format="%.4f", help=H("stack.noise_r"), key="stack_noise_r")
         meas = simulate_reflectometry(truth, wl, noise=noise, rng=1)
     else:
-        noise = c1.slider("Ψ noise (deg, 1σ); Δ noise = 2x", 0.0, 0.2, 0.02, 0.01)
+        noise = c1.slider("Ψ noise (deg, 1σ); Δ noise = 2x", 0.0, 0.2, 0.02, 0.01, help=H("stack.noise_se"), key="stack_noise_se")
         angles = recipe.get("angles_deg", [65, 70, 75])
         meas = simulate_se(truth, wl, angles, noise, 2 * noise, rng=1)
-    float_n = c2.checkbox("Also float n of the top layer (Cauchy A)", value=False,
-                          help="Only possible if the top layer uses a Cauchy model (Al2O3, HfO2, ZrO2).")
+    float_n = c2.checkbox("Also float n of the top layer (Cauchy A)", value=False, help=H("stack.float_n"), key="stack_float_n")
 
     params = list(recipe["fit_params"])
     if float_n and hasattr(stack.layers[0].material, "A"):
@@ -305,20 +325,26 @@ def page_stack():
 
     fig = go.Figure()
     if technique == "reflectometry":
-        fig.add_scatter(x=wl, y=meas.data["R"], mode="markers", name="measured", marker=dict(size=4, color=viz.SERIES[0]))
-        fig.add_scatter(x=wl, y=reflectance(res.stack, wl), mode="lines", name="model fit", line=dict(color=viz.SERIES[1], width=2))
+        fig.add_scatter(x=wl, y=meas.data["R"], mode="markers", name="measured 量測", marker=dict(size=4, color=viz.SERIES[0]),
+                        hovertemplate="measured 量測<br>λ %{x:.0f} nm<br>R = %{y:.4f}<extra></extra>")
+        fig.add_scatter(x=wl, y=reflectance(res.stack, wl), mode="lines", name="model fit 模型擬合",
+                        line=dict(color=viz.SERIES[1], width=2),
+                        hovertemplate="model fit 模型擬合<br>λ %{x:.0f} nm<br>R = %{y:.4f}<extra></extra>")
         st.plotly_chart(layout(fig, "Reflectance: measured vs fitted model", "wavelength (nm)", "R"), width="stretch")
     else:
         a = float(angles[len(angles) // 2])
         psi_m, delta_m = meas.data[a]
         psi_f, delta_f = ellipsometry(res.stack, wl, a)
         g1, g2 = st.columns(2)
-        f1 = go.Figure([go.Scatter(x=wl, y=psi_m, mode="markers", name="measured", marker=dict(size=4, color=viz.SERIES[0])),
-                        go.Scatter(x=wl, y=psi_f, mode="lines", name="fit", line=dict(color=viz.SERIES[1]))])
-        f2 = go.Figure([go.Scatter(x=wl, y=delta_m, mode="markers", name="measured", marker=dict(size=4, color=viz.SERIES[0])),
-                        go.Scatter(x=wl, y=delta_f, mode="lines", name="fit", line=dict(color=viz.SERIES[1]))])
-        g1.plotly_chart(layout(f1, f"Ψ at {a:.0f}°", "wavelength (nm)", "Ψ (deg)"), width="stretch")
-        g2.plotly_chart(layout(f2, f"Δ at {a:.0f}°", "wavelength (nm)", "Δ (deg)"), width="stretch")
+        figs = []
+        for ym, yf, lab in ((psi_m, psi_f, "Ψ"), (delta_m, delta_f, "Δ")):
+            figs.append(go.Figure([
+                go.Scatter(x=wl, y=ym, mode="markers", name="measured 量測", marker=dict(size=4, color=viz.SERIES[0]),
+                           hovertemplate=f"measured 量測<br>λ %{{x:.0f}} nm<br>{lab} = %{{y:.3f}}°<extra></extra>"),
+                go.Scatter(x=wl, y=yf, mode="lines", name="model fit 模型擬合", line=dict(color=viz.SERIES[1]),
+                           hovertemplate=f"model fit 模型擬合<br>λ %{{x:.0f}} nm<br>{lab} = %{{y:.3f}}°<extra></extra>")]))
+        g1.plotly_chart(layout(figs[0], f"Ψ at {a:.0f}°", "wavelength (nm)", "Ψ (deg)"), width="stretch")
+        g2.plotly_chart(layout(figs[1], f"Δ at {a:.0f}°", "wavelength (nm)", "Δ (deg)"), width="stretch")
 
     rows = []
     for lab in res.labels:
@@ -328,16 +354,22 @@ def page_stack():
         rows.append({"parameter": lab, "true": truth_val, "fitted": res.values[lab], "± 1σ": res.stderr[lab],
                      "error": res.values[lab] - truth_val})
     m1, m2 = st.columns([2, 1])
-    m1.dataframe(pd.DataFrame(rows).style.format(precision=4), hide_index=True, width="stretch")
-    m2.metric("reduced χ²", f"{res.chi2_red:.2f}")
+    fit_tab = pd.DataFrame(rows)
+    m1.dataframe(fit_tab.style.format(precision=4), hide_index=True, width="stretch",
+                 column_config=col_help(fit_tab, {"parameter": "stack.col.parameter", "true": "stack.col.true",
+                                                  "fitted": "stack.col.fitted", "± 1σ": "stack.col.sigma",
+                                                  "error": "stack.col.error"}))
+    m2.metric("reduced χ²", f"{res.chi2_red:.2f}", help=H("stack.chi2"))
     if len(res.labels) > 1:
-        m2.write("Parameter correlation")
+        m2.caption("Parameter correlation", help=H("stack.corr"))
         m2.dataframe(pd.DataFrame(res.correlation, index=res.labels, columns=res.labels).style.format(precision=3))
     fixed_changed = [i for i, l in enumerate(stack.layers)
                      if i not in {p.layer for p in params} and abs(true_t[i] - l.thickness_nm) > 1e-9]
     if fixed_changed:
         st.info(f"Layer(s) {fixed_changed} differ from the recipe's fixed value: watch the floated-layer error "
                 "while χ² stays low. Fit statistics do not reveal a wrong fixed layer.")
+    explain("stack_reflectance" if technique == "reflectometry" else "stack_se",
+            gi.stack_fit(res, rows, technique, fixed_changed))
 
 
 def page_wafer(df):
@@ -348,21 +380,23 @@ def page_wafer(df):
         st.info("這份資料沒有量測點座標（每片只有一個值），無法畫晶圓圖。請到 **SPC** 頁面分析。")
         return
     df = df[df["x"].notna() & df["y"].notna()]
-    param = st.selectbox("Parameter", sorted(df.parameter.unique()))
+    param = st.selectbox("Parameter", sorted(df.parameter.unique()), help=H("wafer.param"), key="wafer_param")
     sub = df[df.parameter == param]
     wafers = wafer_summary(sub)
-    wafer = st.selectbox("Wafer (worst NU first)", wafers.sort_values("nu_1sigma_pct", ascending=False).wafer_id)
+    wafer = st.selectbox("Wafer (worst NU first)", wafers.sort_values("nu_1sigma_pct", ascending=False).wafer_id,
+                         help=H("wafer.select"), key=f"wafer_pick_{param}")
     w = sub[sub.wafer_id == wafer]
     um = uniformity_metrics(w.value)
     r_eff = float(np.hypot(w.x, w.y).max())
     k = st.columns(5)
-    k[0].metric("mean", f"{um['mean']:.3f}")
-    k[1].metric("1σ NU", f"{um['nu_1sigma_pct']:.3f} %")
-    k[2].metric("range", f"{um['range']:.3f}")
-    k[3].metric("(max−min)/2·mean", f"{um['half_range_pct']:.3f} %")
-    k[4].metric("sites", um["n_sites"])
+    k[0].metric("mean", f"{um['mean']:.3f}", help=H("wafer.mean"))
+    k[1].metric("1σ NU", f"{um['nu_1sigma_pct']:.3f} %", help=H("wafer.nu"))
+    k[2].metric("range", f"{um['range']:.3f}", help=H("wafer.range"))
+    k[3].metric("(max−min)/2·mean", f"{um['half_range_pct']:.3f} %", help=H("wafer.half_range"))
+    k[4].metric("sites", um["n_sites"], help=H("wafer.sites"))
 
-    mode = st.radio("Colour scale", ["absolute (sequential)", "deviation from mean (diverging)"], horizontal=True)
+    mode = st.radio("Colour scale", ["absolute (sequential)", "deviation from mean (diverging)"], horizontal=True,
+                    help=H("wafer.colour"), key="wafer_colour")
     X, Y, Z = interpolate_map(w.x, w.y, w.value, radius_mm=r_eff, grid=101)
     if mode.startswith("absolute"):
         zz, cs, zmid = Z, viz.PLOTLY_SEQ, None
@@ -372,67 +406,99 @@ def page_wafer(df):
                                contours=dict(showlines=False), colorbar=dict(title=w.unit.iloc[0] if "unit" in w else "")))
     fig.add_scatter(x=w.x, y=w.y, mode="markers", marker=dict(size=7, color=viz.SURFACE, line=dict(color=viz.INK_2, width=1)),
                     text=[f"site {s}: {v:.3f}" for s, v in zip(w.get("site", range(len(w))), w.value)], hoverinfo="text",
-                    name="sites")
+                    name="sites 量測點")
     fig.add_shape(type="circle", x0=-r_eff, y0=-r_eff, x1=r_eff, y1=r_eff, line=dict(color=viz.AXIS))
+    legend_line(fig, "wafer edge 晶圓邊緣", viz.AXIS)
     fig = layout(fig, f"{wafer}  ({w.chamber_id.iloc[0] if 'chamber_id' in w else ''})", "x (mm)", "y (mm)", 520)
     fig.update_yaxes(scaleanchor="x", scaleratio=1)
     c1, c2 = st.columns([3, 2])
     c1.plotly_chart(fig, width="stretch")
-
     zk = zernike_decompose(w.x, w.y, w.value, radius_mm=r_eff)
+    rp = radial_profile(w.x, w.y, w.value)
+    facts = gi.wafer_page(w, um, wafers, zk, rp, param)
+    explain("wafer_map", facts["wafer_map"], where=c1)
+
     coef = {kk: v for kk, v in zk["coefficients"].items() if kk != "piston"}
-    f2 = go.Figure(go.Bar(x=list(coef.values()), y=list(coef), orientation="h", marker_color=viz.SERIES[0]))
+    f2 = go.Figure(go.Bar(x=list(coef.values()), y=list(coef), orientation="h", marker_color=viz.SERIES[0],
+                          name="Zernike coefficient 係數",
+                          hovertemplate="%{y}: %{x:+.4g}<extra>Zernike coefficient 係數</extra>"))
     f2.update_yaxes(autorange="reversed")
     c2.plotly_chart(layout(f2, f"Spatial signature (R² {zk['r2']:.2f})", "coefficient", "", 260), width="stretch")
-    rp = radial_profile(w.x, w.y, w.value)
+    explain("wafer_zernike", facts["wafer_zernike"], where=c2)
     f3 = go.Figure(go.Scatter(x=rp.r_mm, y=rp["mean"], mode="lines+markers", line=dict(color=viz.SERIES[0]),
-                              error_y=dict(array=rp["std"].fillna(0), color=viz.MUTED)))
+                              name="ring mean ±1σ 環平均 ±1σ", error_y=dict(array=rp["std"].fillna(0), color=viz.MUTED),
+                              hovertemplate="r ≈ %{x:.0f} mm<br>ring mean 環平均 %{y:.4g}<extra></extra>"))
+    f3.update_layout(showlegend=True)
     c2.plotly_chart(layout(f3, "Radial profile", "radius (mm)", "value", 260), width="stretch")
+    explain("wafer_radial", facts["wafer_radial"], where=c2)
 
 
 def page_spc(df):
     st.header("SPC by chamber")
     if df is None:
         return
-    param = st.selectbox("Parameter", sorted(df.parameter.unique()), key="spc_param")
+    param = st.selectbox("Parameter", sorted(df.parameter.unique()), key="spc_param", help=H("spc.param"))
     sub = df[df.parameter == param]
     wafers = wafer_summary(sub)
-    stat = st.radio("Statistic", ["mean", "nu_1sigma_pct", "range"], horizontal=True,
-                    format_func={"mean": "wafer mean", "nu_1sigma_pct": "within-wafer 1σ %", "range": "range"}.get)
+    stat = st.radio("Statistic", ["mean", "nu_1sigma_pct", "range"], horizontal=True, help=H("spc.stat"),
+                    format_func={"mean": "wafer mean", "nu_1sigma_pct": "within-wafer 1σ %", "range": "range"}.get, key="spc_stat")
     groups = [c for c in ("chamber_id", "tool_id", "metro_tool_id") if c in wafers]
     if not groups:
         wafers["all wafers"] = "all"
         groups = ["all wafers"]
-    group = st.radio("Group by", groups, horizontal=True)
-    ctype = st.radio("Chart", ["IMR", "EWMA", "CUSUM"], horizontal=True, key="chart_type")
-    phase1 = st.slider("Phase I points (baseline for limits)", 5, 60, 20)
+    group = st.radio("Group by", groups, horizontal=True, help=H("spc.group"), key=f"spc_group_{'_'.join(groups)}")
+    ctype = st.radio("Chart", ["IMR", "EWMA", "CUSUM"], horizontal=True, key="chart_type", help=H("spc.chart"))
+    phase1 = st.slider("Phase I points (baseline for limits)", 5, 60, 20, help=H("spc.phase1"), key="spc_phase1")
     colors = viz.color_map(wafers[group]) if wafers[group].nunique() <= len(viz.SERIES) else {
         g: viz.SERIES[0] for g in wafers[group].unique()}
     charts = spc_by_group(wafers, group, stat, ctype, phase1)
+    stat_label = {"mean": "wafer mean", "nu_1sigma_pct": "1σ %", "range": "range"}[stat]
     cols = st.columns(2)
     summary = []
     for i, (g, ch) in enumerate(charts.items()):
         sw = wafers[wafers[group] == g].sort_values("timestamp")
         x = sw.timestamp
+        z = (np.asarray(ch.statistic) - ch.cl) / ch.sigma if ch.sigma > 0 else np.zeros(len(sw))
         fig = go.Figure()
-        fig.add_scatter(x=x, y=ch.statistic, mode="lines+markers", name=str(g), line=dict(color=colors[g], width=1.5),
-                        marker=dict(size=5), text=sw.wafer_id, hovertemplate="%{text}<br>%{y:.4f}<extra></extra>")
-        fig.add_scatter(x=x, y=ch.ucl, mode="lines", name="limits", line=dict(color=viz.STATUS["critical"], width=1))
-        fig.add_scatter(x=x, y=ch.lcl, mode="lines", showlegend=False, line=dict(color=viz.STATUS["critical"], width=1))
+        fig.add_scatter(x=x, y=ch.statistic, mode="lines+markers", name=f"{g} {stat_label}",
+                        line=dict(color=colors[g], width=1.5), marker=dict(size=5),
+                        customdata=np.column_stack([sw.wafer_id, z]),
+                        hovertemplate="%{customdata[0]}<br>%{y:.4f}<br>" +
+                                      ("偏離 CL %{customdata[1]:+.1f}σ<extra></extra>" if ch.chart_type == "IMR"
+                                       else "<extra></extra>"))
+        lim_name = {"IMR": "UCL / LCL 管制界限 (±3σ)", "EWMA": "UCL / LCL EWMA 界限", "CUSUM": "±h 決策界限 decision interval"}
+        fig.add_scatter(x=x, y=ch.ucl, mode="lines", name=lim_name[ch.chart_type], line=dict(color=viz.STATUS["critical"], width=1),
+                        hovertemplate="UCL %{y:.4f}<extra></extra>")
+        fig.add_scatter(x=x, y=ch.lcl, mode="lines", showlegend=False, line=dict(color=viz.STATUS["critical"], width=1),
+                        hovertemplate="LCL %{y:.4f}<extra></extra>")
         if ch.chart_type != "CUSUM":
             fig.add_hline(y=ch.cl, line=dict(color=viz.INK_2, width=1))
+            legend_line(fig, f"CL 中心線 = {ch.cl:.4g}", viz.INK_2, width=1)
+        k1 = min(phase1, len(sw)) - 1
+        if 0 <= k1 < len(sw) - 1:
+            fig.add_vline(x=x.iloc[k1], line=dict(color=viz.MUTED, dash="dash", width=1))
+            legend_line(fig, "Phase I 結束 end of baseline", viz.MUTED, dash="dash", width=1)
         ooc = ch.out_of_control
         if ooc.size:
-            fig.add_scatter(x=x.iloc[ooc], y=ch.statistic[ooc], mode="markers", name="violation",
-                            marker=dict(size=11, color="rgba(0,0,0,0)", line=dict(color=viz.STATUS["critical"], width=2)))
-        cols[i % 2].plotly_chart(layout(fig, f"{g}  {ctype}", "time", stat, 320), width="stretch")
+            fig.add_scatter(x=x.iloc[ooc], y=ch.statistic[ooc], mode="markers", name="OOC 違規點",
+                            marker=dict(size=11, color="rgba(0,0,0,0)", line=dict(color=viz.STATUS["critical"], width=2)),
+                            hovertemplate="OOC 違規點<br>%{y:.4f}<extra></extra>")
+        cols[i % 2].plotly_chart(layout(fig, f"{g}  {ctype}", "time", stat, 340), width="stretch")
         summary.append({group: g, "points": len(ch.statistic), "violations": int(ooc.size), "CL": ch.cl, "σ short-term": ch.sigma})
-    st.dataframe(pd.DataFrame(summary).style.format(precision=4), hide_index=True)
+    sm = pd.DataFrame(summary)
+    st.dataframe(sm.style.format(precision=4), hide_index=True,
+                 column_config=col_help(sm, {"points": "spc.col.points", "violations": "spc.col.violations",
+                                             "CL": "spc.col.cl", "σ short-term": "spc.col.sigma"}))
+    cap, lsl, usl = None, None, None
     if stat == "mean" and {"lsl", "usl"} <= set(sub.columns) and sub.lsl.notna().any() and sub.usl.notna().any():
         lsl, usl = float(sub.lsl.dropna().median()), float(sub.usl.dropna().median())
         cap = [{group: g, **process_capability(gw["mean"], lsl, usl)} for g, gw in wafers.groupby(group)]
         st.subheader(f"Capability (LSL {lsl}, USL {usl})")
-        st.dataframe(pd.DataFrame(cap).style.format(precision=3), hide_index=True)
+        ct = pd.DataFrame(cap)
+        st.dataframe(ct.style.format(precision=3), hide_index=True,
+                     column_config=col_help(ct, {c: f"cap.{c}" for c in ("mean", "sigma_within", "sigma_overall",
+                                                                          "Cp", "Cpk", "Pp", "Ppk")}))
+    explain("spc_chart", gi.spc(charts, wafers, group, stat, ctype, param, cap, lsl, usl))
 
 
 def page_msa():
@@ -440,48 +506,60 @@ def page_msa():
     lim = load_yaml("limits.yaml")
     spec = lim["parameters"]["ox_thickness_nm"]
     st.subheader("Gauge R&R (synthetic study, or upload part/operator/value CSV)")
-    up = st.file_uploader("GR&R CSV with columns part, operator, value", type="csv", key="grr")
+    up = st.file_uploader("GR&R CSV with columns part, operator, value", type="csv", key="grr", help=H("msa.upload"))
     if up is not None:
         data = pd.read_csv(up)
     else:
         c = st.columns(3)
-        rep = c[0].slider("repeatability σ (nm)", 0.01, 0.3, 0.05, 0.01)
-        op = c[1].slider("tool-to-tool σ (nm)", 0.0, 0.3, 0.03, 0.01)
-        part = c[2].slider("part spread σ (nm)", 0.1, 3.0, 1.0, 0.1)
+        rep = c[0].slider("repeatability σ (nm)", 0.01, 0.3, 0.05, 0.01, help=H("msa.repeat_sigma"), key="msa_rep")
+        op = c[1].slider("tool-to-tool σ (nm)", 0.0, 0.3, 0.03, 0.01, help=H("msa.tool_sigma"), key="msa_tool")
+        part = c[2].slider("part spread σ (nm)", 0.1, 3.0, 1.0, 0.1, help=H("msa.part_sigma"), key="msa_part")
         data = grr_study(repeat_sigma=rep, operator_sigma=op, part_sigma=part)
     c = st.columns(2)
-    lsl = c[0].number_input("LSL", value=float(spec["lsl"]))
-    usl = c[1].number_input("USL", value=float(spec["usl"]))
+    lsl = c[0].number_input("LSL", value=float(spec["lsl"]), help=H("msa.lsl"), key="msa_lsl")
+    usl = c[1].number_input("USL", value=float(spec["usl"]), help=H("msa.usl"), key="msa_usl")
     g = gauge_rr(data, lsl=lsl, usl=usl, k=lim["msa"]["grr_k"])
     k = st.columns(4)
-    k[0].metric("%GRR (study var)", f"{g['pct_study_var']['gauge_rr']:.1f} %")
-    k[1].metric("P/T", f"{g['pct_tolerance']['gauge_rr']:.1f} %")
-    k[2].metric("ndc", g["ndc"])
-    k[3].metric("verdict", g["verdict"])
+    k[0].metric("%GRR (study var)", f"{g['pct_study_var']['gauge_rr']:.1f} %", help=H("msa.grr"))
+    k[1].metric("P/T", f"{g['pct_tolerance']['gauge_rr']:.1f} %", help=H("msa.pt"))
+    k[2].metric("ndc", g["ndc"], help=H("msa.ndc"))
+    k[3].metric("verdict", g["verdict"], help=H("msa.verdict"))
     comps = ["repeatability", "reproducibility", "gauge_rr", "part_to_part"]
     fig = go.Figure(go.Bar(x=[g["pct_study_var"][c] for c in comps], y=comps, orientation="h", marker_color=viz.SERIES[0],
-                           text=[f"{g['pct_study_var'][c]:.1f}%" for c in comps], textposition="outside"))
+                           name="% study variation 研究變異 %", text=[f"{g['pct_study_var'][c]:.1f}%" for c in comps],
+                           textposition="outside", hovertemplate="%{y}: %{x:.1f}% of study variation<extra></extra>"))
     fig.add_vline(x=10, line=dict(color=viz.STATUS["good"], width=1))
     fig.add_vline(x=30, line=dict(color=viz.STATUS["critical"], width=1))
+    legend_line(fig, "10% acceptable 可接受", viz.STATUS["good"], width=1)
+    legend_line(fig, "30% unacceptable 不可接受", viz.STATUS["critical"], width=1)
     fig.update_yaxes(autorange="reversed")
-    st.plotly_chart(layout(fig, "Variance components (10% / 30% guides)", "% study variation", "", 300), width="stretch")
+    st.plotly_chart(layout(fig, "Variance components (10% / 30% guides)", "% study variation", "", 320), width="stretch")
+    explain("msa_grr", gi.msa_grr(g))
 
     st.subheader("Tool matching")
     c = st.columns(2)
-    off = c[0].slider("true offset of FT02 (nm)", -0.5, 0.5, 0.1, 0.01)
-    slope = c[1].slider("true slope of FT02", 0.95, 1.05, 1.0, 0.005)
+    off = c[0].slider("true offset of FT02 (nm)", -0.5, 0.5, 0.1, 0.01, help=H("msa.offset"), key="msa_offset")
+    slope = c[1].slider("true slope of FT02", 0.95, 1.05, 1.0, 0.005, help=H("msa.slope"), key="msa_slope")
     mdf = matching_study(offset=off, slope=slope)
     res = fleet_matching(mdf, reference="FT01", offset_spec=lim["msa"]["matching_offset_spec"],
                          slope_tol=lim["msa"]["matching_slope_tol"])
-    st.dataframe(res.style.format(precision=4), hide_index=True)
+    st.dataframe(res.style.format(precision=4), hide_index=True,
+                 column_config=col_help(res, {c: f"msa.col.{c}" for c in res.columns}))
     wide = mdf.pivot_table(index=["wafer_id", "site"], columns="tool_id", values="value").reset_index()
-    fig = go.Figure(go.Scatter(x=wide.FT01, y=wide.FT02 - wide.FT01, mode="markers", marker=dict(size=6, color=viz.SERIES[0]),
-                               name="site"))
+    diff = wide.FT02 - wide.FT01
+    fig = go.Figure(go.Scatter(x=wide.FT01, y=diff, mode="markers", marker=dict(size=6, color=viz.SERIES[0]),
+                               name="site difference 各點差值", customdata=np.column_stack([wide.wafer_id, wide.site]),
+                               hovertemplate="%{customdata[0]} site %{customdata[1]}<br>FT01 %{x:.3f} nm<br>"
+                                             "FT02 − FT01 = %{y:+.3f} nm<extra></extra>"))
     spec_off = lim["msa"]["matching_offset_spec"]
     for y in (-spec_off, spec_off):
         fig.add_hline(y=y, line=dict(color=viz.STATUS["critical"], width=1))
+    fig.add_hline(y=float(diff.mean()), line=dict(color=viz.INK_2, width=1, dash="dash"))
+    legend_line(fig, "±matching spec 匹配規格", viz.STATUS["critical"], width=1)
+    legend_line(fig, f"mean offset 平均偏差 = {diff.mean():+.3f} nm", viz.INK_2, dash="dash", width=1)
     st.plotly_chart(layout(fig, "Bland-Altman: FT02 − FT01 vs FT01 (red = matching spec)", "FT01 (nm)", "difference (nm)"),
                     width="stretch")
+    explain("msa_matching", gi.msa_matching(res, lim["msa"]["matching_offset_spec"], lim["msa"]["matching_slope_tol"]))
 
 
 def page_studies():
@@ -489,24 +567,39 @@ def page_studies():
     wl = np.linspace(250, 1000, 151)
     stack, _ = load_stack("gate_oxide_thin", films_cfg())
     ts = [1, 2, 3, 5, 10, 20, 50, 100, 200]
-    if st.button("Run sensitivity study (reflectometry vs SE)"):
+    if st.button("Run sensitivity study (reflectometry vs SE)", help=H("study.sensitivity_run"), key="study_sens_run"):
         r = thickness_sensitivity(stack, 0, ts, wl, "reflectometry", noise=0.002)
         s = thickness_sensitivity(stack, 0, ts, wl, "se", angles=(65, 70, 75), noise=0.0007)
-        fig = go.Figure([go.Scatter(x=r.thickness_nm, y=r.est_precision_nm, name="reflectometry", line=dict(color=viz.SERIES[0])),
-                         go.Scatter(x=s.thickness_nm, y=s.est_precision_nm, name="SE 65/70/75°", line=dict(color=viz.SERIES[1]))])
+        st.session_state["study_sens"] = (r, s)
+    if "study_sens" in st.session_state:
+        r, s = st.session_state["study_sens"]
+        fig = go.Figure([go.Scatter(x=r.thickness_nm, y=r.est_precision_nm, name="reflectometry 反射儀",
+                                    line=dict(color=viz.SERIES[0]), mode="lines+markers",
+                                    hovertemplate="reflectometry 反射儀<br>%{x:g} nm → 1σ %{y:.3g} nm<extra></extra>"),
+                         go.Scatter(x=s.thickness_nm, y=s.est_precision_nm, name="SE 65/70/75° 橢偏儀",
+                                    line=dict(color=viz.SERIES[1]), mode="lines+markers",
+                                    hovertemplate="SE 橢偏儀<br>%{x:g} nm → 1σ %{y:.3g} nm<extra></extra>")])
         fig.update_xaxes(type="log")
         fig.update_yaxes(type="log")
         st.plotly_chart(layout(fig, "Estimated 1σ precision vs SiO2 thickness", "thickness (nm)", "precision (nm)"),
                         width="stretch")
-    if st.button("Run thickness / n correlation study (~5 s)"):
-        c = thickness_n_correlation([2, 5, 10, 25, 50, 100, 200], wl)
+        explain("study_sensitivity", gi.study_sensitivity(r, s))
+    if st.button("Run thickness / n correlation study (~5 s)", help=H("study.tn_run"), key="study_tn_run"):
+        st.session_state["study_tn"] = thickness_n_correlation([2, 5, 10, 25, 50, 100, 200], wl)
+    if "study_tn" in st.session_state:
+        c = st.session_state["study_tn"]
         fig = go.Figure(go.Scatter(x=c.thickness_nm, y=c.A_stderr, mode="lines+markers", line=dict(color=viz.SERIES[0]),
-                                   name="σ(n)"))
+                                   name="σ(A) when n is floated 浮動 n 的不確定度",
+                                   hovertemplate="%{x:g} nm → σ(A) = %{y:.3g}<extra></extra>"))
+        fig.add_hline(y=0.01, line=dict(color=viz.STATUS["critical"], width=1, dash="dash"))
+        legend_line(fig, "0.01 reference limit 參考門檻", viz.STATUS["critical"], dash="dash", width=1)
         fig.update_xaxes(type="log")
         fig.update_yaxes(type="log")
         st.plotly_chart(layout(fig, "Uncertainty of n (Cauchy A) when floated with thickness", "thickness (nm)", "σ(A)"),
                         width="stretch")
-        st.dataframe(c.style.format(precision=4), hide_index=True)
+        st.dataframe(c.style.format(precision=4), hide_index=True,
+                     column_config=col_help(c, {col: f"study.col.{col}" for col in c.columns}))
+        explain("study_tn", gi.study_tn(c))
 
 DESIGNS = {"full2": "2 水準全因子 (2^k) + 中心點", "fractional": "部分因子 2^(k-p) + 中心點",
            "ccd": "中心合成 CCD（可估彎曲）", "bbd": "Box-Behnken（可估彎曲、不跑角落）", "full3": "3 水準全因子 3^k"}
@@ -520,19 +613,22 @@ def _goal_inputs(goals: dict, key: str) -> dict:
     for c, (r, g) in zip(cols, goals.items()):
         with c:
             st.markdown(f"**{r}** ({g.get('unit', '')})")
-            kind = st.selectbox("目標", ["target", "minimize", "maximize"], key=f"{key}_{r}_goal",
+            kind = st.selectbox("目標", ["target", "minimize", "maximize"], key=f"{key}_{r}_goal", help=H("doe.goal"),
                                 index=["target", "minimize", "maximize"].index(g["goal"]),
                                 format_func={"target": "打到目標值", "minimize": "越小越好", "maximize": "越大越好"}.get)
             new = {"goal": kind, "unit": g.get("unit", "")}
             if kind == "target":
-                new["target"] = st.number_input("目標值", value=float(g.get("target", 0.0)), key=f"{key}_{r}_t", format="%.4g")
+                new["target"] = st.number_input("目標值", value=float(g.get("target", 0.0)), key=f"{key}_{r}_t", format="%.4g",
+                                                help=H("doe.target"))
                 new["tol"] = st.number_input("容許 ±", value=float(g.get("tol", 1.0)), min_value=1e-9, key=f"{key}_{r}_tol",
-                                             format="%.4g")
+                                             format="%.4g", help=H("doe.tol"))
             else:
-                new["best"] = st.number_input("最佳（d = 1）", value=float(g.get("best", 0.0)), key=f"{key}_{r}_b", format="%.4g")
+                new["best"] = st.number_input("最佳（d = 1）", value=float(g.get("best", 0.0)), key=f"{key}_{r}_b", format="%.4g",
+                                              help=H("doe.best"))
                 new["worst"] = st.number_input("不可接受（d = 0）", value=float(g.get("worst", 1.0)), key=f"{key}_{r}_w",
-                                               format="%.4g")
-            new["weight"] = st.slider("權重", 0.1, 3.0, float(g.get("weight", 1.0)), 0.1, key=f"{key}_{r}_wt")
+                                               format="%.4g", help=H("doe.worst"))
+            new["weight"] = st.slider("權重", 0.1, 3.0, float(g.get("weight", 1.0)), 0.1, key=f"{key}_{r}_wt",
+                                      help=H("doe.weight"))
             out[r] = new
     return out
 
@@ -542,15 +638,22 @@ def _pareto(fit, title: str) -> go.Figure:
     tab["abs_t"] = tab["t"].abs()
     tab = tab.sort_values("abs_t")
     t_crit = float(t_dist.ppf(0.975, fit.dof)) if fit.dof > 0 else None
-    colors = [viz.SERIES[0] if (t_crit and v >= t_crit) else viz.AXIS for v in tab["abs_t"]]
-    fig = go.Figure(go.Bar(x=tab["abs_t"], y=tab["term"], orientation="h", marker_color=colors,
-                           customdata=np.column_stack([tab["coef"], tab["p"]]),
-                           hovertemplate="%{y}<br>|t| = %{x:.2f}<br>係數 %{customdata[0]:.4g}"
-                                         "<br>p = %{customdata[1]:.3g}<extra></extra>"))
+    sig = (tab["p"] < 0.05).to_numpy()
+    fig = go.Figure()
+    for mask, name, color in ((sig, "p < 0.05 significant 顯著", viz.SERIES[0]), (~sig, "p ≥ 0.05 not significant 不顯著", viz.AXIS)):
+        part = tab[mask]
+        fig.add_bar(x=part["abs_t"], y=part["term"], orientation="h", marker_color=color, name=name,
+                    customdata=np.column_stack([part["coef"], part["p"]]) if len(part) else None,
+                    hovertemplate="%{y}<br>|t| = %{x:.2f}<br>係數 coef %{customdata[0]:.4g}"
+                                  "<br>p = %{customdata[1]:.3g}<extra></extra>")
+    fig.update_yaxes(categoryorder="array", categoryarray=list(tab["term"]))
+    fig.update_layout(barmode="overlay")
     if t_crit:
         fig.add_vline(x=t_crit, line=dict(color=viz.INK_2, dash="dash", width=1))
-        title += f"；虛線 = p 0.05 門檻 |t| = {t_crit:.2f}"
-    return layout(fig, title, "|t|（標準化效應）", "", max(260, 26 * len(tab) + 120))
+        legend_line(fig, f"p = 0.05 threshold 門檻 (|t| = {t_crit:.2f})", viz.INK_2, dash="dash", width=1)
+    fig = layout(fig, title, "|t|（標準化效應）", "", max(320, 26 * len(tab) + 190))
+    fig.update_layout(margin=dict(t=125))  # three legend rows sit between the title and the plot
+    return fig
 
 
 def page_doe():
@@ -558,17 +661,20 @@ def page_doe():
     st.caption("設計實驗 → 在虛擬機台上跑（或上傳自己的結果）→ 建立回應曲面模型 → 找出同時滿足膜厚目標與均勻度的配方 → "
                "確認實驗 → 對答案。虛擬機台的物理與數字都是教科書等級的示意，不是任何公司的配方。")
     procs = load_processes()
-    src = st.selectbox("製程", list(procs) + [CUSTOM], format_func=lambda k: procs[k]["title"] if k in procs else k)
+    src = st.selectbox("製程", list(procs) + [CUSTOM], format_func=lambda k: procs[k]["title"] if k in procs else k,
+                       help=H("doe.process"), key="doe_process")
 
     if src == CUSTOM:
-        up = st.file_uploader("上傳 DOE 結果 CSV（每列一次實驗：因子欄位 + 回應欄位）", type="csv", key="doe_up")
+        up = st.file_uploader("上傳 DOE 結果 CSV（每列一次實驗：因子欄位 + 回應欄位）", type="csv", key="doe_up",
+                              help=H("doe.upload"))
         st.caption("檔案只在這次瀏覽中使用，不會存檔或上傳到 GitHub。")
         if up is None:
             return
         res = pd.read_csv(up)
         num = [c for c in res.columns if pd.api.types.is_numeric_dtype(res[c])]
-        names = st.multiselect("因子欄位", num, default=num[: min(3, len(num))])
-        resp = st.multiselect("回應欄位", [c for c in num if c not in names], default=[c for c in num if c not in names][:2])
+        names = st.multiselect("因子欄位", num, default=num[: min(3, len(num))], help=H("doe.factor_cols"), key=f"doe_factor_cols_{len(num)}")
+        resp = st.multiselect("回應欄位", [c for c in num if c not in names], default=[c for c in num if c not in names][:2],
+                              help=H("doe.response_cols"), key=f"doe_resp_cols_{len(num)}")
         if len(names) < 1 or not resp:
             return
         factors = {n: {"low": float(res[n].min()), "high": float(res[n].max()), "unit": ""} for n in names}
@@ -578,15 +684,17 @@ def page_doe():
         proc = procs[src]
         factors_all = proc["factors"]
         c1, c2, c3, c4, c5 = st.columns([2, 2, 1, 1, 1])
-        names = c1.multiselect("要研究的因子（其他固定在中間值）", list(factors_all), default=list(factors_all), key=f"doe_f_{src}")
+        names = c1.multiselect("要研究的因子（其他固定在中間值）", list(factors_all), default=list(factors_all), key=f"doe_f_{src}",
+                               help=H("doe.factors"))
         if not names:
             return
         kinds = [k for k in DESIGNS if not (k == "bbd" and not 3 <= len(names) <= 5)
                  and not (k == "fractional" and len(names) < 3)]
-        kind = c2.selectbox("設計", kinds, index=kinds.index("ccd"), format_func=DESIGNS.get, key="doe_kind")
-        center = c3.number_input("中心點", 0, 10, 4 if kind != "full3" else 0, key="doe_center")
-        reps = c4.number_input("重複", 1, 4, 1, key="doe_reps")
-        seed = c5.number_input("seed", value=1, step=1, key="doe_seed")
+        kind = c2.selectbox("設計", kinds, index=kinds.index("ccd"), format_func=DESIGNS.get, key="doe_kind",
+                            help=H("doe.design"))
+        center = c3.number_input("中心點", 0, 10, 4 if kind != "full3" else 0, key="doe_center", help=H("doe.center"))
+        reps = c4.number_input("重複", 1, 4, 1, key="doe_reps", help=H("doe.reps"))
+        seed = c5.number_input("seed", value=1, step=1, key="doe_seed", help=H("doe.seed"))
         factors = {n: factors_all[n] for n in names}
         coded, info = make_design(kind, len(names), int(center))
         sheet = run_sheet(coded, factors, int(reps), int(seed))
@@ -597,11 +705,12 @@ def page_doe():
         if kind == "ccd":
             st.caption("面心 CCD (α = 1)：軸點落在範圍邊界上，不會超出機台允許的設定。")
         c1, c2 = st.columns([3, 1])
+        c1.caption("Run sheet 實驗表", help=H("doe.sheet"))
         c1.dataframe(sheet, hide_index=True, height=220)
         c2.download_button("下載 run sheet (CSV)", sheet.to_csv(index=False).encode("utf-8-sig"),
-                           file_name=f"doe_{src}_{kind}.csv", mime="text/csv")
+                           file_name=f"doe_{src}_{kind}.csv", mime="text/csv", help=H("doe.download"), key="doe_download")
         key = (src, tuple(names), kind, int(center), int(reps), int(seed))
-        if c2.button("在虛擬機台上執行", type="primary"):
+        if c2.button("在虛擬機台上執行", type="primary", help=H("doe.run"), key="doe_run_btn"):
             st.session_state["doe_run"] = (key, run_experiments(proc, sheet, seed=int(seed) + 100))
         if st.session_state.get("doe_run", (None,))[0] != key:
             st.info("按「在虛擬機台上執行」得到量測結果（含機台的 run-to-run 雜訊）。")
@@ -613,7 +722,7 @@ def page_doe():
 
     coded_df = pd.DataFrame(to_coded(res[names].to_numpy(float), factors), columns=names)
     st.subheader("模型 Model")
-    order = st.radio("模型", ["linear", "interaction", "quadratic"], index=2, horizontal=True, key="doe_order",
+    order = st.radio("模型", ["linear", "interaction", "quadratic"], index=2, horizontal=True, key="doe_order", help=H("doe.model"),
                      format_func={"linear": "線性", "interaction": "線性 + 交互作用", "quadratic": "二次（含彎曲）"}.get)
     fits = {r: fit_model(coded_df, res[r], r, order) for r in resp}
     tabs = st.tabs(resp)
@@ -621,11 +730,10 @@ def page_doe():
         f = fits[r]
         with tab:
             k = st.columns(4)
-            k[0].metric("R²", f"{f.r2:.3f}")
-            k[1].metric("調整 R² adj", "—" if np.isnan(f.r2_adj) else f"{f.r2_adj:.3f}", help="依參數數量懲罰的 R²")
-            k[2].metric("預測 R² pred", "—" if np.isnan(f.r2_pred) else f"{f.r2_pred:.3f}",
-                        help="留一法 (PRESS)：模型對沒看過的實驗預測得多好。和 R² 差很多 = 過度擬合")
-            k[3].metric("殘差 RMSE", "—" if np.isnan(f.rmse) else f"{f.rmse:.3g}")
+            k[0].metric("R²", f"{f.r2:.3f}", help=H("doe.r2"))
+            k[1].metric("調整 R² adj", "—" if np.isnan(f.r2_adj) else f"{f.r2_adj:.3f}", help=H("doe.r2_adj"))
+            k[2].metric("預測 R² pred", "—" if np.isnan(f.r2_pred) else f"{f.r2_pred:.3f}", help=H("doe.r2_pred"))
+            k[3].metric("殘差 RMSE", "—" if np.isnan(f.rmse) else f"{f.rmse:.3g}", help=H("doe.rmse"))
             for w in f.warnings:
                 st.warning(w)
             curv = curvature_test(coded_df, res[r])
@@ -636,7 +744,9 @@ def page_doe():
                 (st.error if curv["p"] < 0.05 else st.caption)(msg)
             c1, c2 = st.columns([3, 2])
             c1.plotly_chart(_pareto(f, f"{r}：哪些因子重要（藍 = p < 0.05）"), width="stretch")
-            c2.dataframe(f.table.round(4), hide_index=True)
+            ft = f.table.round(4)
+            c2.dataframe(ft, hide_index=True, column_config=col_help(ft, {c: f"doe.col.{c}" for c in ft.columns}))
+            explain("doe_pareto", gi.doe_pareto(f, curv))
 
     st.subheader("最佳化 Optimize")
     goals = _goal_inputs(goals0, f"doe_goal_{src}")
@@ -645,16 +755,16 @@ def page_doe():
     recipe = dict(zip(names, to_real(best["coded"][None, :], factors)[0]))
     k = st.columns(len(names) + 1)
     for c, n in zip(k, names):
-        c.metric(f"{n} ({factors[n].get('unit', '')})", f"{recipe[n]:.4g}")
-    k[-1].metric("預測整體滿意度 D", f"{best['D']:.2f}", help="0 = 至少一個回應不可接受，1 = 全部完美")
+        c.metric(f"{n} ({factors[n].get('unit', '')})", f"{recipe[n]:.4g}", help=H("doe.factor_setting"))
+    k[-1].metric("預測整體滿意度 D", f"{best['D']:.2f}", help=H("doe.D"))
     st.caption("預測回應：" + "；".join(f"{r} = {v:.4g}" for r, v in best["responses"].items())
                + "。最佳化只在實驗範圍內搜尋（不外插）。")
 
     if len(names) >= 2:
         c1, c2, c3 = st.columns(3)
-        xa = c1.selectbox("等高線 x", names, index=0, key="doe_cx")
-        ya = c2.selectbox("等高線 y", [n for n in names if n != xa], index=0, key="doe_cy")
-        show = c3.selectbox("顯示", ["D"] + resp, key="doe_cz",
+        xa = c1.selectbox("等高線 x", names, index=0, key="doe_cx", help=H("doe.contour_x"))
+        ya = c2.selectbox("等高線 y", [n for n in names if n != xa], index=0, key="doe_cy", help=H("doe.contour_y"))
+        show = c3.selectbox("顯示", ["D"] + resp, key="doe_cz", help=H("doe.contour_show"),
                             format_func=lambda v: "整體滿意度 D" if v == "D" else v)
         g = np.linspace(-1, 1, 61)
         gx, gy = np.meshgrid(g, g)
@@ -667,34 +777,38 @@ def page_doe():
                                    colorscale=viz.PLOTLY_SEQ, contours=dict(showlabels=True, labelfont=dict(size=10)),
                                    colorbar=dict(title=show), hovertemplate=f"{xa} %{{x:.3g}}<br>{ya} %{{y:.3g}}<br>"
                                                                             f"{show} %{{z:.3g}}<extra></extra>"))
-        fig.add_scatter(x=res[xa], y=res[ya], mode="markers", name="實驗點",
+        fig.add_scatter(x=res[xa], y=res[ya], mode="markers", name="design runs 實驗點",
                         marker=dict(size=8, color=viz.SURFACE, line=dict(color=viz.INK, width=1.5)),
-                        hovertemplate=f"實驗點<br>{xa} %{{x:.3g}}<br>{ya} %{{y:.3g}}<extra></extra>")
-        fig.add_scatter(x=[recipe[xa]], y=[recipe[ya]], mode="markers", name="建議配方",
+                        hovertemplate=f"design run 實驗點<br>{xa} %{{x:.3g}}<br>{ya} %{{y:.3g}}<extra></extra>")
+        fig.add_scatter(x=[recipe[xa]], y=[recipe[ya]], mode="markers", name="suggested recipe 建議配方",
                         marker=dict(size=14, symbol="star", color=viz.SERIES[1], line=dict(color=viz.SURFACE, width=2)),
-                        hovertemplate="建議配方<extra></extra>")
+                        hovertemplate="suggested recipe 建議配方<extra></extra>")
         others = [n for n in names if n not in (xa, ya)]
         sub = "；其他因子固定在建議值 " + "、".join(f"{n} = {recipe[n]:.3g}" for n in others) if others else ""
         st.plotly_chart(layout(fig, f"{'整體滿意度 D' if show == 'D' else show}（模型預測）{sub}", xa, ya, 480), width="stretch")
+    explain("doe_contour", gi.doe_contour(best, recipe, names, factors))
 
     if proc is None:
         return
     st.subheader("確認實驗與答案 Confirm & answer key")
-    n_conf = st.slider("確認實驗片數", 1, 10, 3, key="doe_nconf")
-    if st.button("在建議配方跑確認實驗"):
+    n_conf = st.slider("確認實驗片數", 1, 10, 3, key="doe_nconf", help=H("doe.n_conf"))
+    if st.button("在建議配方跑確認實驗", help=H("doe.confirm"), key="doe_confirm_run"):
         conf_sheet = pd.DataFrame({n: [recipe[n]] * n_conf for n in names})
         fixed = {n: (f["low"] + f["high"]) / 2 for n, f in proc["factors"].items() if n not in names}
         st.session_state["doe_conf"] = (key, recipe, run_experiments(proc, conf_sheet, fixed, seed=int(seed) + 999))
-    if st.session_state.get("doe_conf", (None,))[0] == key:
-        _, rec, conf = st.session_state["doe_conf"]
+    stored = st.session_state.get("doe_conf", (None,))
+    if stored[0] == key and all(abs(stored[1][n] - recipe[n]) <= 1e-9 * max(1.0, abs(recipe[n])) for n in names):
+        _, rec, conf = stored  # only while the suggested recipe is the one the wafers were run at
         rows = []
         for r in resp:
             m = conf[r].mean()
             ok = desirability([m], goals[r])[0] > 0
             rows.append({"回應": r, "預測": best["responses"][r], "確認平均": m, "確認標準差": conf[r].std(ddof=1),
                          "可接受": "✓" if ok else "✗"})
-        st.dataframe(pd.DataFrame(rows).round(4), hide_index=True)
+        conf_tab = pd.DataFrame(rows)
+        st.dataframe(conf_tab.round(4), hide_index=True)
         st.caption("預測和確認差很多 → 模型在這一區不準（例如二次模型描述不了的物理），要在新的中心附近再做一次小 DOE。")
+        explain("doe_confirm", gi.doe_confirm(conf_tab, fits))
     with st.expander("看答案 Answer key（真實的最佳配方）"):
         fixed = {n: (f["low"] + f["high"]) / 2 for n, f in proc["factors"].items() if n not in names}
         true_proc = dict(proc, responses=goals)
@@ -708,8 +822,7 @@ def page_doe():
         c2.dataframe(pd.DataFrame({"response": resp, "最佳配方": [opt["responses"][r] for r in resp],
                                    "你的建議": [mine["responses"][r] for r in resp]}).round(4), hide_index=True)
         ratio = mine["D"] / opt["D"] if opt["D"] > 0 else float("nan")
-        st.metric(f"你的配方真實滿意度（真實最佳 = {opt['D']:.2f}）", f"{mine['D']:.2f}",
-                  help="用無雜訊的真實曲面計算。D = 0 表示至少一個回應其實不可接受。")
+        st.metric(f"你的配方真實滿意度（真實最佳 = {opt['D']:.2f}）", f"{mine['D']:.2f}", help=H("doe.true_D"))
         st.caption(f"= 真實最佳的 {100 * ratio:.0f} %。" if np.isfinite(ratio) else "")
         st.caption("虛擬機台的真實物理：" + (
             "ALD 溫度視窗外 GPC 上升（低溫凝結、高溫分解）；清洗太短會殘留前驅物 → 寄生 CVD → 變厚又不均勻；清洗越久越慢。"
@@ -730,6 +843,8 @@ SCENARIO_TEXT = {
 CAUSE_LABEL = {".": "pass", "D": "defect", "G": "gate_ox_thk", "K": "hk_thk", "T": "tin_thk", "C": "wl_cd_etch",
                "I": "ild_thk"}
 CAUSE_COLOR = {".": viz.GRID, **{c: viz.SERIES[i] for i, c in enumerate("DGKTCI")}}  # fixed: colour follows the cause
+CAUSE_NAME = {".": "pass 良品", "D": "defect 缺陷", "G": "gate_ox_thk 閘極氧化層超窗", "K": "hk_thk high-k 厚度超窗",
+              "T": "tin_thk TiN 厚度超窗", "C": "wl_cd_etch 字元線蝕刻 CD 超窗", "I": "ild_thk ILD 厚度超窗"}
 
 
 SETUP_COLOR = {n: viz.SERIES[i] for i, n in enumerate(CHART_SETUPS)}  # fixed: colour follows the chart setup
@@ -744,30 +859,32 @@ def compare_view(summ_df: pd.DataFrame, delays: pd.DataFrame):
         fig.add_scatter(x=[r["false_alarm_rate_pct"]], y=[delay], mode="markers", name=r["setup"],
                         marker=dict(size=12, color=SETUP_COLOR.get(r["setup"], viz.SERIES[0]),
                                     line=dict(color=viz.SURFACE, width=2)),
-                        hovertemplate=f"{r['setup']}<br>誤警報 %{{x:.1f}}%<br>中位延遲 %{{y}} 片"
-                                      f"<br>抓到 {r['detected']}/{r['observable']}<extra></extra>")
-    fig = layout(fig, "速度 vs 誤警報（越靠左下越好）", "誤警報率 (%)", "中位延遲（片）", 480)
+                        hovertemplate=f"{r['setup']}<br>誤警報 false alarms %{{x:.1f}}%<br>中位延遲 median delay %{{y}} 片"
+                                      f"<br>抓到 detected {r['detected']}/{r['observable']}<extra></extra>")
+    fig = layout(fig, "速度 vs 誤警報（越靠左下越好）", "誤警報率 false-alarm rate (%)", "中位延遲 median delay（片）", 480)
     fig.update_layout(margin=dict(t=120))
     fig.update_xaxes(rangemode="tozero")
     fig.update_yaxes(rangemode="tozero")
     c1.plotly_chart(fig, width="stretch")
+    explain("fab_tradeoff", gi.fab_tradeoff(summ_df), where=c1)
 
     d = delays.copy()
     d["event"] = d["id"] + " " + d["type"]
     fig = go.Figure()
     for setup in summ_df["setup"]:
         sub = d[d["setup"] == setup]
-        label = [("未抓到" if st_ == "missed" else "量測不到") if pd.isna(dl) else f"{dl:.0f}"
+        label = [("未抓到 missed" if st_ == "missed" else "量測不到 not observable") if pd.isna(dl) else f"{dl:.0f}"
                  for dl, st_ in zip(sub["delay_wafers"], sub["status"])]
         fig.add_bar(y=sub["event"], x=sub["delay_wafers"].fillna(0), orientation="h", name=setup,
                     text=label, textposition="outside", textfont=dict(color=viz.INK_2, size=10), cliponaxis=False,
                     marker_color=SETUP_COLOR.get(setup, viz.SERIES[0]), customdata=sub["status"],
-                    hovertemplate=f"{setup}<br>%{{y}}: 延遲 %{{x}} 片<br>%{{customdata}}<extra></extra>")
-    fig = layout(fig, "每個事件的偵測延遲（0 = 第一片受影響的量測晶圓就抓到）", "延遲（片）", "", 480)
+                    hovertemplate=f"{setup}<br>%{{y}}: 延遲 delay %{{x}} 片<br>%{{customdata}}<extra></extra>")
+    fig = layout(fig, "每個事件的偵測延遲（0 = 第一片受影響的量測晶圓就抓到）", "延遲 delay（片 measured wafers）", "", 480)
     fig.update_layout(margin=dict(t=120))
     fig.update_layout(barmode="group", bargap=0.2, bargroupgap=0.05, uniformtext=dict(minsize=10, mode="show"))
     fig.update_yaxes(autorange="reversed")
     c2.plotly_chart(fig, width="stretch")
+    explain("fab_event_delay", gi.fab_event_delay(delays), where=c2)
 
     show = summ_df[["setup", "detected", "observable", "median_delay_wafers", "false_alarm_rate_pct", "flagged_points"]]
     st.dataframe(show.rename(columns={"setup": "設定", "detected": "抓到", "observable": "可觀測",
@@ -795,9 +912,8 @@ def pattern_section(truth: dict, seed: int, key: str):
     st.subheader("晶圓圖樣分類 Wafer-map patterns")
     st.caption("只看「缺陷」造成的失效晶粒，算出幾個看得懂的特徵（徑向分布、直線、群聚），再用另一組模擬晶圓訓練的"
                "最近中心分類器判斷圖樣，最後和答案比對。")
-    min_def = st.slider("最少缺陷晶粒數（少於這個數就判為 random）", 0, 40, 16, key="pat_min",
-                        help="缺陷很少的晶圓，任何形狀都可能是巧合。調高 → 少誤判、但小圖樣會漏掉。")
-    run = st.button("分類並打分數", key="pat_run")
+    min_def = st.slider("最少缺陷晶粒數（少於這個數就判為 random）", 0, 40, 16, key="pat_min", help=H("pat.min_defects"))
+    run = st.button("分類並打分數", key="pat_run", help=H("pat.run"))
     if not run and st.session_state.get("pat_result", (None,))[0] != key:
         return
     clf, geo = trained_classifier(seed)
@@ -816,11 +932,11 @@ def pattern_section(truth: dict, seed: int, key: str):
     ev = evaluate(true, pred)
 
     k = st.columns(3)
-    k[0].metric("正確率 accuracy", f"{100 * ev['accuracy']:.1f} %")
-    k[1].metric("有圖樣的晶圓", f"{int((true != 'random').sum())} / {len(true)}")
+    k[0].metric("正確率 accuracy", f"{100 * ev['accuracy']:.1f} %", help=H("pat.m_accuracy"))
+    k[1].metric("有圖樣的晶圓", f"{int((true != 'random').sum())} / {len(true)}", help=H("pat.m_n_pattern"))
     nonrandom = true != "random"
     k[2].metric("有圖樣晶圓的召回", f"{100 * (pred[nonrandom] == true[nonrandom]).mean():.0f} %" if nonrandom.any() else "—",
-                help="真的有空間圖樣的晶圓，有多少被分到正確圖樣")
+                help=H("pat.m_recall"))
 
     c1, c2 = st.columns([3, 2])
     cm = ev["confusion"]
@@ -829,36 +945,43 @@ def pattern_section(truth: dict, seed: int, key: str):
                                colorscale=viz.PLOTLY_SEQ,
                                customdata=cm.to_numpy(), text=cm.to_numpy(), texttemplate="%{text}",
                                xgap=2, ygap=2, colorbar=dict(title="% of row"),
-                               hovertemplate="真實 %{y} → 判為 %{x}<br>%{customdata} 片（%{z:.0f}% of row）<extra></extra>"))
+                               hovertemplate="真實 truth %{y} → 判為 predicted %{x}<br>%{customdata} 片 wafers"
+                                             "（%{z:.0f}% of row）<extra></extra>"))
     fig = layout(fig, "混淆矩陣（列 = 真實，欄 = 判斷；數字 = 晶圓數）", "判斷 predicted", "真實 truth", 380)
     fig.update_yaxes(autorange="reversed")
     c1.plotly_chart(fig, width="stretch")
-    c2.dataframe(ev["per_class"].assign(recall=lambda d: (100 * d.recall).round(0),
-                                        precision=lambda d: (100 * d.precision).round(0))
-                 .rename(columns={"recall": "召回 %", "precision": "精確 %"}), hide_index=True)
+    pc = ev["per_class"].assign(recall=lambda d: (100 * d.recall).round(0), precision=lambda d: (100 * d.precision).round(0))
+    c2.dataframe(pc, hide_index=True, column_config=col_help(pc, {c: f"pat.col.{c}" for c in pc.columns}))
     c2.markdown("\n".join(f"- **{p}**：{t}" for p, t in PATTERN_TEXT.items()))
+    explain("fab_patterns", gi.fab_patterns(ev, true, pred, min_def), where=c1)
 
     wrong = feats["wafer_id"][pred != true].tolist()
     options = wrong or feats["wafer_id"].tolist()
-    wid = st.selectbox("看晶圓的缺陷圖（判錯的在清單中）" if wrong else "看晶圓的缺陷圖", options, key="pat_wafer")
+    wid = st.selectbox("看晶圓的缺陷圖（判錯的在清單中）" if wrong else "看晶圓的缺陷圖", options, key="pat_wafer",
+                       help=H("pat.wafer"))
     i = int(np.flatnonzero(feats["wafer_id"].to_numpy() == wid)[0])
     m = truth["dies"].set_index("wafer_id").loc[wid, "map"]
     f = fail_vector(m).astype(bool)
     fig = go.Figure()
-    fig.add_scatter(x=geo.x[~f], y=geo.y[~f], mode="markers", name="其他晶粒", hoverinfo="skip",
+    fig.add_scatter(x=geo.x[~f], y=geo.y[~f], mode="markers", name="other dies 其他晶粒", hoverinfo="skip",
                     marker=dict(symbol="square", size=9, color=viz.GRID))
-    fig.add_scatter(x=geo.x[f], y=geo.y[f], mode="markers", name=f"缺陷失效 ({f.sum()})",
+    fig.add_scatter(x=geo.x[f], y=geo.y[f], mode="markers", name=f"defect fails 缺陷失效 ({f.sum()})",
                     marker=dict(symbol="square", size=9, color=CAUSE_COLOR["D"]),
-                    hovertemplate="defect<br>x %{x:.0f} mm, y %{y:.0f} mm<extra></extra>")
+                    hovertemplate="defect fail 缺陷失效<br>x %{x:.0f} mm, y %{y:.0f} mm<extra></extra>")
     r = geo.r_eff + 3
     fig.add_shape(type="circle", x0=-r, y0=-r, x1=r, y1=r, line=dict(color=viz.AXIS))
+    legend_line(fig, "wafer edge 晶圓邊緣", viz.AXIS)
     fig = layout(fig, f"{wid}  真實：{true[i]}  · 判斷：{pred[i]}  · 信心 {conf[i]:.2f}", "x (mm)", "y (mm)", 480)
     fig.update_yaxes(scaleanchor="x", scaleratio=1)
     c1, c2 = st.columns([3, 2])
     c1.plotly_chart(fig, width="stretch")
-    c2.dataframe(feats.iloc[[i]].drop(columns="wafer_id").T.rename(columns={feats.index[i]: "value"}).round(3))
+    ft = feats.iloc[[i]].drop(columns="wafer_id").T.rename(columns={feats.index[i]: "value"}).round(3)
+    ft.insert(0, "feature", ft.index)
+    ft["說明 meaning"] = [(H(f"pat.feat.{n}") or "").split("\n")[0][:90] for n in ft["feature"]]
+    c2.dataframe(ft, hide_index=True)
     c2.caption("line_score 高 → 刮痕；peak_score 高、neighbour_ratio 高 → 群聚；ring_4 / edge_center 高 → 邊緣環；"
                "ring_0 高 → 中心。缺陷很少的晶圓特徵很吵，容易被誤判。")
+    explain("fab_defect_map", gi.fab_defect_map(wid, true[i], pred[i], float(conf[i]), int(f.sum())), where=c1)
 
 
 def page_fab():
@@ -867,15 +990,13 @@ def page_fab():
     cfg = load_fab_config()
     c1, c2, c3 = st.columns([2, 1, 1])
     scenario = c1.selectbox("情境 Scenario", list(cfg["scenarios"]), index=list(cfg["scenarios"]).index("mixed"),
-                            format_func=lambda k: f"{k} — {SCENARIO_TEXT.get(k, '')}")
-    lots = c2.slider("批數 lots", 20, 120, int(cfg["n_lots"]), 5, help="每批 25 片；每批量測 5 片")
-    seed = c3.number_input("亂數種子 seed", value=int(cfg["seed"]), step=1)
+                            format_func=lambda k: f"{k} — {SCENARIO_TEXT.get(k, '')}", help=H("fab.scenario"), key="fab_scenario")
+    lots = c2.slider("批數 lots", 20, 120, int(cfg["n_lots"]), 5, help=H("fab.lots"), key="fab_lots")
+    seed = c3.number_input("亂數種子 seed", value=int(cfg["seed"]), step=1, help=H("fab.seed"), key="fab_seed")
     c4, c5 = st.columns([2, 1])
-    name = c4.text_input("資料集名稱", value=f"sim_{scenario}")
-    sy = c5.checkbox("用 SemiYield 欄位名稱", value=False,
-                     help="把 gate_ox_thk → gate_oxide_thickness、wl_cd_etch → poly_cd、rs_ohm_sq → metal_resistance，"
-                          "讓 SemiYield 的 Yield Prediction 可以直接使用。")
-    if st.button("產生並儲存", type="primary"):
+    name = c4.text_input("資料集名稱", value=f"sim_{scenario}", help=H("fab.name"), key=f"fab_name_{scenario}")
+    sy = c5.checkbox("用 SemiYield 欄位名稱", value=False, help=H("fab.sy_names"), key="fab_sy_names")
+    if st.button("產生並儲存", type="primary", help=H("fab.generate"), key="fab_generate"):
         with st.spinner("模擬中…"):
             res = simulate_fab(cfg, scenario, lots, int(seed))
             paths = save_fab(res, name, semiyield_names=sy)
@@ -888,27 +1009,34 @@ def page_fab():
         st.info("還沒有模擬資料。選擇情境後按「產生並儲存」。")
         return
     active = st.session_state.get("dataset")
-    pick = st.selectbox("檢視的模擬資料", sims, index=sims.index(active) if active in sims else 0)
+    pick = st.selectbox("檢視的模擬資料", sims, index=sims.index(active) if active in sims else 0, help=H("fab.pick"), key=f"fab_pick_{active}")
     truth = load_truth(pick)
     w = truth["wafers"]
     long_df = load_dataset(pick)
 
     k = st.columns(5)
-    k[0].metric("晶圓", f"{len(w):,}")
-    k[1].metric("批", w["lot_id"].nunique())
-    k[2].metric("平均良率", f"{100 * w['yield'].mean():.1f} %")
-    k[3].metric("良率標準差", f"{100 * w['yield'].std():.1f} %")
-    k[4].metric("注入事件", len(truth["events"]), help="細節在最下方「看答案」")
+    k[0].metric("晶圓", f"{len(w):,}", help=H("fab.m_wafers"))
+    k[1].metric("批", w["lot_id"].nunique(), help=H("fab.m_lots"))
+    k[2].metric("平均良率", f"{100 * w['yield'].mean():.1f} %", help=H("fab.m_mean_yield"))
+    k[3].metric("良率標準差", f"{100 * w['yield'].std():.1f} %", help=H("fab.m_yield_sd"))
+    k[4].metric("注入事件", len(truth["events"]), help=H("fab.m_events"))
 
-    lot_y = w.groupby("lot_index")["yield"].mean().reset_index()
-    fig = go.Figure(go.Scatter(x=lot_y["lot_index"], y=100 * lot_y["yield"], mode="lines+markers",
-                               line=dict(color=viz.SERIES[0], width=1.5), marker=dict(size=5),
-                               hovertemplate="lot %{x}<br>平均良率 %{y:.1f}%<extra></extra>"))
-    st.plotly_chart(layout(fig, "每批平均良率（所有晶圓都有電測與良率）", "lot", "yield (%)", 300), width="stretch")
+    lot_y = w.groupby(["lot_index", "lot_id"])["yield"].mean().reset_index()
+    med = float(lot_y["yield"].median())
+    mad = 1.4826 * float((lot_y["yield"] - med).abs().median()) or float(lot_y["yield"].std())
+    fig = go.Figure(go.Scatter(x=lot_y["lot_index"], y=100 * lot_y["yield"], mode="lines+markers", name="lot mean yield 每批平均良率",
+                               line=dict(color=viz.SERIES[0], width=1.5), marker=dict(size=5), customdata=lot_y["lot_id"],
+                               hovertemplate="%{customdata} (lot %{x})<br>平均良率 mean yield %{y:.1f}%<extra></extra>"))
+    fig.add_hline(y=100 * med, line=dict(color=viz.INK_2, width=1))
+    fig.add_hline(y=100 * (med - 3 * mad), line=dict(color=viz.STATUS["critical"], width=1, dash="dash"))
+    legend_line(fig, f"median 中位數 = {100 * med:.1f}%", viz.INK_2, width=1)
+    legend_line(fig, f"median − 3σ alert 警戒線 = {100 * (med - 3 * mad):.1f}%", viz.STATUS["critical"], dash="dash", width=1)
+    st.plotly_chart(layout(fig, "每批平均良率（所有晶圓都有電測與良率）", "lot", "yield (%)", 340), width="stretch")
+    explain("fab_yield_trend", gi.fab_yield_trend(w))
 
     st.subheader("晶圓圖 Die map")
     order = w.sort_values("yield")["wafer_id"].tolist()
-    wid = st.selectbox("晶圓（良率最低的在前）", order)
+    wid = st.selectbox("晶圓（良率最低的在前）", order, help=H("fab.wafer_select"), key=f"fab_wafer_{pick}")
     m = truth["dies"].set_index("wafer_id").loc[wid, "map"]
     gx, gy = np.array(truth["grid"]["x"]), np.array(truth["grid"]["y"])
     codes = np.array(list(m))
@@ -917,56 +1045,59 @@ def page_fab():
     for c in present:
         sel = codes == c
         color = CAUSE_COLOR[c]
-        fig.add_scatter(x=gx[sel], y=gy[sel], mode="markers", name=f"{CAUSE_LABEL[c]} ({sel.sum()})",
+        fig.add_scatter(x=gx[sel], y=gy[sel], mode="markers", name=f"{CAUSE_NAME[c]} ({sel.sum()})",
                         marker=dict(symbol="square", size=9, color=color),
-                        hovertemplate=f"{CAUSE_LABEL[c]}<br>x %{{x:.0f}} mm, y %{{y:.0f}} mm<extra></extra>")
+                        hovertemplate=f"{CAUSE_NAME[c]}<br>x %{{x:.0f}} mm, y %{{y:.0f}} mm<extra></extra>")
     r = truth["grid"]["r_eff"] + 3
     fig.add_shape(type="circle", x0=-r, y0=-r, x1=r, y1=r, line=dict(color=viz.AXIS))
+    legend_line(fig, "wafer edge 晶圓邊緣", viz.AXIS)
     row = w.set_index("wafer_id").loc[wid]
     fig = layout(fig, f"{wid}  良率 {100 * row['yield']:.1f}%  · 缺陷圖樣：{row['defect_pattern']}", "x (mm)", "y (mm)", 520)
     fig.update_yaxes(scaleanchor="x", scaleratio=1)
     st.plotly_chart(fig, width="stretch")
+    cause_step = {s_["code"]: s_["name"] for s_ in cfg["steps"]} | {"D": cfg["defects"].get("inspection_step", "—")}
+    explain("fab_die_map", gi.fab_die_map(row, codes, gx, gy, truth["grid"]["r_eff"], w, CAUSE_NAME, cause_step))
 
     pattern_section(truth, int(seed), pick)
 
     st.subheader("偵測打分數 Score my detection")
     st.caption("用你選的管制圖設定跑一次 SPC（每個參數、每個 chamber 分開），再和答案比對。")
     c1, c2, c3, c4 = st.columns(4)
-    chart = c1.radio("管制圖", ["IMR", "EWMA", "CUSUM"], horizontal=True, key="fab_chart")
-    rules = c2.multiselect("WE 規則", [1, 2, 3, 4], default=[1, 2], key="fab_rules")
+    chart = c1.radio("管制圖", ["IMR", "EWMA", "CUSUM"], horizontal=True, key="fab_chart", help=H("spc.chart"))
+    rules = c2.multiselect("WE 規則", [1, 2, 3, 4], default=[1, 2], key="fab_rules", help=H("spc.rules"))
     stats = c3.multiselect("統計量", ["mean", "nu_1sigma_pct"], default=["mean", "nu_1sigma_pct"], key="fab_stats",
-                           format_func={"mean": "晶圓平均", "nu_1sigma_pct": "片內 1σ %"}.get)
-    phase1 = c4.slider("Phase I 點數", 8, 40, 20, key="fab_phase1")
+                           format_func={"mean": "晶圓平均", "nu_1sigma_pct": "片內 1σ %"}.get, help=H("spc.stat"))
+    phase1 = c4.slider("Phase I 點數", 8, 40, 20, key="fab_phase1", help=H("spc.phase1"))
     opts = {}
     if chart == "EWMA":
-        opts["ewma_lambda"] = st.slider("EWMA λ（越小越重視歷史、越能抓小漂移）", 0.05, 1.0, 0.2, 0.05, key="fab_lam")
+        opts["ewma_lambda"] = st.slider("EWMA λ（越小越重視歷史、越能抓小漂移）", 0.05, 1.0, 0.2, 0.05, key="fab_lam",
+                                        help=H("spc.ewma_lambda"))
     elif chart == "CUSUM":
         c1, c2 = st.columns(2)
-        opts["cusum_k"] = c1.slider("CUSUM k（σ；要抓的偏移的一半）", 0.25, 1.5, 0.5, 0.25, key="fab_k")
-        opts["cusum_h"] = c2.slider("CUSUM h（σ；決策界限）", 2.0, 8.0, 5.0, 0.5, key="fab_h")
+        opts["cusum_k"] = c1.slider("CUSUM k（σ；要抓的偏移的一半）", 0.25, 1.5, 0.5, 0.25, key="fab_k", help=H("spc.cusum_k"))
+        opts["cusum_h"] = c2.slider("CUSUM h（σ；決策界限）", 2.0, 8.0, 5.0, 0.5, key="fab_h", help=H("spc.cusum_h"))
     if chart != "IMR":
         st.caption("EWMA / CUSUM 有自己的判定規則，WE 規則只用在 I-MR。")
-    if st.button("計算分數"):
+    if st.button("計算分數", help=H("fab.score"), key="fab_score_run"):
         flags = spc_flags(long_df, chart, tuple(rules) or (1,), tuple(stats) or ("mean",), phase1, chart_opts=opts)
         table, summ = score_detection(flags, truth["events"], long_df)
         st.session_state["fab_score"] = (pick, table, summ)
     if st.session_state.get("fab_score") and st.session_state["fab_score"][0] == pick:
         _, table, summ = st.session_state["fab_score"]
         k = st.columns(4)
-        k[0].metric("抓到的事件", f"{summ['detected']} / {summ['observable']}",
-                    help="可觀測 = 至少有一片受影響的晶圓被量測到")
+        k[0].metric("抓到的事件", f"{summ['detected']} / {summ['observable']}", help=H("fab.m_detected"))
         k[1].metric("中位延遲", "—" if summ["median_delay_wafers"] is None else f"{summ['median_delay_wafers']:.0f} 片",
-                    help="事件開始後，第幾片被量測到的受影響晶圓才被標記（0 = 第一片就抓到）")
-        k[2].metric("誤警報率", f"{summ['false_alarm_rate_pct']:.1f} %",
-                    help="被標記、但不屬於任何注入事件的點。注意：PM 之間的自然漂移也會被標記，它是真實製程行為但不是注入事件。")
-        k[3].metric("被標記的點", summ["flagged_points"])
+                    help=H("fab.m_delay"))
+        k[2].metric("誤警報率", f"{summ['false_alarm_rate_pct']:.1f} %", help=H("fab.m_false_alarm"))
+        k[3].metric("被標記的點", summ["flagged_points"], help=H("fab.m_flagged"))
         with st.expander("看每個事件的結果（會顯示答案）"):
-            st.dataframe(table.drop(columns=["affects_product"]).round(2), hide_index=True)
+            et = table.drop(columns=["affects_product"]).round(2)
+            st.dataframe(et, hide_index=True, column_config=col_help(et, {c: f"fab.col.{c}" for c in et.columns}))
 
     st.subheader("管制圖比較 Compare charts")
     st.caption("同一份資料、同樣的統計量與 Phase I，用四種常見設定各跑一次：誰抓得快？誰誤警報多？"
                "（延遲 = 事件開始後第幾片被量測到的受影響晶圓才被標記）")
-    if st.button("比較管制圖"):
+    if st.button("比較管制圖", help=H("fab.compare"), key="fab_compare_run"):
         with st.spinner("計算中…"):
             summ_df, delays = compare_charts(long_df, truth["events"], stats=tuple(stats) or ("mean",), phase1=phase1)
         st.session_state["fab_compare"] = (pick, summ_df, delays)
@@ -981,10 +1112,12 @@ def page_fab():
         st.dataframe(ev.rename(columns={"yield_impact": "yield_impact_%"}), hide_index=True)
         drv = truth["drivers"]
         fig = go.Figure(go.Bar(x=drv["yield_loss_pct"], y=drv["cause"], orientation="h", marker_color=viz.SERIES[0],
-                               hovertemplate="%{y}: 平均損失 %{x:.2f}% 良率<extra></extra>"))
+                               name="true yield loss 真實良率損失",
+                               hovertemplate="%{y}: 平均損失 mean loss %{x:.2f} pp<extra></extra>"))
         fig.update_yaxes(autorange="reversed")
-        st.plotly_chart(layout(fig, "真正的良率損失來源（拿來和 SHAP / 相關性排名比對）", "平均良率損失 (%)", "", 300),
+        st.plotly_chart(layout(fig, "真正的良率損失來源（拿來和 SHAP / 相關性排名比對）", "平均良率損失 mean yield loss (pp)", "", 300),
                         width="stretch")
+        corr_rank, cmp = None, None
         st.caption("缺陷圖樣：" + "、".join(f"{k} {v}" for k, v in w["defect_pattern"].value_counts().items()))
         back = {b: a for a, b in (truth.get("renamed") or {}).items()}
         wt = long_df.assign(parameter=long_df["parameter"].replace(back)).pivot_table(
@@ -993,6 +1126,7 @@ def page_fab():
         if "yield" in wt.columns and causes:
             corr = wt[causes + ["yield"]].corr(method="spearman")["yield"].drop("yield").abs().sort_values(ascending=False)
             cmp = compare_drivers(list(corr.index), drv)
+            corr_rank = list(corr.index)
             st.markdown(
                 f"**簡單相關性排名 vs 真正原因**：相關性排名 {' > '.join(corr.index)}；"
                 f"真正原因 {' > '.join(cmp['truth'])}。第一名{'相同' if cmp['top1_match'] else '不同'}"
@@ -1000,6 +1134,55 @@ def page_fab():
                 + "。相關性只看量測過的晶圓與晶圓平均值，可能漏掉只在部分晶粒發生的問題。")
         if truth.get("semiyield_names"):
             st.caption("此資料集使用 SemiYield 欄位名稱：" + "、".join(f"{a} → {b}" for a, b in truth["renamed"].items()))
+        explain("fab_drivers", gi.fab_drivers(drv, corr_rank, cmp), inline=True)
+
+
+GUIDE_GROUPS = {"nav": "導覽 Navigation", "guide": "導覽 Navigation", "data": "資料來源 Data source",
+                "import": "資料匯入 Data import", "field": "標準欄位 Standard fields", "stack": "Film stack & fit",
+                "wafer": "Wafer map", "spc": "SPC 管制圖", "cap": "製程能力 Capability", "msa": "MSA 量測系統分析",
+                "study": "Recipe studies", "doe": "DOE / recipe", "fab": "Fab simulator", "pat": "晶圓圖樣 Wafer patterns"}
+
+
+def page_guide():
+    from metro_toolkit import guide
+
+    st.header("Guide 參數與圖表說明")
+    st.caption("每個控制項、指標與圖表的專業說明（Metro AE 用語），以及每張圖該怎麼讀、怎麼處理、要跟誰說。"
+               "左側可切換說明語言。各頁面上的「?」與「📖 怎麼讀這張圖」用的是同一份內容。")
+    q = st.text_input("搜尋 Search", placeholder="例如 EWMA、Cpk、Phase I、bowl、P/T …", help=H("guide.search"), key="guide_search").strip().lower()
+    t1, t2, t3 = st.tabs(["參數 Parameters", "圖表 Charts", "角色與狀態 Roles & status"])
+    with t1:
+        params = guide.params()
+        groups: dict = {}
+        for key, entry in params.items():
+            txt = (entry.get("zh", "") + " " + entry.get("en", "")).lower()
+            if q and q not in key.lower() and q not in txt:
+                continue
+            groups.setdefault(GUIDE_GROUPS.get(key.split(".")[0], "其他 Other"), []).append(key)
+        st.caption(f"{sum(len(v) for v in groups.values())} / {len(params)} 項")
+        for g, keys in groups.items():
+            with st.expander(f"{g}（{len(keys)}）", expanded=bool(q)):
+                for key in keys:
+                    st.markdown(f"`{key}`")
+                    st.markdown(H(key) or "")
+                    st.divider()
+    with t2:
+        charts_kb = guide.charts()
+        shown = 0
+        for key, c in charts_kb.items():
+            blob = str(c).lower()
+            if q and q not in key.lower() and q not in blob:
+                continue
+            shown += 1
+            with st.expander(f"{c.get('page', '')} · {c['title']['zh']} · {c['title']['en']}", expanded=bool(q) and shown <= 3):
+                explain(key, None, inline=True)
+        st.caption(f"{shown} / {len(charts_kb)} 張圖")
+    with t3:
+        m = guide.meta()
+        for r in m["roles"].values():
+            st.markdown(f"**{r['zh']} · {r['en']}**  \n{r['cares_zh']}  \n*{r['cares_en']}*")
+        for k, v in m["status"].items():
+            st.markdown(f"{v['icon']} **{v['zh']} · {v['en']}**")
 
 
 PAGES = {
@@ -1011,10 +1194,12 @@ PAGES = {
     "MSA": lambda df: page_msa(),
     "Recipe studies": lambda df: page_studies(),
     "DOE / recipe": lambda df: page_doe(),
+    "Guide 參數與圖表說明": lambda df: page_guide(),
 }
 
 st.sidebar.title("metro-toolkit")
 st.sidebar.caption("Thin-film metrology analysis · synthetic sample or your own imported data")
-choice = st.sidebar.radio("Page", list(PAGES))
+choice = st.sidebar.radio("Page", list(PAGES), help=H("nav.page"), key="nav_page")
+language_switch()
 data = get_data() if choice in ("Wafer map", "SPC") else None
 PAGES[choice](data)
