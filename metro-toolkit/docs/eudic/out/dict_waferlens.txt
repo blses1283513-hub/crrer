@@ -11,10 +11,11 @@ dashboard@<b>dashboard</b>　<span style="color:#1c5cab">儀表板</span><br>互
 data pipeline@<b>data pipeline</b>　<span style="color:#1c5cab">資料管線</span><br>資料從產生、驗證、載入到分析的自動化流程。<br><i>The data pipeline simulates, validates, and loads six months of fab data.</i><br>資料管線模擬、驗證並載入六個月的晶圓廠資料。<br><span style="color:#898781;font-size:smaller">waferlens</span>
 database migration@<b>database migration</b>　<span style="color:#1c5cab">資料庫遷移</span><br>以版本化腳本建立或修改資料表結構（如 Alembic）。<br><i>Run the database migration before loading any data.</i><br>載入任何資料之前，先執行資料庫遷移。<br><span style="color:#898781;font-size:smaller">waferlens</span>
 defect density@<b>defect density</b>　<span style="color:#1c5cab">缺陷密度（D0）</span><br>單位面積的致命缺陷數，常用 defects/cm²。<br><i>A higher defect density at the edge lowers edge-die yield.</i><br>邊緣較高的缺陷密度降低了邊緣晶粒的良率。<br><span style="color:#898781;font-size:smaller">semiyield, waferlens</span>
-defect pattern@<b>defect pattern</b>　<span style="color:#1c5cab">缺陷圖樣</span><br>晶圓圖上失效晶粒的空間分布型態，如 Center、Edge-Ring、Scratch。<br><i>An edge-ring defect pattern often points to deposition edge effects.</i><br>邊緣環狀缺陷圖樣常指向沉積的邊緣效應。<br><span style="color:#898781;font-size:smaller">sem-toolkit, waferlens</span>
+defect pattern@<b>defect pattern</b>　<span style="color:#1c5cab">缺陷圖樣</span><br>晶圓圖上失效晶粒的空間分布型態，如 Center、Edge-Ring、Scratch。<br><i>An edge-ring defect pattern often points to deposition edge effects.</i><br>邊緣環狀缺陷圖樣常指向沉積的邊緣效應。<br><span style="color:#898781;font-size:smaller">sem-toolkit, waferlens, metro-toolkit</span>
 die@<b>die</b>　<span style="color:#1c5cab">晶粒</span><br>晶圓上切割後的單一晶片。<br><i>Each die on the wafer map is coloured by its sort bin.</i><br>晶圓圖上的每顆晶粒依照其電測分類著色。<br><span style="color:#898781;font-size:smaller">semiyield, waferlens, sem-toolkit</span>
 dishing@<b>dishing</b>　<span style="color:#1c5cab">碟化</span><br>CMP 後寬圖形中央凹陷的現象。<br><i>Dishing increases when oxide thickness after CMP is low.</i><br>CMP 後氧化層較薄時，碟化會增加。<br><span style="color:#898781;font-size:smaller">waferlens</span>
 drift@<b>drift</b>　<span style="color:#1c5cab">漂移</span><br>隨時間緩慢變化的趨勢，如腔體老化。<br><i>Deposition rate drifts down with chamber age and resets at PM.</i><br>沉積速率隨腔體使用時間往下漂移，PM 後重置。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, waferlens</span>
+edge ring@<b>edge ring</b>　<span style="color:#1c5cab">邊緣環（圖樣）</span><br>失效晶粒集中在晶圓最外圈的圖樣，常與邊緣製程、斜面或夾持有關。<br><i>The particle event produced an edge ring on every wafer from that chamber.</i><br>微粒事件讓那個 chamber 的每片晶圓都出現邊緣環。<br><span style="color:#898781;font-size:smaller">metro-toolkit, waferlens, sem-toolkit</span>
 environment variable@<b>environment variable</b>　<span style="color:#1c5cab">環境變數</span><br>作業系統層級的設定，用來指定資料與設定檔路徑。<br><i>Point METRO_DATA_PATH to a folder outside the repository.</i><br>把 METRO_DATA_PATH 指向儲存庫以外的資料夾。<br><span style="color:#898781;font-size:smaller">metro-toolkit, waferlens</span>
 etching@<b>etching</b>　<span style="color:#1c5cab">蝕刻</span><br>以化學或電漿去除材料形成圖形。<br><i>Etching selectivity determines how much of the mask survives.</i><br>蝕刻選擇比決定遮罩能保留多少。<br><span style="color:#898781;font-size:smaller">semiyield, waferlens</span>
 excursion@<b>excursion</b>　<span style="color:#1c5cab">製程異常（偏移事件）</span><br>製程突然偏離正常狀態的事件，需快速偵測並找出原因。<br><i>The injected excursion is logged in a ground-truth table.</i><br>注入的製程異常會記錄在真值表中。<br><span style="color:#898781;font-size:smaller">metro-toolkit, waferlens</span>
@@ -46,7 +47,7 @@ root cause analysis@<b>root cause analysis</b>　<span style="color:#1c5cab">根
 sampling plan@<b>sampling plan</b>　<span style="color:#1c5cab">取樣計畫</span><br>每片量哪些點、每批量幾片的規定。<br><i>The 49-point sampling plan uses three rings around a centre site.</i><br>49 點取樣計畫在中心點外圍佈三圈。<br><span style="color:#898781;font-size:smaller">metro-toolkit, waferlens</span>
 schema@<b>schema</b>　<span style="color:#1c5cab">資料結構定義（schema）</span><br>欄位名稱、型別與關聯的規定。<br><i>Map your fab export to the standard schema once, in a loader.</i><br>在一個載入程式中，把廠內匯出資料一次對應到標準 schema。<br><span style="color:#898781;font-size:smaller">metro-toolkit, waferlens</span>
 scrap@<b>scrap</b>　<span style="color:#1c5cab">報廢</span><br>晶圓無法修復而被丟棄。<br><i>A scrapped wafer disappears from all later process steps.</i><br>報廢的晶圓不會出現在之後的任何製程站點。<br><span style="color:#898781;font-size:smaller">waferlens</span>
-scratch@<b>scratch</b>　<span style="color:#1c5cab">刮傷</span><br>線狀缺陷圖樣，多與晶圓搬運或 CMP 有關。<br><i>A scratch pattern runs in a straight line across several dies.</i><br>刮傷圖樣以直線橫跨數顆晶粒。<br><span style="color:#898781;font-size:smaller">sem-toolkit, waferlens</span>
+scratch@<b>scratch</b>　<span style="color:#1c5cab">刮傷</span><br>線狀缺陷圖樣，多與晶圓搬運或 CMP 有關。<br><i>A scratch pattern runs in a straight line across several dies.</i><br>刮傷圖樣以直線橫跨數顆晶粒。<br><span style="color:#898781;font-size:smaller">sem-toolkit, waferlens, metro-toolkit</span>
 sensor@<b>sensor</b>　<span style="color:#1c5cab">感測器（機台參數）</span><br>機台回報的製程參數，如 RF 功率、壓力、溫度。<br><i>The tool&#x27;s primary sensor couples into the first metrology parameter.</i><br>機台的主要感測器參數會影響第一個量測參數。<br><span style="color:#898781;font-size:smaller">waferlens, sem-toolkit</span>
 sheet resistance@<b>sheet resistance</b>　<span style="color:#1c5cab">片電阻</span><br>薄導電層的電阻，單位 Ω/□。<br><i>Sheet resistance is measured after the source-drain anneal.</i><br>片電阻在源汲極退火之後量測。<br><span style="color:#898781;font-size:smaller">waferlens</span>
 sidewall angle@<b>sidewall angle</b>　<span style="color:#1c5cab">側壁角</span><br>蝕刻輪廓側壁與水平面的夾角。<br><i>A sidewall angle of 88 degrees is the gate etch target.</i><br>閘極蝕刻的目標側壁角為 88 度。<br><span style="color:#898781;font-size:smaller">waferlens</span>
@@ -84,6 +85,7 @@ yield@<b>yield</b>　<span style="color:#1c5cab">良率</span><br>合格晶粒�
 晶粒@→ <b>die</b>
 碟化@→ <b>dishing</b>
 漂移@→ <b>drift</b>
+邊緣環@→ <b>edge ring</b>
 環境變數@→ <b>environment variable</b>
 蝕刻@→ <b>etching</b>
 製程異常@→ <b>excursion</b>

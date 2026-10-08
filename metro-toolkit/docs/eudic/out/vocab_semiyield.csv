@@ -1,4 +1,5 @@
 activation energy,活化能｜Arrhenius 關係中決定溫度敏感度的參數。｜例：A higher activation energy makes the rate more sensitive to temperature.｜譯：活化能越高，速率對溫度越敏感。
+adjusted R-squared,調整後 R²｜依模型參數數量懲罰的 R²；加入沒用的項會讓它下降。｜例：Adjusted R-squared fell when the extra terms added nothing.｜譯：多加的項沒有幫助時，調整後 R² 會下降。
 amorphous silicon,非晶矽（a-Si）｜無長程有序的矽，吸收比結晶矽強。｜例：Amorphous silicon absorbs strongly in the blue part of the spectrum.｜譯：非晶矽在光譜的藍光區有很強的吸收。
 aspect ratio,深寬比｜結構深度與寬度之比。｜例：Step coverage falls as the aspect ratio increases.｜譯：深寬比越大，階梯覆蓋率越低。
 atomic layer deposition,原子層沉積（ALD）｜以自我限制反應逐層沉積，厚度以循環數控制，覆蓋性極佳。｜例：Atomic layer deposition adds about 0.1 nm per cycle.｜譯：原子層沉積每個循環約增加 0.1 nm。

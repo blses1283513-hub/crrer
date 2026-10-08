@@ -15,6 +15,7 @@ defect pattern
 die
 dishing
 drift
+edge ring
 environment variable
 etching
 excursion

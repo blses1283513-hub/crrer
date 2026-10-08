@@ -24,7 +24,10 @@ proving gauge capability, and turning site data into SPC and root cause.
 | Gauge capability (MSA) | `msa/` | `gauge_rr` (ANOVA, %GRR, P/T, ndc), `static_repeatability`, `dynamic_repeatability`, `long_term_stability` |
 | Tool-to-tool / chamber matching | `msa/matching.py` | `tool_matching` (TOST equivalence + Deming slope), `fleet_matching` |
 | SPC and capability | `analysis/spc.py` | `control_chart` (I-MR, Xbar-R/S, EWMA, CUSUM), `western_electric`, `process_capability`, `spc_by_group` |
-| Practice data with known answers | `datagen/thickness.py` | `simulate_thickness` (chamber offsets, PM-cycle drift, signatures, injected excursions + truth table), MSA study generators |
+| Practice data with known answers | `datagen/thickness.py`, `datagen/fab.py` | `simulate_thickness`, `simulate_fab` (route, die-level yield, injected events + answer key), MSA study generators |
+| Which control chart catches what | `datagen/answer_key.py` | `score_detection`, `compare_charts` (I-MR, WE rules, EWMA, CUSUM: delay vs false alarms) |
+| Wafer-map pattern recognition | `wafer/patterns.py` | `feature_table` (radial, line, cluster features), `PatternClassifier`, `evaluate` |
+| DOE and recipe optimisation | `doe/`, `config/doe_processes.yaml` | `make_design` (2^k, 2^(k-p), CCD, Box-Behnken), `fit_model`, `optimize` (desirability), virtual ALD / CVD tools |
 
 ## Quick start
 
@@ -32,7 +35,7 @@ proving gauge capability, and turning site data into SPC and root cause.
 cd metro-toolkit
 pip install -r requirements.txt          # or: pip install -e ".[dashboard,dev]"
 
-python -m pytest                         # 47 tests: physics limits, statistics, end-to-end
+python -m pytest                         # ~110 tests: physics limits, statistics, end-to-end
 PYTHONPATH=src python -m metro_toolkit.demo            # report -> reports/demo/report.md
 streamlit run src/metro_toolkit/dashboard/app.py       # interactive dashboard
 ```
@@ -60,6 +63,9 @@ Full step-by-step Windows instructions (including SemiYield and the other upstre
 3. **SPC**: per chamber / tool / metrology tool; wafer mean, within-wafer 1σ %, or range; I-MR, EWMA or CUSUM.
 4. **MSA**: GR&R with adjustable variance sources (or upload part/operator/value), tool matching (Bland-Altman).
 5. **Recipe studies**: reflectometry-vs-SE sensitivity, thickness/n correlation.
+6. **Data import** and **Fab simulator**: see the sections below.
+7. **DOE / recipe**: design an experiment, run it on a virtual ALD or CVD tool (or upload your own results),
+   fit a response surface, optimise thickness + uniformity together, confirm, and check against the answer key.
 
 ## Five lessons the demo makes concrete
 
@@ -76,7 +82,7 @@ Full step-by-step Windows instructions (including SemiYield and the other upstre
 
 ## Vocabulary study files (Eudic 歐路詞典)
 
-191 metrology / fab / statistics terms with Traditional Chinese translations, explanations and example
+210 metrology / fab / statistics terms with Traditional Chinese translations, explanations and example
 sentences, one file per tool plus a combined file, in both Eudic import formats:
 [`docs/eudic/`](docs/eudic/README.md). Edit `docs/eudic/glossary.yaml` and run `python -m metro_toolkit.eudic` to rebuild.
 
@@ -124,6 +130,45 @@ process); a simple correlation ranking puts TiN thickness above gate oxide altho
 Even the true defect density explains only ~10–35% of wafer-yield variance, because much loss is random at
 die level, so expect modest R² from any yield model.
 
+**Compare charts** scores I-MR (rule 1), I-MR (WE 1–4), EWMA (λ = 0.2) and CUSUM (k = 0.5, h = 5) on the same run.
+On the `slow_drift` scenario EWMA catches the drift after ~4 measured wafers instead of ~44 for I-MR rule 1, at
+about 6% false alarms instead of 2%; CUSUM is fastest but flags far more points. There is no free lunch: pick the
+chart by the failure you most need to catch.
+
+**Wafer-map patterns** (`wafer/patterns.py`): features computed from the failing dies only (fail rate in five
+radial rings, centre-vs-edge, best straight band, best 25 mm neighbourhood, neighbour ratio) and a
+nearest-centroid classifier trained on a *separate* simulated run (`pattern_zoo` scenario: random, edge ring,
+centre, scratch, cluster). On unseen wafers it scores ~93% (edge ring / centre ~100%, cluster ~75%, mostly
+confused with centre). On the realistic `mixed` run most wafers have no pattern; wafers with fewer than 16
+defect dies are called random, which lifts accuracy from ~89% to ~96%. The lesson: base rates matter, and a
+shape drawn from eight dies is noise.
+
+## DOE / recipe optimizer
+
+Dashboard → **DOE / recipe**. Code: `src/metro_toolkit/doe/`; virtual tools: `config/doe_processes.yaml`.
+
+1. **Design**: 2-level full factorial (+ centre points), fractional factorial (shows resolution and aliases),
+   face-centred central composite, Box-Behnken, or 3-level full factorial. Replicates and randomised run order;
+   download the run sheet as CSV.
+2. **Run**: on a virtual tool with hidden physics and run-to-run noise:
+   * *ALD high-k* (cycles, temperature, purge): GPC flat inside the ALD window and rising outside it; too short
+     a purge gives parasitic CVD (thicker, less uniform); long purges cost throughput.
+   * *CVD TiN* (time, temperature, pressure): Arrhenius at low temperature (reaction limited), pressure limited
+     at high temperature (transport limited, worse uniformity).
+
+   Or upload your own DOE results (used in the browser session only, never saved).
+3. **Model**: linear / interaction / quadratic least squares with p-values, R², adjusted R², predicted R² (PRESS),
+   a Pareto of standardised effects, and a centre-point curvature test.
+4. **Optimise**: desirability functions (thickness on target ± tolerance, NU % and time as low as possible,
+   with weights), searched only inside the tested range; contour of D or any response.
+5. **Confirm and score**: confirmation runs at the suggested recipe, then the answer key: the true optimum and
+   how good your recipe really is.
+
+What it teaches (default settings, ALD): a 2-level design with centre points shows strong curvature
+(p ≈ 2e-5) but cannot say which factor causes it, so its recipe sits outside the ALD window and is truly
+unacceptable (D = 0). A face-centred CCD or Box-Behnken lands within ~70–85% of the true optimum desirability.
+On the CVD tool a quadratic model cannot follow the Arrhenius curve exactly, which is why confirmation runs matter.
+
 ## SemiYield hover guide
 
 Hover explanations (Traditional Chinese + English term) for SemiYield's inputs, chart points, and SPC lines,
@@ -154,21 +199,23 @@ and every module (maps, SPC, MSA, matching) works unchanged.
 
 ```
 metro-toolkit/
-├── config/                 films.yaml · sampling.yaml · limits.yaml
+├── config/                 films.yaml · sampling.yaml · limits.yaml · fab_sim.yaml · doe_processes.yaml
 ├── data/sample/            synthetic site-level thickness data + excursion truth table
 ├── docs/example-report/    pre-generated demo report
 ├── src/metro_toolkit/
 │   ├── metrology/thinfilm/ materials · tmm · fitting · pipeline · studies · data/si_green2008.csv
 │   ├── metrology/cd/       (planned) CD-SEM edge detection, CD, LER/LWR, overlay
 │   ├── metrology/rage/     (planned) vertical stack / profile metrology
-│   ├── wafer/              sampling · uniformity (metrics, Zernike, maps)
+│   ├── wafer/              sampling · uniformity (metrics, Zernike, maps) · patterns (die-map classifier)
 │   ├── msa/                grr · repeatability · matching
 │   ├── analysis/spc.py     control charts, WE rules, capability, per-chamber SPC
-│   ├── datagen/            synthetic fab + MSA study data
+│   ├── datagen/            synthetic thickness data, fab simulator + answer key, MSA study data
+│   ├── doe/                designs · model · optimize · virtual (process tools with an answer key)
+│   ├── ingest/             readers · mapping · convert · checks · store (your own data)
 │   ├── dashboard/app.py    Streamlit app
 │   ├── demo.py             one-command report
 │   ├── schema.py · config.py · viz.py
-└── tests/                  47 tests
+└── tests/                  pytest suite
 ```
 
 ## How the three upstream projects were used
@@ -188,7 +235,9 @@ Reviewed on 2026-10-07 (details and licenses in [NOTICE.md](NOTICE.md)):
 
 ## Roadmap
 
-* **v0.2**: DOE module (factorial / response surface, wire in SemiYield's Bayesian optimiser), real-data loaders
-  (CSV / Excel exports), Hotelling T² for multi-parameter stacks, SPC on Zernike coefficients.
+* **Done**: real-data import, fab simulator with answer key, chart comparison, wafer-map pattern classifier,
+  DOE / recipe optimizer.
+* **v0.2**: Bayesian optimisation as a DOE follow-up, Hotelling T² for multi-parameter stacks, SPC on Zernike
+  coefficients.
 * **v0.3**: CD module (`metrology/cd`), overlay, CD-SEM MSA.
 * **v0.4**: vertical stack / profile metrology (`metrology/rage`), layer-to-layer correlation.

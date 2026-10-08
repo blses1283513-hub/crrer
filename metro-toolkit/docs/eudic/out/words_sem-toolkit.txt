@@ -15,6 +15,7 @@ desirability function
 die
 diffusion barrier
 edge exclusion
+edge ring
 explainability
 extinction coefficient
 fault detection and classification
@@ -37,6 +38,7 @@ precursor
 process window
 Psi and Delta
 random forest
+recall
 reflectance
 reflectometry
 refractive index

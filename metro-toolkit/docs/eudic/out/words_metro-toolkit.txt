@@ -1,4 +1,7 @@
 accuracy
+adjusted R-squared
+ALD window
+aliasing
 ambient medium
 amorphous silicon
 analysis of variance
@@ -11,26 +14,37 @@ average run length
 band gap
 Bland-Altman plot
 bowl
+Box-Behnken design
 Brewster angle
 capacitor dielectric
 Cauchy model
+center point
 center-to-edge
+central composite design
 chamber
 chamber matching
+confirmation run
+confusion matrix
 contour plot
 control chart
 control limits
 Cpk
 critical dimension
+curvature
 CUSUM chart
 dashboard
+defect pattern
 Deming regression
 deposition rate
 design of experiments
+design resolution
+desirability function
+detection delay
 dispersion model
 drift
 dynamic repeatability
 edge exclusion
+edge ring
 edge roll-off
 editable install
 environment variable
@@ -42,12 +56,15 @@ false alarm
 film stack
 film thickness
 floated parameter
+fractional factorial design
 Fresnel coefficients
+full factorial design
 gate oxide
 gauge R&R
 global search
 goodness of fit
 ground truth
+growth per cycle
 hard mask
 high-k dielectric
 individuals and moving range chart
@@ -61,11 +78,13 @@ local minimum
 long format
 long-term stability
 lot
+mass-transport limited
 measurement site
 measurement system analysis
 metrology
 model-based fitting
 monitor wafer
+nearest centroid classifier
 non-uniformity
 notch
 number of distinct categories
@@ -80,11 +99,14 @@ polarization
 Ppk
 precision
 precision-to-tolerance ratio
+predicted R-squared
 preventive maintenance
 process capability
 process step
 Psi and Delta
+purge
 radial profile
+recall
 recipe
 recipe release
 reduced chi-square
@@ -97,8 +119,10 @@ reproducibility
 residual
 response surface
 root cause analysis
+run order randomization
 sampling plan
 schema
+scratch
 Sellmeier equation
 sensitivity
 short-term sigma
@@ -111,6 +135,7 @@ spectroscopic ellipsometry
 standard error
 statistical process control
 substrate
+surface-reaction limited
 synthetic data
 Tauc-Lorentz model
 thin film

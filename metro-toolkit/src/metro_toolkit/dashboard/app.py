@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
+from scipy.stats import t as t_dist
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # allow running without pip install
 
@@ -22,6 +23,21 @@ from metro_toolkit.config import data_dir, import_dir, load_stack, load_yaml, wa
 from metro_toolkit.datagen import ThicknessSimConfig, grr_study, matching_study, simulate_thickness  # noqa: E402
 from metro_toolkit.datagen.answer_key import CHART_SETUPS, compare_charts, compare_drivers, score_detection, spc_flags  # noqa: E402
 from metro_toolkit.datagen.fab import load_fab_config, load_truth, save_fab, simulate_fab  # noqa: E402
+from metro_toolkit.doe import (  # noqa: E402
+    curvature_test,
+    desirability,
+    evaluate_recipe,
+    fit_model,
+    load_processes,
+    make_design,
+    optimize,
+    overall,
+    run_experiments,
+    run_sheet,
+    to_coded,
+    to_real,
+    true_optimum,
+)
 from metro_toolkit.metrology.thinfilm import (  # noqa: E402
     ellipsometry,
     fit,
@@ -492,6 +508,215 @@ def page_studies():
                         width="stretch")
         st.dataframe(c.style.format(precision=4), hide_index=True)
 
+DESIGNS = {"full2": "2 水準全因子 (2^k) + 中心點", "fractional": "部分因子 2^(k-p) + 中心點",
+           "ccd": "中心合成 CCD（可估彎曲）", "bbd": "Box-Behnken（可估彎曲、不跑角落）", "full3": "3 水準全因子 3^k"}
+CUSTOM = "我的 DOE 結果（上傳 CSV）"
+
+
+def _goal_inputs(goals: dict, key: str) -> dict:
+    """Editable optimisation goals per response."""
+    out = {}
+    cols = st.columns(len(goals))
+    for c, (r, g) in zip(cols, goals.items()):
+        with c:
+            st.markdown(f"**{r}** ({g.get('unit', '')})")
+            kind = st.selectbox("目標", ["target", "minimize", "maximize"], key=f"{key}_{r}_goal",
+                                index=["target", "minimize", "maximize"].index(g["goal"]),
+                                format_func={"target": "打到目標值", "minimize": "越小越好", "maximize": "越大越好"}.get)
+            new = {"goal": kind, "unit": g.get("unit", "")}
+            if kind == "target":
+                new["target"] = st.number_input("目標值", value=float(g.get("target", 0.0)), key=f"{key}_{r}_t", format="%.4g")
+                new["tol"] = st.number_input("容許 ±", value=float(g.get("tol", 1.0)), min_value=1e-9, key=f"{key}_{r}_tol",
+                                             format="%.4g")
+            else:
+                new["best"] = st.number_input("最佳（d = 1）", value=float(g.get("best", 0.0)), key=f"{key}_{r}_b", format="%.4g")
+                new["worst"] = st.number_input("不可接受（d = 0）", value=float(g.get("worst", 1.0)), key=f"{key}_{r}_w",
+                                               format="%.4g")
+            new["weight"] = st.slider("權重", 0.1, 3.0, float(g.get("weight", 1.0)), 0.1, key=f"{key}_{r}_wt")
+            out[r] = new
+    return out
+
+
+def _pareto(fit, title: str) -> go.Figure:
+    tab = fit.table[fit.table["term"] != "intercept"].copy()
+    tab["abs_t"] = tab["t"].abs()
+    tab = tab.sort_values("abs_t")
+    t_crit = float(t_dist.ppf(0.975, fit.dof)) if fit.dof > 0 else None
+    colors = [viz.SERIES[0] if (t_crit and v >= t_crit) else viz.AXIS for v in tab["abs_t"]]
+    fig = go.Figure(go.Bar(x=tab["abs_t"], y=tab["term"], orientation="h", marker_color=colors,
+                           customdata=np.column_stack([tab["coef"], tab["p"]]),
+                           hovertemplate="%{y}<br>|t| = %{x:.2f}<br>係數 %{customdata[0]:.4g}"
+                                         "<br>p = %{customdata[1]:.3g}<extra></extra>"))
+    if t_crit:
+        fig.add_vline(x=t_crit, line=dict(color=viz.INK_2, dash="dash", width=1))
+        title += f"；虛線 = p 0.05 門檻 |t| = {t_crit:.2f}"
+    return layout(fig, title, "|t|（標準化效應）", "", max(260, 26 * len(tab) + 120))
+
+
+def page_doe():
+    st.header("DOE / 配方最佳化 Recipe optimizer")
+    st.caption("設計實驗 → 在虛擬機台上跑（或上傳自己的結果）→ 建立回應曲面模型 → 找出同時滿足膜厚目標與均勻度的配方 → "
+               "確認實驗 → 對答案。虛擬機台的物理與數字都是教科書等級的示意，不是任何公司的配方。")
+    procs = load_processes()
+    src = st.selectbox("製程", list(procs) + [CUSTOM], format_func=lambda k: procs[k]["title"] if k in procs else k)
+
+    if src == CUSTOM:
+        up = st.file_uploader("上傳 DOE 結果 CSV（每列一次實驗：因子欄位 + 回應欄位）", type="csv", key="doe_up")
+        st.caption("檔案只在這次瀏覽中使用，不會存檔或上傳到 GitHub。")
+        if up is None:
+            return
+        res = pd.read_csv(up)
+        num = [c for c in res.columns if pd.api.types.is_numeric_dtype(res[c])]
+        names = st.multiselect("因子欄位", num, default=num[: min(3, len(num))])
+        resp = st.multiselect("回應欄位", [c for c in num if c not in names], default=[c for c in num if c not in names][:2])
+        if len(names) < 1 or not resp:
+            return
+        factors = {n: {"low": float(res[n].min()), "high": float(res[n].max()), "unit": ""} for n in names}
+        goals0 = {r: {"goal": "minimize", "best": float(res[r].min()), "worst": float(res[r].max()), "unit": ""} for r in resp}
+        proc = None
+    else:
+        proc = procs[src]
+        factors_all = proc["factors"]
+        c1, c2, c3, c4, c5 = st.columns([2, 2, 1, 1, 1])
+        names = c1.multiselect("要研究的因子（其他固定在中間值）", list(factors_all), default=list(factors_all), key=f"doe_f_{src}")
+        if not names:
+            return
+        kinds = [k for k in DESIGNS if not (k == "bbd" and not 3 <= len(names) <= 5)
+                 and not (k == "fractional" and len(names) < 3)]
+        kind = c2.selectbox("設計", kinds, index=kinds.index("ccd"), format_func=DESIGNS.get, key="doe_kind")
+        center = c3.number_input("中心點", 0, 10, 4 if kind != "full3" else 0, key="doe_center")
+        reps = c4.number_input("重複", 1, 4, 1, key="doe_reps")
+        seed = c5.number_input("seed", value=1, step=1, key="doe_seed")
+        factors = {n: factors_all[n] for n in names}
+        coded, info = make_design(kind, len(names), int(center))
+        sheet = run_sheet(coded, factors, int(reps), int(seed))
+        st.markdown(f"**{len(sheet)} 次實驗**（隨機順序；`__coded` 欄是 -1…+1 的編碼值）")
+        if info.get("resolution"):
+            st.caption(f"解析度 Resolution {info['resolution']}；{info['defining_relation']}；混淆："
+                       + "、".join(f"{k} = {' = '.join(v)}" for k, v in list(info["aliases"].items())[:8]))
+        if kind == "ccd":
+            st.caption("面心 CCD (α = 1)：軸點落在範圍邊界上，不會超出機台允許的設定。")
+        c1, c2 = st.columns([3, 1])
+        c1.dataframe(sheet, hide_index=True, height=220)
+        c2.download_button("下載 run sheet (CSV)", sheet.to_csv(index=False).encode("utf-8-sig"),
+                           file_name=f"doe_{src}_{kind}.csv", mime="text/csv")
+        key = (src, tuple(names), kind, int(center), int(reps), int(seed))
+        if c2.button("在虛擬機台上執行", type="primary"):
+            st.session_state["doe_run"] = (key, run_experiments(proc, sheet, seed=int(seed) + 100))
+        if st.session_state.get("doe_run", (None,))[0] != key:
+            st.info("按「在虛擬機台上執行」得到量測結果（含機台的 run-to-run 雜訊）。")
+            return
+        res = st.session_state["doe_run"][1]
+        resp = list(proc["responses"])
+        goals0 = proc["responses"]
+        res = res.copy()
+
+    coded_df = pd.DataFrame(to_coded(res[names].to_numpy(float), factors), columns=names)
+    st.subheader("模型 Model")
+    order = st.radio("模型", ["linear", "interaction", "quadratic"], index=2, horizontal=True, key="doe_order",
+                     format_func={"linear": "線性", "interaction": "線性 + 交互作用", "quadratic": "二次（含彎曲）"}.get)
+    fits = {r: fit_model(coded_df, res[r], r, order) for r in resp}
+    tabs = st.tabs(resp)
+    for tab, r in zip(tabs, resp):
+        f = fits[r]
+        with tab:
+            k = st.columns(4)
+            k[0].metric("R²", f"{f.r2:.3f}")
+            k[1].metric("調整 R² adj", "—" if np.isnan(f.r2_adj) else f"{f.r2_adj:.3f}", help="依參數數量懲罰的 R²")
+            k[2].metric("預測 R² pred", "—" if np.isnan(f.r2_pred) else f"{f.r2_pred:.3f}",
+                        help="留一法 (PRESS)：模型對沒看過的實驗預測得多好。和 R² 差很多 = 過度擬合")
+            k[3].metric("殘差 RMSE", "—" if np.isnan(f.rmse) else f"{f.rmse:.3g}")
+            for w in f.warnings:
+                st.warning(w)
+            curv = curvature_test(coded_df, res[r])
+            if curv and (order != "quadratic" or f.curvature_unresolved):  # model has no curvature: test for it
+                msg = (f"中心點 vs 角落點差 {curv['difference']:.3g}（p = {curv['p']:.3g}）。"
+                       + ("**有明顯彎曲**：線性模型會預測錯中間區域，請改用 CCD / Box-Behnken。" if curv["p"] < 0.05
+                          else "沒有明顯彎曲。"))
+                (st.error if curv["p"] < 0.05 else st.caption)(msg)
+            c1, c2 = st.columns([3, 2])
+            c1.plotly_chart(_pareto(f, f"{r}：哪些因子重要（藍 = p < 0.05）"), width="stretch")
+            c2.dataframe(f.table.round(4), hide_index=True)
+
+    st.subheader("最佳化 Optimize")
+    goals = _goal_inputs(goals0, f"doe_goal_{src}")
+    pred = lambda c: pd.DataFrame({r: fits[r].predict(pd.DataFrame(c, columns=names)) for r in resp})  # noqa: E731
+    best = optimize(pred, len(names), goals)
+    recipe = dict(zip(names, to_real(best["coded"][None, :], factors)[0]))
+    k = st.columns(len(names) + 1)
+    for c, n in zip(k, names):
+        c.metric(f"{n} ({factors[n].get('unit', '')})", f"{recipe[n]:.4g}")
+    k[-1].metric("預測整體滿意度 D", f"{best['D']:.2f}", help="0 = 至少一個回應不可接受，1 = 全部完美")
+    st.caption("預測回應：" + "；".join(f"{r} = {v:.4g}" for r, v in best["responses"].items())
+               + "。最佳化只在實驗範圍內搜尋（不外插）。")
+
+    if len(names) >= 2:
+        c1, c2, c3 = st.columns(3)
+        xa = c1.selectbox("等高線 x", names, index=0, key="doe_cx")
+        ya = c2.selectbox("等高線 y", [n for n in names if n != xa], index=0, key="doe_cy")
+        show = c3.selectbox("顯示", ["D"] + resp, key="doe_cz",
+                            format_func=lambda v: "整體滿意度 D" if v == "D" else v)
+        g = np.linspace(-1, 1, 61)
+        gx, gy = np.meshgrid(g, g)
+        pts = np.tile(best["coded"], (gx.size, 1))
+        pts[:, names.index(xa)], pts[:, names.index(ya)] = gx.ravel(), gy.ravel()
+        P = pred(pts)
+        z = overall(P, goals) if show == "D" else P[show].to_numpy()
+        rx = to_real(pts, factors)
+        fig = go.Figure(go.Contour(x=rx[:61, names.index(xa)], y=rx[::61, names.index(ya)], z=z.reshape(gx.shape),
+                                   colorscale=viz.PLOTLY_SEQ, contours=dict(showlabels=True, labelfont=dict(size=10)),
+                                   colorbar=dict(title=show), hovertemplate=f"{xa} %{{x:.3g}}<br>{ya} %{{y:.3g}}<br>"
+                                                                            f"{show} %{{z:.3g}}<extra></extra>"))
+        fig.add_scatter(x=res[xa], y=res[ya], mode="markers", name="實驗點",
+                        marker=dict(size=8, color=viz.SURFACE, line=dict(color=viz.INK, width=1.5)),
+                        hovertemplate=f"實驗點<br>{xa} %{{x:.3g}}<br>{ya} %{{y:.3g}}<extra></extra>")
+        fig.add_scatter(x=[recipe[xa]], y=[recipe[ya]], mode="markers", name="建議配方",
+                        marker=dict(size=14, symbol="star", color=viz.SERIES[1], line=dict(color=viz.SURFACE, width=2)),
+                        hovertemplate="建議配方<extra></extra>")
+        others = [n for n in names if n not in (xa, ya)]
+        sub = "；其他因子固定在建議值 " + "、".join(f"{n} = {recipe[n]:.3g}" for n in others) if others else ""
+        st.plotly_chart(layout(fig, f"{'整體滿意度 D' if show == 'D' else show}（模型預測）{sub}", xa, ya, 480), width="stretch")
+
+    if proc is None:
+        return
+    st.subheader("確認實驗與答案 Confirm & answer key")
+    n_conf = st.slider("確認實驗片數", 1, 10, 3, key="doe_nconf")
+    if st.button("在建議配方跑確認實驗"):
+        conf_sheet = pd.DataFrame({n: [recipe[n]] * n_conf for n in names})
+        fixed = {n: (f["low"] + f["high"]) / 2 for n, f in proc["factors"].items() if n not in names}
+        st.session_state["doe_conf"] = (key, recipe, run_experiments(proc, conf_sheet, fixed, seed=int(seed) + 999))
+    if st.session_state.get("doe_conf", (None,))[0] == key:
+        _, rec, conf = st.session_state["doe_conf"]
+        rows = []
+        for r in resp:
+            m = conf[r].mean()
+            ok = desirability([m], goals[r])[0] > 0
+            rows.append({"回應": r, "預測": best["responses"][r], "確認平均": m, "確認標準差": conf[r].std(ddof=1),
+                         "可接受": "✓" if ok else "✗"})
+        st.dataframe(pd.DataFrame(rows).round(4), hide_index=True)
+        st.caption("預測和確認差很多 → 模型在這一區不準（例如二次模型描述不了的物理），要在新的中心附近再做一次小 DOE。")
+    with st.expander("看答案 Answer key（真實的最佳配方）"):
+        fixed = {n: (f["low"] + f["high"]) / 2 for n, f in proc["factors"].items() if n not in names}
+        true_proc = dict(proc, responses=goals)
+        opt = true_optimum(true_proc, names, fixed)
+        mine = evaluate_recipe(true_proc, {**fixed, **recipe})
+        c1, c2 = st.columns(2)
+        c1.markdown("**真實最佳配方**（無雜訊的真實曲面）")
+        c1.dataframe(pd.DataFrame({"factor": names, "最佳": [opt["settings"][n] for n in names],
+                                   "你的建議": [recipe[n] for n in names]}).round(4), hide_index=True)
+        c2.markdown("**真實回應**")
+        c2.dataframe(pd.DataFrame({"response": resp, "最佳配方": [opt["responses"][r] for r in resp],
+                                   "你的建議": [mine["responses"][r] for r in resp]}).round(4), hide_index=True)
+        ratio = mine["D"] / opt["D"] if opt["D"] > 0 else float("nan")
+        st.metric(f"你的配方真實滿意度（真實最佳 = {opt['D']:.2f}）", f"{mine['D']:.2f}",
+                  help="用無雜訊的真實曲面計算。D = 0 表示至少一個回應其實不可接受。")
+        st.caption(f"= 真實最佳的 {100 * ratio:.0f} %。" if np.isfinite(ratio) else "")
+        st.caption("虛擬機台的真實物理：" + (
+            "ALD 溫度視窗外 GPC 上升（低溫凝結、高溫分解）；清洗太短會殘留前驅物 → 寄生 CVD → 變厚又不均勻；清洗越久越慢。"
+            if proc["physics"] == "ald" else
+            "低溫為反應控制（Arrhenius，加熱器溫度分布影響均勻度）；高溫變成質傳控制（受壓力限制，氣體沿晶圓耗盡 → 不均勻）。"))
+
+
 SCENARIO_TEXT = {
     "baseline": "正常生產：只有自然變異（chamber 差異、PM 之間的漂移、隨機缺陷）",
     "chamber_shift": "某個 chamber 突然偏移",
@@ -785,6 +1010,7 @@ PAGES = {
     "SPC": page_spc,
     "MSA": lambda df: page_msa(),
     "Recipe studies": lambda df: page_studies(),
+    "DOE / recipe": lambda df: page_doe(),
 }
 
 st.sidebar.title("metro-toolkit")

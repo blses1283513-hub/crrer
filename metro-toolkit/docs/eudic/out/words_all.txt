@@ -1,5 +1,8 @@
 accuracy
 activation energy
+adjusted R-squared
+ALD window
+aliasing
 ambient medium
 amorphous silicon
 analysis of variance
@@ -13,17 +16,20 @@ band gap
 Bayesian optimization
 Bland-Altman plot
 bowl
+Box-Behnken design
 Brewster angle
 capacitor dielectric
 Cauchy model
 center point
 center-to-edge
+central composite design
 chamber
 chamber matching
 chemical mechanical polishing
 chemical vapor deposition
 class imbalance
 commonality analysis
+confirmation run
 confusion matrix
 container
 contour plot
@@ -32,6 +38,7 @@ control limits
 convolutional neural network
 Cpk
 critical dimension
+curvature
 CUSUM chart
 dashboard
 data pipeline
@@ -41,7 +48,9 @@ defect pattern
 Deming regression
 deposition rate
 design of experiments
+design resolution
 desirability function
+detection delay
 die
 diffusion barrier
 dishing
@@ -49,6 +58,7 @@ dispersion model
 drift
 dynamic repeatability
 edge exclusion
+edge ring
 edge roll-off
 editable install
 ensemble model
@@ -67,6 +77,7 @@ film stack
 film stress
 film thickness
 floated parameter
+fractional factorial design
 Fresnel coefficients
 full factorial design
 gate oxide
@@ -76,6 +87,7 @@ global search
 goodness of fit
 Grad-CAM
 ground truth
+growth per cycle
 hard mask
 high-k dielectric
 hold
@@ -93,11 +105,13 @@ local minimum
 long format
 long-term stability
 lot
+mass-transport limited
 measurement site
 measurement system analysis
 metrology
 model-based fitting
 monitor wafer
+nearest centroid classifier
 non-uniformity
 notch
 number of distinct categories
@@ -118,6 +132,7 @@ Ppk
 precision
 precision-to-tolerance ratio
 precursor
+predicted R-squared
 preventive maintenance
 process capability
 process route
@@ -125,9 +140,11 @@ process simulation
 process step
 process window
 Psi and Delta
+purge
 queue time
 radial profile
 random forest
+recall
 recipe
 recipe release
 reduced chi-square
@@ -142,6 +159,7 @@ response surface
 rework
 RF power
 root cause analysis
+run order randomization
 sampling plan
 schema
 scrap
@@ -166,6 +184,7 @@ star schema
 statistical process control
 step coverage
 substrate
+surface-reaction limited
 synthetic data
 Tauc-Lorentz model
 technology node

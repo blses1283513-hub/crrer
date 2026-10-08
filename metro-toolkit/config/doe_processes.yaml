@@ -1,0 +1,52 @@
+# Virtual process tools for DOE practice (metro_toolkit.doe.virtual).
+# Generic, textbook-style physics with illustrative numbers only - not any company's recipe or tool.
+# Each tool has a hidden true response surface + run-to-run noise. The true optimum is the answer key.
+#
+# goals: target (hit a value within +-tol), minimize (best at `best`, unacceptable at `worst`)
+# weight: importance in the overall desirability (geometric mean)
+
+processes:
+  ald_hk:
+    title: "ALD high-k 介電層（循環數、溫度、清洗時間）"
+    physics: ald
+    factors:
+      cycles:  {low: 40,  high: 60,  unit: cycles}
+      temp_c:  {low: 240, high: 330, unit: "°C"}
+      purge_s: {low: 0.5, high: 4.0, unit: s}
+    params:
+      gpc_nm: 0.098          # growth per cycle inside the ALD window
+      t_window_c: 285        # centre of the ALD temperature window
+      t_curv: 0.10           # GPC rise per (40 °C)^2 away from the window (condensation / decomposition)
+      cvd_frac: 0.35         # parasitic CVD growth when purge is too short ...
+      purge_tau_s: 0.6       # ... decaying with purge time
+      nu_base_pct: 0.8
+      nu_temp: 0.9           # NU rise per (40 °C)^2 away from the window
+      nu_cvd: 4.0            # NU rise from parasitic CVD (non-uniform gas exposure)
+      pulse_s: 0.3           # precursor + reactant pulse time per cycle
+    noise: {thickness: 0.03, nu_pct: 0.12, time_min: 0.0}
+    responses:
+      thickness: {unit: nm, goal: target, target: 5.0, tol: 0.15, weight: 1.0}
+      nu_pct:    {unit: "%", goal: minimize, best: 0.5, worst: 3.0, weight: 1.0}
+      time_min:  {unit: min, goal: minimize, best: 2.0, worst: 10.0, weight: 0.3}
+
+  cvd_tin:
+    title: "CVD TiN 金屬層（時間、溫度、壓力）"
+    physics: cvd
+    factors:
+      time_s:        {low: 40,  high: 120, unit: s}
+      temp_c:        {low: 500, high: 650, unit: "°C"}
+      pressure_torr: {low: 1.0, high: 10.0, unit: Torr}
+    params:
+      rs0_nm_s: 0.12         # surface-reaction rate at 575 °C
+      ea_ev: 0.9             # activation energy (surface-reaction limited regime)
+      rm0_nm_s: 0.25         # mass-transport limited rate at 5 Torr
+      p_exp: 0.6
+      nu_base_pct: 1.0
+      nu_transport: 3.0      # NU rise when growth becomes transport limited (gas depletion across the wafer)
+      nu_pressure: 0.8       # NU rise per (5 Torr)^2 away from the best flow regime
+      p_best_torr: 4.0
+      nu_temp: 0.6           # NU rise per (75 °C)^2: in the reaction-limited regime the heater profile shows up
+    noise: {thickness: 0.08, nu_pct: 0.15}
+    responses:
+      thickness: {unit: nm, goal: target, target: 10.0, tol: 0.3, weight: 1.0}
+      nu_pct:    {unit: "%", goal: minimize, best: 0.8, worst: 4.0, weight: 1.0}

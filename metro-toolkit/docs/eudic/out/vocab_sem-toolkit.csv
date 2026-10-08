@@ -15,6 +15,7 @@ desirability function,滿意度函數｜把多個響應合併成單一 0–1 分
 die,晶粒｜晶圓上切割後的單一晶片。｜例：Each die on the wafer map is coloured by its sort bin.｜譯：晶圓圖上的每顆晶粒依照其電測分類著色。
 diffusion barrier,擴散阻障層｜防止金屬擴散進介電質的薄層，如 TiN。｜例：TiN acts as a diffusion barrier under tungsten.｜譯：TiN 在鎢下方作為擴散阻障層。
 edge exclusion,邊緣排除｜晶圓最外圈不量測的寬度，常為 2–3 mm。｜例：With 3 mm edge exclusion the outer ring sits at 147 mm radius.｜譯：邊緣排除 3 mm 時，最外圈位於半徑 147 mm。
+edge ring,邊緣環（圖樣）｜失效晶粒集中在晶圓最外圈的圖樣，常與邊緣製程、斜面或夾持有關。｜例：The particle event produced an edge ring on every wafer from that chamber.｜譯：微粒事件讓那個 chamber 的每片晶圓都出現邊緣環。
 explainability,可解釋性｜說明模型為何做出某預測，如 SHAP 值。｜例：SHAP explainability ranks which process parameters drive yield.｜譯：SHAP 可解釋性排出哪些製程參數影響良率最大。
 extinction coefficient,消光係數（k）｜複數折射率的虛部，代表材料吸收光的強弱。｜例：Silicon has a large extinction coefficient in the ultraviolet.｜譯：矽在紫外光區有很大的消光係數。
 fault detection and classification,故障偵測與分類（FDC）｜以機台感測器資料即時偵測異常並分類。｜例：Fault detection and classification uses hundreds of sensor readings per wafer.｜譯：故障偵測與分類每片晶圓使用數百個感測器讀值。
@@ -37,6 +38,7 @@ precursor,前驅物｜CVD/ALD 中提供元素的反應氣體，如 SiH4、TMA。
 process window,製程窗口｜所有輸出都符合規格的參數範圍。｜例：The process window shrinks when the uniformity spec is tightened.｜譯：均勻性規格收緊時，製程窗口會縮小。
 Psi and Delta,Ψ 與 Δ（橢偏參數）｜ρ = rp/rs = tanΨ·e^{iΔ}；Ψ 為振幅比，Δ 為相位差。｜例：Psi and Delta are measured at three angles and fitted together.｜譯：在三個角度量測 Ψ 與 Δ，並一起擬合。
 random forest,隨機森林｜由多棵決策樹投票的分類／迴歸模型。｜例：A random forest classifies wafers as pass or fail from sensor data.｜譯：隨機森林以感測器資料把晶圓分為合格或失效。
+recall,召回率｜真的屬於某類的樣本中，被正確找出的比例。｜例：Recall for edge-ring wafers is high because their shape is easy to recognise.｜譯：邊緣環晶圓的召回率很高，因為它的形狀容易辨認。
 reflectance,反射率｜反射光強與入射光強之比，介於 0 與 1 之間。｜例：Bare silicon has a reflectance of about 0.35 at 633 nm.｜譯：裸矽在 633 nm 的反射率約為 0.35。
 reflectometry,反射光譜量測｜量測反射率隨波長變化來推算膜厚，常為正向入射。｜例：Normal-incidence reflectometry loses sensitivity on oxides thinner than a few nanometres.｜譯：正向入射的反射光譜量測在數奈米以下的氧化層會失去靈敏度。
 refractive index,折射率（n）｜光在材料中速度的倒數比；SiO2 約 1.46，Si3N4 約 2.0。｜例：A refractive index shift often signals a change in film composition.｜譯：折射率偏移常代表薄膜組成發生變化。

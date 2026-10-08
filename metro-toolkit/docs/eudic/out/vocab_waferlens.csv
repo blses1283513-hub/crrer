@@ -15,6 +15,7 @@ defect pattern,缺陷圖樣｜晶圓圖上失效晶粒的空間分布型態，�
 die,晶粒｜晶圓上切割後的單一晶片。｜例：Each die on the wafer map is coloured by its sort bin.｜譯：晶圓圖上的每顆晶粒依照其電測分類著色。
 dishing,碟化｜CMP 後寬圖形中央凹陷的現象。｜例：Dishing increases when oxide thickness after CMP is low.｜譯：CMP 後氧化層較薄時，碟化會增加。
 drift,漂移｜隨時間緩慢變化的趨勢，如腔體老化。｜例：Deposition rate drifts down with chamber age and resets at PM.｜譯：沉積速率隨腔體使用時間往下漂移，PM 後重置。
+edge ring,邊緣環（圖樣）｜失效晶粒集中在晶圓最外圈的圖樣，常與邊緣製程、斜面或夾持有關。｜例：The particle event produced an edge ring on every wafer from that chamber.｜譯：微粒事件讓那個 chamber 的每片晶圓都出現邊緣環。
 environment variable,環境變數｜作業系統層級的設定，用來指定資料與設定檔路徑。｜例：Point METRO_DATA_PATH to a folder outside the repository.｜譯：把 METRO_DATA_PATH 指向儲存庫以外的資料夾。
 etching,蝕刻｜以化學或電漿去除材料形成圖形。｜例：Etching selectivity determines how much of the mask survives.｜譯：蝕刻選擇比決定遮罩能保留多少。
 excursion,製程異常（偏移事件）｜製程突然偏離正常狀態的事件，需快速偵測並找出原因。｜例：The injected excursion is logged in a ground-truth table.｜譯：注入的製程異常會記錄在真值表中。

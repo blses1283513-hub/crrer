@@ -1,4 +1,5 @@
 activation energy
+adjusted R-squared
 amorphous silicon
 aspect ratio
 atomic layer deposition

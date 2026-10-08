@@ -1103,13 +1103,13 @@ terms:
     note: "晶圓圖上失效晶粒的空間分布型態，如 Center、Edge-Ring、Scratch。"
     ex: "An edge-ring defect pattern often points to deposition edge effects."
     ex_zh: "邊緣環狀缺陷圖樣常指向沉積的邊緣效應。"
-    tools: [st, wl]
+    tools: [st, wl, mt]
   - en: "scratch"
     zh: "刮傷"
     note: "線狀缺陷圖樣，多與晶圓搬運或 CMP 有關。"
     ex: "A scratch pattern runs in a straight line across several dies."
     ex_zh: "刮傷圖樣以直線橫跨數顆晶粒。"
-    tools: [st, wl]
+    tools: [st, wl, mt]
   - en: "Grad-CAM"
     zh: "Grad-CAM（梯度加權類別活化圖）"
     note: "顯示 CNN 判斷時關注影像哪個區域。"
@@ -1121,19 +1121,19 @@ terms:
     note: "列出實際類別與預測類別對照的表格。"
     ex: "The confusion matrix shows Loc and Edge-Loc are often confused."
     ex_zh: "混淆矩陣顯示 Loc 與 Edge-Loc 常被混淆。"
-    tools: [st]
+    tools: [st, mt]
   - en: "full factorial design"
     zh: "全因子設計"
     note: "所有因子所有水準組合都做實驗；2⁴ 為 16 組。"
     ex: "A 2-to-the-4 full factorial design with four center points needs 20 runs."
     ex_zh: "2⁴ 全因子設計加四個中心點需要 20 次實驗。"
-    tools: [st, sy]
+    tools: [st, sy, mt]
   - en: "center point"
     zh: "中心點"
     note: "因子皆在中間水準的實驗，用於檢查曲率與估計誤差。"
     ex: "Center points reveal curvature that a two-level design would miss."
     ex_zh: "中心點能發現二水準設計會漏掉的曲率。"
-    tools: [st, sy]
+    tools: [st, sy, mt]
   - en: "response surface"
     zh: "反應曲面"
     note: "以二次模型描述輸出隨因子變化的曲面。"
@@ -1145,7 +1145,7 @@ terms:
     note: "把多個響應合併成單一 0–1 分數，以進行多目標最佳化。"
     ex: "The desirability function trades deposition rate against film stress."
     ex_zh: "滿意度函數在沉積速率與薄膜應力之間取捨。"
-    tools: [st]
+    tools: [st, mt]
   - en: "RF power"
     zh: "射頻功率"
     note: "電漿製程中供給的射頻功率，影響沉積與蝕刻速率。"
@@ -1170,3 +1170,119 @@ terms:
     ex: "TiN acts as a diffusion barrier under tungsten."
     ex_zh: "TiN 在鎢下方作為擴散阻障層。"
     tools: [st]
+
+  # ------------------------------------------------------------------ chart comparison / patterns / DOE (metro-toolkit)
+  - en: "detection delay"
+    zh: "偵測延遲"
+    note: "異常開始後，要到第幾個樣本管制圖才發出警報；越小越好，但通常要用較多誤警報來換。"
+    ex: "EWMA cut the detection delay for the slow drift from 44 to 4 measured wafers."
+    ex_zh: "EWMA 把慢漂移的偵測延遲從 44 片量測晶圓縮短到 4 片。"
+    tools: [mt]
+  - en: "recall"
+    zh: "召回率"
+    note: "真的屬於某類的樣本中，被正確找出的比例。"
+    ex: "Recall for edge-ring wafers is high because their shape is easy to recognise."
+    ex_zh: "邊緣環晶圓的召回率很高，因為它的形狀容易辨認。"
+    tools: [mt, st]
+  - en: "nearest centroid classifier"
+    zh: "最近中心分類器"
+    note: "計算每一類特徵的平均（中心），新樣本歸到距離最近的那一類；簡單、可解釋。"
+    ex: "A nearest centroid classifier on a few radial and line features separates most wafer-map patterns."
+    ex_zh: "用幾個徑向與直線特徵的最近中心分類器，就能分開大部分晶圓圖樣。"
+    tools: [mt]
+  - en: "edge ring"
+    zh: "邊緣環（圖樣）"
+    note: "失效晶粒集中在晶圓最外圈的圖樣，常與邊緣製程、斜面或夾持有關。"
+    ex: "The particle event produced an edge ring on every wafer from that chamber."
+    ex_zh: "微粒事件讓那個 chamber 的每片晶圓都出現邊緣環。"
+    tools: [mt, wl, st]
+  - en: "fractional factorial design"
+    zh: "部分因子設計"
+    note: "只跑全因子組合的一部分（如 2^(4-1) = 8 組），代價是某些效應彼此混淆。"
+    ex: "A half-fraction fractional factorial design screens four factors in eight runs."
+    ex_zh: "半部分因子設計用八次實驗篩選四個因子。"
+    tools: [mt]
+  - en: "aliasing"
+    zh: "混淆（別名）"
+    note: "部分因子設計中，兩個效應的欄位完全相同，無法分開估計。"
+    ex: "With D = ABC, the AB interaction is aliased with CD."
+    ex_zh: "當 D = ABC 時，AB 交互作用與 CD 混淆。"
+    tools: [mt]
+  - en: "design resolution"
+    zh: "設計解析度"
+    note: "定義關係中最短字的長度；解析度 IV 表示主效應不與二因子交互作用混淆。"
+    ex: "A resolution IV design keeps main effects clear of two-factor interactions."
+    ex_zh: "解析度 IV 的設計讓主效應不與二因子交互作用混淆。"
+    tools: [mt]
+  - en: "central composite design"
+    zh: "中心合成設計（CCD）"
+    note: "因子點 + 軸點 + 中心點，可估計二次（彎曲）項；面心型的軸點不會超出範圍。"
+    ex: "The central composite design found the ALD temperature window that the two-level design missed."
+    ex_zh: "中心合成設計找到了二水準設計漏掉的 ALD 溫度視窗。"
+    tools: [mt]
+  - en: "Box-Behnken design"
+    zh: "Box-Behnken 設計"
+    note: "每次只把兩個因子放在極端值，不跑角落點；可估計二次項，適合角落不安全的製程。"
+    ex: "A Box-Behnken design avoids running every factor at its extreme at once."
+    ex_zh: "Box-Behnken 設計避免所有因子同時處於極端值。"
+    tools: [mt]
+  - en: "run order randomization"
+    zh: "實驗順序隨機化"
+    note: "打亂實驗順序，避免機台漂移或時間效應被誤認為因子效應。"
+    ex: "Run order randomization keeps chamber drift from masquerading as a temperature effect."
+    ex_zh: "實驗順序隨機化讓 chamber 漂移不會偽裝成溫度效應。"
+    tools: [mt]
+  - en: "curvature"
+    zh: "彎曲（曲率）"
+    note: "回應在範圍中間不是直線變化；二水準設計看不到，中心點能偵測、CCD/BBD 能估計。"
+    ex: "Center points showed strong curvature, so the linear model was replaced by a quadratic one."
+    ex_zh: "中心點顯示明顯彎曲，所以把線性模型換成二次模型。"
+    tools: [mt]
+  - en: "adjusted R-squared"
+    zh: "調整後 R²"
+    note: "依模型參數數量懲罰的 R²；加入沒用的項會讓它下降。"
+    ex: "Adjusted R-squared fell when the extra terms added nothing."
+    ex_zh: "多加的項沒有幫助時，調整後 R² 會下降。"
+    tools: [mt, sy]
+  - en: "predicted R-squared"
+    zh: "預測 R²"
+    note: "用留一法 (PRESS) 估計模型對沒看過的實驗預測得多好；遠低於 R² 代表過度擬合。"
+    ex: "A negative predicted R-squared warns that the model will not predict new runs."
+    ex_zh: "預測 R² 為負，警告這個模型無法預測新的實驗。"
+    tools: [mt]
+  - en: "confirmation run"
+    zh: "確認實驗"
+    note: "在模型建議的配方實際再跑幾片，確認預測是否成立，才發行配方。"
+    ex: "Three confirmation runs landed within tolerance, so the recipe was released."
+    ex_zh: "三片確認實驗都落在容許範圍內，所以發行了配方。"
+    tools: [mt]
+  - en: "growth per cycle"
+    zh: "每循環成長量（GPC）"
+    note: "ALD 每一個循環沉積的厚度；在 ALD 視窗內幾乎固定。"
+    ex: "Thickness equals growth per cycle times the number of cycles."
+    ex_zh: "膜厚等於每循環成長量乘以循環數。"
+    tools: [mt]
+  - en: "ALD window"
+    zh: "ALD 溫度視窗"
+    note: "每循環成長量幾乎不隨溫度變化的溫度範圍；太低會凝結、太高前驅物會分解。"
+    ex: "Outside the ALD window, growth per cycle and non-uniformity both rise."
+    ex_zh: "在 ALD 溫度視窗外，每循環成長量和不均勻度都會上升。"
+    tools: [mt]
+  - en: "purge"
+    zh: "清洗（吹淨）"
+    note: "ALD 兩種前驅物之間用惰性氣體清除殘留氣體；太短會產生寄生 CVD。"
+    ex: "A purge that is too short leaves precursor behind and adds parasitic CVD growth."
+    ex_zh: "清洗太短會殘留前驅物，產生寄生 CVD 成長。"
+    tools: [mt]
+  - en: "mass-transport limited"
+    zh: "質傳控制"
+    note: "沉積速率受反應氣體輸送到表面的速度限制（高溫時），對壓力與流場敏感、均勻度較差。"
+    ex: "At high temperature the CVD process becomes mass-transport limited and depends on pressure."
+    ex_zh: "高溫時 CVD 變成質傳控制，速率取決於壓力。"
+    tools: [mt]
+  - en: "surface-reaction limited"
+    zh: "表面反應控制"
+    note: "沉積速率受表面化學反應速度限制（低溫時），遵循 Arrhenius 關係、對溫度敏感。"
+    ex: "In the surface-reaction limited regime the heater profile shows up in the thickness map."
+    ex_zh: "在表面反應控制區，加熱器的溫度分布會反映在膜厚圖上。"
+    tools: [mt]
