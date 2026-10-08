@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from metro_toolkit.datagen.answer_key import compare_drivers, score_detection, spc_flags
+from metro_toolkit.datagen.answer_key import CHART_SETUPS, compare_charts, compare_drivers, score_detection, spc_flags
 from metro_toolkit.datagen.fab import load_fab_config, load_truth, save_fab, simulate_fab
 from metro_toolkit.ingest import list_datasets, load_dataset, quality_report
 
@@ -114,6 +114,23 @@ def test_score_detection_on_hand_made_case():
                     "false_alarms": 1, "false_alarm_rate_pct": pytest.approx(100 / 6)}
 
 
+def test_ewma_catches_slow_drift_sooner_than_imr():
+    r = simulate_fab(CFG, "slow_drift")
+    summ, delays = compare_charts(r.long, r.events)
+    assert list(summ["setup"]) == list(CHART_SETUPS) and len(delays) == len(CHART_SETUPS)
+    d = delays.set_index("setup")["delay_wafers"]
+    assert d["EWMA λ=0.2"] < d["I-MR rule 1"] / 3  # small sustained drift: EWMA's strength
+    fa = summ.set_index("setup")["false_alarm_rate_pct"]
+    assert fa["I-MR rule 1"] < fa["I-MR WE 1-4"] and fa["I-MR rule 1"] < fa["CUSUM k=0.5 h=5"]  # the price of speed
+
+
+def test_chart_options_reach_control_chart():
+    r = simulate_fab(CFG, "slow_drift", n_lots=40)
+    loose = spc_flags(r.long, "EWMA", parameters=["hk_thk"], chart_opts={"ewma_lambda": 0.2, "L": 3.0})
+    tight = spc_flags(r.long, "EWMA", parameters=["hk_thk"], chart_opts={"ewma_lambda": 0.2, "L": 2.0})
+    assert len(tight) > len(loose)
+
+
 def test_compare_drivers():
     drivers = pd.DataFrame({"cause": ["d", "c", "k", "g", "t"], "yield_loss_pct": [6, 2, 1, 0.5, 0.0]})
     perfect = compare_drivers(["d", "c", "k", "g", "t"], drivers)
@@ -181,5 +198,7 @@ def test_fab_dashboard_page(tmp_path, monkeypatch):
     assert not at.exception
     labels = {m.label: m.value for m in at.metric}
     assert labels["晶圓"] == "750" and "/" in labels["抓到的事件"]
+    [b for b in at.button if b.label == "比較管制圖"][0].click().run()
+    assert not at.exception and len(at.dataframe) >= 1
     at.sidebar.radio[0].set_value("SPC").run()
     assert not at.exception and at.sidebar.selectbox[0].value == "匯入：sim_mixed"

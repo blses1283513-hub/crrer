@@ -5,6 +5,7 @@ score_detection   Did SPC flag the injected events? How many measured wafers lat
                   blind spot, not a failure of SPC).
 true_drivers      Real yield loss by cause (from the die maps), to compare with SHAP / correlation rankings.
 compare_drivers   Rank agreement between a model's ranking and the truth.
+compare_charts    Same run scored with several chart setups (I-MR, WE rules, EWMA, CUSUM): speed vs false alarms.
 """
 
 from __future__ import annotations
@@ -16,8 +17,10 @@ from ..analysis.spc import control_chart, wafer_summary
 
 
 def spc_flags(long_df: pd.DataFrame, chart: str = "IMR", rules=(1, 2), stats=("mean", "nu_1sigma_pct"),
-              phase1: int = 20, group: str = "chamber_id", parameters=None) -> pd.DataFrame:
-    """Run per-group control charts like an engineer would; return one row per flagged wafer point."""
+              phase1: int = 20, group: str = "chamber_id", parameters=None, chart_opts: dict | None = None
+              ) -> pd.DataFrame:
+    """Run per-group control charts like an engineer would; return one row per flagged wafer point.
+    chart_opts go to control_chart (ewma_lambda, L, cusum_k, cusum_h)."""
     rows = []
     for param, sub in long_df.groupby("parameter"):
         if parameters is not None and param not in parameters:
@@ -34,7 +37,7 @@ def spc_flags(long_df: pd.DataFrame, chart: str = "IMR", rules=(1, 2), stats=("m
                 y = gw[stat].to_numpy(float)
                 if len(y) < 8 or not np.isfinite(y).all():
                     continue
-                ch = control_chart(y, chart, phase1=min(phase1, len(y)), rules=rules)
+                ch = control_chart(y, chart, phase1=min(phase1, len(y)), rules=rules, **(chart_opts or {}))
                 for i in sorted({v[0] for v in ch.violations}):
                     rows.append({"parameter": param, "stat": stat, "group": g, "wafer_id": gw["wafer_id"].iloc[i],
                                  "timestamp": gw["timestamp"].iloc[i]})
@@ -87,6 +90,32 @@ def score_detection(flags: pd.DataFrame, events: pd.DataFrame, long_df: pd.DataF
         "false_alarm_rate_pct": 100.0 * false / n_points if n_points else 0.0,
     }
     return table, summary
+
+
+# Chart setups an engineer typically weighs. EWMA/CUSUM ignore WE rules (they have their own decision rule).
+CHART_SETUPS = {
+    "I-MR rule 1": {"chart": "IMR", "rules": (1,)},
+    "I-MR WE 1-4": {"chart": "IMR", "rules": (1, 2, 3, 4)},
+    "EWMA λ=0.2": {"chart": "EWMA", "rules": (1,), "chart_opts": {"ewma_lambda": 0.2, "L": 3.0}},
+    "CUSUM k=0.5 h=5": {"chart": "CUSUM", "rules": (1,), "chart_opts": {"cusum_k": 0.5, "cusum_h": 5.0}},
+}
+
+
+def compare_charts(long_df: pd.DataFrame, events: pd.DataFrame, setups: dict | None = None,
+                   stats=("mean", "nu_1sigma_pct"), phase1: int = 20) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Score the same data with several chart setups.
+
+    Returns (summary, delays): one summary row per setup (detected, median delay, false-alarm %),
+    and one row per setup x event with that event's delay (None = missed / not observable)."""
+    summary, delays = [], []
+    for name, s in (setups or CHART_SETUPS).items():
+        flags = spc_flags(long_df, s["chart"], s.get("rules", (1,)), stats, phase1, chart_opts=s.get("chart_opts"))
+        table, summ = score_detection(flags, events, long_df)
+        summary.append({"setup": name, **summ})
+        for _, r in table.iterrows():
+            delays.append({"setup": name, "id": r["id"], "type": r["type"], "status": r["status"],
+                           "delay_wafers": r["delay_wafers"] if r["detected"] else None})
+    return pd.DataFrame(summary), pd.DataFrame(delays, columns=["setup", "id", "type", "status", "delay_wafers"])
 
 
 def true_drivers(truth_wafers: pd.DataFrame, drivers: pd.DataFrame | None = None) -> pd.DataFrame:

@@ -20,7 +20,7 @@ from metro_toolkit import viz  # noqa: E402
 from metro_toolkit.analysis import process_capability, spc_by_group, wafer_summary  # noqa: E402
 from metro_toolkit.config import data_dir, import_dir, load_stack, load_yaml, wavelengths  # noqa: E402
 from metro_toolkit.datagen import ThicknessSimConfig, grr_study, matching_study, simulate_thickness  # noqa: E402
-from metro_toolkit.datagen.answer_key import compare_drivers, score_detection, spc_flags  # noqa: E402
+from metro_toolkit.datagen.answer_key import CHART_SETUPS, compare_charts, compare_drivers, score_detection, spc_flags  # noqa: E402
 from metro_toolkit.datagen.fab import load_fab_config, load_truth, save_fab, simulate_fab  # noqa: E402
 from metro_toolkit.metrology.thinfilm import (  # noqa: E402
     ellipsometry,
@@ -499,6 +499,51 @@ CAUSE_LABEL = {".": "pass", "D": "defect", "G": "gate_ox_thk", "K": "hk_thk", "T
 CAUSE_COLOR = {".": viz.GRID, **{c: viz.SERIES[i] for i, c in enumerate("DGKTCI")}}  # fixed: colour follows the cause
 
 
+SETUP_COLOR = {n: viz.SERIES[i] for i, n in enumerate(CHART_SETUPS)}  # fixed: colour follows the chart setup
+
+
+def compare_view(summ_df: pd.DataFrame, delays: pd.DataFrame):
+    """Speed-vs-false-alarm scatter, per-event delay bars and the summary table."""
+    c1, c2 = st.columns(2)
+    fig = go.Figure()
+    for _, r in summ_df.iterrows():
+        delay = r["median_delay_wafers"]
+        fig.add_scatter(x=[r["false_alarm_rate_pct"]], y=[delay], mode="markers+text", name=r["setup"],
+                        text=[r["setup"]], textposition="top center", textfont=dict(color=viz.INK_2, size=11),
+                        marker=dict(size=12, color=SETUP_COLOR.get(r["setup"], viz.SERIES[0]),
+                                    line=dict(color=viz.SURFACE, width=2)),
+                        hovertemplate=f"{r['setup']}<br>誤警報 %{{x:.1f}}%<br>中位延遲 %{{y}} 片"
+                                      f"<br>抓到 {r['detected']}/{r['observable']}<extra></extra>")
+    fig = layout(fig, "速度 vs 誤警報（越靠左下越好）", "誤警報率 (%)", "中位延遲（片）", 360)
+    fig.update_layout(showlegend=False)
+    c1.plotly_chart(fig, width="stretch")
+
+    d = delays.copy()
+    d["event"] = d["id"] + " " + d["type"]
+    fig = go.Figure()
+    for setup in summ_df["setup"]:
+        sub = d[d["setup"] == setup]
+        fig.add_bar(y=sub["event"], x=sub["delay_wafers"], orientation="h", name=setup,
+                    marker_color=SETUP_COLOR.get(setup, viz.SERIES[0]), customdata=sub["status"],
+                    hovertemplate=f"{setup}<br>%{{y}}: 延遲 %{{x}} 片<br>%{{customdata}}<extra></extra>")
+    fig = layout(fig, "每個事件的偵測延遲（沒有長條 = 沒抓到或量測不到）", "延遲（片）", "", 360)
+    fig.update_layout(barmode="group", bargap=0.25, bargroupgap=0.08,
+                      legend=dict(orientation="h", y=-0.2, x=0))
+    fig.update_yaxes(autorange="reversed")
+    c2.plotly_chart(fig, width="stretch")
+
+    show = summ_df[["setup", "detected", "observable", "median_delay_wafers", "false_alarm_rate_pct", "flagged_points"]]
+    st.dataframe(show.rename(columns={"setup": "設定", "detected": "抓到", "observable": "可觀測",
+                                      "median_delay_wafers": "中位延遲(片)", "false_alarm_rate_pct": "誤警報 %",
+                                      "flagged_points": "被標記點"}).round(1), hide_index=True)
+    fast = summ_df.dropna(subset=["median_delay_wafers"])
+    if len(fast):
+        best = fast.sort_values(["median_delay_wafers", "false_alarm_rate_pct"]).iloc[0]
+        quiet = summ_df.sort_values("false_alarm_rate_pct").iloc[0]
+        st.caption(f"最快：**{best['setup']}**；最安靜：**{quiet['setup']}**。實務上要在「早一點發現」與"
+                   "「少一點誤停機」之間取捨；小而持續的漂移通常是 EWMA / CUSUM 的強項，大的突跳 I-MR 就夠快。")
+
+
 def page_fab():
     st.header("Fab simulator 模擬晶圓廠")
     st.caption("產生行為接近真實晶圓廠的資料，並保留「答案」。先用 Wafer map / SPC 頁面自己找問題，再回來對答案、打分數。")
@@ -573,8 +618,17 @@ def page_fab():
     stats = c3.multiselect("統計量", ["mean", "nu_1sigma_pct"], default=["mean", "nu_1sigma_pct"], key="fab_stats",
                            format_func={"mean": "晶圓平均", "nu_1sigma_pct": "片內 1σ %"}.get)
     phase1 = c4.slider("Phase I 點數", 8, 40, 20, key="fab_phase1")
+    opts = {}
+    if chart == "EWMA":
+        opts["ewma_lambda"] = st.slider("EWMA λ（越小越重視歷史、越能抓小漂移）", 0.05, 1.0, 0.2, 0.05, key="fab_lam")
+    elif chart == "CUSUM":
+        c1, c2 = st.columns(2)
+        opts["cusum_k"] = c1.slider("CUSUM k（σ；要抓的偏移的一半）", 0.25, 1.5, 0.5, 0.25, key="fab_k")
+        opts["cusum_h"] = c2.slider("CUSUM h（σ；決策界限）", 2.0, 8.0, 5.0, 0.5, key="fab_h")
+    if chart != "IMR":
+        st.caption("EWMA / CUSUM 有自己的判定規則，WE 規則只用在 I-MR。")
     if st.button("計算分數"):
-        flags = spc_flags(long_df, chart, tuple(rules) or (1,), tuple(stats) or ("mean",), phase1)
+        flags = spc_flags(long_df, chart, tuple(rules) or (1,), tuple(stats) or ("mean",), phase1, chart_opts=opts)
         table, summ = score_detection(flags, truth["events"], long_df)
         st.session_state["fab_score"] = (pick, table, summ)
     if st.session_state.get("fab_score") and st.session_state["fab_score"][0] == pick:
@@ -589,6 +643,17 @@ def page_fab():
         k[3].metric("被標記的點", summ["flagged_points"])
         with st.expander("看每個事件的結果（會顯示答案）"):
             st.dataframe(table.drop(columns=["affects_product"]).round(2), hide_index=True)
+
+    st.subheader("管制圖比較 Compare charts")
+    st.caption("同一份資料、同樣的統計量與 Phase I，用四種常見設定各跑一次：誰抓得快？誰誤警報多？"
+               "（延遲 = 事件開始後第幾片被量測到的受影響晶圓才被標記）")
+    if st.button("比較管制圖"):
+        with st.spinner("計算中…"):
+            summ_df, delays = compare_charts(long_df, truth["events"], stats=tuple(stats) or ("mean",), phase1=phase1)
+        st.session_state["fab_compare"] = (pick, summ_df, delays)
+    if st.session_state.get("fab_compare") and st.session_state["fab_compare"][0] == pick:
+        _, summ_df, delays = st.session_state["fab_compare"]
+        compare_view(summ_df, delays)
 
     with st.expander("看答案 Answer key"):
         ev = truth["events"].drop(columns=["wafer_ids"]).copy()
