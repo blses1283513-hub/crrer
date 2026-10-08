@@ -25,6 +25,8 @@ defects:
   d0_per_cm2: 0.07                   # killer-defect density
   cluster_alpha: 2.0                 # negative-binomial clustering (smaller = more clustered wafers)
   inspection_step: TIN_DEP           # inline inspection reports defect_density on measured wafers
+  # background spatial patterns (probability per wafer; the rest is "random"): scratch, cluster, center, edge_ring
+  pattern_mix: {scratch: 0.02, cluster: 0.03}
 
 # device windows: a die whose local value is outside [lo, hi] fails (parametric yield loss).
 # spec: metrology spec limits (default = window). code: letter used in the die map.
@@ -138,6 +140,7 @@ etest:
 #   type: shift (step mean, one chamber/tool) | drift (ramp per lot) | bowl (signature change)
 #         recipe (all tools of a step) | metro_offset (measurement only, no physical change)
 #         defects (killer-defect density x magnitude, with a spatial pattern)
+# A scenario can also be {events: [...], pattern_mix: {...}} to change the background defect patterns.
 scenarios:
   baseline: []
   chamber_shift:
@@ -158,3 +161,6 @@ scenarios:
     - {type: metro_offset, step: GATE_OX, where: FT02, start_lot: 42, n_lots: 18, magnitude: 0.030}
     - {type: defects, step: TIN_DEP, where: CVD02, start_lot: 50, n_lots: 4, magnitude: 6.0, pattern: edge_ring}
     - {type: bowl, step: WL_ETCH, where: ETC01-C, start_lot: 18, n_lots: 10, magnitude: 1.2}
+  pattern_zoo:                       # many spatial defect patterns, for the wafer-map pattern classifier
+    events: []
+    pattern_mix: {scratch: 0.15, cluster: 0.15, center: 0.15, edge_ring: 0.15}

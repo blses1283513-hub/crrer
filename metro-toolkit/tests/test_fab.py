@@ -198,6 +198,8 @@ def test_fab_dashboard_page(tmp_path, monkeypatch):
     assert not at.exception
     labels = {m.label: m.value for m in at.metric}
     assert labels["晶圓"] == "750" and "/" in labels["抓到的事件"]
+    [b for b in at.button if b.label == "分類並打分數"][0].click().run()
+    assert not at.exception and any(m.label == "正確率 accuracy" for m in at.metric)
     [b for b in at.button if b.label == "比較管制圖"][0].click().run()
     assert not at.exception and len(at.dataframe) >= 1
     at.sidebar.radio[0].set_value("SPC").run()

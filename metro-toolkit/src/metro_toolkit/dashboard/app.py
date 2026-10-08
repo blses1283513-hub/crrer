@@ -52,6 +52,14 @@ from metro_toolkit.ingest import (  # noqa: E402
 from metro_toolkit.ingest.mapping import LONG_ONLY  # noqa: E402
 from metro_toolkit.schema import validate  # noqa: E402
 from metro_toolkit.wafer import interpolate_map, radial_profile, uniformity_metrics, zernike_decompose  # noqa: E402
+from metro_toolkit.wafer.patterns import (  # noqa: E402
+    PATTERN_TEXT,
+    GridGeometry,
+    PatternClassifier,
+    evaluate,
+    fail_vector,
+    feature_table,
+)
 
 st.set_page_config(page_title="metro-toolkit", layout="wide")
 
@@ -506,16 +514,17 @@ def compare_view(summ_df: pd.DataFrame, delays: pd.DataFrame):
     """Speed-vs-false-alarm scatter, per-event delay bars and the summary table."""
     c1, c2 = st.columns(2)
     fig = go.Figure()
-    for _, r in summ_df.iterrows():
+    for _, r in summ_df.iterrows():  # points can sit close together: legend + hover instead of direct labels
         delay = r["median_delay_wafers"]
-        fig.add_scatter(x=[r["false_alarm_rate_pct"]], y=[delay], mode="markers+text", name=r["setup"],
-                        text=[r["setup"]], textposition="top center", textfont=dict(color=viz.INK_2, size=11),
+        fig.add_scatter(x=[r["false_alarm_rate_pct"]], y=[delay], mode="markers", name=r["setup"],
                         marker=dict(size=12, color=SETUP_COLOR.get(r["setup"], viz.SERIES[0]),
                                     line=dict(color=viz.SURFACE, width=2)),
                         hovertemplate=f"{r['setup']}<br>誤警報 %{{x:.1f}}%<br>中位延遲 %{{y}} 片"
                                       f"<br>抓到 {r['detected']}/{r['observable']}<extra></extra>")
-    fig = layout(fig, "速度 vs 誤警報（越靠左下越好）", "誤警報率 (%)", "中位延遲（片）", 360)
-    fig.update_layout(showlegend=False)
+    fig = layout(fig, "速度 vs 誤警報（越靠左下越好）", "誤警報率 (%)", "中位延遲（片）", 480)
+    fig.update_layout(margin=dict(t=120))
+    fig.update_xaxes(rangemode="tozero")
+    fig.update_yaxes(rangemode="tozero")
     c1.plotly_chart(fig, width="stretch")
 
     d = delays.copy()
@@ -523,12 +532,15 @@ def compare_view(summ_df: pd.DataFrame, delays: pd.DataFrame):
     fig = go.Figure()
     for setup in summ_df["setup"]:
         sub = d[d["setup"] == setup]
-        fig.add_bar(y=sub["event"], x=sub["delay_wafers"], orientation="h", name=setup,
+        label = [("未抓到" if st_ == "missed" else "量測不到") if pd.isna(dl) else f"{dl:.0f}"
+                 for dl, st_ in zip(sub["delay_wafers"], sub["status"])]
+        fig.add_bar(y=sub["event"], x=sub["delay_wafers"].fillna(0), orientation="h", name=setup,
+                    text=label, textposition="outside", textfont=dict(color=viz.INK_2, size=10), cliponaxis=False,
                     marker_color=SETUP_COLOR.get(setup, viz.SERIES[0]), customdata=sub["status"],
                     hovertemplate=f"{setup}<br>%{{y}}: 延遲 %{{x}} 片<br>%{{customdata}}<extra></extra>")
-    fig = layout(fig, "每個事件的偵測延遲（沒有長條 = 沒抓到或量測不到）", "延遲（片）", "", 360)
-    fig.update_layout(barmode="group", bargap=0.25, bargroupgap=0.08,
-                      legend=dict(orientation="h", y=-0.2, x=0))
+    fig = layout(fig, "每個事件的偵測延遲（0 = 第一片受影響的量測晶圓就抓到）", "延遲（片）", "", 480)
+    fig.update_layout(margin=dict(t=120))
+    fig.update_layout(barmode="group", bargap=0.2, bargroupgap=0.05, uniformtext=dict(minsize=10, mode="show"))
     fig.update_yaxes(autorange="reversed")
     c2.plotly_chart(fig, width="stretch")
 
@@ -542,6 +554,86 @@ def compare_view(summ_df: pd.DataFrame, delays: pd.DataFrame):
         quiet = summ_df.sort_values("false_alarm_rate_pct").iloc[0]
         st.caption(f"最快：**{best['setup']}**；最安靜：**{quiet['setup']}**。實務上要在「早一點發現」與"
                    "「少一點誤停機」之間取捨；小而持續的漂移通常是 EWMA / CUSUM 的強項，大的突跳 I-MR 就夠快。")
+
+
+@st.cache_resource(show_spinner="訓練圖樣分類器（用另一組模擬晶圓）…")
+def trained_classifier(seed: int):
+    """Train on a separate pattern-rich simulation, so the scored dataset is never seen in training."""
+    train = simulate_fab(load_fab_config(), "pattern_zoo", 40, seed + 1000)
+    geo = GridGeometry.from_grid(train.grid, train.config["die_mm"])
+    feats = feature_table(train.dies, geo)
+    labels = train.wafers.set_index("wafer_id").loc[feats["wafer_id"], "defect_pattern"].to_numpy()
+    return PatternClassifier().fit(feats, labels), geo
+
+
+def pattern_section(truth: dict, seed: int, key: str):
+    st.subheader("晶圓圖樣分類 Wafer-map patterns")
+    st.caption("只看「缺陷」造成的失效晶粒，算出幾個看得懂的特徵（徑向分布、直線、群聚），再用另一組模擬晶圓訓練的"
+               "最近中心分類器判斷圖樣，最後和答案比對。")
+    min_def = st.slider("最少缺陷晶粒數（少於這個數就判為 random）", 0, 40, 16, key="pat_min",
+                        help="缺陷很少的晶圓，任何形狀都可能是巧合。調高 → 少誤判、但小圖樣會漏掉。")
+    run = st.button("分類並打分數", key="pat_run")
+    if not run and st.session_state.get("pat_result", (None,))[0] != key:
+        return
+    clf, geo = trained_classifier(seed)
+    if len(geo.x) != len(truth["grid"]["x"]):
+        st.warning("這份資料的晶粒尺寸和訓練資料不同，無法分類。")
+        return
+    clf.min_defects = min_def
+    if run or st.session_state.get("pat_result", (None,))[0] != key:
+        feats = feature_table(truth["dies"], geo)
+        pred = clf.predict(feats)
+        conf = clf.confidence(feats)
+        st.session_state["pat_result"] = (key, feats, pred, conf)
+    _, feats, _, conf = st.session_state["pat_result"]
+    pred = clf.predict(feats)  # cheap; follows the slider without recomputing features
+    true = truth["wafers"].set_index("wafer_id").loc[feats["wafer_id"], "defect_pattern"].to_numpy()
+    ev = evaluate(true, pred)
+
+    k = st.columns(3)
+    k[0].metric("正確率 accuracy", f"{100 * ev['accuracy']:.1f} %")
+    k[1].metric("有圖樣的晶圓", f"{int((true != 'random').sum())} / {len(true)}")
+    nonrandom = true != "random"
+    k[2].metric("有圖樣晶圓的召回", f"{100 * (pred[nonrandom] == true[nonrandom]).mean():.0f} %" if nonrandom.any() else "—",
+                help="真的有空間圖樣的晶圓，有多少被分到正確圖樣")
+
+    c1, c2 = st.columns([3, 2])
+    cm = ev["confusion"]
+    pct = cm.div(cm.sum(axis=1).replace(0, 1), axis=0) * 100
+    fig = go.Figure(go.Heatmap(z=pct.to_numpy(), x=list(cm.columns), y=list(cm.index), zmin=0, zmax=100,
+                               colorscale=viz.PLOTLY_SEQ,
+                               customdata=cm.to_numpy(), text=cm.to_numpy(), texttemplate="%{text}",
+                               xgap=2, ygap=2, colorbar=dict(title="% of row"),
+                               hovertemplate="真實 %{y} → 判為 %{x}<br>%{customdata} 片（%{z:.0f}% of row）<extra></extra>"))
+    fig = layout(fig, "混淆矩陣（列 = 真實，欄 = 判斷；數字 = 晶圓數）", "判斷 predicted", "真實 truth", 380)
+    fig.update_yaxes(autorange="reversed")
+    c1.plotly_chart(fig, width="stretch")
+    c2.dataframe(ev["per_class"].assign(recall=lambda d: (100 * d.recall).round(0),
+                                        precision=lambda d: (100 * d.precision).round(0))
+                 .rename(columns={"recall": "召回 %", "precision": "精確 %"}), hide_index=True)
+    c2.markdown("\n".join(f"- **{p}**：{t}" for p, t in PATTERN_TEXT.items()))
+
+    wrong = feats["wafer_id"][pred != true].tolist()
+    options = wrong or feats["wafer_id"].tolist()
+    wid = st.selectbox("看晶圓的缺陷圖（判錯的在清單中）" if wrong else "看晶圓的缺陷圖", options, key="pat_wafer")
+    i = int(np.flatnonzero(feats["wafer_id"].to_numpy() == wid)[0])
+    m = truth["dies"].set_index("wafer_id").loc[wid, "map"]
+    f = fail_vector(m).astype(bool)
+    fig = go.Figure()
+    fig.add_scatter(x=geo.x[~f], y=geo.y[~f], mode="markers", name="其他晶粒", hoverinfo="skip",
+                    marker=dict(symbol="square", size=9, color=viz.GRID))
+    fig.add_scatter(x=geo.x[f], y=geo.y[f], mode="markers", name=f"缺陷失效 ({f.sum()})",
+                    marker=dict(symbol="square", size=9, color=CAUSE_COLOR["D"]),
+                    hovertemplate="defect<br>x %{x:.0f} mm, y %{y:.0f} mm<extra></extra>")
+    r = geo.r_eff + 3
+    fig.add_shape(type="circle", x0=-r, y0=-r, x1=r, y1=r, line=dict(color=viz.AXIS))
+    fig = layout(fig, f"{wid}  真實：{true[i]}  · 判斷：{pred[i]}  · 信心 {conf[i]:.2f}", "x (mm)", "y (mm)", 480)
+    fig.update_yaxes(scaleanchor="x", scaleratio=1)
+    c1, c2 = st.columns([3, 2])
+    c1.plotly_chart(fig, width="stretch")
+    c2.dataframe(feats.iloc[[i]].drop(columns="wafer_id").T.rename(columns={feats.index[i]: "value"}).round(3))
+    c2.caption("line_score 高 → 刮痕；peak_score 高、neighbour_ratio 高 → 群聚；ring_4 / edge_center 高 → 邊緣環；"
+               "ring_0 高 → 中心。缺陷很少的晶圓特徵很吵，容易被誤判。")
 
 
 def page_fab():
@@ -609,6 +701,8 @@ def page_fab():
     fig = layout(fig, f"{wid}  良率 {100 * row['yield']:.1f}%  · 缺陷圖樣：{row['defect_pattern']}", "x (mm)", "y (mm)", 520)
     fig.update_yaxes(scaleanchor="x", scaleratio=1)
     st.plotly_chart(fig, width="stretch")
+
+    pattern_section(truth, int(seed), pick)
 
     st.subheader("偵測打分數 Score my detection")
     st.caption("用你選的管制圖設定跑一次 SPC（每個參數、每個 chamber 分開），再和答案比對。")

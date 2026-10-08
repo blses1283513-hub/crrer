@@ -117,7 +117,16 @@ def simulate_fab(cfg: dict | None = None, scenario: str = "mixed", n_lots: int |
     cfg = dict(cfg or load_fab_config())
     if scenario not in cfg["scenarios"]:
         raise ValueError(f"unknown scenario '{scenario}'; choose from {list(cfg['scenarios'])}")
-    events = [dict(e, id=f"E{i + 1}") for i, e in enumerate(cfg["scenarios"][scenario] or [])]
+    scen = cfg["scenarios"][scenario] or []
+    if isinstance(scen, dict):  # {events: [...], pattern_mix: {...}} — a scenario may also change the defect mix
+        mix = scen.get("pattern_mix")
+        scen = scen.get("events") or []
+    else:
+        mix = None
+    pattern_mix = mix or cfg["defects"].get("pattern_mix", {"scratch": 0.02, "cluster": 0.03})
+    if sum(pattern_mix.values()) > 1:
+        raise ValueError("pattern_mix probabilities must add up to at most 1 (the rest is 'random')")
+    events = [dict(e, id=f"E{i + 1}") for i, e in enumerate(scen)]
     rng = np.random.default_rng(cfg["seed"] if seed is None else seed)
     n_lots = int(n_lots or cfg["n_lots"])
     n_wafers = int(cfg["wafers_per_lot"])
@@ -249,11 +258,12 @@ def simulate_fab(cfg: dict | None = None, scenario: str = "mixed", n_lots: int |
             lam = np.full(dx.size, d_w * die_area_cm2)
             lam_cf = None
             pattern = "random"
-            u = rng.random()
-            if u < 0.02:
-                pattern = "scratch"
-            elif u < 0.05:
-                pattern = "cluster"
+            u, edge = rng.random(), 0.0
+            for name, prob in pattern_mix.items():
+                edge += prob
+                if u < edge:
+                    pattern = name
+                    break
             if pattern != "random":
                 lam = lam + 3.0 * d_w * die_area_cm2 * defect_weight(pattern, dx, dy, r_eff, rng)
             insp = step_by_name.get(dcfg.get("inspection_step", ""), steps[0])
