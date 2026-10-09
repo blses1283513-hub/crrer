@@ -271,7 +271,10 @@ def _import_panel() -> None:
         options = [synthetic] + names
         choice = st.selectbox("資料集", options, index=options.index(active) if active in options else 0,
                               help="載入後，SemiYield 的 SPC Dashboard 與 Yield Prediction 會使用這份資料。")
-        if st.button("載入這份資料" if choice != synthetic else "改回合成資料"):
+        if st.button("載入這份資料" if choice != synthetic else "改回合成資料",
+                     help=bilingual("載入選定的匯入資料給 SemiYield 使用；選「合成資料」則改回 SemiYield 自己產生的資料。",
+                                    "Load the selected imported dataset into SemiYield; choose the synthetic option to go "
+                                    "back to SemiYield's own generated data.")):
             if choice == synthetic:
                 st.session_state.fab_df = None
                 for k in ("metro_import", "metro_import_id", "metro_import_specs"):

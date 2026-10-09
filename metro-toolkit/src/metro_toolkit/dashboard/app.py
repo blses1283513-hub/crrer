@@ -62,11 +62,18 @@ from metro_toolkit.dashboard.figures import (  # noqa: E402
     CAUSE_COLOR,
     CAUSE_NAME,
     adders_figure,
+    area_hover,
+    attempt_hover,
     bin_corr_figure,
     bland_altman_figure,
+    card_template,
+    confusion_hover,
     defect_counts_figure,
+    delay_hover,
+    die_hover,
     die_map_figure,
     doe_contour_figure,
+    driver_hover,
     fit_figures,
     grr_figure,
     layout,
@@ -75,9 +82,11 @@ from metro_toolkit.dashboard.figures import (  # noqa: E402
     quantity,
     radial_figure,
     review_pareto_figure,
+    rolling_hover,
     sensitivity_figure,
     spc_figure,
     tn_figure,
+    tradeoff_hover,
     unit_of,
     wafer_map_figure,
     yield_trend_figure,
@@ -739,8 +748,7 @@ def compare_view(summ_df: pd.DataFrame, delays: pd.DataFrame):
         fig.add_scatter(x=[r["false_alarm_rate_pct"]], y=[delay], mode="markers", name=r["setup"],
                         marker=dict(size=12, color=SETUP_COLOR.get(r["setup"], viz.SERIES[0]),
                                     line=dict(color=viz.SURFACE, width=2)),
-                        hovertemplate=f"{r['setup']}<br>誤警報 false alarms %{{x:.1f}}%<br>中位延遲 median delay %{{y}} 片"
-                                      f"<br>抓到 detected {r['detected']}/{r['observable']}<extra></extra>")
+                        customdata=[tradeoff_hover(r, summ_df)], hovertemplate=card_template())
     fig = layout(fig, "速度 vs 誤警報（越靠左下越好）", "誤警報率 false-alarm rate (%)", "中位延遲 median delay（片）", 480)
     fig.update_layout(margin=dict(t=120))
     fig.update_xaxes(rangemode="tozero")
@@ -757,8 +765,9 @@ def compare_view(summ_df: pd.DataFrame, delays: pd.DataFrame):
                  for dl, st_ in zip(sub["delay_wafers"], sub["status"])]
         fig.add_bar(y=sub["event"], x=sub["delay_wafers"].fillna(0), orientation="h", name=setup,
                     text=label, textposition="outside", textfont=dict(color=viz.INK_2, size=10), cliponaxis=False,
-                    marker_color=SETUP_COLOR.get(setup, viz.SERIES[0]), customdata=sub["status"],
-                    hovertemplate=f"{setup}<br>%{{y}}: 延遲 delay %{{x}} 片<br>%{{customdata}}<extra></extra>")
+                    marker_color=SETUP_COLOR.get(setup, viz.SERIES[0]),
+                    customdata=[delay_hover(setup, ev_, dl, st_) for ev_, dl, st_ in zip(sub["event"], sub["delay_wafers"], sub["status"])],
+                    hovertemplate=card_template())
     fig = layout(fig, "每個事件的偵測延遲（0 = 第一片受影響的量測晶圓就抓到）", "延遲 delay（片 measured wafers）", "", 480)
     fig.update_layout(margin=dict(t=120))
     fig.update_layout(barmode="group", bargap=0.2, bargroupgap=0.05, uniformtext=dict(minsize=10, mode="show"))
@@ -824,9 +833,8 @@ def pattern_section(truth: dict, seed: int, key: str):
     fig = go.Figure(go.Heatmap(z=pct.to_numpy(), x=list(cm.columns), y=list(cm.index), zmin=0, zmax=100,
                                colorscale=viz.PLOTLY_SEQ,
                                customdata=cm.to_numpy(), text=cm.to_numpy(), texttemplate="%{text}",
-                               xgap=2, ygap=2, colorbar=dict(title="% of row"),
-                               hovertemplate="真實 truth %{y} → 判為 predicted %{x}<br>%{customdata} 片 wafers"
-                                             "（%{z:.0f}% of row）<extra></extra>"))
+                               xgap=2, ygap=2, colorbar=dict(title="% of row")))
+    fig.update_traces(customdata=confusion_hover(cm, pct), hovertemplate=card_template())
     fig = layout(fig, "混淆矩陣（列 = 真實，欄 = 判斷；數字 = 晶圓數）", "判斷 predicted", "真實 truth", 380)
     fig.update_yaxes(autorange="reversed")
     c1.plotly_chart(fig, width="stretch")
@@ -847,7 +855,7 @@ def pattern_section(truth: dict, seed: int, key: str):
                     marker=dict(symbol="square", size=9, color=viz.GRID))
     fig.add_scatter(x=geo.x[f], y=geo.y[f], mode="markers", name=f"defect fails 缺陷失效 ({f.sum()})",
                     marker=dict(symbol="square", size=9, color=CAUSE_COLOR["D"]),
-                    hovertemplate="defect fail 缺陷失效<br>x %{x:.0f} mm, y %{y:.0f} mm<extra></extra>")
+                    customdata=die_hover(f, "D", geo.x[f], geo.y[f], geo.r_eff), hovertemplate=card_template())
     r = geo.r_eff + 3
     fig.add_shape(type="circle", x0=-r, y0=-r, x1=r, y1=r, line=dict(color=viz.AXIS))
     legend_line(fig, "wafer edge 晶圓邊緣", viz.AXIS)
@@ -971,8 +979,7 @@ def page_fab():
         st.dataframe(ev.rename(columns={"yield_impact": "yield_impact_%"}), hide_index=True)
         drv = truth["drivers"]
         fig = go.Figure(go.Bar(x=drv["yield_loss_pct"], y=drv["cause"], orientation="h", marker_color=viz.SERIES[0],
-                               name="true yield loss 真實良率損失",
-                               hovertemplate="%{y}: 平均損失 mean loss %{x:.2f} pp<extra></extra>"))
+                               name="true yield loss 真實良率損失", customdata=driver_hover(drv), hovertemplate=card_template()))
         fig.update_yaxes(autorange="reversed")
         st.plotly_chart(layout(fig, "真正的良率損失來源（拿來和 SHAP / 相關性排名比對）", "平均良率損失 mean yield loss (pp)", "", 300),
                         width="stretch")
@@ -1657,10 +1664,10 @@ def report_cross_study(hist, dname):
     fig = go.Figure()
     fig.add_scatter(x=h.index + 1, y=h["score"], mode="markers", name="每次分數 Score per attempt",
                     marker=dict(size=9, color=viz.SERIES[0], line=dict(color=viz.SURFACE, width=2)),
-                    customdata=h[["case"]], hovertemplate="#%{x} · %{customdata[0]}<br>%{y:.0f} / 100<extra></extra>")
+                    customdata=attempt_hover(h), hovertemplate=card_template())
     fig.add_scatter(x=h.index + 1, y=h["score"].rolling(5, min_periods=1).mean(), mode="lines",
                     name="最近 5 次平均 Rolling mean (5)", line=dict(color=viz.SERIES[1], width=2),
-                    hovertemplate="#%{x} · %{y:.0f}<extra></extra>")
+                    customdata=rolling_hover(h), hovertemplate=card_template())
     layout(fig, "分數趨勢 Score over attempts", "第幾次 Attempt", "分數 Score", height=320)
     fig.update_yaxes(range=[0, 105])
     fig.update_layout(legend=dict(orientation="h", y=1.02, yanchor="bottom", x=0))
@@ -1671,8 +1678,8 @@ def report_cross_study(hist, dname):
     dom = dom[dom["attempts"] > 0].sort_values("mean")
     fig2 = go.Figure(go.Bar(x=dom["mean"], y=dom["domain"].map(lambda d: lib["domains"][d]["en"]), orientation="h",
                             marker=dict(color=viz.SERIES[0], cornerradius=4), text=dom["mean"].map("{:.0f}".format),
-                            textposition="outside", customdata=dom[["attempts"]],
-                            hovertemplate="%{y}: %{x:.0f} (%{customdata[0]} attempts)<extra></extra>"))
+                            textposition="outside", customdata=area_hover(dom, {d: lib["domains"][d]["en"] for d in dom["domain"]}),
+                            hovertemplate=card_template()))
     layout(fig2, "各範圍平均分數 Mean score by area", "平均分數 Mean score", "", height=320)
     fig2.update_xaxes(range=[0, 110])
     c2.plotly_chart(fig2, use_container_width=True, key="rep_areas")

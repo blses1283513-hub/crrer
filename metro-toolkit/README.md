@@ -100,16 +100,22 @@ Every control, KPI tile and table column has a "?" tooltip, and every chart has:
 * **A status line read from the data**: 🟢 normal (record it), 🟡 watch (record and track) or 🔴 act (follow the
   OCAP), with the reason and the real numbers. For example, "RTP02-B went OOC within the last 5 points (WE1, WE2)" or
   "lowest Cpk = 0.87 < 1.0".
-* **Hover any SPC point to see why it is OOC (or why it is not)**: its value and unit, its distance from the
-  centre line in σ, the limits, and the rule that fired with the numbers behind it (WE1 one point beyond 3σ; WE2 two
-  of three beyond 2σ; WE3 four of five beyond 1σ; WE4 eight in a row on one side, each with the z values of the points
-  used; the EWMA limit; the CUSUM decision interval), in 繁中 and English.
-* **A "📖 怎麼讀這張圖 · How to read this chart" panel** with four tabs:
-  1. legend and axes;
-  2. what it shows, good vs bad patterns and what this data says;
-  3. the next step for each status, plus a one-line e-log / SPC-comment record to copy;
-  4. a ready-to-send message for each role: RDA (defect / failure analysis), PE, EE, PIE / YE, and
-     Manager / QE.
+* **Hover any point on any chart to see what it is and what it means**, in 繁中 and English: a tooltip with the
+  numbers, a verdict (🟢 normal, 🟡 watch, 🔴 act, or ℹ️ for a plain fact), the rule and the numbers behind the verdict,
+  and the next step. The verdicts use the same thresholds as the chart's own status line, so the two always agree.
+  * SPC: why a point is OOC or not, with the rule that fired (WE1 beyond 3σ, WE2 two of three beyond 2σ, WE3 four of
+    five beyond 1σ, WE4 eight in a row on one side, the EWMA limit, the CUSUM decision interval) and the z values it used.
+  * Wafer map, Zernike, radial profile: a site's deviation and whether it is a single-site outlier or out of spec; what a
+    Zernike term means and whether it dominates; edge roll-off of the outer ring. Film fits: the residual against the
+    typical misfit.
+  * MSA and studies: each GR&R component against the 10% / 30% guides; each Bland-Altman site against the matching spec;
+    precision against the 0.05 nm target; σ(A) against the limit where n can no longer be floated.
+  * DOE: each term's |t| and p against the significance threshold; what a contour value, a design run and the suggested
+    recipe are.
+  * Fab simulator and defects: a lot against the yield alert line; a die's failure cause and device window; trade-off,
+    detection delay, confusion-matrix cells and drivers; inspection counts against the maxout, the nuisance share,
+    previous-layer vs this-layer adders, bin loss vs inline metrology.
+  * Study log: each attempt and each area against the 85 / 50 score bands that 🎯 weak-spot mode uses.
 
 The sidebar switch **說明語言 Guide language** selects 繁中 + English, 繁中 or English (your settings are kept
 when you switch). The **Guide 參數與圖表說明** page lists and searches all of it. SemiYield gets the same panels under
