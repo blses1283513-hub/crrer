@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <title>Firefly III 記帳</title>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1b3466"/>
+      <stop offset="1" stop-color="#0a1530"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#ff9a2e" stop-opacity=".85"/>
+      <stop offset=".45" stop-color="#ff8a1f" stop-opacity=".32"/>
+      <stop offset="1" stop-color="#ff7a1a" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="lamp" cx="42%" cy="35%" r="75%">
+      <stop offset="0" stop-color="#fff1c2"/>
+      <stop offset=".35" stop-color="#ffc247"/>
+      <stop offset="1" stop-color="#ff7a1a"/>
+    </radialGradient>
+    <clipPath id="tile"><rect width="256" height="256" rx="56"/></clipPath>
+  </defs>
+  <g clip-path="url(#tile)">
+    <rect width="256" height="256" fill="url(#sky)"/>
+    <!-- 夜空小星點 -->
+    <g fill="#bcd2ff" opacity=".7">
+      <circle cx="40" cy="48" r="2.4"/><circle cx="212" cy="64" r="2"/>
+      <circle cx="28" cy="170" r="1.8"/><circle cx="226" cy="150" r="2.4"/>
+      <circle cx="196" cy="214" r="1.8"/>
+    </g>
+    <!-- 光暈 -->
+    <circle cx="128" cy="160" r="112" fill="url(#glow)"/>
+    <!-- 翅膀 -->
+    <g fill="#d8e6ff" fill-opacity=".42" stroke="#9db8ee" stroke-opacity=".7" stroke-width="2">
+      <ellipse cx="82" cy="104" rx="52" ry="21" transform="rotate(-32 82 104)"/>
+      <ellipse cx="174" cy="104" rx="52" ry="21" transform="rotate(32 174 104)"/>
+    </g>
+    <!-- 觸角 -->
+    <g fill="none" stroke="#7f9ccf" stroke-width="4" stroke-linecap="round">
+      <path d="M118 64 Q108 46 94 40"/>
+      <path d="M138 64 Q148 46 162 40"/>
+    </g>
+    <!-- 頭與胸 -->
+    <circle cx="128" cy="76" r="17" fill="#3a5a96"/>
+    <ellipse cx="128" cy="108" rx="24" ry="22" fill="#2c4780"/>
+    <!-- 發光的腹部（同時像一枚錢幣） -->
+    <ellipse cx="128" cy="168" rx="42" ry="50" fill="url(#lamp)"/>
+    <ellipse cx="128" cy="168" rx="29" ry="37" fill="none" stroke="#fff4cf" stroke-opacity=".75" stroke-width="3.5"/>
+  </g>
+</svg>

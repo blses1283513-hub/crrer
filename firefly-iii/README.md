@@ -16,6 +16,8 @@ purpose: Firefly III 個人記帳系統的入口：安裝、匯入、每月流�
 | `.env.example` / `.db.env.example` / `.importer.env.example` | 設定範本（複製後填密碼） |
 | `importer/玉山-存款.json`、`importer/玉山-信用卡.json` | 玉山銀行 CSV 匯入設定 |
 | `scripts/check.ps1` | Windows 安裝檢查（唯讀） |
+| `scripts/install-app.ps1` | 在 Windows 桌面建立「記帳」App 捷徑（螢火蟲圖示） |
+| `icon/` | App 圖示：`firefly-app.svg` 原稿、各尺寸 PNG、Windows 用 `firefly-app.ico` |
 | `scripts/backup.sh` | 備份資料庫與附件（Windows 用 Git Bash 或 WSL 執行） |
 
 > 🔒 `.gitignore` 已排除 `.env`、`.db.env`、`.importer.env`、`*.csv`、`*.xls(x)` 與 `backups/`。**真正的密碼與銀行對帳單永遠不要提交到 Git。**
@@ -115,6 +117,21 @@ New-NetFirewallRule -DisplayName "Firefly III" -Direction Inbound -Protocol TCP 
 > ⚠️ 不要使用 Tailscale Funnel，也不要在路由器做埠轉發：那會把你的財務資料公開到網際網路上。
 > `APP_URL` 只能設一個。用另一個網址開啟時，登入通常仍可用，但部分連結會導回 `APP_URL`；若發生，統一改用一種網址即可。
 > 手機要記帳時需先開啟 Tailscale。
+
+## 2.7 做成電腦上的 App（Windows）
+
+目的：雙擊桌面的「記帳」圖示，就開啟獨立視窗，沒有網址列和分頁，像一般 App。圖示是自己設計的深藍底、橘色發光的螢火蟲（`icon/firefly-app.svg`）。
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\install-app.ps1
+```
+這個腳本只做兩件事：複製圖示到 `%LOCALAPPDATA%\FireflyIII`，並在桌面建立一個 `記帳.lnk` 捷徑（使用 Edge，沒有 Edge 時用 Chrome，以 `--app` 模式開啟）。它會讀取 `.env` 的 `APP_URL` 當網址，也可以手動指定：`-Url http://100.x.y.z:8080`。要移除時，刪除桌面捷徑和 `%LOCALAPPDATA%\FireflyIII` 即可。
+
+- 捷徑可以按右鍵「釘選到工作列」或「釘選到開始」。
+- 使用前需要 Docker Desktop 正在執行，否則頁面打不開。
+- 為什麼不用瀏覽器內建的「安裝成應用程式」？那種方式會直接使用 Firefly III 自己的圖示，無法換成自訂圖示。
+- 桌面捷徑會顯示自訂圖示；視窗開啟後，工作列上的圖示可能仍顯示瀏覽器或網站的圖示，這是瀏覽器的行為。
+- Android 手機的主畫面圖示無法更換，會維持 Firefly III 的預設圖示。
 
 ## 3. 匯入玉山銀行 CSV
 

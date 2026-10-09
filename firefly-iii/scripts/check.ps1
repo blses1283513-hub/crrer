@@ -1,4 +1,4 @@
-# Firefly III 安裝檢查（唯讀，不會修改任何東西）
+﻿# Firefly III 安裝檢查（唯讀，不會修改任何東西）
 # 在 firefly-iii 資料夾開啟 PowerShell 後執行：
 #   powershell -ExecutionPolicy Bypass -File scripts\check.ps1
 $ErrorActionPreference = 'Continue'
