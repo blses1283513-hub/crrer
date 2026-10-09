@@ -1,4 +1,5 @@
 accuracy@<b>accuracy</b>　<span style="color:#1c5cab">準確度</span><br>量測值與真值的接近程度。<br><i>Good precision does not guarantee accuracy if the model is biased.</i><br>如果模型有偏差，精密度好並不保證準確度好。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
+adder@<b>adder</b>　<span style="color:#1c5cab">新增缺陷（adder）</span><br>同一片晶圓本層檢查數量減去前層數量＝這一層新增的缺陷；用來分辨進料（incoming）還是本層造成。<br><i>The split wafers had twice the adders of the baseline, so the new condition adds defects.</i><br>split 晶圓的新增缺陷是 baseline 的兩倍，所以新條件本身會增加缺陷。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 adjusted R-squared@<b>adjusted R-squared</b>　<span style="color:#1c5cab">調整後 R²</span><br>依模型參數數量懲罰的 R²；加入沒用的項會讓它下降。<br><i>Adjusted R-squared fell when the extra terms added nothing.</i><br>多加的項沒有幫助時，調整後 R² 會下降。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield</span>
 ALD window@<b>ALD window</b>　<span style="color:#1c5cab">ALD 溫度視窗</span><br>每循環成長量幾乎不隨溫度變化的溫度範圍；太低會凝結、太高前驅物會分解。<br><i>Outside the ALD window, growth per cycle and non-uniformity both rise.</i><br>在 ALD 溫度視窗外，每循環成長量和不均勻度都會上升。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 aliasing@<b>aliasing</b>　<span style="color:#1c5cab">混淆（別名）</span><br>部分因子設計中，兩個效應的欄位完全相同，無法分開估計。<br><i>With D = ABC, the AB interaction is aliased with CD.</i><br>當 D = ABC 時，AB 交互作用與 CD 混淆。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
@@ -17,6 +18,7 @@ bowl@<b>bowl</b>　<span style="color:#1c5cab">碗形（中心厚邊緣薄或反
 Box-Behnken design@<b>Box-Behnken design</b>　<span style="color:#1c5cab">Box-Behnken 設計</span><br>每次只把兩個因子放在極端值，不跑角落點；可估計二次項，適合角落不安全的製程。<br><i>A Box-Behnken design avoids running every factor at its extreme at once.</i><br>Box-Behnken 設計避免所有因子同時處於極端值。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 Brewster angle@<b>Brewster angle</b>　<span style="color:#1c5cab">布魯斯特角</span><br>p 偏振反射率為零的入射角，tanθ = n2/n1。<br><i>On a bare glass substrate Psi drops to zero at the Brewster angle.</i><br>在裸玻璃基板上，Ψ 在布魯斯特角降為零。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 capacitor dielectric@<b>capacitor dielectric</b>　<span style="color:#1c5cab">電容介電層</span><br>DRAM 儲存電容中的絕緣層，如 ZrO2/Al2O3/ZrO2（ZAZ）。<br><i>The ZAZ capacitor dielectric is only about 5 nm thick in total.</i><br>ZAZ 電容介電層總厚度只有約 5 nm。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
+capture rate@<b>capture rate</b>　<span style="color:#1c5cab">捕捉率（capture rate）</span><br>失效晶粒中帶有某一站 inline 缺陷的比例；&lt; 30% 代表這站看不到這種 killer，它的 SPC 正常也證明不了什麼。<br><i>The monitor step&#x27;s capture rate was only 18 %, so it could not see the killer defects.</i><br>監控站的捕捉率只有 18%，所以它看不到這些致命缺陷。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 Cauchy model@<b>Cauchy model</b>　<span style="color:#1c5cab">柯西模型</span><br>n = A + B/λ² + C/λ⁴，適用於透明介電質。<br><i>The Cauchy model is a good choice for transparent ALD oxides.</i><br>柯西模型很適合用於透明的 ALD 氧化物。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 center point@<b>center point</b>　<span style="color:#1c5cab">中心點</span><br>因子皆在中間水準的實驗，用於檢查曲率與估計誤差。<br><i>Center points reveal curvature that a two-level design would miss.</i><br>中心點能發現二水準設計會漏掉的曲率。<br><span style="color:#898781;font-size:smaller">sem-toolkit, semiyield, metro-toolkit</span>
 center-to-edge@<b>center-to-edge</b>　<span style="color:#1c5cab">中心到邊緣差</span><br>邊緣平均值減中心值，用來描述碗形或圓頂形分布。<br><i>A negative center-to-edge value means the edge is thinner.</i><br>中心到邊緣差為負值代表邊緣較薄。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
@@ -26,6 +28,7 @@ chamber matching@<b>chamber matching</b>　<span style="color:#1c5cab">腔體匹
 change control@<b>change control</b>　<span style="color:#1c5cab">變更管理（change control）</span><br>正式變更 recipe／規格前的審核流程：資料、風險評估、核准與紀錄。<br><i>The new ALD recipe went through change control before release.</i><br>新的 ALD 配方在發行前走了變更管理流程。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 commonality analysis@<b>commonality analysis</b>　<span style="color:#1c5cab">共通性分析</span><br>找出低良率晶圓共同經過的機台或腔體。<br><i>Commonality analysis points to the chamber shared by most failing wafers.</i><br>共通性分析指向大多數失效晶圓共同經過的腔體。<br><span style="color:#898781;font-size:smaller">waferlens, metro-toolkit</span>
 confirmation run@<b>confirmation run</b>　<span style="color:#1c5cab">確認實驗</span><br>在模型建議的配方實際再跑幾片，確認預測是否成立，才發行配方。<br><i>Three confirmation runs landed within tolerance, so the recipe was released.</i><br>三片確認實驗都落在容許範圍內，所以發行了配方。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
+confounding@<b>confounding</b>　<span style="color:#1c5cab">混淆（confounding）</span><br>兩個因素同時改變、分不出差異是哪個造成；例如 split 晶圓同時跑了另一個實驗。<br><i>The off-focus FEM wafers all landed in the split group, so the result was confounded.</i><br>偏焦的 FEM 晶圓全部落在 split 組，所以結果被混淆了。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield</span>
 confusion matrix@<b>confusion matrix</b>　<span style="color:#1c5cab">混淆矩陣</span><br>列出實際類別與預測類別對照的表格。<br><i>The confusion matrix shows Loc and Edge-Loc are often confused.</i><br>混淆矩陣顯示 Loc 與 Edge-Loc 常被混淆。<br><span style="color:#898781;font-size:smaller">sem-toolkit, metro-toolkit</span>
 containment@<b>containment</b>　<span style="color:#1c5cab">圍堵（containment）</span><br>找到根因之前先限制影響範圍的動作：hold、禁用機台、加測、隔離可疑晶圓。<br><i>Containment came first: all lots from the chamber were held and re-measured.</i><br>先圍堵：該 chamber 的所有 lot 都 hold 並重測。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 contour plot@<b>contour plot</b>　<span style="color:#1c5cab">等高線圖</span><br>以等值線或色階呈現二維分布。<br><i>The contour plot uses a single blue scale for thickness.</i><br>等高線圖用單一藍色色階表示膜厚。<br><span style="color:#898781;font-size:smaller">metro-toolkit, sem-toolkit</span>
@@ -37,12 +40,16 @@ curvature@<b>curvature</b>　<span style="color:#1c5cab">彎曲（曲率）</spa
 CUSUM chart@<b>CUSUM chart</b>　<span style="color:#1c5cab">累積和管制圖（CUSUM）</span><br>累積偏離目標的量，適合偵測小偏移。<br><i>The CUSUM chart crosses the decision interval after a small sustained drift.</i><br>在小幅持續漂移之後，CUSUM 管制圖超出決策區間。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield</span>
 dashboard@<b>dashboard</b>　<span style="color:#1c5cab">儀表板</span><br>互動式網頁，集中呈現圖表與指標。<br><i>Open the dashboard with streamlit run.</i><br>用 streamlit run 開啟儀表板。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, waferlens, sem-toolkit</span>
 defect pattern@<b>defect pattern</b>　<span style="color:#1c5cab">缺陷圖樣</span><br>晶圓圖上失效晶粒的空間分布型態，如 Center、Edge-Ring、Scratch。<br><i>An edge-ring defect pattern often points to deposition edge effects.</i><br>邊緣環狀缺陷圖樣常指向沉積的邊緣效應。<br><span style="color:#898781;font-size:smaller">sem-toolkit, waferlens, metro-toolkit</span>
+defect-limited yield@<b>defect-limited yield</b>　<span style="color:#1c5cab">缺陷限制良率（DLY）</span><br>只算缺陷造成的損失後的良率（排除參數或設計因素），常作為每週 KPI 和目標比較。<br><i>Defect-limited yield fell below goal for two weeks in a row.</i><br>缺陷限制良率連續兩週低於目標。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
+defect-to-probe overlay@<b>defect-to-probe overlay</b>　<span style="color:#1c5cab">缺陷與電測疊圖</span><br>把 inline 缺陷位置疊在 probe 失效晶粒圖上，看缺陷有沒有落在失效晶粒，用來算 capture rate 與 kill ratio。<br><i>The defect-to-probe overlay showed that most failing dies carried a post-etch-back defect.</i><br>缺陷與電測疊圖顯示大部分失效晶粒上都有 etch-back 後的缺陷。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 Deming regression@<b>Deming regression</b>　<span style="color:#1c5cab">戴明迴歸</span><br>兩個變數都有量測誤差時使用的迴歸，比最小平方法無偏。<br><i>Deming regression gives an unbiased slope when both tools are noisy.</i><br>兩台機台都有雜訊時，戴明迴歸能給出無偏的斜率。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 deposition rate@<b>deposition rate</b>　<span style="color:#1c5cab">沉積速率</span><br>單位時間沉積的厚度，nm/min。<br><i>The optimal recipe reaches a deposition rate of 62 nm per minute.</i><br>最佳 recipe 達到每分鐘 62 nm 的沉積速率。<br><span style="color:#898781;font-size:smaller">semiyield, sem-toolkit, metro-toolkit</span>
 design of experiments@<b>design of experiments</b>　<span style="color:#1c5cab">實驗設計（DOE）</span><br>有系統地改變因子，以最少實驗找出因子效應。<br><i>Design of experiments links recipe parameters to thickness and uniformity.</i><br>實驗設計把 recipe 參數與膜厚、均勻性連結起來。<br><span style="color:#898781;font-size:smaller">semiyield, sem-toolkit, metro-toolkit</span>
 design resolution@<b>design resolution</b>　<span style="color:#1c5cab">設計解析度</span><br>定義關係中最短字的長度；解析度 IV 表示主效應不與二因子交互作用混淆。<br><i>A resolution IV design keeps main effects clear of two-factor interactions.</i><br>解析度 IV 的設計讓主效應不與二因子交互作用混淆。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 desirability function@<b>desirability function</b>　<span style="color:#1c5cab">滿意度函數</span><br>把多個響應合併成單一 0–1 分數，以進行多目標最佳化。<br><i>The desirability function trades deposition rate against film stress.</i><br>滿意度函數在沉積速率與薄膜應力之間取捨。<br><span style="color:#898781;font-size:smaller">sem-toolkit, metro-toolkit</span>
 detection delay@<b>detection delay</b>　<span style="color:#1c5cab">偵測延遲</span><br>異常開始後，要到第幾個樣本管制圖才發出警報；越小越好，但通常要用較多誤警報來換。<br><i>EWMA cut the detection delay for the slow drift from 44 to 4 measured wafers.</i><br>EWMA 把慢漂移的偵測延遲從 44 片量測晶圓縮短到 4 片。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
+die area@<b>die area</b>　<span style="color:#1c5cab">晶粒面積</span><br>單顆晶粒的面積（cm²）；同樣的缺陷密度下，晶粒越大，被缺陷打到的機率越高。<br><i>With a die area of 0.8 cm², a defect density of 0.1 per cm² already costs several points of yield.</i><br>晶粒面積 0.8 cm² 時，每 cm² 0.1 顆的缺陷密度就會損失好幾個百分點良率。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield</span>
+die-weighted net effect@<b>die-weighted net effect</b>　<span style="color:#1c5cab">依晶粒數加權的淨效果</span><br>把各區（中心、中間、邊緣）的良率差乘上該區晶粒比例再加總；邊緣晶粒多，邊緣的損失影響很大。<br><i>The centre gain disappeared in the die-weighted net effect because the edge holds a third of the dies.</i><br>因為邊緣佔了三分之一的晶粒，中心的增益在加權淨效果裡就消失了。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 dispersion model@<b>dispersion model</b>　<span style="color:#1c5cab">色散模型</span><br>描述 n、k 隨波長變化的數學模型。<br><i>Each material is assigned a dispersion model in films.yaml.</i><br>每一種材料都在 films.yaml 中指定一個色散模型。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 disposition@<b>disposition</b>　<span style="color:#1c5cab">判定處置（disposition）</span><br>對異常 lot／晶圓做的決定：放行、重工、報廢或繼續 hold，由 PIE／PE 與品保決定。<br><i>Integration owns the disposition of the wafers processed during the excursion.</i><br>異常期間處理的晶圓由整合工程負責判定處置。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 drift@<b>drift</b>　<span style="color:#1c5cab">漂移</span><br>隨時間緩慢變化的趨勢，如腔體老化。<br><i>Deposition rate drifts down with chamber age and resets at PM.</i><br>沉積速率隨腔體使用時間往下漂移，PM 後重置。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, waferlens</span>
@@ -52,17 +59,22 @@ edge exclusion@<b>edge exclusion</b>　<span style="color:#1c5cab">邊緣排除<
 edge ring@<b>edge ring</b>　<span style="color:#1c5cab">邊緣環（圖樣）</span><br>失效晶粒集中在晶圓最外圈的圖樣，常與邊緣製程、斜面或夾持有關。<br><i>The particle event produced an edge ring on every wafer from that chamber.</i><br>微粒事件讓那個 chamber 的每片晶圓都出現邊緣環。<br><span style="color:#898781;font-size:smaller">metro-toolkit, waferlens, sem-toolkit</span>
 edge roll-off@<b>edge roll-off</b>　<span style="color:#1c5cab">邊緣下滑</span><br>最外圈突然變薄的現象。<br><i>Edge roll-off appears only in the outermost ring of sites.</i><br>邊緣下滑只出現在最外圈的量測點。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 editable install@<b>editable install</b>　<span style="color:#1c5cab">可編輯安裝（pip install -e）</span><br>套件直接指向原始碼，修改後立即生效。<br><i>An editable install is required so the config folder can be found.</i><br>需要可編輯安裝，程式才能找到 config 資料夾。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield</span>
+energy-dispersive X-ray spectroscopy@<b>energy-dispersive X-ray spectroscopy</b>　<span style="color:#1c5cab">能量散射 X 光光譜（EDX）</span><br>SEM 搭配的成分分析，用來判斷缺陷或殘留是什麼元素。<br><i>EDX on the residue found fluorine, which pointed to the etch step.</i><br>對殘留物做 EDX 分析找到氟，指向蝕刻站。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 environment variable@<b>environment variable</b>　<span style="color:#1c5cab">環境變數</span><br>作業系統層級的設定，用來指定資料與設定檔路徑。<br><i>Point METRO_DATA_PATH to a folder outside the repository.</i><br>把 METRO_DATA_PATH 指向儲存庫以外的資料夾。<br><span style="color:#898781;font-size:smaller">metro-toolkit, waferlens</span>
 equivalence test@<b>equivalence test</b>　<span style="color:#1c5cab">等效性檢定（TOST）</span><br>雙單尾檢定：證明差異「小於規格」，而非只是「不顯著」。<br><i>A non-significant t-test does not prove matching; use an equivalence test.</i><br>t 檢定不顯著不代表匹配，應使用等效性檢定。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 escalation@<b>escalation</b>　<span style="color:#1c5cab">升級通報（escalation）</span><br>依影響大小把問題通報給更高層或其他部門；一般先排除量測問題再升級。<br><i>The excursion was escalated to the manager once yield impact was confirmed.</i><br>確認影響良率後，異常被升級通報給主管。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 EWMA chart@<b>EWMA chart</b>　<span style="color:#1c5cab">指數加權移動平均管制圖（EWMA）</span><br>對小幅持續偏移比傳統管制圖更靈敏。<br><i>The EWMA chart detects a one-sigma shift much faster than rule 1.</i><br>EWMA 管制圖偵測一個標準差偏移的速度比法則一快得多。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield</span>
 excursion@<b>excursion</b>　<span style="color:#1c5cab">製程異常（偏移事件）</span><br>製程突然偏離正常狀態的事件，需快速偵測並找出原因。<br><i>The injected excursion is logged in a ground-truth table.</i><br>注入的製程異常會記錄在真值表中。<br><span style="color:#898781;font-size:smaller">metro-toolkit, waferlens</span>
+excursion wafer@<b>excursion wafer</b>　<span style="color:#1c5cab">異常晶圓</span><br>已知事件（例如 handling 刮傷）造成的低良率晶圓；排除時要寫明原因、同時報告含與不含的數字，不能刪資料。<br><i>Without the two excursion wafers the week was on goal, and we reported both numbers.</i><br>不含那兩片異常晶圓時這週達標，我們兩個數字都有報告。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
+expected yield gain@<b>expected yield gain</b>　<span style="color:#1c5cab">預期良率回收</span><br>修好某個缺陷來源後估計能回收的良率；常用 Poisson 模型 Y = exp(−D·A·KR) 由缺陷密度、晶粒面積與致命比例換算。<br><i>The expected yield gain of 3 points ranked this defect source first on the fix list.</i><br>預期可回收 3 個百分點良率，讓這個缺陷來源排在修正清單第一位。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield</span>
 extinction coefficient@<b>extinction coefficient</b>　<span style="color:#1c5cab">消光係數（k）</span><br>複數折射率的虛部，代表材料吸收光的強弱。<br><i>Silicon has a large extinction coefficient in the ultraviolet.</i><br>矽在紫外光區有很大的消光係數。<br><span style="color:#898781;font-size:smaller">metro-toolkit, sem-toolkit</span>
 false alarm@<b>false alarm</b>　<span style="color:#1c5cab">誤警報</span><br>製程正常卻觸發管制規則。<br><i>Tight limits on a very stable statistic produce occasional false alarms.</i><br>在非常穩定的統計量上設緊界限，偶爾會產生誤警報。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 false call@<b>false call</b>　<span style="color:#1c5cab">誤判（false call）</span><br>把正常的東西判成異常，例如把隨機缺陷判成有圖樣；會浪費 FA 與工程資源。<br><i>Raising the minimum defect count cut the false calls in half.</i><br>提高最少缺陷數門檻後，誤判減少一半。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
+FIB cross-section@<b>FIB cross-section</b>　<span style="color:#1c5cab">FIB 切面</span><br>用聚焦離子束（focused ion beam）在缺陷位置切開晶圓，從側面觀察缺陷在哪一層、是什麼。<br><i>A FIB cross-section through the cluster showed a void under the cap layer.</i><br>在缺陷群做 FIB 切面，看到 cap 層下方有一個空洞。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 film stack@<b>film stack</b>　<span style="color:#1c5cab">膜層堆疊</span><br>由上而下的多層薄膜結構，最底層為基板。<br><i>The film stack is listed from the ambient side down to the silicon substrate.</i><br>膜層堆疊從環境介質側往下列到矽基板。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 film thickness@<b>film thickness</b>　<span style="color:#1c5cab">膜厚</span><br>最常見的薄膜量測參數，單位多為 nm 或 Å。<br><i>Film thickness is fitted at 49 sites to build the wafer map.</i><br>在 49 個量測點擬合膜厚，以建立晶圓圖。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, waferlens, sem-toolkit</span>
 floated parameter@<b>floated parameter</b>　<span style="color:#1c5cab">浮動參數</span><br>擬合時允許改變的參數；其餘為固定參數。<br><i>Only the top layer thickness is a floated parameter in this recipe.</i><br>這個 recipe 中只有最上層膜厚是浮動參數。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
+focus-exposure matrix@<b>focus-exposure matrix</b>　<span style="color:#1c5cab">焦距－曝光矩陣（FEM）</span><br>微影實驗：每片或每個區域用不同的焦距與曝光量，找出製程窗口；偏離標準條件的晶圓良率會變差。<br><i>A focus-exposure matrix on the same lot made the split comparison unusable.</i><br>同一批跑了焦距－曝光矩陣，讓 split 的比較不能用。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 fractional factorial design@<b>fractional factorial design</b>　<span style="color:#1c5cab">部分因子設計</span><br>只跑全因子組合的一部分（如 2^(4-1) = 8 組），代價是某些效應彼此混淆。<br><i>A half-fraction fractional factorial design screens four factors in eight runs.</i><br>半部分因子設計用八次實驗篩選四個因子。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 Fresnel coefficients@<b>Fresnel coefficients</b>　<span style="color:#1c5cab">菲涅耳係數</span><br>介面上反射／穿透的複數振幅比，分 rs 與 rp。<br><i>The model returns the complex Fresnel coefficients of the whole stack.</i><br>模型回傳整個膜層堆疊的複數菲涅耳係數。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 full factorial design@<b>full factorial design</b>　<span style="color:#1c5cab">全因子設計</span><br>所有因子所有水準組合都做實驗；2⁴ 為 16 組。<br><i>A 2-to-the-4 full factorial design with four center points needs 20 runs.</i><br>2⁴ 全因子設計加四個中心點需要 20 次實驗。<br><span style="color:#898781;font-size:smaller">sem-toolkit, semiyield, metro-toolkit</span>
@@ -74,14 +86,20 @@ goodness of fit@<b>goodness of fit</b>　<span style="color:#1c5cab">擬合優�
 ground truth@<b>ground truth</b>　<span style="color:#1c5cab">真值（標準答案）</span><br>已知正確的結果，用來評估演算法。<br><i>The simulator logs ground truth for every excursion it injects.</i><br>模擬器會記錄每個注入異常的真值。<br><span style="color:#898781;font-size:smaller">metro-toolkit, waferlens</span>
 growth per cycle@<b>growth per cycle</b>　<span style="color:#1c5cab">每循環成長量（GPC）</span><br>ALD 每一個循環沉積的厚度；在 ALD 視窗內幾乎固定。<br><i>Thickness equals growth per cycle times the number of cycles.</i><br>膜厚等於每循環成長量乘以循環數。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 hard mask@<b>hard mask</b>　<span style="color:#1c5cab">硬遮罩</span><br>蝕刻時保護下層圖形的無機薄膜，如氮化矽。<br><i>The nitride hard mask thickness sets the etch budget.</i><br>氮化矽硬遮罩的厚度決定了蝕刻餘裕。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
+head-to-head split@<b>head-to-head split</b>　<span style="color:#1c5cab">對照實驗（head-to-head）</span><br>新條件與 POR 在同時段、同機台路線下直接比較，用來決定是否轉換。<br><i>The head-to-head split showed a gain in the centre but a loss at the edge.</i><br>對照實驗顯示中心有增益、邊緣卻有損失。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 high-k dielectric@<b>high-k dielectric</b>　<span style="color:#1c5cab">高介電常數介電質（high-k）</span><br>如 HfO2、ZrO2，用於閘極或 DRAM 電容。<br><i>The high-k dielectric is floated while the interfacial layer stays fixed.</i><br>高介電常數介電質設為浮動，介面層保持固定。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield</span>
 hold@<b>hold</b>　<span style="color:#1c5cab">暫停（hold）</span><br>因異常把 lot 或機台暫停，待工程判定。<br><i>The lot went on hold after two points violated rule 2.</i><br>兩點違反法則 2 之後，這批被暫停。<br><span style="color:#898781;font-size:smaller">waferlens, metro-toolkit</span>
+inconclusive@<b>inconclusive</b>　<span style="color:#1c5cab">無法下結論</span><br>實驗設定錯誤或被干擾，結果既不能用來轉換，也不能用來否定新條件；要重新設計後重跑。<br><i>We reported the split as inconclusive and scheduled a rerun on clean wafers.</i><br>我們把這次 split 報告為無法下結論，並安排用乾淨的晶圓重跑。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 individuals and moving range chart@<b>individuals and moving range chart</b>　<span style="color:#1c5cab">個別值-移動全距管制圖（I-MR）</span><br>每次一個數據點時使用的管制圖。<br><i>The wafer mean is plotted on an individuals and moving range chart.</i><br>晶圓平均值繪在個別值-移動全距管制圖上。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield</span>
 inhibit@<b>inhibit</b>　<span style="color:#1c5cab">禁用（inhibit）</span><br>在系統中暫停某機台或 chamber 跑特定 recipe，直到問題排除。<br><i>Equipment inhibited chamber B until the heater was replaced.</i><br>設備工程把 chamber B 禁用，直到更換加熱器。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
+inline inspection@<b>inline inspection</b>　<span style="color:#1c5cab">線上缺陷檢查（inline inspection）</span><br>製程中途用明場／暗場光學或 eBeam 機台掃描晶圓、報出缺陷位置；比 probe 良率早好幾週看到問題。<br><i>The inline inspection after etch-back flagged a cluster near the wafer edge.</i><br>etch-back 後的線上檢查在晶圓邊緣附近標出一群缺陷。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 interfacial layer@<b>interfacial layer</b>　<span style="color:#1c5cab">介面層（IL）</span><br>high-k 與矽之間的薄 SiO2 層，約 0.5–1 nm。<br><i>The interfacial layer is pre-measured before the high-k deposition.</i><br>介面層會在 high-k 沉積前先量測。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 interference fringe@<b>interference fringe</b>　<span style="color:#1c5cab">干涉條紋</span><br>上下介面反射光相互干涉，使光譜出現週期性起伏。<br><i>A thicker film produces more interference fringes across the same wavelength range.</i><br>膜越厚，在相同波長範圍內出現的干涉條紋越多。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 interpolation@<b>interpolation</b>　<span style="color:#1c5cab">內插</span><br>由離散量測點估計其他位置的值，用於繪製等高線圖。<br><i>Thin-plate-spline interpolation fills the map between sites.</i><br>薄板樣條內插填補量測點之間的晶圓圖。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
+kill ratio@<b>kill ratio</b>　<span style="color:#1c5cab">致命比例（kill ratio）</span><br>某一站的缺陷落在失效晶粒上的比例，扣掉隨機落上的機率；代表這站抓到的缺陷有多少會致命。<br><i>A kill ratio of 0.5 means about half of these defects end up killing a die.</i><br>致命比例 0.5 代表這些缺陷大約有一半會讓晶粒失效。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
+killer defect@<b>killer defect</b>　<span style="color:#1c5cab">致命缺陷（killer）</span><br>會讓晶粒電性失效的缺陷；不是每顆 inline 缺陷都是 killer。<br><i>Only the bridging defects between lines were killers; the small particles on top were not.</i><br>只有線與線之間的架橋缺陷是致命的，表面的小微粒不是。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 Kramers-Kronig relations@<b>Kramers-Kronig relations</b>　<span style="color:#1c5cab">克拉莫-克若尼關係</span><br>連結介電函數實部與虛部的因果關係式。<br><i>The real part of the permittivity follows from the Kramers-Kronig relations.</i><br>介電函數的實部可由克拉莫-克若尼關係求得。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
+leading indicator@<b>leading indicator</b>　<span style="color:#1c5cab">領先指標</span><br>比結果更早反映變化的數據，例如 inline 缺陷密度比 probe 良率早好幾週。<br><i>Inline killer density is the leading indicator; yield only confirms it weeks later.</i><br>inline 致命缺陷密度是領先指標，良率要好幾週後才會證實。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 least squares@<b>least squares</b>　<span style="color:#1c5cab">最小平方法</span><br>使殘差平方和最小的擬合方法。<br><i>Each candidate basin is refined with bounded least squares.</i><br>每個候選區域都用有界的最小平方法進行精修。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 license@<b>license</b>　<span style="color:#1c5cab">授權條款</span><br>規定他人可否使用、修改、散布程式碼；沒有授權即保留所有權利。<br><i>Without a license file you may read the code but not reuse it.</i><br>沒有授權檔時，你可以閱讀程式碼，但不能重複使用。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, waferlens, sem-toolkit</span>
 local minimum@<b>local minimum</b>　<span style="color:#1c5cab">局部極小值</span><br>擬合誤差的假最低點，會給出看似合理但錯誤的膜厚。<br><i>A local fit started at 530 nm stopped in a local minimum at 538.7 nm.</i><br>從 530 nm 開始的局部擬合停在 538.7 nm 的局部極小值。<br><span style="color:#898781;font-size:smaller">metro-toolkit, sem-toolkit</span>
@@ -89,6 +107,7 @@ long format@<b>long format</b>　<span style="color:#1c5cab">長表格格式</sp
 long-term stability@<b>long-term stability</b>　<span style="color:#1c5cab">長期穩定性</span><br>以標準片每天量測數週，檢查漂移。<br><i>The long-term stability study found a significant drift of 1.3 pm per day.</i><br>長期穩定性研究發現每天 1.3 pm 的顯著漂移。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 lot@<b>lot</b>　<span style="color:#1c5cab">批（lot）</span><br>一起流動的一組晶圓，通常 25 片。<br><i>Five wafers per lot are sampled for metrology.</i><br>每批抽五片晶圓做量測。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, waferlens</span>
 mass-transport limited@<b>mass-transport limited</b>　<span style="color:#1c5cab">質傳控制</span><br>沉積速率受反應氣體輸送到表面的速度限制（高溫時），對壓力與流場敏感、均勻度較差。<br><i>At high temperature the CVD process becomes mass-transport limited and depends on pressure.</i><br>高溫時 CVD 變成質傳控制，速率取決於壓力。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
+maxout@<b>maxout</b>　<span style="color:#1c5cab">計數上限（maxout）</span><br>檢查機台的缺陷計數上限；達到後停止計數與存資料，數字只是下限，不能互相比較或平均。<br><i>Three wafers hit the maxout, so their real defect counts are unknown.</i><br>三片晶圓碰到計數上限，所以它們真正的缺陷數未知。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 measurement site@<b>measurement site</b>　<span style="color:#1c5cab">量測點</span><br>晶圓上一個量測位置，以 (x, y) 座標表示。<br><i>Each measurement site is stored as one row in the long-format table.</i><br>每一個量測點在長表格中存成一列。<br><span style="color:#898781;font-size:smaller">metro-toolkit, waferlens</span>
 measurement system analysis@<b>measurement system analysis</b>　<span style="color:#1c5cab">量測系統分析（MSA）</span><br>評估量測系統是否足夠好、能否用於管制與決策。<br><i>Measurement system analysis comes before any SPC chart is trusted.</i><br>在信任任何 SPC 管制圖之前，要先做量測系統分析。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 metrology@<b>metrology</b>　<span style="color:#1c5cab">量測（計量）</span><br>以量測確認製程結果是否符合規格的工程領域；Metro 即 metrology 的簡稱。<br><i>Metrology confirms that every deposition step lands on target before the lot moves on.</i><br>量測確認每一道沉積步驟都達到目標值，lot 才能往下一站走。<br><span style="color:#898781;font-size:smaller">metro-toolkit, sem-toolkit</span>
@@ -98,6 +117,7 @@ moving range@<b>moving range</b>　<span style="color:#1c5cab">移動全距（MR
 nearest centroid classifier@<b>nearest centroid classifier</b>　<span style="color:#1c5cab">最近中心分類器</span><br>計算每一類特徵的平均（中心），新樣本歸到距離最近的那一類；簡單、可解釋。<br><i>A nearest centroid classifier on a few radial and line features separates most wafer-map patterns.</i><br>用幾個徑向與直線特徵的最近中心分類器，就能分開大部分晶圓圖樣。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 non-uniformity@<b>non-uniformity</b>　<span style="color:#1c5cab">不均勻度（NU）</span><br>常見定義：1σ/mean、range/mean、(max−min)/(2·mean)。<br><i>Always state which non-uniformity definition a report uses.</i><br>報告中一定要說明使用哪一種不均勻度定義。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, sem-toolkit</span>
 notch@<b>notch</b>　<span style="color:#1c5cab">缺口（晶圓定位）</span><br>晶圓邊緣用來定位方向的小缺口。<br><i>Site coordinates are defined relative to the notch direction.</i><br>量測點座標是相對於缺口方向定義的。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
+nuisance defect@<b>nuisance defect</b>　<span style="color:#1c5cab">假缺陷（nuisance）</span><br>檢查機台因雜訊、色差、grain 或膜厚變化報出、review 時看不到真缺陷的訊號；比例高代表 recipe 太敏感。<br><i>Two thirds of the reviewed sites were nuisance, so the count could not trigger a hold.</i><br>review 的位置有三分之二是假缺陷，所以這個數量不能拿來觸發 hold。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 number of distinct categories@<b>number of distinct categories</b>　<span style="color:#1c5cab">可區分類別數（ndc）</span><br>1.41 × σ零件 / σGR&amp;R；應 ≥ 5。<br><i>An ndc of 27 means the gauge easily separates the wafers.</i><br>ndc 為 27 代表量具能輕易區分這些晶圓。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 OCAP@<b>OCAP</b>　<span style="color:#1c5cab">異常處置計畫（OCAP）</span><br>Out-of-Control Action Plan：OOC 發生時的標準處置步驟（先確認量測、hold、通知、檢查機台、qual 後放行）。<br><i>The engineer followed the OCAP: re-measure, hold the lot, then notify the equipment engineer.</i><br>工程師依 OCAP 處理：重測、hold 這批，再通知設備工程師。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield</span>
 offset@<b>offset</b>　<span style="color:#1c5cab">偏移量</span><br>兩台機台或腔體之間的平均差異。<br><i>The mean offset of 0.10 nm is inside the 0.3 nm matching spec.</i><br>0.10 nm 的平均偏移量在 0.3 nm 的匹配規格內。<br><span style="color:#898781;font-size:smaller">metro-toolkit, waferlens</span>
@@ -114,6 +134,7 @@ precision@<b>precision</b>　<span style="color:#1c5cab">精密度</span><br>重
 precision-to-tolerance ratio@<b>precision-to-tolerance ratio</b>　<span style="color:#1c5cab">精密度公差比（P/T）</span><br>k·σ量測 /（USL − LSL）；&lt; 10% 可接受，10–30% 有條件接受。<br><i>A precision-to-tolerance ratio of 9.7% is acceptable.</i><br>9.7% 的精密度公差比是可接受的。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 predicted R-squared@<b>predicted R-squared</b>　<span style="color:#1c5cab">預測 R²</span><br>用留一法 (PRESS) 估計模型對沒看過的實驗預測得多好；遠低於 R² 代表過度擬合。<br><i>A negative predicted R-squared warns that the model will not predict new runs.</i><br>預測 R² 為負，警告這個模型無法預測新的實驗。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 preventive maintenance@<b>preventive maintenance</b>　<span style="color:#1c5cab">預防保養（PM）</span><br>定期保養機台；常造成製程參數重置。<br><i>Thickness shows a saw-tooth pattern between preventive maintenance events.</i><br>膜厚在兩次預防保養之間呈現鋸齒狀變化。<br><span style="color:#898781;font-size:smaller">metro-toolkit, waferlens</span>
+probe lag@<b>probe lag</b>　<span style="color:#1c5cab">電測延遲</span><br>晶圓從某一站製造到 probe 要好幾週；修正後要等修正後製造的 lot 到 probe 才看得到良率回升。<br><i>Because of the probe lag, the fix will show in the yield trend about three weeks later.</i><br>因為電測延遲，修正的效果大約三週後才會出現在良率趨勢上。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 process capability@<b>process capability</b>　<span style="color:#1c5cab">製程能力</span><br>製程變異相對於規格寬度的能力，以 Cp/Cpk 表示。<br><i>Process capability is only meaningful for a process in control.</i><br>只有在製程受控時，製程能力才有意義。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield</span>
 process of record@<b>process of record</b>　<span style="color:#1c5cab">標準製程（POR）</span><br>Process of Record：目前正式發行、量產使用的製程與 recipe。<br><i>The confirmation runs compared the new recipe against the POR.</i><br>確認實驗把新配方與 POR 比較。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield</span>
 process step@<b>process step</b>　<span style="color:#1c5cab">製程站點（步驟）</span><br>製程流程中的一個步驟，例如 poly_dep、sti_cmp。<br><i>Metrology is attached to the process step it follows.</i><br>量測資料掛在它之後的製程站點上。<br><span style="color:#898781;font-size:smaller">metro-toolkit, waferlens</span>
@@ -121,9 +142,11 @@ Psi and Delta@<b>Psi and Delta</b>　<span style="color:#1c5cab">Ψ 與 Δ（橢
 purge@<b>purge</b>　<span style="color:#1c5cab">清洗（吹淨）</span><br>ALD 兩種前驅物之間用惰性氣體清除殘留氣體；太短會產生寄生 CVD。<br><i>A purge that is too short leaves precursor behind and adds parasitic CVD growth.</i><br>清洗太短會殘留前驅物，產生寄生 CVD 成長。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 qual@<b>qual</b>　<span style="color:#1c5cab">機台驗證（qual）</span><br>PM 或修理後，用監控片確認機台回到規格與管制中心，才能恢復生產。<br><i>After the PM, two qual wafers landed near the centre line and the chamber was released.</i><br>PM 後兩片 qual 片落在中心線附近，chamber 才被放行。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 radial profile@<b>radial profile</b>　<span style="color:#1c5cab">徑向分布</span><br>量測值隨半徑變化的曲線。<br><i>The radial profile drops sharply beyond 130 mm.</i><br>徑向分布在 130 mm 以外急遽下降。<br><span style="color:#898781;font-size:smaller">metro-toolkit, waferlens</span>
+random vs systematic loss@<b>random vs systematic loss</b>　<span style="color:#1c5cab">隨機與系統性損失</span><br>隨機損失來自隨機落下的缺陷，跟 inline 缺陷密度走；系統性損失有固定圖樣或集中在某一層、某一區。<br><i>Systematic loss on one metal level kept growing while random loss stayed flat.</i><br>某一金屬層的系統性損失持續變大，隨機損失則維持不變。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield</span>
 recall@<b>recall</b>　<span style="color:#1c5cab">召回率</span><br>真的屬於某類的樣本中，被正確找出的比例。<br><i>Recall for edge-ring wafers is high because their shape is easy to recognise.</i><br>邊緣環晶圓的召回率很高，因為它的形狀容易辨認。<br><span style="color:#898781;font-size:smaller">metro-toolkit, sem-toolkit</span>
 recipe@<b>recipe</b>　<span style="color:#1c5cab">Recipe（配方／程式）</span><br>機台執行的參數設定；量測 recipe 含膜層模型與取樣計畫。<br><i>The metrology recipe stores the stack model, fit settings, and sampling plan.</i><br>量測 recipe 儲存膜層模型、擬合設定與取樣計畫。<br><span style="color:#898781;font-size:smaller">metro-toolkit, waferlens</span>
 recipe release@<b>recipe release</b>　<span style="color:#1c5cab">Recipe 發行</span><br>完成驗證後正式交給產線使用。<br><i>Recipe release requires a passing gauge R&amp;R and a matching study.</i><br>Recipe 發行需要通過 GR&amp;R 與機台匹配研究。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
+red / green status@<b>red / green status</b>　<span style="color:#1c5cab">紅綠燈狀態</span><br>KPI 板上用顏色表示是否達標（綠＝達標、黃＝接近、紅＝未達標）；紅燈要說明原因、是不是真的、下一步。<br><i>The week turned red, and the summary explained why and what happens next.</i><br>這週變成紅燈，摘要說明了原因和接下來的做法。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 reduced chi-square@<b>reduced chi-square</b>　<span style="color:#1c5cab">縮減卡方</span><br>以自由度與雜訊正規化的擬合誤差；≈1 表示擬合與雜訊一致。<br><i>A reduced chi-square far above 1 points to a wrong stack model.</i><br>縮減卡方遠大於 1 表示膜層模型有誤。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 reference wafer@<b>reference wafer</b>　<span style="color:#1c5cab">標準片</span><br>膜厚已知且穩定的晶圓，用於校正與穩定性監控。<br><i>The reference wafer is measured twice a day on every tool.</i><br>每台機台每天量測標準片兩次。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 reflectance@<b>reflectance</b>　<span style="color:#1c5cab">反射率</span><br>反射光強與入射光強之比，介於 0 與 1 之間。<br><i>Bare silicon has a reflectance of about 0.35 at 633 nm.</i><br>裸矽在 633 nm 的反射率約為 0.35。<br><span style="color:#898781;font-size:smaller">metro-toolkit, sem-toolkit</span>
@@ -134,12 +157,14 @@ reproducibility@<b>reproducibility</b>　<span style="color:#1c5cab">再現性</
 residual@<b>residual</b>　<span style="color:#1c5cab">殘差</span><br>量測值減去模型值。<br><i>Structured residuals mean the optical model is missing a layer.</i><br>殘差若有規律，代表光學模型少了一層。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 response surface@<b>response surface</b>　<span style="color:#1c5cab">反應曲面</span><br>以二次模型描述輸出隨因子變化的曲面。<br><i>The response surface shows deposition rate rising with RF power.</i><br>反應曲面顯示沉積速率隨射頻功率上升。<br><span style="color:#898781;font-size:smaller">sem-toolkit, semiyield, metro-toolkit</span>
 root cause analysis@<b>root cause analysis</b>　<span style="color:#1c5cab">根本原因分析</span><br>找出異常真正來源的分析過程。<br><i>Root cause analysis traced the yield loss to one etch chamber.</i><br>根本原因分析把良率損失追溯到一個蝕刻腔體。<br><span style="color:#898781;font-size:smaller">metro-toolkit, waferlens</span>
+run log@<b>run log</b>　<span style="color:#1c5cab">執行紀錄（run log）</span><br>每片晶圓實際跑了哪個 recipe、哪台機台的紀錄；分析 split 前要先確認和計畫一致。<br><i>The run log showed that the B-high wafers actually ran the B-low recipe.</i><br>執行紀錄顯示 B-high 的晶圓實際上跑的是 B-low 的 recipe。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 run order randomization@<b>run order randomization</b>　<span style="color:#1c5cab">實驗順序隨機化</span><br>打亂實驗順序，避免機台漂移或時間效應被誤認為因子效應。<br><i>Run order randomization keeps chamber drift from masquerading as a temperature effect.</i><br>實驗順序隨機化讓 chamber 漂移不會偽裝成溫度效應。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 sampling plan@<b>sampling plan</b>　<span style="color:#1c5cab">取樣計畫</span><br>每片量哪些點、每批量幾片的規定。<br><i>The 49-point sampling plan uses three rings around a centre site.</i><br>49 點取樣計畫在中心點外圍佈三圈。<br><span style="color:#898781;font-size:smaller">metro-toolkit, waferlens</span>
 schema@<b>schema</b>　<span style="color:#1c5cab">資料結構定義（schema）</span><br>欄位名稱、型別與關聯的規定。<br><i>Map your fab export to the standard schema once, in a loader.</i><br>在一個載入程式中，把廠內匯出資料一次對應到標準 schema。<br><span style="color:#898781;font-size:smaller">metro-toolkit, waferlens</span>
 scratch@<b>scratch</b>　<span style="color:#1c5cab">刮傷</span><br>線狀缺陷圖樣，多與晶圓搬運或 CMP 有關。<br><i>A scratch pattern runs in a straight line across several dies.</i><br>刮傷圖樣以直線橫跨數顆晶粒。<br><span style="color:#898781;font-size:smaller">sem-toolkit, waferlens, metro-toolkit</span>
 Sellmeier equation@<b>Sellmeier equation</b>　<span style="color:#1c5cab">塞爾邁爾方程式</span><br>以共振項描述折射率的色散公式，常用於 SiO2、Si3N4。<br><i>SiO2 uses the Malitson Sellmeier equation for fused silica.</i><br>SiO2 使用 Malitson 的熔融石英塞爾邁爾方程式。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 sensitivity@<b>sensitivity</b>　<span style="color:#1c5cab">靈敏度</span><br>訊號對參數變化的響應大小，決定可達到的量測精度。<br><i>The sensitivity study shows why SE is chosen for films below 5 nm.</i><br>靈敏度研究說明了為什麼 5 nm 以下的薄膜選用 SE。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
+short / open@<b>short / open</b>　<span style="color:#1c5cab">短路／斷路</span><br>兩種常見電性失效：短路多指向相鄰線間的殘留或架橋，斷路多指向空洞或蝕刻不足；方向可幫忙判斷是哪一層。<br><i>The fails were shorts between word lines, which pointed to residue left after etch-back.</i><br>失效是字元線之間的短路，指向 etch-back 後留下的殘留。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 short-term sigma@<b>short-term sigma</b>　<span style="color:#1c5cab">短期標準差</span><br>由移動全距或子群內變異估計，不含漂移。<br><i>EWMA limits use short-term sigma so drift cannot widen them.</i><br>EWMA 界限使用短期標準差，因此漂移不會把界限撐寬。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield</span>
 silicon dioxide@<b>silicon dioxide</b>　<span style="color:#1c5cab">二氧化矽（SiO2）</span><br>最常見的介電質薄膜，可熱成長或沉積。<br><i>Thermal silicon dioxide is the classic metrology reference film.</i><br>熱成長二氧化矽是經典的量測參考膜。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, sem-toolkit</span>
 silicon nitride@<b>silicon nitride</b>　<span style="color:#1c5cab">氮化矽（Si3N4）</span><br>常作硬遮罩、間隙壁、保護層，n 約 2.0。<br><i>Silicon nitride on pad oxide is fitted as a two-layer model.</i><br>墊氧化層上的氮化矽用兩層模型擬合。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, sem-toolkit</span>
@@ -150,6 +175,7 @@ spectroscopic ellipsometry@<b>spectroscopic ellipsometry</b>　<span style="colo
 standard error@<b>standard error</b>　<span style="color:#1c5cab">標準誤差</span><br>參數估計值的 1σ 不確定度；只涵蓋雜訊，不涵蓋模型錯誤。<br><i>The reported standard error stayed at 0.001 nm even when the IL was wrong.</i><br>即使介面層設錯，回報的標準誤差仍停在 0.001 nm。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 statistical process control@<b>statistical process control</b>　<span style="color:#1c5cab">統計製程管制（SPC）</span><br>以統計方法監控製程是否處於管制狀態。<br><i>Statistical process control flags the shift within four wafers.</i><br>統計製程管制在四片之內就偵測到偏移。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, waferlens, sem-toolkit</span>
 substrate@<b>substrate</b>　<span style="color:#1c5cab">基板</span><br>薄膜下方視為半無限厚的材料，量測監控片通常為矽基板。<br><i>Light that reaches the substrate is either reflected back or absorbed.</i><br>到達基板的光不是被反射回來就是被吸收。<br><span style="color:#898781;font-size:smaller">metro-toolkit, sem-toolkit</span>
+subsurface defect@<b>subsurface defect</b>　<span style="color:#1c5cab">表面下缺陷</span><br>在表面下或被覆蓋的缺陷；SEM 俯視可能只看到粗糙表面或什麼都沒有，要靠下一層檢查或切面確認。<br><i>SEM showed only a rough surface, but the defect came back at the next layer: a subsurface defect.</i><br>SEM 只看到粗糙表面，但下一層同位置又出現：是表面下缺陷。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 surface-reaction limited@<b>surface-reaction limited</b>　<span style="color:#1c5cab">表面反應控制</span><br>沉積速率受表面化學反應速度限制（低溫時），遵循 Arrhenius 關係、對溫度敏感。<br><i>In the surface-reaction limited regime the heater profile shows up in the thickness map.</i><br>在表面反應控制區，加熱器的溫度分布會反映在膜厚圖上。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 synthetic data@<b>synthetic data</b>　<span style="color:#1c5cab">合成資料</span><br>以模擬產生、已知真值的資料，用於練習與驗證。<br><i>Synthetic data lets you score detection against a known truth.</i><br>合成資料讓你能以已知真值評估偵測效果。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, waferlens</span>
 Tauc-Lorentz model@<b>Tauc-Lorentz model</b>　<span style="color:#1c5cab">Tauc-Lorentz 模型</span><br>描述非晶半導體吸收的色散模型，含能隙 Eg。<br><i>Amorphous silicon is described with a Tauc-Lorentz oscillator.</i><br>非晶矽用 Tauc-Lorentz 振子來描述。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
@@ -168,9 +194,10 @@ within-wafer uniformity@<b>within-wafer uniformity</b>　<span style="color:#1c5
 Xbar-R chart@<b>Xbar-R chart</b>　<span style="color:#1c5cab">平均值-全距管制圖</span><br>以子群平均與全距監控製程，子群大小 2–10。<br><i>The Xbar-R chart groups five consecutive wafers into one subgroup.</i><br>平均值-全距管制圖把連續五片晶圓分成一個子群。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield</span>
 Zernike polynomials@<b>Zernike polynomials</b>　<span style="color:#1c5cab">澤尼克多項式</span><br>圓形區域上的正交多項式，用來分解晶圓圖成傾斜、碗形等成分。<br><i>Zernike polynomials turn a 49-point map into a few meaningful numbers.</i><br>澤尼克多項式把 49 點晶圓圖轉成幾個有意義的數字。<br><span style="color:#898781;font-size:smaller">metro-toolkit</span>
 準確度@→ <b>accuracy</b>
+新增缺陷@→ <b>adder</b>
 調整後 R²@→ <b>adjusted R-squared</b>
 ALD 溫度視窗@→ <b>ALD window</b>
-混淆@→ <b>aliasing</b>
+混淆@→ <b>aliasing</b><br>→ <b>confounding</b>
 環境介質@→ <b>ambient medium</b>
 非晶矽@→ <b>amorphous silicon</b>
 變異數分析@→ <b>analysis of variance</b>
@@ -186,6 +213,7 @@ Bland-Altman 圖@→ <b>Bland-Altman plot</b>
 Box-Behnken 設計@→ <b>Box-Behnken design</b>
 布魯斯特角@→ <b>Brewster angle</b>
 電容介電層@→ <b>capacitor dielectric</b>
+捕捉率@→ <b>capture rate</b>
 柯西模型@→ <b>Cauchy model</b>
 中心點@→ <b>center point</b>
 中心到邊緣差@→ <b>center-to-edge</b>
@@ -206,12 +234,16 @@ Box-Behnken 設計@→ <b>Box-Behnken design</b>
 累積和管制圖@→ <b>CUSUM chart</b>
 儀表板@→ <b>dashboard</b>
 缺陷圖樣@→ <b>defect pattern</b>
+缺陷限制良率@→ <b>defect-limited yield</b>
+缺陷與電測疊圖@→ <b>defect-to-probe overlay</b>
 戴明迴歸@→ <b>Deming regression</b>
 沉積速率@→ <b>deposition rate</b>
 實驗設計@→ <b>design of experiments</b>
 設計解析度@→ <b>design resolution</b>
 滿意度函數@→ <b>desirability function</b>
 偵測延遲@→ <b>detection delay</b>
+晶粒面積@→ <b>die area</b>
+依晶粒數加權的淨效果@→ <b>die-weighted net effect</b>
 色散模型@→ <b>dispersion model</b>
 判定處置@→ <b>disposition</b>
 漂移@→ <b>drift</b>
@@ -221,17 +253,22 @@ Box-Behnken 設計@→ <b>Box-Behnken design</b>
 邊緣環@→ <b>edge ring</b>
 邊緣下滑@→ <b>edge roll-off</b>
 可編輯安裝@→ <b>editable install</b>
+能量散射 X 光光譜@→ <b>energy-dispersive X-ray spectroscopy</b>
 環境變數@→ <b>environment variable</b>
 等效性檢定@→ <b>equivalence test</b>
 升級通報@→ <b>escalation</b>
 指數加權移動平均管制圖@→ <b>EWMA chart</b>
 製程異常@→ <b>excursion</b>
+異常晶圓@→ <b>excursion wafer</b>
+預期良率回收@→ <b>expected yield gain</b>
 消光係數@→ <b>extinction coefficient</b>
 誤警報@→ <b>false alarm</b>
 誤判@→ <b>false call</b>
+FIB 切面@→ <b>FIB cross-section</b>
 膜層堆疊@→ <b>film stack</b>
 膜厚@→ <b>film thickness</b>
 浮動參數@→ <b>floated parameter</b>
+焦距－曝光矩陣@→ <b>focus-exposure matrix</b>
 部分因子設計@→ <b>fractional factorial design</b>
 菲涅耳係數@→ <b>Fresnel coefficients</b>
 全因子設計@→ <b>full factorial design</b>
@@ -243,14 +280,20 @@ Box-Behnken 設計@→ <b>Box-Behnken design</b>
 真值@→ <b>ground truth</b>
 每循環成長量@→ <b>growth per cycle</b>
 硬遮罩@→ <b>hard mask</b>
+對照實驗@→ <b>head-to-head split</b>
 高介電常數介電質@→ <b>high-k dielectric</b>
 暫停@→ <b>hold</b>
+無法下結論@→ <b>inconclusive</b>
 個別值-移動全距管制圖@→ <b>individuals and moving range chart</b>
 禁用@→ <b>inhibit</b>
+線上缺陷檢查@→ <b>inline inspection</b>
 介面層@→ <b>interfacial layer</b>
 干涉條紋@→ <b>interference fringe</b>
 內插@→ <b>interpolation</b>
+致命比例@→ <b>kill ratio</b>
+致命缺陷@→ <b>killer defect</b>
 克拉莫-克若尼關係@→ <b>Kramers-Kronig relations</b>
+領先指標@→ <b>leading indicator</b>
 最小平方法@→ <b>least squares</b>
 授權條款@→ <b>license</b>
 局部極小值@→ <b>local minimum</b>
@@ -258,6 +301,7 @@ Box-Behnken 設計@→ <b>Box-Behnken design</b>
 長期穩定性@→ <b>long-term stability</b>
 批@→ <b>lot</b>
 質傳控制@→ <b>mass-transport limited</b>
+計數上限@→ <b>maxout</b>
 量測點@→ <b>measurement site</b>
 量測系統分析@→ <b>measurement system analysis</b>
 量測@→ <b>metrology</b>
@@ -267,6 +311,7 @@ Box-Behnken 設計@→ <b>Box-Behnken design</b>
 最近中心分類器@→ <b>nearest centroid classifier</b>
 不均勻度@→ <b>non-uniformity</b>
 缺口@→ <b>notch</b>
+假缺陷@→ <b>nuisance defect</b>
 可區分類別數@→ <b>number of distinct categories</b>
 異常處置計畫@→ <b>OCAP</b>
 偏移量@→ <b>offset</b>
@@ -283,6 +328,7 @@ ONO 堆疊@→ <b>ONO stack</b>
 精密度公差比@→ <b>precision-to-tolerance ratio</b>
 預測 R²@→ <b>predicted R-squared</b>
 預防保養@→ <b>preventive maintenance</b>
+電測延遲@→ <b>probe lag</b>
 製程能力@→ <b>process capability</b>
 標準製程@→ <b>process of record</b>
 製程站點@→ <b>process step</b>
@@ -290,9 +336,11 @@ ONO 堆疊@→ <b>ONO stack</b>
 清洗@→ <b>purge</b>
 機台驗證@→ <b>qual</b>
 徑向分布@→ <b>radial profile</b>
+隨機與系統性損失@→ <b>random vs systematic loss</b>
 召回率@→ <b>recall</b>
 Recipe@→ <b>recipe</b>
 Recipe 發行@→ <b>recipe release</b>
+紅綠燈狀態@→ <b>red / green status</b>
 縮減卡方@→ <b>reduced chi-square</b>
 標準片@→ <b>reference wafer</b>
 反射率@→ <b>reflectance</b>
@@ -303,12 +351,14 @@ Recipe 發行@→ <b>recipe release</b>
 殘差@→ <b>residual</b>
 反應曲面@→ <b>response surface</b>
 根本原因分析@→ <b>root cause analysis</b>
+執行紀錄@→ <b>run log</b>
 實驗順序隨機化@→ <b>run order randomization</b>
 取樣計畫@→ <b>sampling plan</b>
 資料結構定義@→ <b>schema</b>
 刮傷@→ <b>scratch</b>
 塞爾邁爾方程式@→ <b>Sellmeier equation</b>
 靈敏度@→ <b>sensitivity</b>
+短路／斷路@→ <b>short / open</b>
 短期標準差@→ <b>short-term sigma</b>
 二氧化矽@→ <b>silicon dioxide</b>
 氮化矽@→ <b>silicon nitride</b>
@@ -319,6 +369,7 @@ Recipe 發行@→ <b>recipe release</b>
 標準誤差@→ <b>standard error</b>
 統計製程管制@→ <b>statistical process control</b>
 基板@→ <b>substrate</b>
+表面下缺陷@→ <b>subsurface defect</b>
 表面反應控制@→ <b>surface-reaction limited</b>
 合成資料@→ <b>synthetic data</b>
 Tauc-Lorentz 模型@→ <b>Tauc-Lorentz model</b>

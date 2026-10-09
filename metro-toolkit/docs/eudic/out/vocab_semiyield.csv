@@ -8,6 +8,7 @@ Bayesian optimization,貝氏最佳化｜以代理模型與取樣策略，用少�
 center point,中心點｜因子皆在中間水準的實驗，用於檢查曲率與估計誤差。｜例：Center points reveal curvature that a two-level design would miss.｜譯：中心點能發現二水準設計會漏掉的曲率。
 chemical mechanical polishing,化學機械研磨（CMP）｜以研磨液與研磨墊平坦化表面。｜例：Chemical mechanical polishing removes less material at the wafer edge.｜譯：化學機械研磨在晶圓邊緣移除的材料較少。
 chemical vapor deposition,化學氣相沉積（CVD）｜以氣體前驅物反應沉積薄膜。｜例：Chemical vapor deposition rate rises exponentially with temperature.｜譯：化學氣相沉積速率隨溫度呈指數上升。
+confounding,"混淆（confounding）｜兩個因素同時改變、分不出差異是哪個造成；例如 split 晶圓同時跑了另一個實驗。｜例：The off-focus FEM wafers all landed in the split group, so the result was confounded.｜譯：偏焦的 FEM 晶圓全部落在 split 組，所以結果被混淆了。"
 control chart,管制圖｜依時間序列繪製量測值與管制界限的圖。｜例：Each chamber gets its own control chart and baseline.｜譯：每個腔體都有自己的管制圖與基準。
 control limits,"管制界限（UCL／LCL）｜由製程本身變異算出的界限，與規格界限不同。｜例：Control limits come from the process, not from the specification.｜譯：管制界限來自製程本身，而不是規格。"
 Cpk,製程能力指標 Cpk｜考慮偏離中心的短期能力指標；≥ 1.33 常為最低要求。｜例：Chamber DEP01-B has the lowest Cpk because its mean is off target.｜譯：DEP01-B 腔的 Cpk 最低，因為它的平均值偏離目標。
@@ -17,12 +18,14 @@ defect density,缺陷密度（D0）｜單位面積的致命缺陷數，常用 de
 deposition rate,沉積速率｜單位時間沉積的厚度，nm/min。｜例：The optimal recipe reaches a deposition rate of 62 nm per minute.｜譯：最佳 recipe 達到每分鐘 62 nm 的沉積速率。
 design of experiments,實驗設計（DOE）｜有系統地改變因子，以最少實驗找出因子效應。｜例：Design of experiments links recipe parameters to thickness and uniformity.｜譯：實驗設計把 recipe 參數與膜厚、均勻性連結起來。
 die,晶粒｜晶圓上切割後的單一晶片。｜例：Each die on the wafer map is coloured by its sort bin.｜譯：晶圓圖上的每顆晶粒依照其電測分類著色。
+die area,"晶粒面積｜單顆晶粒的面積（cm²）；同樣的缺陷密度下，晶粒越大，被缺陷打到的機率越高。｜例：With a die area of 0.8 cm², a defect density of 0.1 per cm² already costs several points of yield.｜譯：晶粒面積 0.8 cm² 時，每 cm² 0.1 顆的缺陷密度就會損失好幾個百分點良率。"
 drift,漂移｜隨時間緩慢變化的趨勢，如腔體老化。｜例：Deposition rate drifts down with chamber age and resets at PM.｜譯：沉積速率隨腔體使用時間往下漂移，PM 後重置。
 editable install,可編輯安裝（pip install -e）｜套件直接指向原始碼，修改後立即生效。｜例：An editable install is required so the config folder can be found.｜譯：需要可編輯安裝，程式才能找到 config 資料夾。
 ensemble model,集成模型｜結合多個機器學習模型以提高預測準確度。｜例：The ensemble model combines gradient boosting and a neural network.｜譯：集成模型結合了梯度提升與神經網路。
 etching,蝕刻｜以化學或電漿去除材料形成圖形。｜例：Etching selectivity determines how much of the mask survives.｜譯：蝕刻選擇比決定遮罩能保留多少。
 EWMA chart,指數加權移動平均管制圖（EWMA）｜對小幅持續偏移比傳統管制圖更靈敏。｜例：The EWMA chart detects a one-sigma shift much faster than rule 1.｜譯：EWMA 管制圖偵測一個標準差偏移的速度比法則一快得多。
 expected improvement,期望改善量（EI）｜貝氏最佳化中選下一個實驗點的準則。｜例：Expected improvement balances exploring new regions and refining good ones.｜譯：期望改善量在探索新區域與精修好區域之間取得平衡。
+expected yield gain,預期良率回收｜修好某個缺陷來源後估計能回收的良率；常用 Poisson 模型 Y = exp(−D·A·KR) 由缺陷密度、晶粒面積與致命比例換算。｜例：The expected yield gain of 3 points ranked this defect source first on the fix list.｜譯：預期可回收 3 個百分點良率，讓這個缺陷來源排在修正清單第一位。
 explainability,可解釋性｜說明模型為何做出某預測，如 SHAP 值。｜例：SHAP explainability ranks which process parameters drive yield.｜譯：SHAP 可解釋性排出哪些製程參數影響良率最大。
 film stress,薄膜應力｜薄膜內的張應力或壓應力，會造成晶圓翹曲。｜例：Film stress combines intrinsic stress and thermal mismatch.｜譯：薄膜應力包含本質應力與熱膨脹不匹配。
 film thickness,膜厚｜最常見的薄膜量測參數，單位多為 nm 或 Å。｜例：Film thickness is fitted at 49 sites to build the wafer map.｜譯：在 49 個量測點擬合膜厚，以建立晶圓圖。
@@ -48,6 +51,7 @@ process capability,製程能力｜製程變異相對於規格寬度的能力，�
 process of record,標準製程（POR）｜Process of Record：目前正式發行、量產使用的製程與 recipe。｜例：The confirmation runs compared the new recipe against the POR.｜譯：確認實驗把新配方與 POR 比較。
 process simulation,製程模擬｜以物理模型預測氧化、沉積、蝕刻、植入的結果。｜例：Process simulation predicts oxide thickness from time and temperature.｜譯：製程模擬由時間與溫度預測氧化層厚度。
 process window,製程窗口｜所有輸出都符合規格的參數範圍。｜例：The process window shrinks when the uniformity spec is tightened.｜譯：均勻性規格收緊時，製程窗口會縮小。
+random vs systematic loss,隨機與系統性損失｜隨機損失來自隨機落下的缺陷，跟 inline 缺陷密度走；系統性損失有固定圖樣或集中在某一層、某一區。｜例：Systematic loss on one metal level kept growing while random loss stayed flat.｜譯：某一金屬層的系統性損失持續變大，隨機損失則維持不變。
 refractive index,折射率（n）｜光在材料中速度的倒數比；SiO2 約 1.46，Si3N4 約 2.0。｜例：A refractive index shift often signals a change in film composition.｜譯：折射率偏移常代表薄膜組成發生變化。
 response surface,反應曲面｜以二次模型描述輸出隨因子變化的曲面。｜例：The response surface shows deposition rate rising with RF power.｜譯：反應曲面顯示沉積速率隨射頻功率上升。
 RF power,射頻功率｜電漿製程中供給的射頻功率，影響沉積與蝕刻速率。｜例：Raising RF power increases PECVD deposition rate.｜譯：提高射頻功率會增加 PECVD 沉積速率。

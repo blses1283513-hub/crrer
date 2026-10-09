@@ -8,6 +8,7 @@ Bayesian optimization
 center point
 chemical mechanical polishing
 chemical vapor deposition
+confounding
 control chart
 control limits
 Cpk
@@ -17,12 +18,14 @@ defect density
 deposition rate
 design of experiments
 die
+die area
 drift
 editable install
 ensemble model
 etching
 EWMA chart
 expected improvement
+expected yield gain
 explainability
 film stress
 film thickness
@@ -48,6 +51,7 @@ process capability
 process of record
 process simulation
 process window
+random vs systematic loss
 refractive index
 response surface
 RF power

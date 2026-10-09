@@ -8,6 +8,7 @@ Bayesian optimization@<b>Bayesian optimization</b>　<span style="color:#1c5cab"
 center point@<b>center point</b>　<span style="color:#1c5cab">中心點</span><br>因子皆在中間水準的實驗，用於檢查曲率與估計誤差。<br><i>Center points reveal curvature that a two-level design would miss.</i><br>中心點能發現二水準設計會漏掉的曲率。<br><span style="color:#898781;font-size:smaller">sem-toolkit, semiyield, metro-toolkit</span>
 chemical mechanical polishing@<b>chemical mechanical polishing</b>　<span style="color:#1c5cab">化學機械研磨（CMP）</span><br>以研磨液與研磨墊平坦化表面。<br><i>Chemical mechanical polishing removes less material at the wafer edge.</i><br>化學機械研磨在晶圓邊緣移除的材料較少。<br><span style="color:#898781;font-size:smaller">waferlens, semiyield</span>
 chemical vapor deposition@<b>chemical vapor deposition</b>　<span style="color:#1c5cab">化學氣相沉積（CVD）</span><br>以氣體前驅物反應沉積薄膜。<br><i>Chemical vapor deposition rate rises exponentially with temperature.</i><br>化學氣相沉積速率隨溫度呈指數上升。<br><span style="color:#898781;font-size:smaller">semiyield, sem-toolkit, waferlens</span>
+confounding@<b>confounding</b>　<span style="color:#1c5cab">混淆（confounding）</span><br>兩個因素同時改變、分不出差異是哪個造成；例如 split 晶圓同時跑了另一個實驗。<br><i>The off-focus FEM wafers all landed in the split group, so the result was confounded.</i><br>偏焦的 FEM 晶圓全部落在 split 組，所以結果被混淆了。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield</span>
 control chart@<b>control chart</b>　<span style="color:#1c5cab">管制圖</span><br>依時間序列繪製量測值與管制界限的圖。<br><i>Each chamber gets its own control chart and baseline.</i><br>每個腔體都有自己的管制圖與基準。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, waferlens</span>
 control limits@<b>control limits</b>　<span style="color:#1c5cab">管制界限（UCL／LCL）</span><br>由製程本身變異算出的界限，與規格界限不同。<br><i>Control limits come from the process, not from the specification.</i><br>管制界限來自製程本身，而不是規格。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, waferlens</span>
 Cpk@<b>Cpk</b>　<span style="color:#1c5cab">製程能力指標 Cpk</span><br>考慮偏離中心的短期能力指標；≥ 1.33 常為最低要求。<br><i>Chamber DEP01-B has the lowest Cpk because its mean is off target.</i><br>DEP01-B 腔的 Cpk 最低，因為它的平均值偏離目標。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield</span>
@@ -17,12 +18,14 @@ defect density@<b>defect density</b>　<span style="color:#1c5cab">缺陷密度�
 deposition rate@<b>deposition rate</b>　<span style="color:#1c5cab">沉積速率</span><br>單位時間沉積的厚度，nm/min。<br><i>The optimal recipe reaches a deposition rate of 62 nm per minute.</i><br>最佳 recipe 達到每分鐘 62 nm 的沉積速率。<br><span style="color:#898781;font-size:smaller">semiyield, sem-toolkit, metro-toolkit</span>
 design of experiments@<b>design of experiments</b>　<span style="color:#1c5cab">實驗設計（DOE）</span><br>有系統地改變因子，以最少實驗找出因子效應。<br><i>Design of experiments links recipe parameters to thickness and uniformity.</i><br>實驗設計把 recipe 參數與膜厚、均勻性連結起來。<br><span style="color:#898781;font-size:smaller">semiyield, sem-toolkit, metro-toolkit</span>
 die@<b>die</b>　<span style="color:#1c5cab">晶粒</span><br>晶圓上切割後的單一晶片。<br><i>Each die on the wafer map is coloured by its sort bin.</i><br>晶圓圖上的每顆晶粒依照其電測分類著色。<br><span style="color:#898781;font-size:smaller">semiyield, waferlens, sem-toolkit</span>
+die area@<b>die area</b>　<span style="color:#1c5cab">晶粒面積</span><br>單顆晶粒的面積（cm²）；同樣的缺陷密度下，晶粒越大，被缺陷打到的機率越高。<br><i>With a die area of 0.8 cm², a defect density of 0.1 per cm² already costs several points of yield.</i><br>晶粒面積 0.8 cm² 時，每 cm² 0.1 顆的缺陷密度就會損失好幾個百分點良率。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield</span>
 drift@<b>drift</b>　<span style="color:#1c5cab">漂移</span><br>隨時間緩慢變化的趨勢，如腔體老化。<br><i>Deposition rate drifts down with chamber age and resets at PM.</i><br>沉積速率隨腔體使用時間往下漂移，PM 後重置。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, waferlens</span>
 editable install@<b>editable install</b>　<span style="color:#1c5cab">可編輯安裝（pip install -e）</span><br>套件直接指向原始碼，修改後立即生效。<br><i>An editable install is required so the config folder can be found.</i><br>需要可編輯安裝，程式才能找到 config 資料夾。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield</span>
 ensemble model@<b>ensemble model</b>　<span style="color:#1c5cab">集成模型</span><br>結合多個機器學習模型以提高預測準確度。<br><i>The ensemble model combines gradient boosting and a neural network.</i><br>集成模型結合了梯度提升與神經網路。<br><span style="color:#898781;font-size:smaller">semiyield</span>
 etching@<b>etching</b>　<span style="color:#1c5cab">蝕刻</span><br>以化學或電漿去除材料形成圖形。<br><i>Etching selectivity determines how much of the mask survives.</i><br>蝕刻選擇比決定遮罩能保留多少。<br><span style="color:#898781;font-size:smaller">semiyield, waferlens</span>
 EWMA chart@<b>EWMA chart</b>　<span style="color:#1c5cab">指數加權移動平均管制圖（EWMA）</span><br>對小幅持續偏移比傳統管制圖更靈敏。<br><i>The EWMA chart detects a one-sigma shift much faster than rule 1.</i><br>EWMA 管制圖偵測一個標準差偏移的速度比法則一快得多。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield</span>
 expected improvement@<b>expected improvement</b>　<span style="color:#1c5cab">期望改善量（EI）</span><br>貝氏最佳化中選下一個實驗點的準則。<br><i>Expected improvement balances exploring new regions and refining good ones.</i><br>期望改善量在探索新區域與精修好區域之間取得平衡。<br><span style="color:#898781;font-size:smaller">semiyield</span>
+expected yield gain@<b>expected yield gain</b>　<span style="color:#1c5cab">預期良率回收</span><br>修好某個缺陷來源後估計能回收的良率；常用 Poisson 模型 Y = exp(−D·A·KR) 由缺陷密度、晶粒面積與致命比例換算。<br><i>The expected yield gain of 3 points ranked this defect source first on the fix list.</i><br>預期可回收 3 個百分點良率，讓這個缺陷來源排在修正清單第一位。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield</span>
 explainability@<b>explainability</b>　<span style="color:#1c5cab">可解釋性</span><br>說明模型為何做出某預測，如 SHAP 值。<br><i>SHAP explainability ranks which process parameters drive yield.</i><br>SHAP 可解釋性排出哪些製程參數影響良率最大。<br><span style="color:#898781;font-size:smaller">semiyield, sem-toolkit</span>
 film stress@<b>film stress</b>　<span style="color:#1c5cab">薄膜應力</span><br>薄膜內的張應力或壓應力，會造成晶圓翹曲。<br><i>Film stress combines intrinsic stress and thermal mismatch.</i><br>薄膜應力包含本質應力與熱膨脹不匹配。<br><span style="color:#898781;font-size:smaller">semiyield, sem-toolkit</span>
 film thickness@<b>film thickness</b>　<span style="color:#1c5cab">膜厚</span><br>最常見的薄膜量測參數，單位多為 nm 或 Å。<br><i>Film thickness is fitted at 49 sites to build the wafer map.</i><br>在 49 個量測點擬合膜厚，以建立晶圓圖。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, waferlens, sem-toolkit</span>
@@ -48,6 +51,7 @@ process capability@<b>process capability</b>　<span style="color:#1c5cab">製�
 process of record@<b>process of record</b>　<span style="color:#1c5cab">標準製程（POR）</span><br>Process of Record：目前正式發行、量產使用的製程與 recipe。<br><i>The confirmation runs compared the new recipe against the POR.</i><br>確認實驗把新配方與 POR 比較。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield</span>
 process simulation@<b>process simulation</b>　<span style="color:#1c5cab">製程模擬</span><br>以物理模型預測氧化、沉積、蝕刻、植入的結果。<br><i>Process simulation predicts oxide thickness from time and temperature.</i><br>製程模擬由時間與溫度預測氧化層厚度。<br><span style="color:#898781;font-size:smaller">semiyield</span>
 process window@<b>process window</b>　<span style="color:#1c5cab">製程窗口</span><br>所有輸出都符合規格的參數範圍。<br><i>The process window shrinks when the uniformity spec is tightened.</i><br>均勻性規格收緊時，製程窗口會縮小。<br><span style="color:#898781;font-size:smaller">semiyield, sem-toolkit</span>
+random vs systematic loss@<b>random vs systematic loss</b>　<span style="color:#1c5cab">隨機與系統性損失</span><br>隨機損失來自隨機落下的缺陷，跟 inline 缺陷密度走；系統性損失有固定圖樣或集中在某一層、某一區。<br><i>Systematic loss on one metal level kept growing while random loss stayed flat.</i><br>某一金屬層的系統性損失持續變大，隨機損失則維持不變。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield</span>
 refractive index@<b>refractive index</b>　<span style="color:#1c5cab">折射率（n）</span><br>光在材料中速度的倒數比；SiO2 約 1.46，Si3N4 約 2.0。<br><i>A refractive index shift often signals a change in film composition.</i><br>折射率偏移常代表薄膜組成發生變化。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, sem-toolkit</span>
 response surface@<b>response surface</b>　<span style="color:#1c5cab">反應曲面</span><br>以二次模型描述輸出隨因子變化的曲面。<br><i>The response surface shows deposition rate rising with RF power.</i><br>反應曲面顯示沉積速率隨射頻功率上升。<br><span style="color:#898781;font-size:smaller">sem-toolkit, semiyield, metro-toolkit</span>
 RF power@<b>RF power</b>　<span style="color:#1c5cab">射頻功率</span><br>電漿製程中供給的射頻功率，影響沉積與蝕刻速率。<br><i>Raising RF power increases PECVD deposition rate.</i><br>提高射頻功率會增加 PECVD 沉積速率。<br><span style="color:#898781;font-size:smaller">sem-toolkit, semiyield, waferlens</span>
@@ -80,6 +84,7 @@ yield model@<b>yield model</b>　<span style="color:#1c5cab">良率模型</span>
 中心點@→ <b>center point</b>
 化學機械研磨@→ <b>chemical mechanical polishing</b>
 化學氣相沉積@→ <b>chemical vapor deposition</b>
+混淆@→ <b>confounding</b>
 管制圖@→ <b>control chart</b>
 管制界限@→ <b>control limits</b>
 製程能力指標 Cpk@→ <b>Cpk</b>
@@ -89,12 +94,14 @@ yield model@<b>yield model</b>　<span style="color:#1c5cab">良率模型</span>
 沉積速率@→ <b>deposition rate</b>
 實驗設計@→ <b>design of experiments</b>
 晶粒@→ <b>die</b>
+晶粒面積@→ <b>die area</b>
 漂移@→ <b>drift</b>
 可編輯安裝@→ <b>editable install</b>
 集成模型@→ <b>ensemble model</b>
 蝕刻@→ <b>etching</b>
 指數加權移動平均管制圖@→ <b>EWMA chart</b>
 期望改善量@→ <b>expected improvement</b>
+預期良率回收@→ <b>expected yield gain</b>
 可解釋性@→ <b>explainability</b>
 薄膜應力@→ <b>film stress</b>
 膜厚@→ <b>film thickness</b>
@@ -120,6 +127,7 @@ yield model@<b>yield model</b>　<span style="color:#1c5cab">良率模型</span>
 標準製程@→ <b>process of record</b>
 製程模擬@→ <b>process simulation</b>
 製程窗口@→ <b>process window</b>
+隨機與系統性損失@→ <b>random vs systematic loss</b>
 折射率@→ <b>refractive index</b>
 反應曲面@→ <b>response surface</b>
 射頻功率@→ <b>RF power</b>

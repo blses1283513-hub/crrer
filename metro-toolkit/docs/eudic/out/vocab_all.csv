@@ -1,5 +1,6 @@
 accuracy,準確度｜量測值與真值的接近程度。｜例：Good precision does not guarantee accuracy if the model is biased.｜譯：如果模型有偏差，精密度好並不保證準確度好。
 activation energy,活化能｜Arrhenius 關係中決定溫度敏感度的參數。｜例：A higher activation energy makes the rate more sensitive to temperature.｜譯：活化能越高，速率對溫度越敏感。
+adder,"新增缺陷（adder）｜同一片晶圓本層檢查數量減去前層數量＝這一層新增的缺陷；用來分辨進料（incoming）還是本層造成。｜例：The split wafers had twice the adders of the baseline, so the new condition adds defects.｜譯：split 晶圓的新增缺陷是 baseline 的兩倍，所以新條件本身會增加缺陷。"
 adjusted R-squared,調整後 R²｜依模型參數數量懲罰的 R²；加入沒用的項會讓它下降。｜例：Adjusted R-squared fell when the extra terms added nothing.｜譯：多加的項沒有幫助時，調整後 R² 會下降。
 ALD window,"ALD 溫度視窗｜每循環成長量幾乎不隨溫度變化的溫度範圍；太低會凝結、太高前驅物會分解。｜例：Outside the ALD window, growth per cycle and non-uniformity both rise.｜譯：在 ALD 溫度視窗外，每循環成長量和不均勻度都會上升。"
 aliasing,"混淆（別名）｜部分因子設計中，兩個效應的欄位完全相同，無法分開估計。｜例：With D = ABC, the AB interaction is aliased with CD.｜譯：當 D = ABC 時，AB 交互作用與 CD 混淆。"
@@ -19,6 +20,7 @@ bowl,碗形（中心厚邊緣薄或反之）｜對稱的二次方徑向分布，
 Box-Behnken design,Box-Behnken 設計｜每次只把兩個因子放在極端值，不跑角落點；可估計二次項，適合角落不安全的製程。｜例：A Box-Behnken design avoids running every factor at its extreme at once.｜譯：Box-Behnken 設計避免所有因子同時處於極端值。
 Brewster angle,布魯斯特角｜p 偏振反射率為零的入射角，tanθ = n2/n1。｜例：On a bare glass substrate Psi drops to zero at the Brewster angle.｜譯：在裸玻璃基板上，Ψ 在布魯斯特角降為零。
 capacitor dielectric,電容介電層｜DRAM 儲存電容中的絕緣層，如 ZrO2/Al2O3/ZrO2（ZAZ）。｜例：The ZAZ capacitor dielectric is only about 5 nm thick in total.｜譯：ZAZ 電容介電層總厚度只有約 5 nm。
+capture rate,"捕捉率（capture rate）｜失效晶粒中帶有某一站 inline 缺陷的比例；< 30% 代表這站看不到這種 killer，它的 SPC 正常也證明不了什麼。｜例：The monitor step's capture rate was only 18 %, so it could not see the killer defects.｜譯：監控站的捕捉率只有 18%，所以它看不到這些致命缺陷。"
 Cauchy model,柯西模型｜n = A + B/λ² + C/λ⁴，適用於透明介電質。｜例：The Cauchy model is a good choice for transparent ALD oxides.｜譯：柯西模型很適合用於透明的 ALD 氧化物。
 center point,中心點｜因子皆在中間水準的實驗，用於檢查曲率與估計誤差。｜例：Center points reveal curvature that a two-level design would miss.｜譯：中心點能發現二水準設計會漏掉的曲率。
 center-to-edge,中心到邊緣差｜邊緣平均值減中心值，用來描述碗形或圓頂形分布。｜例：A negative center-to-edge value means the edge is thinner.｜譯：中心到邊緣差為負值代表邊緣較薄。
@@ -31,6 +33,7 @@ chemical vapor deposition,化學氣相沉積（CVD）｜以氣體前驅物反應
 class imbalance,類別不平衡｜某一類樣本遠少於其他類，如失效晶圓只佔少數。｜例：SECOM has a 14 to 1 class imbalance between pass and fail.｜譯：SECOM 的合格與失效之間有 14 比 1 的類別不平衡。
 commonality analysis,共通性分析｜找出低良率晶圓共同經過的機台或腔體。｜例：Commonality analysis points to the chamber shared by most failing wafers.｜譯：共通性分析指向大多數失效晶圓共同經過的腔體。
 confirmation run,"確認實驗｜在模型建議的配方實際再跑幾片，確認預測是否成立，才發行配方。｜例：Three confirmation runs landed within tolerance, so the recipe was released.｜譯：三片確認實驗都落在容許範圍內，所以發行了配方。"
+confounding,"混淆（confounding）｜兩個因素同時改變、分不出差異是哪個造成；例如 split 晶圓同時跑了另一個實驗。｜例：The off-focus FEM wafers all landed in the split group, so the result was confounded.｜譯：偏焦的 FEM 晶圓全部落在 split 組，所以結果被混淆了。"
 confusion matrix,混淆矩陣｜列出實際類別與預測類別對照的表格。｜例：The confusion matrix shows Loc and Edge-Loc are often confused.｜譯：混淆矩陣顯示 Loc 與 Edge-Loc 常被混淆。
 container,容器（Docker）｜打包好的執行環境，如資料庫服務。｜例：The database runs in a Docker container on port 5432.｜譯：資料庫在 5432 埠的 Docker 容器中執行。
 containment,圍堵（containment）｜找到根因之前先限制影響範圍的動作：hold、禁用機台、加測、隔離可疑晶圓。｜例：Containment came first: all lots from the chamber were held and re-measured.｜譯：先圍堵：該 chamber 的所有 lot 都 hold 並重測。
@@ -47,6 +50,8 @@ data pipeline,"資料管線｜資料從產生、驗證、載入到分析的自�
 database migration,資料庫遷移｜以版本化腳本建立或修改資料表結構（如 Alembic）。｜例：Run the database migration before loading any data.｜譯：載入任何資料之前，先執行資料庫遷移。
 defect density,缺陷密度（D0）｜單位面積的致命缺陷數，常用 defects/cm²。｜例：A higher defect density at the edge lowers edge-die yield.｜譯：邊緣較高的缺陷密度降低了邊緣晶粒的良率。
 defect pattern,缺陷圖樣｜晶圓圖上失效晶粒的空間分布型態，如 Center、Edge-Ring、Scratch。｜例：An edge-ring defect pattern often points to deposition edge effects.｜譯：邊緣環狀缺陷圖樣常指向沉積的邊緣效應。
+defect-limited yield,缺陷限制良率（DLY）｜只算缺陷造成的損失後的良率（排除參數或設計因素），常作為每週 KPI 和目標比較。｜例：Defect-limited yield fell below goal for two weeks in a row.｜譯：缺陷限制良率連續兩週低於目標。
+defect-to-probe overlay,缺陷與電測疊圖｜把 inline 缺陷位置疊在 probe 失效晶粒圖上，看缺陷有沒有落在失效晶粒，用來算 capture rate 與 kill ratio。｜例：The defect-to-probe overlay showed that most failing dies carried a post-etch-back defect.｜譯：缺陷與電測疊圖顯示大部分失效晶粒上都有 etch-back 後的缺陷。
 Deming regression,戴明迴歸｜兩個變數都有量測誤差時使用的迴歸，比最小平方法無偏。｜例：Deming regression gives an unbiased slope when both tools are noisy.｜譯：兩台機台都有雜訊時，戴明迴歸能給出無偏的斜率。
 deposition rate,沉積速率｜單位時間沉積的厚度，nm/min。｜例：The optimal recipe reaches a deposition rate of 62 nm per minute.｜譯：最佳 recipe 達到每分鐘 62 nm 的沉積速率。
 design of experiments,實驗設計（DOE）｜有系統地改變因子，以最少實驗找出因子效應。｜例：Design of experiments links recipe parameters to thickness and uniformity.｜譯：實驗設計把 recipe 參數與膜厚、均勻性連結起來。
@@ -54,6 +59,8 @@ design resolution,設計解析度｜定義關係中最短字的長度；解析�
 desirability function,滿意度函數｜把多個響應合併成單一 0–1 分數，以進行多目標最佳化。｜例：The desirability function trades deposition rate against film stress.｜譯：滿意度函數在沉積速率與薄膜應力之間取捨。
 detection delay,偵測延遲｜異常開始後，要到第幾個樣本管制圖才發出警報；越小越好，但通常要用較多誤警報來換。｜例：EWMA cut the detection delay for the slow drift from 44 to 4 measured wafers.｜譯：EWMA 把慢漂移的偵測延遲從 44 片量測晶圓縮短到 4 片。
 die,晶粒｜晶圓上切割後的單一晶片。｜例：Each die on the wafer map is coloured by its sort bin.｜譯：晶圓圖上的每顆晶粒依照其電測分類著色。
+die area,"晶粒面積｜單顆晶粒的面積（cm²）；同樣的缺陷密度下，晶粒越大，被缺陷打到的機率越高。｜例：With a die area of 0.8 cm², a defect density of 0.1 per cm² already costs several points of yield.｜譯：晶粒面積 0.8 cm² 時，每 cm² 0.1 顆的缺陷密度就會損失好幾個百分點良率。"
+die-weighted net effect,依晶粒數加權的淨效果｜把各區（中心、中間、邊緣）的良率差乘上該區晶粒比例再加總；邊緣晶粒多，邊緣的損失影響很大。｜例：The centre gain disappeared in the die-weighted net effect because the edge holds a third of the dies.｜譯：因為邊緣佔了三分之一的晶粒，中心的增益在加權淨效果裡就消失了。
 diffusion barrier,擴散阻障層｜防止金屬擴散進介電質的薄層，如 TiN。｜例：TiN acts as a diffusion barrier under tungsten.｜譯：TiN 在鎢下方作為擴散阻障層。
 dishing,碟化｜CMP 後寬圖形中央凹陷的現象。｜例：Dishing increases when oxide thickness after CMP is low.｜譯：CMP 後氧化層較薄時，碟化會增加。
 dispersion model,色散模型｜描述 n、k 隨波長變化的數學模型。｜例：Each material is assigned a dispersion model in films.yaml.｜譯：每一種材料都在 films.yaml 中指定一個色散模型。
@@ -65,6 +72,7 @@ edge exclusion,邊緣排除｜晶圓最外圈不量測的寬度，常為 2–3 m
 edge ring,邊緣環（圖樣）｜失效晶粒集中在晶圓最外圈的圖樣，常與邊緣製程、斜面或夾持有關。｜例：The particle event produced an edge ring on every wafer from that chamber.｜譯：微粒事件讓那個 chamber 的每片晶圓都出現邊緣環。
 edge roll-off,邊緣下滑｜最外圈突然變薄的現象。｜例：Edge roll-off appears only in the outermost ring of sites.｜譯：邊緣下滑只出現在最外圈的量測點。
 editable install,可編輯安裝（pip install -e）｜套件直接指向原始碼，修改後立即生效。｜例：An editable install is required so the config folder can be found.｜譯：需要可編輯安裝，程式才能找到 config 資料夾。
+energy-dispersive X-ray spectroscopy,"能量散射 X 光光譜（EDX）｜SEM 搭配的成分分析，用來判斷缺陷或殘留是什麼元素。｜例：EDX on the residue found fluorine, which pointed to the etch step.｜譯：對殘留物做 EDX 分析找到氟，指向蝕刻站。"
 ensemble model,集成模型｜結合多個機器學習模型以提高預測準確度。｜例：The ensemble model combines gradient boosting and a neural network.｜譯：集成模型結合了梯度提升與神經網路。
 environment variable,環境變數｜作業系統層級的設定，用來指定資料與設定檔路徑。｜例：Point METRO_DATA_PATH to a folder outside the repository.｜譯：把 METRO_DATA_PATH 指向儲存庫以外的資料夾。
 equivalence test,等效性檢定（TOST）｜雙單尾檢定：證明差異「小於規格」，而非只是「不顯著」。｜例：A non-significant t-test does not prove matching; use an equivalence test.｜譯：t 檢定不顯著不代表匹配，應使用等效性檢定。
@@ -72,17 +80,21 @@ escalation,升級通報（escalation）｜依影響大小把問題通報給更�
 etching,蝕刻｜以化學或電漿去除材料形成圖形。｜例：Etching selectivity determines how much of the mask survives.｜譯：蝕刻選擇比決定遮罩能保留多少。
 EWMA chart,指數加權移動平均管制圖（EWMA）｜對小幅持續偏移比傳統管制圖更靈敏。｜例：The EWMA chart detects a one-sigma shift much faster than rule 1.｜譯：EWMA 管制圖偵測一個標準差偏移的速度比法則一快得多。
 excursion,製程異常（偏移事件）｜製程突然偏離正常狀態的事件，需快速偵測並找出原因。｜例：The injected excursion is logged in a ground-truth table.｜譯：注入的製程異常會記錄在真值表中。
+excursion wafer,"異常晶圓｜已知事件（例如 handling 刮傷）造成的低良率晶圓；排除時要寫明原因、同時報告含與不含的數字，不能刪資料。｜例：Without the two excursion wafers the week was on goal, and we reported both numbers.｜譯：不含那兩片異常晶圓時這週達標，我們兩個數字都有報告。"
 expected improvement,期望改善量（EI）｜貝氏最佳化中選下一個實驗點的準則。｜例：Expected improvement balances exploring new regions and refining good ones.｜譯：期望改善量在探索新區域與精修好區域之間取得平衡。
+expected yield gain,預期良率回收｜修好某個缺陷來源後估計能回收的良率；常用 Poisson 模型 Y = exp(−D·A·KR) 由缺陷密度、晶粒面積與致命比例換算。｜例：The expected yield gain of 3 points ranked this defect source first on the fix list.｜譯：預期可回收 3 個百分點良率，讓這個缺陷來源排在修正清單第一位。
 explainability,可解釋性｜說明模型為何做出某預測，如 SHAP 值。｜例：SHAP explainability ranks which process parameters drive yield.｜譯：SHAP 可解釋性排出哪些製程參數影響良率最大。
 extinction coefficient,消光係數（k）｜複數折射率的虛部，代表材料吸收光的強弱。｜例：Silicon has a large extinction coefficient in the ultraviolet.｜譯：矽在紫外光區有很大的消光係數。
 false alarm,誤警報｜製程正常卻觸發管制規則。｜例：Tight limits on a very stable statistic produce occasional false alarms.｜譯：在非常穩定的統計量上設緊界限，偶爾會產生誤警報。
 false call,誤判（false call）｜把正常的東西判成異常，例如把隨機缺陷判成有圖樣；會浪費 FA 與工程資源。｜例：Raising the minimum defect count cut the false calls in half.｜譯：提高最少缺陷數門檻後，誤判減少一半。
 fault detection and classification,故障偵測與分類（FDC）｜以機台感測器資料即時偵測異常並分類。｜例：Fault detection and classification uses hundreds of sensor readings per wafer.｜譯：故障偵測與分類每片晶圓使用數百個感測器讀值。
 feature selection,特徵選擇｜去除無資訊或缺值過多的變數。｜例：Feature selection kept 442 of the 591 sensors.｜譯：特徵選擇保留了 591 個感測器中的 442 個。
+FIB cross-section,FIB 切面｜用聚焦離子束（focused ion beam）在缺陷位置切開晶圓，從側面觀察缺陷在哪一層、是什麼。｜例：A FIB cross-section through the cluster showed a void under the cap layer.｜譯：在缺陷群做 FIB 切面，看到 cap 層下方有一個空洞。
 film stack,膜層堆疊｜由上而下的多層薄膜結構，最底層為基板。｜例：The film stack is listed from the ambient side down to the silicon substrate.｜譯：膜層堆疊從環境介質側往下列到矽基板。
 film stress,薄膜應力｜薄膜內的張應力或壓應力，會造成晶圓翹曲。｜例：Film stress combines intrinsic stress and thermal mismatch.｜譯：薄膜應力包含本質應力與熱膨脹不匹配。
 film thickness,膜厚｜最常見的薄膜量測參數，單位多為 nm 或 Å。｜例：Film thickness is fitted at 49 sites to build the wafer map.｜譯：在 49 個量測點擬合膜厚，以建立晶圓圖。
 floated parameter,浮動參數｜擬合時允許改變的參數；其餘為固定參數。｜例：Only the top layer thickness is a floated parameter in this recipe.｜譯：這個 recipe 中只有最上層膜厚是浮動參數。
+focus-exposure matrix,焦距－曝光矩陣（FEM）｜微影實驗：每片或每個區域用不同的焦距與曝光量，找出製程窗口；偏離標準條件的晶圓良率會變差。｜例：A focus-exposure matrix on the same lot made the split comparison unusable.｜譯：同一批跑了焦距－曝光矩陣，讓 split 的比較不能用。
 fractional factorial design,部分因子設計｜只跑全因子組合的一部分（如 2^(4-1) = 8 組），代價是某些效應彼此混淆。｜例：A half-fraction fractional factorial design screens four factors in eight runs.｜譯：半部分因子設計用八次實驗篩選四個因子。
 Fresnel coefficients,菲涅耳係數｜介面上反射／穿透的複數振幅比，分 rs 與 rp。｜例：The model returns the complex Fresnel coefficients of the whole stack.｜譯：模型回傳整個膜層堆疊的複數菲涅耳係數。
 full factorial design,全因子設計｜所有因子所有水準組合都做實驗；2⁴ 為 16 組。｜例：A 2-to-the-4 full factorial design with four center points needs 20 runs.｜譯：2⁴ 全因子設計加四個中心點需要 20 次實驗。
@@ -96,17 +108,23 @@ Grad-CAM,Grad-CAM（梯度加權類別活化圖）｜顯示 CNN 判斷時關注�
 ground truth,真值（標準答案）｜已知正確的結果，用來評估演算法。｜例：The simulator logs ground truth for every excursion it injects.｜譯：模擬器會記錄每個注入異常的真值。
 growth per cycle,每循環成長量（GPC）｜ALD 每一個循環沉積的厚度；在 ALD 視窗內幾乎固定。｜例：Thickness equals growth per cycle times the number of cycles.｜譯：膜厚等於每循環成長量乘以循環數。
 hard mask,硬遮罩｜蝕刻時保護下層圖形的無機薄膜，如氮化矽。｜例：The nitride hard mask thickness sets the etch budget.｜譯：氮化矽硬遮罩的厚度決定了蝕刻餘裕。
+head-to-head split,對照實驗（head-to-head）｜新條件與 POR 在同時段、同機台路線下直接比較，用來決定是否轉換。｜例：The head-to-head split showed a gain in the centre but a loss at the edge.｜譯：對照實驗顯示中心有增益、邊緣卻有損失。
 high-k dielectric,高介電常數介電質（high-k）｜如 HfO2、ZrO2，用於閘極或 DRAM 電容。｜例：The high-k dielectric is floated while the interfacial layer stays fixed.｜譯：高介電常數介電質設為浮動，介面層保持固定。
 hold,暫停（hold）｜因異常把 lot 或機台暫停，待工程判定。｜例：The lot went on hold after two points violated rule 2.｜譯：兩點違反法則 2 之後，這批被暫停。
 Hotelling T-squared,Hotelling T² 統計量｜多變量管制統計量，同時監控多個相關參數。｜例：Hotelling T-squared watches thickness and refractive index together.｜譯：Hotelling T² 同時監控膜厚與折射率。
+inconclusive,無法下結論｜實驗設定錯誤或被干擾，結果既不能用來轉換，也不能用來否定新條件；要重新設計後重跑。｜例：We reported the split as inconclusive and scheduled a rerun on clean wafers.｜譯：我們把這次 split 報告為無法下結論，並安排用乾淨的晶圓重跑。
 individuals and moving range chart,個別值-移動全距管制圖（I-MR）｜每次一個數據點時使用的管制圖。｜例：The wafer mean is plotted on an individuals and moving range chart.｜譯：晶圓平均值繪在個別值-移動全距管制圖上。
 inhibit,禁用（inhibit）｜在系統中暫停某機台或 chamber 跑特定 recipe，直到問題排除。｜例：Equipment inhibited chamber B until the heater was replaced.｜譯：設備工程把 chamber B 禁用，直到更換加熱器。
+inline inspection,線上缺陷檢查（inline inspection）｜製程中途用明場／暗場光學或 eBeam 機台掃描晶圓、報出缺陷位置；比 probe 良率早好幾週看到問題。｜例：The inline inspection after etch-back flagged a cluster near the wafer edge.｜譯：etch-back 後的線上檢查在晶圓邊緣附近標出一群缺陷。
 interfacial layer,介面層（IL）｜high-k 與矽之間的薄 SiO2 層，約 0.5–1 nm。｜例：The interfacial layer is pre-measured before the high-k deposition.｜譯：介面層會在 high-k 沉積前先量測。
 interference fringe,干涉條紋｜上下介面反射光相互干涉，使光譜出現週期性起伏。｜例：A thicker film produces more interference fringes across the same wavelength range.｜譯：膜越厚，在相同波長範圍內出現的干涉條紋越多。
 interpolation,內插｜由離散量測點估計其他位置的值，用於繪製等高線圖。｜例：Thin-plate-spline interpolation fills the map between sites.｜譯：薄板樣條內插填補量測點之間的晶圓圖。
 ion implantation,離子植入｜以加速離子將摻雜物打入矽中。｜例：Ion implantation dose is set in ions per square centimetre.｜譯：離子植入劑量以每平方公分的離子數設定。
+kill ratio,致命比例（kill ratio）｜某一站的缺陷落在失效晶粒上的比例，扣掉隨機落上的機率；代表這站抓到的缺陷有多少會致命。｜例：A kill ratio of 0.5 means about half of these defects end up killing a die.｜譯：致命比例 0.5 代表這些缺陷大約有一半會讓晶粒失效。
+killer defect,致命缺陷（killer）｜會讓晶粒電性失效的缺陷；不是每顆 inline 缺陷都是 killer。｜例：Only the bridging defects between lines were killers; the small particles on top were not.｜譯：只有線與線之間的架橋缺陷是致命的，表面的小微粒不是。
 Kramers-Kronig relations,克拉莫-克若尼關係｜連結介電函數實部與虛部的因果關係式。｜例：The real part of the permittivity follows from the Kramers-Kronig relations.｜譯：介電函數的實部可由克拉莫-克若尼關係求得。
 Latin hypercube sampling,拉丁超立方抽樣｜讓樣本均勻散佈於多維空間的抽樣法。｜例：The first ten runs use Latin hypercube sampling.｜譯：前十次實驗使用拉丁超立方抽樣。
+leading indicator,領先指標｜比結果更早反映變化的數據，例如 inline 缺陷密度比 probe 良率早好幾週。｜例：Inline killer density is the leading indicator; yield only confirms it weeks later.｜譯：inline 致命缺陷密度是領先指標，良率要好幾週後才會證實。
 least squares,最小平方法｜使殘差平方和最小的擬合方法。｜例：Each candidate basin is refined with bounded least squares.｜譯：每個候選區域都用有界的最小平方法進行精修。
 license,授權條款｜規定他人可否使用、修改、散布程式碼；沒有授權即保留所有權利。｜例：Without a license file you may read the code but not reuse it.｜譯：沒有授權檔時，你可以閱讀程式碼，但不能重複使用。
 local minimum,局部極小值｜擬合誤差的假最低點，會給出看似合理但錯誤的膜厚。｜例：A local fit started at 530 nm stopped in a local minimum at 538.7 nm.｜譯：從 530 nm 開始的局部擬合停在 538.7 nm 的局部極小值。
@@ -114,6 +132,7 @@ long format,長表格格式｜每列一筆量測（一個量測點），方便�
 long-term stability,長期穩定性｜以標準片每天量測數週，檢查漂移。｜例：The long-term stability study found a significant drift of 1.3 pm per day.｜譯：長期穩定性研究發現每天 1.3 pm 的顯著漂移。
 lot,批（lot）｜一起流動的一組晶圓，通常 25 片。｜例：Five wafers per lot are sampled for metrology.｜譯：每批抽五片晶圓做量測。
 mass-transport limited,質傳控制｜沉積速率受反應氣體輸送到表面的速度限制（高溫時），對壓力與流場敏感、均勻度較差。｜例：At high temperature the CVD process becomes mass-transport limited and depends on pressure.｜譯：高溫時 CVD 變成質傳控制，速率取決於壓力。
+maxout,"計數上限（maxout）｜檢查機台的缺陷計數上限；達到後停止計數與存資料，數字只是下限，不能互相比較或平均。｜例：Three wafers hit the maxout, so their real defect counts are unknown.｜譯：三片晶圓碰到計數上限，所以它們真正的缺陷數未知。"
 measurement site,"量測點｜晶圓上一個量測位置，以 (x, y) 座標表示。｜例：Each measurement site is stored as one row in the long-format table.｜譯：每一個量測點在長表格中存成一列。"
 measurement system analysis,量測系統分析（MSA）｜評估量測系統是否足夠好、能否用於管制與決策。｜例：Measurement system analysis comes before any SPC chart is trusted.｜譯：在信任任何 SPC 管制圖之前，要先做量測系統分析。
 metrology,量測（計量）｜以量測確認製程結果是否符合規格的工程領域；Metro 即 metrology 的簡稱。｜例：Metrology confirms that every deposition step lands on target before the lot moves on.｜譯：量測確認每一道沉積步驟都達到目標值，lot 才能往下一站走。
@@ -123,6 +142,7 @@ moving range,"移動全距（MR）｜相鄰兩點差的絕對值；平均移動�
 nearest centroid classifier,最近中心分類器｜計算每一類特徵的平均（中心），新樣本歸到距離最近的那一類；簡單、可解釋。｜例：A nearest centroid classifier on a few radial and line features separates most wafer-map patterns.｜譯：用幾個徑向與直線特徵的最近中心分類器，就能分開大部分晶圓圖樣。
 non-uniformity,不均勻度（NU）｜常見定義：1σ/mean、range/mean、(max−min)/(2·mean)。｜例：Always state which non-uniformity definition a report uses.｜譯：報告中一定要說明使用哪一種不均勻度定義。
 notch,缺口（晶圓定位）｜晶圓邊緣用來定位方向的小缺口。｜例：Site coordinates are defined relative to the notch direction.｜譯：量測點座標是相對於缺口方向定義的。
+nuisance defect,"假缺陷（nuisance）｜檢查機台因雜訊、色差、grain 或膜厚變化報出、review 時看不到真缺陷的訊號；比例高代表 recipe 太敏感。｜例：Two thirds of the reviewed sites were nuisance, so the count could not trigger a hold.｜譯：review 的位置有三分之二是假缺陷，所以這個數量不能拿來觸發 hold。"
 number of distinct categories,可區分類別數（ndc）｜1.41 × σ零件 / σGR&R；應 ≥ 5。｜例：An ndc of 27 means the gauge easily separates the wafers.｜譯：ndc 為 27 代表量具能輕易區分這些晶圓。
 OCAP,"異常處置計畫（OCAP）｜Out-of-Control Action Plan：OOC 發生時的標準處置步驟（先確認量測、hold、通知、檢查機台、qual 後放行）。｜例：The engineer followed the OCAP: re-measure, hold the lot, then notify the equipment engineer.｜譯：工程師依 OCAP 處理：重測、hold 這批，再通知設備工程師。"
 offset,偏移量｜兩台機台或腔體之間的平均差異。｜例：The mean offset of 0.10 nm is inside the 0.3 nm matching spec.｜譯：0.10 nm 的平均偏移量在 0.3 nm 的匹配規格內。
@@ -145,6 +165,7 @@ precision-to-tolerance ratio,精密度公差比（P/T）｜k·σ量測 /（USL �
 precursor,前驅物｜CVD/ALD 中提供元素的反應氣體，如 SiH4、TMA。｜例：SiH4 is the silicon precursor for PECVD nitride.｜譯：SiH4 是 PECVD 氮化矽的矽前驅物。
 predicted R-squared,預測 R²｜用留一法 (PRESS) 估計模型對沒看過的實驗預測得多好；遠低於 R² 代表過度擬合。｜例：A negative predicted R-squared warns that the model will not predict new runs.｜譯：預測 R² 為負，警告這個模型無法預測新的實驗。
 preventive maintenance,預防保養（PM）｜定期保養機台；常造成製程參數重置。｜例：Thickness shows a saw-tooth pattern between preventive maintenance events.｜譯：膜厚在兩次預防保養之間呈現鋸齒狀變化。
+probe lag,"電測延遲｜晶圓從某一站製造到 probe 要好幾週；修正後要等修正後製造的 lot 到 probe 才看得到良率回升。｜例：Because of the probe lag, the fix will show in the yield trend about three weeks later.｜譯：因為電測延遲，修正的效果大約三週後才會出現在良率趨勢上。"
 process capability,製程能力｜製程變異相對於規格寬度的能力，以 Cp/Cpk 表示。｜例：Process capability is only meaningful for a process in control.｜譯：只有在製程受控時，製程能力才有意義。
 process of record,標準製程（POR）｜Process of Record：目前正式發行、量產使用的製程與 recipe。｜例：The confirmation runs compared the new recipe against the POR.｜譯：確認實驗把新配方與 POR 比較。
 process route,製程流程（route）｜產品依序經過的所有製程步驟。｜例：Every product runs its own version of the process route.｜譯：每個產品都跑自己版本的製程流程。
@@ -157,9 +178,11 @@ qual,"機台驗證（qual）｜PM 或修理後，用監控片確認機台回到�
 queue time,等候時間（Q-time）｜晶圓在兩站之間等待的時間，過長可能影響品質。｜例：Queue time between steps follows an exponential distribution in the simulator.｜譯：模擬器中站與站之間的等候時間服從指數分布。
 radial profile,徑向分布｜量測值隨半徑變化的曲線。｜例：The radial profile drops sharply beyond 130 mm.｜譯：徑向分布在 130 mm 以外急遽下降。
 random forest,隨機森林｜由多棵決策樹投票的分類／迴歸模型。｜例：A random forest classifies wafers as pass or fail from sensor data.｜譯：隨機森林以感測器資料把晶圓分為合格或失效。
+random vs systematic loss,隨機與系統性損失｜隨機損失來自隨機落下的缺陷，跟 inline 缺陷密度走；系統性損失有固定圖樣或集中在某一層、某一區。｜例：Systematic loss on one metal level kept growing while random loss stayed flat.｜譯：某一金屬層的系統性損失持續變大，隨機損失則維持不變。
 recall,召回率｜真的屬於某類的樣本中，被正確找出的比例。｜例：Recall for edge-ring wafers is high because their shape is easy to recognise.｜譯：邊緣環晶圓的召回率很高，因為它的形狀容易辨認。
 recipe,"Recipe（配方／程式）｜機台執行的參數設定；量測 recipe 含膜層模型與取樣計畫。｜例：The metrology recipe stores the stack model, fit settings, and sampling plan.｜譯：量測 recipe 儲存膜層模型、擬合設定與取樣計畫。"
 recipe release,Recipe 發行｜完成驗證後正式交給產線使用。｜例：Recipe release requires a passing gauge R&R and a matching study.｜譯：Recipe 發行需要通過 GR&R 與機台匹配研究。
+red / green status,"紅綠燈狀態｜KPI 板上用顏色表示是否達標（綠＝達標、黃＝接近、紅＝未達標）；紅燈要說明原因、是不是真的、下一步。｜例：The week turned red, and the summary explained why and what happens next.｜譯：這週變成紅燈，摘要說明了原因和接下來的做法。"
 reduced chi-square,縮減卡方｜以自由度與雜訊正規化的擬合誤差；≈1 表示擬合與雜訊一致。｜例：A reduced chi-square far above 1 points to a wrong stack model.｜譯：縮減卡方遠大於 1 表示膜層模型有誤。
 reference wafer,標準片｜膜厚已知且穩定的晶圓，用於校正與穩定性監控。｜例：The reference wafer is measured twice a day on every tool.｜譯：每台機台每天量測標準片兩次。
 reflectance,反射率｜反射光強與入射光強之比，介於 0 與 1 之間。｜例：Bare silicon has a reflectance of about 0.35 at 633 nm.｜譯：裸矽在 633 nm 的反射率約為 0.35。
@@ -172,6 +195,7 @@ response surface,反應曲面｜以二次模型描述輸出隨因子變化的曲
 rework,重工｜不合格（多為微影）時去除後重做。｜例：Litho rework adds a two-hour delay to the lot.｜譯：微影重工會讓這批延遲兩小時。
 RF power,射頻功率｜電漿製程中供給的射頻功率，影響沉積與蝕刻速率。｜例：Raising RF power increases PECVD deposition rate.｜譯：提高射頻功率會增加 PECVD 沉積速率。
 root cause analysis,根本原因分析｜找出異常真正來源的分析過程。｜例：Root cause analysis traced the yield loss to one etch chamber.｜譯：根本原因分析把良率損失追溯到一個蝕刻腔體。
+run log,執行紀錄（run log）｜每片晶圓實際跑了哪個 recipe、哪台機台的紀錄；分析 split 前要先確認和計畫一致。｜例：The run log showed that the B-high wafers actually ran the B-low recipe.｜譯：執行紀錄顯示 B-high 的晶圓實際上跑的是 B-low 的 recipe。
 run order randomization,實驗順序隨機化｜打亂實驗順序，避免機台漂移或時間效應被誤認為因子效應。｜例：Run order randomization keeps chamber drift from masquerading as a temperature effect.｜譯：實驗順序隨機化讓 chamber 漂移不會偽裝成溫度效應。
 sampling plan,取樣計畫｜每片量哪些點、每批量幾片的規定。｜例：The 49-point sampling plan uses three rings around a centre site.｜譯：49 點取樣計畫在中心點外圍佈三圈。
 schema,"資料結構定義（schema）｜欄位名稱、型別與關聯的規定。｜例：Map your fab export to the standard schema once, in a loader.｜譯：在一個載入程式中，把廠內匯出資料一次對應到標準 schema。"
@@ -181,6 +205,7 @@ Sellmeier equation,塞爾邁爾方程式｜以共振項描述折射率的色散�
 sensitivity,靈敏度｜訊號對參數變化的響應大小，決定可達到的量測精度。｜例：The sensitivity study shows why SE is chosen for films below 5 nm.｜譯：靈敏度研究說明了為什麼 5 nm 以下的薄膜選用 SE。
 sensor,感測器（機台參數）｜機台回報的製程參數，如 RF 功率、壓力、溫度。｜例：The tool's primary sensor couples into the first metrology parameter.｜譯：機台的主要感測器參數會影響第一個量測參數。
 sheet resistance,片電阻｜薄導電層的電阻，單位 Ω/□。｜例：Sheet resistance is measured after the source-drain anneal.｜譯：片電阻在源汲極退火之後量測。
+short / open,"短路／斷路｜兩種常見電性失效：短路多指向相鄰線間的殘留或架橋，斷路多指向空洞或蝕刻不足；方向可幫忙判斷是哪一層。｜例：The fails were shorts between word lines, which pointed to residue left after etch-back.｜譯：失效是字元線之間的短路，指向 etch-back 後留下的殘留。"
 short-term sigma,短期標準差｜由移動全距或子群內變異估計，不含漂移。｜例：EWMA limits use short-term sigma so drift cannot widen them.｜譯：EWMA 界限使用短期標準差，因此漂移不會把界限撐寬。
 sidewall angle,側壁角｜蝕刻輪廓側壁與水平面的夾角。｜例：A sidewall angle of 88 degrees is the gate etch target.｜譯：閘極蝕刻的目標側壁角為 88 度。
 silicon dioxide,二氧化矽（SiO2）｜最常見的介電質薄膜，可熱成長或沉積。｜例：Thermal silicon dioxide is the classic metrology reference film.｜譯：熱成長二氧化矽是經典的量測參考膜。
@@ -197,6 +222,7 @@ star schema,星型綱要｜以事實表為中心、周圍連接維度表的資�
 statistical process control,統計製程管制（SPC）｜以統計方法監控製程是否處於管制狀態。｜例：Statistical process control flags the shift within four wafers.｜譯：統計製程管制在四片之內就偵測到偏移。
 step coverage,階梯覆蓋率｜溝槽側壁或底部膜厚與表面膜厚之比。｜例：ALD keeps step coverage near 100 percent even at high aspect ratio.｜譯：即使在高深寬比下，ALD 的階梯覆蓋率仍接近 100%。
 substrate,基板｜薄膜下方視為半無限厚的材料，量測監控片通常為矽基板。｜例：Light that reaches the substrate is either reflected back or absorbed.｜譯：到達基板的光不是被反射回來就是被吸收。
+subsurface defect,"表面下缺陷｜在表面下或被覆蓋的缺陷；SEM 俯視可能只看到粗糙表面或什麼都沒有，要靠下一層檢查或切面確認。｜例：SEM showed only a rough surface, but the defect came back at the next layer: a subsurface defect.｜譯：SEM 只看到粗糙表面，但下一層同位置又出現：是表面下缺陷。"
 surface-reaction limited,表面反應控制｜沉積速率受表面化學反應速度限制（低溫時），遵循 Arrhenius 關係、對溫度敏感。｜例：In the surface-reaction limited regime the heater profile shows up in the thickness map.｜譯：在表面反應控制區，加熱器的溫度分布會反映在膜厚圖上。
 synthetic data,合成資料｜以模擬產生、已知真值的資料，用於練習與驗證。｜例：Synthetic data lets you score detection against a known truth.｜譯：合成資料讓你能以已知真值評估偵測效果。
 Tauc-Lorentz model,Tauc-Lorentz 模型｜描述非晶半導體吸收的色散模型，含能隙 Eg。｜例：Amorphous silicon is described with a Tauc-Lorentz oscillator.｜譯：非晶矽用 Tauc-Lorentz 振子來描述。

@@ -1,5 +1,6 @@
 accuracy
 activation energy
+adder
 adjusted R-squared
 ALD window
 aliasing
@@ -19,6 +20,7 @@ bowl
 Box-Behnken design
 Brewster angle
 capacitor dielectric
+capture rate
 Cauchy model
 center point
 center-to-edge
@@ -31,6 +33,7 @@ chemical vapor deposition
 class imbalance
 commonality analysis
 confirmation run
+confounding
 confusion matrix
 container
 containment
@@ -47,6 +50,8 @@ data pipeline
 database migration
 defect density
 defect pattern
+defect-limited yield
+defect-to-probe overlay
 Deming regression
 deposition rate
 design of experiments
@@ -54,6 +59,8 @@ design resolution
 desirability function
 detection delay
 die
+die area
+die-weighted net effect
 diffusion barrier
 dishing
 dispersion model
@@ -65,6 +72,7 @@ edge exclusion
 edge ring
 edge roll-off
 editable install
+energy-dispersive X-ray spectroscopy
 ensemble model
 environment variable
 equivalence test
@@ -72,17 +80,21 @@ escalation
 etching
 EWMA chart
 excursion
+excursion wafer
 expected improvement
+expected yield gain
 explainability
 extinction coefficient
 false alarm
 false call
 fault detection and classification
 feature selection
+FIB cross-section
 film stack
 film stress
 film thickness
 floated parameter
+focus-exposure matrix
 fractional factorial design
 Fresnel coefficients
 full factorial design
@@ -96,17 +108,23 @@ Grad-CAM
 ground truth
 growth per cycle
 hard mask
+head-to-head split
 high-k dielectric
 hold
 Hotelling T-squared
+inconclusive
 individuals and moving range chart
 inhibit
+inline inspection
 interfacial layer
 interference fringe
 interpolation
 ion implantation
+kill ratio
+killer defect
 Kramers-Kronig relations
 Latin hypercube sampling
+leading indicator
 least squares
 license
 local minimum
@@ -114,6 +132,7 @@ long format
 long-term stability
 lot
 mass-transport limited
+maxout
 measurement site
 measurement system analysis
 metrology
@@ -123,6 +142,7 @@ moving range
 nearest centroid classifier
 non-uniformity
 notch
+nuisance defect
 number of distinct categories
 OCAP
 offset
@@ -145,6 +165,7 @@ precision-to-tolerance ratio
 precursor
 predicted R-squared
 preventive maintenance
+probe lag
 process capability
 process of record
 process route
@@ -157,9 +178,11 @@ qual
 queue time
 radial profile
 random forest
+random vs systematic loss
 recall
 recipe
 recipe release
+red / green status
 reduced chi-square
 reference wafer
 reflectance
@@ -172,6 +195,7 @@ response surface
 rework
 RF power
 root cause analysis
+run log
 run order randomization
 sampling plan
 schema
@@ -181,6 +205,7 @@ Sellmeier equation
 sensitivity
 sensor
 sheet resistance
+short / open
 short-term sigma
 sidewall angle
 silicon dioxide
@@ -197,6 +222,7 @@ star schema
 statistical process control
 step coverage
 substrate
+subsurface defect
 surface-reaction limited
 synthetic data
 Tauc-Lorentz model
