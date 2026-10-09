@@ -70,6 +70,23 @@ conda activate metro
 pip install -e ".[dashboard,dev]"
 ```
 
+### Open the dashboard without a terminal (after the one-time setup above)
+
+**Double-click `Metro Toolkit.bat`** in the `metro-toolkit` folder. It finds the project from its own location,
+uses the `.venv` you created, starts the dashboard on a free port (8501, or the next free one) and opens your
+browser. Close the black window to stop it. The dashboard listens on this PC only (`localhost`), not on the
+office network.
+
+Desktop shortcut: right-click `Metro Toolkit.bat` → **Send to → Desktop (create shortcut)**. Rename or re-icon the
+shortcut as you like; do not move the `.bat` itself out of the `metro-toolkit` folder (move the shortcut instead).
+
+If the window says it cannot find `.venv\Scripts\python.exe`, the one-time setup (steps 1-3) is not done in
+this folder. If it closes at once with an error, run it from PowerShell once to read the message:
+`.\"Metro Toolkit.bat"`.
+
+Alternative, from any folder in an activated environment (no `cd`): `metro-toolkit` (it is installed by
+`pip install -e`; re-run that once after a `git pull` to get the command). Options: `--port 8600`, `--no-browser`.
+
 ### Using your own data
 
 Easiest: dashboard → **Data import** page (CSV / Excel / SECOM, automatic column matching, unit
