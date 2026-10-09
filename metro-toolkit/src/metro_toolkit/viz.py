@@ -101,8 +101,11 @@ PLOTLY_LAYOUT = dict(
     paper_bgcolor=SURFACE,
     plot_bgcolor=SURFACE,
     font=dict(family="system-ui, -apple-system, Segoe UI, sans-serif", color=INK, size=12),
-    xaxis=dict(gridcolor=GRID, linecolor=AXIS, zeroline=False, tickfont=dict(color=MUTED)),
-    yaxis=dict(gridcolor=GRID, linecolor=AXIS, zeroline=False, tickfont=dict(color=MUTED)),
+    # axis names are the most important text on a chart: full ink, never the muted grey of the tick labels
+    xaxis=dict(gridcolor=GRID, linecolor=AXIS, zeroline=False, tickfont=dict(color=MUTED),
+               title=dict(font=dict(color=INK, size=13))),
+    yaxis=dict(gridcolor=GRID, linecolor=AXIS, zeroline=False, tickfont=dict(color=MUTED),
+               title=dict(font=dict(color=INK, size=13))),
     margin=dict(l=50, r=20, t=80, b=45),
     hovermode="closest",
     legend=dict(orientation="h", yanchor="bottom", y=1.01, x=0),

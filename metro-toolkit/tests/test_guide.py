@@ -276,3 +276,21 @@ def test_dashboard_panels_and_language_switch(tmp_path, monkeypatch):
     at.sidebar.radio(key="nav_page").set_value("Guide 參數與圖表說明").run()
     at.text_input(key="guide_search").set_value("EWMA").run()
     assert not at.exception and len(at.expander) >= 1
+
+
+def test_chart_axis_names_say_what_is_measured_and_are_black():
+    from metro_toolkit.analysis import spc_by_group
+    from metro_toolkit.dashboard import figures as F
+
+    w = pd.DataFrame({"timestamp": pd.date_range("2026-01-01", periods=30, freq="h"), "mean": np.random.default_rng(1).normal(3, 0.01, 30),
+                      "chamber_id": "A", "wafer_id": [f"W{i}" for i in range(30)]})
+    ch = spc_by_group(w, "chamber_id", "mean", "IMR", 10)["A"]
+    fig = F.spc_figure("A", w, ch, "mean", "#2a78d6", 10, "gate_ox_thk", "nm")
+    assert fig.layout.yaxis.title.text == "gate_ox_thk · wafer mean 晶圓平均 (nm)"
+    assert "measurement time" in fig.layout.xaxis.title.text
+    for f in (fig, F.yield_trend_figure(pd.DataFrame({"lot_index": [0, 1], "lot_id": ["D1", "D2"], "yield": [0.9, 0.8]}))):
+        assert f.layout.xaxis.title.font.color == f.layout.yaxis.title.font.color == "#0b0b0b"
+    assert F.unit_of("gate_ox_thk") == "nm" and F.unit_of("defect_density") == "1/cm²"
+    assert F.unit_of("p", pd.DataFrame({"parameter": ["p"], "unit": ["Å"]})) == "Å"
+    assert F.radial_figure(pd.DataFrame({"r_mm": [0, 50], "mean": [1, 1], "std": [0.1, 0.1]}), "ild_thk", "nm"
+                           ).layout.yaxis.title.text == "ild_thk 環平均 ring mean (nm)"

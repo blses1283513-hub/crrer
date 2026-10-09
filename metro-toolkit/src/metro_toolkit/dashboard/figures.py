@@ -19,6 +19,39 @@ CAUSE_NAME = {".": "pass 良品", "D": "defect 缺陷", "G": "gate_ox_thk 閘極
               "T": "tin_thk TiN 厚度超窗", "C": "wl_cd_etch 字元線蝕刻 CD 超窗", "I": "ild_thk ILD 厚度超窗"}
 
 
+def unit_of(param: str, df: pd.DataFrame | None = None) -> str:
+    """Unit of a measured parameter: from the data's own unit column, else the fab-simulator step of that name,
+    else a guess from the name (…_nm, …_pct)."""
+    if df is not None and "unit" in df.columns:
+        col = df.loc[df["parameter"] == param, "unit"] if "parameter" in df.columns else df["unit"]
+        col = col.dropna()
+        if len(col) and str(col.iloc[0]).strip():
+            return str(col.iloc[0])
+    try:
+        from metro_toolkit.datagen.fab import load_fab_config
+
+        for step in load_fab_config()["steps"]:
+            if step["parameter"] == param:
+                return step["unit"]
+    except Exception:  # noqa: BLE001 - a missing config must never break a chart
+        pass
+    if param == "defect_density":
+        return "1/cm²"
+    if param.endswith("_nm") or param.endswith("_thk") or param.startswith("wl_cd"):
+        return "nm"
+    return {"pct": "%", "mv": "mV"}.get(param.rsplit("_", 1)[-1], "")
+
+
+def quantity(w: pd.DataFrame) -> tuple[str, str]:
+    """(parameter, unit) of a site-level wafer table."""
+    param = str(w["parameter"].iloc[0]) if "parameter" in w.columns and len(w) else ""
+    return param, unit_of(param, w) if param else ""
+
+
+def with_unit(name: str, unit: str) -> str:
+    return f"{name} ({unit})" if unit else name
+
+
 def legend_line(fig: go.Figure, name: str, color: str, dash: str = "solid", width: float = 1.5) -> None:
     """Legend entry for a reference line drawn as a shape (shapes have no legend of their own)."""
     fig.add_scatter(x=[None], y=[None], mode="lines", name=name, line=dict(color=color, dash=dash, width=width),
@@ -33,8 +66,8 @@ def legend_marker(fig: go.Figure, name: str, color: str, symbol: str = "square",
 def layout(fig: go.Figure, title: str, xlab: str, ylab: str, height: int = 380) -> go.Figure:
     fig.update_layout(**viz.PLOTLY_LAYOUT, title=dict(text=title, x=0, y=0.97, yanchor="top", yref="container",
                                                       font=dict(size=14)), height=height)
-    fig.update_xaxes(title=xlab)
-    fig.update_yaxes(title=ylab)
+    fig.update_xaxes(title_text=xlab)  # text only: title=... would also reset the black axis-name font from viz
+    fig.update_yaxes(title_text=ylab)
     return fig
 
 
@@ -50,7 +83,7 @@ def fit_figures(technique: str, wl, meas, fitted_stack, angles=None) -> list[go.
         fig.add_scatter(x=wl, y=reflectance(fitted_stack, wl), mode="lines", name="model fit 模型擬合",
                         line=dict(color=viz.SERIES[1], width=2),
                         hovertemplate="model fit 模型擬合<br>λ %{x:.0f} nm<br>R = %{y:.4f}<extra></extra>")
-        return [layout(fig, "Reflectance: measured vs fitted model", "wavelength (nm)", "R")]
+        return [layout(fig, "Reflectance: measured vs fitted model", "波長 wavelength (nm)", "反射率 reflectance R (0–1)")]
     a = float(angles[len(angles) // 2])
     psi_m, delta_m = meas.data[a]
     psi_f, delta_f = ellipsometry(fitted_stack, wl, a)
@@ -61,7 +94,7 @@ def fit_figures(technique: str, wl, meas, fitted_stack, angles=None) -> list[go.
                        hovertemplate=f"measured 量測<br>λ %{{x:.0f}} nm<br>{lab} = %{{y:.3f}}°<extra></extra>"),
             go.Scatter(x=wl, y=yf, mode="lines", name="model fit 模型擬合", line=dict(color=viz.SERIES[1]),
                        hovertemplate=f"model fit 模型擬合<br>λ %{{x:.0f}} nm<br>{lab} = %{{y:.3f}}°<extra></extra>")])
-        figs.append(layout(fig, f"{lab} at {a:.0f}°", "wavelength (nm)", f"{lab} (deg)"))
+        figs.append(layout(fig, f"{lab} at {a:.0f}°", "波長 wavelength (nm)", f"{lab} 橢偏角 (deg)"))
     return figs
 
 
@@ -85,21 +118,23 @@ def wafer_map_figure(w: pd.DataFrame, um: dict, mode: str, title: str) -> go.Fig
     return fig
 
 
-def zernike_figure(zk: dict) -> go.Figure:
+def zernike_figure(zk: dict, param: str = "", unit: str = "") -> go.Figure:
     coef = {kk: v for kk, v in zk["coefficients"].items() if kk != "piston"}
     fig = go.Figure(go.Bar(x=list(coef.values()), y=list(coef), orientation="h", marker_color=viz.SERIES[0],
                            name="Zernike coefficient 係數",
                            hovertemplate="%{y}: %{x:+.4g}<extra>Zernike coefficient 係數</extra>"))
     fig.update_yaxes(autorange="reversed")
-    return layout(fig, f"Spatial signature (R² {zk['r2']:.2f})", "coefficient", "", 260)
+    xlab = with_unit(f"{param} Zernike 係數 coefficient" if param else "Zernike 係數 coefficient", unit)
+    return layout(fig, f"Spatial signature (R² {zk['r2']:.2f})", xlab, "空間項 Zernike term", 260)
 
 
-def radial_figure(rp: pd.DataFrame) -> go.Figure:
+def radial_figure(rp: pd.DataFrame, param: str = "", unit: str = "") -> go.Figure:
     fig = go.Figure(go.Scatter(x=rp.r_mm, y=rp["mean"], mode="lines+markers", line=dict(color=viz.SERIES[0]),
                                name="ring mean ±1σ 環平均 ±1σ", error_y=dict(array=rp["std"].fillna(0), color=viz.MUTED),
                                hovertemplate="r ≈ %{x:.0f} mm<br>ring mean 環平均 %{y:.4g}<extra></extra>"))
     fig.update_layout(showlegend=True)
-    return layout(fig, "Radial profile", "radius (mm)", "value", 260)
+    ylab = with_unit(f"{param} 環平均 ring mean" if param else "ring mean 環平均", unit)
+    return layout(fig, "Radial profile", "距晶圓中心 radius from centre (mm)", ylab, 260)
 
 
 # --------------------------------------------------------------------------- SPC
@@ -107,7 +142,12 @@ LIMIT_NAME = {"IMR": "UCL / LCL 管制界限 (±3σ)", "EWMA": "UCL / LCL EWMA �
 STAT_LABEL = {"mean": "wafer mean", "nu_1sigma_pct": "1σ %", "range": "range"}
 
 
-def spc_figure(group, sw: pd.DataFrame, ch, stat: str, color: str, phase1: int) -> go.Figure:
+STAT_AXIS = {"mean": ("wafer mean 晶圓平均", True), "nu_1sigma_pct": ("within-wafer 1σ 片內不均勻度", False),
+             "range": ("within-wafer range 片內全距", True)}  # (name, in the parameter's unit?)
+
+
+def spc_figure(group, sw: pd.DataFrame, ch, stat: str, color: str, phase1: int, param: str = "",
+               unit: str = "") -> go.Figure:
     """One control chart: points, limits, CL, end of Phase I, OOC rings. sw = this group's wafers in time order."""
     x = sw.timestamp
     z = (np.asarray(ch.statistic) - ch.cl) / ch.sigma if ch.sigma > 0 else np.zeros(len(sw))
@@ -133,7 +173,10 @@ def spc_figure(group, sw: pd.DataFrame, ch, stat: str, color: str, phase1: int) 
         fig.add_scatter(x=x.iloc[ooc], y=ch.statistic[ooc], mode="markers", name="OOC 違規點",
                         marker=dict(size=11, color="rgba(0,0,0,0)", line=dict(color=viz.STATUS["critical"], width=2)),
                         hovertemplate="OOC 違規點<br>%{y:.4f}<extra></extra>")
-    return layout(fig, f"{group}  {ch.chart_type}", "time", stat, 340)
+    name, in_unit = STAT_AXIS.get(stat, (stat, False))
+    ylab = f"{param} · {name}" if param else name
+    ylab = with_unit(ylab, unit if in_unit else "%" if stat == "nu_1sigma_pct" else "")
+    return layout(fig, f"{group}  {ch.chart_type}", "量測時間 measurement time", ylab, 340)
 
 
 # --------------------------------------------------------------------------- MSA
@@ -147,7 +190,7 @@ def grr_figure(g: dict) -> go.Figure:
     legend_line(fig, "10% acceptable 可接受", viz.STATUS["good"], width=1)
     legend_line(fig, "30% unacceptable 不可接受", viz.STATUS["critical"], width=1)
     fig.update_yaxes(autorange="reversed")
-    return layout(fig, "Variance components (10% / 30% guides)", "% study variation", "", 320)
+    return layout(fig, "Variance components (10% / 30% guides)", "佔研究變異 % of study variation", "變異來源 source", 320)
 
 
 def bland_altman_figure(wide: pd.DataFrame, spec_off: float, ref: str = "FT01", cand: str = "FT02") -> go.Figure:
@@ -174,7 +217,7 @@ def sensitivity_figure(r: pd.DataFrame, s: pd.DataFrame) -> go.Figure:
                                 hovertemplate="SE 橢偏儀<br>%{x:g} nm → 1σ %{y:.3g} nm<extra></extra>")])
     fig.update_xaxes(type="log")
     fig.update_yaxes(type="log")
-    return layout(fig, "Estimated 1σ precision vs SiO2 thickness", "thickness (nm)", "precision (nm)")
+    return layout(fig, "Estimated 1σ precision vs SiO2 thickness", "SiO2 膜厚 thickness (nm)", "1σ 量測精度 precision (nm)")
 
 
 def tn_figure(c: pd.DataFrame) -> go.Figure:
@@ -185,7 +228,8 @@ def tn_figure(c: pd.DataFrame) -> go.Figure:
     legend_line(fig, "0.01 reference limit 參考門檻", viz.STATUS["critical"], dash="dash", width=1)
     fig.update_xaxes(type="log")
     fig.update_yaxes(type="log")
-    return layout(fig, "Uncertainty of n (Cauchy A) when floated with thickness", "thickness (nm)", "σ(A)")
+    return layout(fig, "Uncertainty of n (Cauchy A) when floated with thickness", "膜厚 thickness (nm)",
+                  "σ(A)：n（Cauchy A）的不確定度 uncertainty of n")
 
 
 # --------------------------------------------------------------------------- DOE
@@ -207,7 +251,7 @@ def pareto_figure(fit, title: str) -> go.Figure:
     if t_crit:
         fig.add_vline(x=t_crit, line=dict(color=viz.INK_2, dash="dash", width=1))
         legend_line(fig, f"p = 0.05 threshold 門檻 (|t| = {t_crit:.2f})", viz.INK_2, dash="dash", width=1)
-    fig = layout(fig, title, "|t|（標準化效應）", "", max(320, 26 * len(tab) + 190))
+    fig = layout(fig, title, "|t|（標準化效應 standardised effect）", "模型項 model term", max(320, 26 * len(tab) + 190))
     fig.update_layout(margin=dict(t=125))  # three legend rows sit between the title and the plot
     return fig
 
@@ -237,7 +281,7 @@ def yield_trend_figure(w: pd.DataFrame) -> go.Figure:
     fig.add_hline(y=100 * (med - 3 * mad), line=dict(color=viz.STATUS["critical"], width=1, dash="dash"))
     legend_line(fig, f"median 中位數 = {100 * med:.1f}%", viz.INK_2, width=1)
     legend_line(fig, f"median − 3σ alert 警戒線 = {100 * (med - 3 * mad):.1f}%", viz.STATUS["critical"], dash="dash", width=1)
-    return layout(fig, "每批平均良率（所有晶圓都有電測與良率）", "lot", "yield (%)", 340)
+    return layout(fig, "每批平均良率（所有晶圓都有電測與良率）", "批次序號 lot index（D0001 = 0）", "每批平均良率 lot mean yield (%)", 340)
 
 
 def die_map_figure(codes: np.ndarray, gx, gy, r_eff: float, title: str) -> go.Figure:

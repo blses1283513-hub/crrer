@@ -72,11 +72,13 @@ from metro_toolkit.dashboard.figures import (  # noqa: E402
     layout,
     legend_line,
     pareto_figure,
+    quantity,
     radial_figure,
     review_pareto_figure,
     sensitivity_figure,
     spc_figure,
     tn_figure,
+    unit_of,
     wafer_map_figure,
     yield_trend_figure,
     zernike_figure,
@@ -400,9 +402,10 @@ def page_wafer(df):
     facts = gi.wafer_page(w, um, wafers, zk, rp, param)
     explain("wafer_map", facts["wafer_map"], where=c1)
 
-    c2.plotly_chart(zernike_figure(zk), width="stretch")
+    wp, wu = quantity(w)
+    c2.plotly_chart(zernike_figure(zk, wp, wu), width="stretch")
     explain("wafer_zernike", facts["wafer_zernike"], where=c2)
-    c2.plotly_chart(radial_figure(rp), width="stretch")
+    c2.plotly_chart(radial_figure(rp, wp, wu), width="stretch")
     explain("wafer_radial", facts["wafer_radial"], where=c2)
 
 
@@ -425,11 +428,12 @@ def page_spc(df):
     colors = viz.color_map(wafers[group]) if wafers[group].nunique() <= len(viz.SERIES) else {
         g: viz.SERIES[0] for g in wafers[group].unique()}
     charts = spc_by_group(wafers, group, stat, ctype, phase1)
+    unit = unit_of(param, sub)
     cols = st.columns(2)
     summary = []
     for i, (g, ch) in enumerate(charts.items()):
         sw = wafers[wafers[group] == g].sort_values("timestamp")
-        cols[i % 2].plotly_chart(spc_figure(g, sw, ch, stat, colors[g], phase1), width="stretch")
+        cols[i % 2].plotly_chart(spc_figure(g, sw, ch, stat, colors[g], phase1, param, unit), width="stretch")
         ooc = ch.out_of_control
         summary.append({group: g, "points": len(ch.statistic), "violations": int(ooc.size), "CL": ch.cl, "σ short-term": ch.sigma})
     sm = pd.DataFrame(summary)
@@ -1021,8 +1025,8 @@ def render_evidence(ev: dict, key: str):
         cols = st.columns(2)
         for i, (g, ch) in enumerate(charts.items()):
             sw = wafers[wafers[group] == g].sort_values("timestamp")
-            cols[i % 2].plotly_chart(spc_figure(g, sw, ch, ev["stat"], colors[g], ev["phase1"]), width="stretch",
-                                     key=f"{key}_spc_{i}")
+            cols[i % 2].plotly_chart(spc_figure(g, sw, ch, ev["stat"], colors[g], ev["phase1"], ev["param"],
+                                                unit_of(ev["param"])), width="stretch", key=f"{key}_spc_{i}")
         if ev["stat"] == "mean" and ev.get("lsl") is not None:
             cap = pd.DataFrame([{group: g, **process_capability(gw["mean"], ev["lsl"], ev["usl"])}
                                 for g, gw in wafers.groupby(group)])
@@ -1039,8 +1043,9 @@ def render_evidence(ev: dict, key: str):
         c1, c2 = st.columns([3, 2])
         c1.plotly_chart(wafer_map_figure(w, um, "absolute", f"{w.wafer_id.iloc[0]}  ({w.chamber_id.iloc[0]})"),
                         width="stretch", key=f"{key}_map")
-        c2.plotly_chart(zernike_figure(ev["zk"]), width="stretch", key=f"{key}_zk")
-        c2.plotly_chart(radial_figure(ev["rp"]), width="stretch", key=f"{key}_rp")
+        wp, wu = quantity(w)
+        c2.plotly_chart(zernike_figure(ev["zk"], wp, wu), width="stretch", key=f"{key}_zk")
+        c2.plotly_chart(radial_figure(ev["rp"], wp, wu), width="stretch", key=f"{key}_rp")
     elif kind == "fit":
         res = ev["res"]
         figs = fit_figures(ev["technique"], ev["wl"], ev["meas"], res.stack, ev.get("angles"))
