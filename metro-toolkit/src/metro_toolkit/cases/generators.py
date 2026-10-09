@@ -539,14 +539,20 @@ def _fab_spc(res, param, group):
     return _spc_evidence(wafers, group, "mean", param, lsl, usl)
 
 
-def _fab_yield(res, cfg):
-    """Yield trend + die map of the worst wafer the event touched."""
+def _fab_yield(res, cfg, by: str = "yield"):
+    """Yield trend + die map of the worst wafer a product-affecting event touched (a metrology offset touches no
+    product, so it never picks the wafer)."""
     from ..dashboard.figures import CAUSE_NAME
 
     w = res.wafers
-    hit = set(";".join(res.events["wafer_ids"]).split(";")) if len(res.events) else set()
+    phys = res.events[res.events["type"] != "metro_offset"] if len(res.events) else res.events
+    hit = set(";".join(phys["wafer_ids"]).split(";")) - {""} if len(phys) else set()
     pool = w[w.wafer_id.isin(hit)] if hit else w
-    row = pool.sort_values("yield").iloc[0]
+    if by == "impact":  # the wafer the injected events cost the most (yield with vs without the events)
+        row = pool.assign(_loss=pool["yield_without_events"] - pool["yield"]).sort_values(
+            ["_loss", "yield"], ascending=[False, True]).iloc[0]
+    else:
+        row = pool.sort_values("yield").iloc[0]
     codes = np.array(list(res.dies.set_index("wafer_id").loc[row.wafer_id, "map"]))
     gx, gy = np.array(res.grid["x"]), np.array(res.grid["y"])
     cause_step = {s_["code"]: s_["name"] for s_ in cfg["steps"]} | {"D": cfg["defects"].get("inspection_step", "—")}
@@ -623,7 +629,231 @@ def fab_metro_offset(rng, level):
             "guide": [("spc_chart", f2), ("spc_chart", f1), ("fab_yield_trend", gi.fab_yield_trend(w))]}
 
 
+
+# --------------------------------------------------------------------------- inline defect inspection (step 5)
+LAYERS = ["Metal-2 Cu CMP", "contact etch", "STI CMP", "word-line etch", "via-1 clean"]
+REAL_CLASSES = ["Particle", "Scratch", "Residue", "Blocked etch", "Bridging", "Pattern defect"]
+MAXOUT = 100_000
+
+
+def _lot(rng):
+    return f"D{int(rng.integers(40, 90)):04d}"
+
+
+def _slots(rng, n):
+    return sorted(int(x) for x in rng.choice(np.arange(1, 26), n, replace=False))
+
+
+def _review(rng, n_rev, nuisance_share):
+    """Review classification of n_rev defects: a nuisance share of non-visible, the rest spread over real classes."""
+    nv = int(round(n_rev * nuisance_share))
+    weights = rng.dirichlet(np.ones(len(REAL_CLASSES)) * 0.8)
+    real = rng.multinomial(n_rev - nv, weights)
+    return pd.Series([nv, *real], index=["Non-visible", *REAL_CLASSES])
+
+
+def insp_nuisance_recipe(rng, level):
+    layer = str(rng.choice(LAYERS))
+    lot = _lot(rng)
+    n = int(rng.integers(6, 9))
+    slots = _slots(rng, n)
+    share = {"basic": (0.80, 0.88), "intermediate": (0.68, 0.78), "advanced": (0.56, 0.64)}[level]
+    nuis = rng.uniform(*share)
+    real = rng.uniform(300, 900, n)  # real defects per wafer
+    raw = real / (1 - nuis) * {"basic": 40, "intermediate": 22, "advanced": 9}[level] * rng.uniform(0.6, 1.6, n)
+    counts = np.minimum(raw, MAXOUT).round().astype(int)
+    need = {"basic": 3, "intermediate": 1, "advanced": 0}[level]  # basic: several wafers clearly hit the maxout
+    if (counts >= MAXOUT).sum() < need:
+        counts[np.argsort(-raw)[:need]] = MAXOUT
+    t = pd.DataFrame({"wafer_id": [f"{lot}.{s_:02d}" for s_ in slots], "count": counts, "group": "lot"})
+    rev = _review(rng, 150, nuis)
+    f1 = gi.defect_counts(t, MAXOUT)
+    f2 = gi.review_pareto(rev)
+    real_cls = rev.drop("Non-visible").sort_values(ascending=False)
+    v = {"layer": layer, "lot": lot, "n_wafers": n, "maxout": f"{MAXOUT:,}", "n_maxout": int((counts >= MAXOUT).sum()),
+         "median_count": f"{int(np.median(counts)):,}", "top_wafer": f1.v["top_wafer"],
+         "nonvisible_share": f2.v["nonvisible_share"], "review_n": int(rev.sum()), "top_real_class": real_cls.index[0],
+         "real_per_wafer": int(np.median(real)),
+         "count_text": ({"zh": f"{n} 片中有 {int((counts >= MAXOUT).sum())} 片碰到機台上限 {MAXOUT:,} 顆（maxout），中位數 "
+                               f"{int(np.median(counts)):,} 顆",
+                         "en": f"{int((counts >= MAXOUT).sum())} of {n} wafers hit the tool's maxout of {MAXOUT:,}, median "
+                               f"{int(np.median(counts)):,}"} if (counts >= MAXOUT).any() else
+                        {"zh": f"{n} 片都沒碰到上限，但中位數 {int(np.median(counts)):,} 顆，是這層平常的好幾十倍",
+                         "en": f"none of the {n} wafers hit the maxout, but the median is {int(np.median(counts)):,}, "
+                               "dozens of times this layer's usual level"})}
+    return {"v": v, "evidence": [{"kind": "defect_counts", "counts": t, "maxout": MAXOUT,
+                                  "title": f"{layer} · {lot}"},
+                                 {"kind": "review_pareto", "classes": rev}],
+            "guide": [("defect_counts", f1), ("review_pareto", f2)]}
+
+
+SPLIT_NAMES = [{"zh": "條件 B（新的 hardmask 沉積條件）", "en": "condition B (a new hardmask deposition condition)"},
+               {"zh": "條件 B（新的研磨墊）", "en": "condition B (a new polish pad)"},
+               {"zh": "條件 B（新的清洗化學品）", "en": "condition B (a new clean chemistry)"}]
+
+
+def insp_split_vs_baseline(rng, level):
+    layer = str(rng.choice(LAYERS))
+    split = SPLIT_NAMES[int(rng.integers(len(SPLIT_NAMES)))]
+    lot_s, lot_b = _lot(rng), _lot(rng)
+    incoming = bool(rng.random() < 0.5)
+    k = {"basic": (2.6, 3.2), "intermediate": (2.0, 2.4), "advanced": (1.6, 1.8)}[level]
+    ratio = rng.uniform(*k)
+    for _ in range(30):  # redraw until the data clearly show the intended source (and only that one)
+        rows = []
+        for grp, lot in (("split", lot_s), ("baseline", lot_b)):
+            for s_ in _slots(rng, 4):
+                prev = rng.normal(600, 70)
+                add = rng.normal(250, 40)
+                if grp == "split":
+                    if incoming:
+                        prev *= ratio
+                    else:
+                        add *= ratio
+                rows.append({"wafer_id": f"{lot}.{s_:02d}", "group": grp, "previous": round(max(prev, 50)),
+                             "current": round(max(prev, 50) + max(add, 20))})
+        t = pd.DataFrame(rows)
+        f = gi.adder_compare(t)
+        hit, other = (f.v["prev_ratio"], f.v["adder_ratio"]) if incoming else (f.v["adder_ratio"], f.v["prev_ratio"])
+        if hit >= 1.55 and other <= 1.25:
+            break
+    tot = t.groupby("group")["current"].mean()
+    counts = t.rename(columns={"current": "count"})[["wafer_id", "count", "group"]]
+    v = {"layer": layer, "split": split, "lot_s": lot_s, "lot_b": lot_b, "total_ratio": _fmt(tot["split"] / tot["baseline"], 2),
+         "split_prev": f.v["split_prev"], "base_prev": f.v["base_prev"], "split_adders": f.v["split_adders"],
+         "base_adders": f.v["base_adders"], "prev_ratio": f.v["prev_ratio"], "adder_ratio": f.v["adder_ratio"],
+         "source": f.v["source"],
+         "verdict": ({"zh": "差異在前層就已經存在（incoming），split 條件本身沒有增加缺陷",
+                      "en": "the difference is already there at the previous layer (incoming); the split condition itself "
+                            "adds no defects"} if incoming else
+                     {"zh": "前層兩組一樣，差異來自本層 adder：split 條件本身增加了缺陷",
+                      "en": "both groups match at the previous layer; the difference is this layer's adders, so the split "
+                            "condition itself adds defects"})}
+    answer = ({"cause": "C_INCOMING", "action": "A_PREV_LAYER", "decision": "D_CONFIRM_SOURCE"} if incoming else
+              {"cause": "C_SPLIT", "action": "A_SPLIT_REVIEW", "decision": "D_NO_CONVERT"})
+    fc = gi.defect_counts(counts, MAXOUT)
+    return {"v": v, "evidence": [{"kind": "defect_counts", "counts": counts, "maxout": MAXOUT,
+                                  "title": f"{layer}：split {lot_s} vs baseline {lot_b}"},
+                                 {"kind": "adders", "table": t}],
+            "guide": [("defect_counts", fc), ("adder_compare", f)], "answer": answer}
+
+
+# --------------------------------------------------------------------------- cross-role requests (step 5)
+RECESS = [("TiN recess", "tin_recess", 75.0, 1.2), ("W plug recess", "w_recess", 40.0, 0.8),
+          ("Cu dishing", "cu_dishing", 25.0, 0.9)]
+
+
+def fa_request_recess(rng, level):
+    """FA saw a deeper recess near the array / wafer edge and asks whether the lot's recess was on target. The routine
+    9-site plan reaches r = 140 mm; an edge-only excursion lives in the outermost ~7 mm, which only the 49-site map sees."""
+    from ..wafer.sampling import sampling_plan
+
+    name, param, target, loc = RECESS[int(rng.integers(len(RECESS)))]
+    lot = _lot(rng)
+    wid = f"{lot}.{int(rng.integers(1, 26)):02d}"
+    edge = bool(rng.random() < 0.6)
+    plan = sampling_plan("49", load_yaml("sampling.yaml"))
+    x, y = plan["x_mm"].to_numpy(float), plan["y_mm"].to_numpy(float)
+    r = np.hypot(x, y)
+    usl = target + 6 * loc
+    amp = {"basic": 14, "intermediate": 9, "advanced": 6.5}[level] * loc if edge else 0.0
+    vals = target + rng.normal(0, loc, len(x)) + amp * np.exp((r - r.max()) / 3.0) + 0.3 * loc * (r / r.max()) ** 2
+    w = pd.DataFrame({"wafer_id": wid, "chamber_id": "CMP01-A", "parameter": param, "site": plan["site"], "x": x, "y": y,
+                      "value": vals, "unit": "nm", "lsl": target - 6 * loc, "usl": usl, "timestamp": T0, "lot_id": lot,
+                      "tool_id": "CMP01"})
+    fleet = [w.assign(wafer_id=f"{lot}.{s_:02d}", value=target + rng.normal(0, loc, len(x))) for s_ in range(30, 42)]
+    wafers = wafer_summary(pd.concat(fleet + [w], ignore_index=True))
+    ev, facts, um = _wafer_evidence(w, wafers, param)
+    routine = w[r <= 140.5]
+    outer = w[r > 141]
+    n_out = int((w.value > usl).sum())
+    table = pd.DataFrame([
+        {"sites": "routine plan (r ≤ 140 mm)", "n": len(routine), "mean": routine.value.mean(), "max": routine.value.max(),
+         "beyond USL": int((routine.value > usl).sum())},
+        {"sites": "outer ring (r = 147 mm)", "n": len(outer), "mean": outer.value.mean(), "max": outer.value.max(),
+         "beyond USL": int((outer.value > usl).sum())},
+        {"sites": "full 49-site map", "n": len(w), "mean": w.value.mean(), "max": w.value.max(), "beyond USL": n_out}])
+    v = {"name": name, "param": param, "lot": lot, "wafer": wid, "target": target, "usl": _fmt(usl, 2),
+         "routine_mean": _fmt(routine.value.mean(), 2), "routine_max": _fmt(routine.value.max(), 2),
+         "edge_mean": _fmt(outer.value.mean(), 2), "full_max": _fmt(w.value.max(), 2), "n_out": n_out,
+         "verdict": ({"zh": f"例行量測點都在規格內，但最外圈（r = 147 mm）平均 {outer.value.mean():.1f} nm、"
+                           f"{n_out} 點超出 USL：邊緣的 recess 確實偏深，例行抽樣看不到",
+                      "en": f"the routine sites are all in spec, but the outermost ring (r = 147 mm) averages "
+                            f"{outer.value.mean():.1f} nm with {n_out} sites beyond the USL: the edge recess really is "
+                            "deeper, and routine sampling cannot see it"} if edge else
+                     {"zh": "包含最外圈在內，整片都在 target 附近、沒有點超出規格：recess 不是這次失效的原因",
+                      "en": "the whole wafer, outer ring included, is near target with no site beyond the spec: the "
+                            "recess is not the cause of this failure"})}
+    answer = ({"cause": "C_SAMPLING_GAP", "action": "A_REPLY_FULLMAP", "decision": "D_HOLD",
+               "notify": ["RDA", "PE", "PIE_YE"]} if edge else
+              {"cause": "C_NOT_METRO", "action": "A_REPLY_DATA", "decision": "D_RELEASE", "notify": ["RDA"]})
+    guide = [("wafer_map", facts["wafer_map"]), ("wafer_radial", facts["wafer_radial"])]
+    return {"v": v, "evidence": [ev, {"kind": "table", "table": table,
+                                      "title": "例行抽樣 vs 全片 49 點 · routine plan vs full 49-site map"}],
+            "guide": guide, "answer": answer}
+
+
+BINS = ["Bin S (short)", "Bin O (open)", "Bin L (leakage)"]
+INLINE = [("ild_thk", 300.0, 2.0), ("tin_thk", 10.0, 0.10), ("wl_cd_etch", 18.0, 0.12), ("hk_thk", 5.0, 0.025),
+          ("gate_ox_thk", 3.0, 0.012)]
+
+
+def ye_bin_metro_corr(rng, level):
+    """YE asks whether any inline metrology explains a bin's wafer-to-wafer loss. Either one parameter drives it
+    (strong correlation) or none does (metrology rules itself out)."""
+    bin_name = str(rng.choice(BINS))
+    picks = [INLINE[i] for i in rng.choice(len(INLINE), 3, replace=False)]
+    lots = [_lot(rng) for _ in range(3)]
+    linked = bool(rng.random() < 0.6)
+    n = 20
+    wid = [f"{lots[i % 3]}.{int(s_):02d}" for i, s_ in enumerate(rng.choice(np.arange(1, 26), n, replace=False))]
+    t = pd.DataFrame({"wafer_id": wid})
+    z = {}
+    for p, mu, sd in picks:
+        z[p] = rng.normal(0, 1, n)
+        t[p] = mu + sd * z[p]
+    driver = picks[0][0]
+    target_r = {"basic": 0.9, "intermediate": 0.8, "advanced": 0.72}[level] if linked else 0.0
+    noise = rng.normal(0, 1, n)
+    sign = float(rng.choice([-1, 1]))
+    if linked:
+        y = sign * target_r * z[driver] + np.sqrt(1 - target_r**2) * noise
+    else:
+        y = noise
+    loss = np.clip(4.0 + 2.5 * y, 0.2, None)
+    t["bin_loss"] = loss
+    params = [p for p, _, _ in picks]
+    if not linked:  # keep "no link" honest: every |r| small
+        for _ in range(20):
+            if max(abs(np.corrcoef(t[p], t["bin_loss"])[0, 1]) for p in params) < 0.3:
+                break
+            t["bin_loss"] = np.clip(4.0 + 2.5 * rng.normal(0, 1, n), 0.2, None)
+    f = gi.bin_corr(t, params, bin_name)
+    unit_sd = dict((p, sd) for p, _, sd in picks)[f.v["best_param"]]
+    slope = np.polyfit(t[f.v["best_param"]], t["bin_loss"], 1)[0] * unit_sd
+    v = {"bin": bin_name, "lots": ", ".join(lots), "n_wafers": n, "params": ", ".join(params),
+         "best_param": f.v["best_param"], "best_r": f.v["best_r"], "worst_wafer": f.v["worst_wafer"],
+         "worst_loss": f.v["worst_loss"], "loss_per_sd": _fmt(slope, 2), "mean_loss": _fmt(float(t["bin_loss"].mean()), 1),
+         "verdict": ({"zh": f"{f.v['best_param']} 與損失強相關（r = {f.v['best_r']}），很可能是驅動因子，但相關不等於因果",
+                      "en": f"{f.v['best_param']} correlates strongly with the loss (r = {f.v['best_r']}): a likely driver, "
+                            "but correlation is not causation"} if linked else
+                     {"zh": f"所有參數的 |r| 都很小（最大 {f.v['best_param']} r = {f.v['best_r']}）：量測參數不能解釋這個 bin",
+                      "en": f"every |r| is small (largest {f.v['best_param']}, r = {f.v['best_r']}): inline metrology does "
+                            "not explain this bin"}),
+         "ask": ({"zh": "請安排 split／DOE 確認機制，再決定是否調整 target；晶圓清單附上",
+                  "en": "please confirm the mechanism with a split / DOE before any re-target; wafer list attached"} if linked else
+                 {"zh": "建議對失效晶粒做 defect review／FA；需要晶圓清單我可以提供",
+                  "en": "I suggest defect review / FA on the failing dies; I can send the wafer list"})}
+    answer = ({"cause": "C_PARAM_DRIVES", "action": "A_SEND_PE", "decision": "D_SPLIT_CONFIRM",
+               "notify": ["PIE_YE", "PE"]} if linked else
+              {"cause": "C_NO_METRO_LINK", "action": "A_SUGGEST_FA", "decision": "D_NO_METRO_ACTION",
+               "notify": ["PIE_YE", "RDA"]})
+    return {"v": v, "evidence": [{"kind": "bin_corr", "table": t, "params": params, "bin": bin_name}],
+            "guide": [("bin_corr", f)], "answer": answer}
+
 GENERATORS = {
+    "insp_nuisance_recipe": insp_nuisance_recipe, "insp_split_vs_baseline": insp_split_vs_baseline,
+    "fa_request_recess": fa_request_recess, "ye_bin_metro_corr": ye_bin_metro_corr,
     "spc_chamber_shift": spc_chamber_shift, "spc_slow_drift": spc_slow_drift, "spc_metro_offset": spc_metro_offset,
     "spc_uniformity_only": spc_uniformity_only, "spc_cpk_off_center": spc_cpk_off_center, "spc_false_alarm": spc_false_alarm,
     "wafer_edge_roll": wafer_edge_roll, "wafer_tilt": wafer_tilt, "wafer_bad_site": wafer_bad_site,

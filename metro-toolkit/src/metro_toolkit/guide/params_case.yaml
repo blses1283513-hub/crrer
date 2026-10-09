@@ -5,10 +5,12 @@ params:
     zh: |
       **範圍 Domain**：只從某一類工作抽案例（SPC、晶圓圖、膜厚擬合、MSA、量測技術評估、DOE、良率事件），或「全部」隨機。
       想加強某個弱項時固定範圍；模擬真實值班時用「全部」，因為現場不會先告訴你是哪一類問題。
+      新增的範圍：**Inline defect 缺陷檢查**（檢查數量、review、split vs baseline）與 **跨部門請求**（FA、YE 請量測確認時怎麼用資料回答）；有自己的範本時會多一個「我的案例」。
       「🎯 針對我的弱點」：依你存過的練習紀錄出題，近期分數低的題型與範圍最常出、沒練過的其次、已經很熟的很少出；難度也會跟著你最近的分數升降（≥85 升一級、<50 降一級）。
     en: |
       **Domain**: draw cases from one area of the job only (SPC, wafer map, film fit, MSA, technique choice, DOE, yield events), or from all of them.
       Fix the domain to drill a weak spot; use "all" to simulate a real shift, where nobody tells you in advance what kind of problem it is.
+      Newer areas: **Inline defect inspection** (counts, review, split vs baseline) and **Cross-role requests** (answering FA / YE requests with metrology data); "My cases" appears once you have your own templates.
       "🎯 My weak spots" picks from your saved study log: case types and areas with low recent scores come up most, types you have not tried next, ones you have mastered rarely; the level follows your recent score too (>= 85 one level up, < 50 one level down).
   case.level:
     zh: |
@@ -75,3 +77,78 @@ params:
   reports.retry:
     zh: "**重練這一題**：用同一個案例編號（同樣的數據）回到 Case study 頁重做一次，比較前後分數。"
     en: "**Retry this case**: opens the same case ID (same data) on the Case study page so you can redo it and compare scores."
+  case.mix:
+    zh: "**🎲🎲 多重問題**：一次產生 2–3 個問題。可能是**連動**（同一段製程資料裡同時發生，會互相遮蓋，例如量測機台偏差蓋住真正的 chamber 偏移），也可能是**獨立**（同一次交接裡不相關的幾件事）。除了原因與處置，還要判斷**先處理哪一個**。難度選「隨機」時也會隨機。"
+    en: "**🎲🎲 Multi-issue**: makes 2–3 problems at once, either **linked** (happening together in the same fab data and able to hide each other, e.g. a metrology-tool offset over a real chamber shift) or **separate** (unrelated items in one shift handover). Besides causes and actions you decide **what to handle first**. With the level on random, the level is random too."
+  case.q_causes:
+    zh: "**有哪些原因（可複選）**：多重問題可能同時有好幾個原因。全部選對才拿滿分；漏選或多選會依重疊比例扣分。"
+    en: "**Which causes are present (select all)**: a multi-issue case can have several causes at once. Full points only for the exact set; missing or extra choices cost points by overlap."
+  case.q_priority:
+    zh: "**先處理哪一個**：產品正在受影響的先止血（hold／隔離），其次是今天要處理但沒有立即風險的，最後是可以排程的。"
+    en: "**Handle first**: contain whatever puts product at risk now (hold / isolate) first, then what needs action today without immediate risk, then what can be scheduled."
+  case.builder_mode:
+    zh: "**類型**：**連動**＝1–3 個問題放進同一次 fab 模擬（同一批 SPC、良率與 die map，可能互相遮蓋）；**獨立**＝2–3 個不相關的案例放進同一次交接，練習排先後。"
+    en: "**Mode**: **linked** = 1–3 issues in one fab simulation (the same SPC, yield and die maps; they can hide each other); **separate** = 2–3 unrelated cases in one handover, to practise priorities."
+  case.builder_n:
+    zh: "**問題數**：連動案例要放幾個問題（1–3）。只有 1 個時就是單一問題，但你可以自己決定製程站、位置、大小與時間。"
+    en: "**Issues**: how many issues the linked case has (1–3). With 1 it is a single issue, but you choose the step, place, size and timing."
+  case.builder_kind:
+    zh: "**問題種類**：單一 chamber 偏移、慢漂移、均勻度變差、所有 chamber 一起偏（recipe／進料）、量測機台偏差、外圈微粒、中心區缺陷。"
+    en: "**Issue kind**: one-chamber shift, slow drift, worse uniformity, all chambers moved (recipe / incoming), metrology-tool offset, edge-ring particles, centre defects."
+  case.builder_step:
+    zh: "**製程站**：問題發生在哪一站（決定參數、單位、規格與元件窗口）。缺陷類問題固定在 inline 檢查站。"
+    en: "**Step**: where the issue happens (sets the parameter, unit, spec and device window). Defect issues sit at the inline-inspection step."
+  case.builder_where:
+    zh: "**位置**：哪個 chamber／機台／量測機台；「all」代表所有機台一起。"
+    en: "**Where**: which chamber / tool / metrology tool; \"all\" means every tool at once."
+  case.builder_size:
+    zh: "**大小**：訊號大小。參數類以該站的晶圓間 σ 為單位（小 ≈ 1.8σ、中 ≈ 2.8σ、大 ≈ 3.8σ）；缺陷類是缺陷密度倍數。小的訊號比較難看出來，也可能不影響良率。"
+    en: "**Size**: signal size. Parameter issues are in the step's wafer-to-wafer σ (small ≈ 1.8σ, medium ≈ 2.8σ, large ≈ 3.8σ); defect issues are a defect-density multiplier. Small signals are harder to see and may not cost yield."
+  case.builder_start:
+    zh: "**開始批**：問題從第幾批開始（批序號，D0001 起算）。不同問題錯開時間，比較容易分辨；同時開始就比較難。"
+    en: "**Start lot**: the lot index where the issue begins (D0001 = index 0). Staggered starts are easier to tell apart; simultaneous starts are harder."
+  case.builder_types:
+    zh: "**選案例類型**：獨立模式要放進同一次交接的 2–3 個案例（建議選不同範圍，例如 SPC＋MSA＋缺陷）。"
+    en: "**Case types**: the 2–3 cases put in one handover in separate mode (different areas work best, e.g. SPC + MSA + defect)."
+  case.builder_build:
+    zh: "**建立案例**：依你的設定產生案例，設定存在這台電腦的 data/cases/built/，案例編號（build_…）可以重練。"
+    en: "**Build case**: generates the case from your settings; the settings are saved on this PC in data/cases/built/, and the case ID (build_…) replays it."
+  case.tpl_pick:
+    zh: "**範本**：選「新範本」寫一個新的，或選已存的範本來修改、練習或刪除。範本只存在這台電腦。"
+    en: "**Template**: pick \"new template\" to write one, or a saved template to edit, practise or delete it. Templates live on this PC only."
+  case.tpl_base:
+    zh: "**資料模式**：範本的圖表與數值來自哪一個內建案例類型。下方列出你可以在文字裡引用的 {名稱} 與範例值。"
+    en: "**Data pattern**: which built-in case type draws the template's charts and values. The {names} you can quote in your texts are listed below with example values."
+  case.tpl_text:
+    zh: "**文字**：中文或英文寫一種就好，另一種會自動沿用。可以用 {名稱} 引用資料模式裡的數值（例如 {chamber}、{shift}）；換行會保留。"
+    en: "**Text**: one language is enough; the other copies it. Quote values from the data pattern with {names} (e.g. {chamber}, {shift}); line breaks are kept."
+  case.tpl_answer:
+    zh: "**正確答案**：從選項庫選一個，或選「我自己寫」輸入你自己的答案文字（中／英）。"
+    en: "**Right answer**: pick one from the option pool, or choose \"write my own\" and type your own answer text (zh / en)."
+  case.tpl_wrong:
+    zh: "**錯誤選項**：至少 2 個看起來合理但錯的選項；好的干擾選項要像真的會有人選。"
+    en: "**Wrong options**: at least 2 plausible but wrong choices; good distractors are ones people really pick."
+  case.tpl_notify:
+    zh: "**要通知誰**：標準答案的通知對象；不選＝不需升級（只記錄）。"
+    en: "**Notify**: the model answer for who to tell; none = no escalation (record only)."
+  case.tpl_role:
+    zh: "**訊息寫給**：練習者要寫訊息給哪個角色。"
+    en: "**Message to**: the role the trainee writes the message to."
+  case.tpl_format:
+    zh: "**報告格式**：訊息要用的格式（SWR 缺陷摘要、回覆 FA、批次報告備註、交接摘要），作答框會預填各段標題。"
+    en: "**Format**: the layout the message must follow (SWR defect summary, FA reply, lot-report note, handover); the answer box is pre-filled with its headings."
+  case.tpl_urgency:
+    zh: "**急迫度**：3＝產品正在受影響、2＝今天要處理、1＝可以排程。放進多重問題時用來判斷先後。"
+    en: "**Urgency**: 3 = product at risk now, 2 = act today, 1 = can be scheduled. Used for priorities when the case is part of a multi-issue handover."
+  case.tpl_keypoints:
+    zh: "**訊息要點**：每行一個：「中文要點 | English point | 關鍵字1, 關鍵字2」。訊息裡出現任一個關鍵字（不分大小寫）就算有寫到；關鍵字也可以用 {名稱}。"
+    en: "**Key points**: one per line: \"zh point | English point | word1, word2\". A message covers the point if it contains any of the words (not case-sensitive); words may use {names}."
+  case.tpl_save:
+    zh: "**儲存範本**：檢查後存到 data/cases/custom/。新範本不會覆蓋舊的；修改已存的範本會更新它。缺少的必填項會顯示原因。"
+    en: "**Save template**: checks and saves it to data/cases/custom/. A new template never overwrites another; editing a saved one updates it. Anything missing is explained."
+  case.tpl_practise:
+    zh: "**練習這個範本**：用這個範本產生一題（中級、隨機數值）到上方作答。"
+    en: "**Practise it**: generates a case from this template (intermediate, random numbers) to answer above."
+  case.tpl_delete:
+    zh: "**刪除範本**：先勾「確定刪除」再按刪除，範本檔案會從這台電腦移除，無法復原（已存的練習報告不受影響）。"
+    en: "**Delete template**: tick \"I am sure\" first, then delete; the template file is removed from this PC and cannot be restored (saved practice reports are kept)."

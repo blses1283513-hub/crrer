@@ -61,7 +61,10 @@ from metro_toolkit.ingest import (  # noqa: E402
 from metro_toolkit.dashboard.figures import (  # noqa: E402
     CAUSE_COLOR,
     CAUSE_NAME,
+    adders_figure,
+    bin_corr_figure,
     bland_altman_figure,
+    defect_counts_figure,
     die_map_figure,
     doe_contour_figure,
     fit_figures,
@@ -70,6 +73,7 @@ from metro_toolkit.dashboard.figures import (  # noqa: E402
     legend_line,
     pareto_figure,
     radial_figure,
+    review_pareto_figure,
     sensitivity_figure,
     spc_figure,
     tn_figure,
@@ -990,7 +994,8 @@ def page_fab():
 
 # --------------------------------------------------------------------------- Case study
 @st.cache_resource(max_entries=6, show_spinner="產生案例 Generating the case…")
-def cached_case(case_id: str):
+def cached_case(case_id: str, stamp: float = 0.0):
+    """stamp: a template's modification time, so an edited template is regenerated."""
     from metro_toolkit import cases
 
     return cases.generate(case_id)
@@ -1098,37 +1103,97 @@ def render_evidence(ev: dict, key: str):
                         key=f"{key}_ct")
     elif kind == "yield_trend":
         st.plotly_chart(yield_trend_figure(ev["w"]), width="stretch", key=f"{key}_yt")
+    elif kind == "header":  # one problem of a multi-problem handover
+        st.markdown(f"##### {bi_line(ev['text'])}")
+    elif kind == "table":
+        st.dataframe(ev["table"].style.format(precision=2), hide_index=True)
+    elif kind == "defect_counts":
+        st.plotly_chart(defect_counts_figure(ev["counts"], ev["maxout"], "每片檢查數量 · inline inspection count per wafer"),
+                        width="stretch", key=f"{key}_dc")
+    elif kind == "review_pareto":
+        st.plotly_chart(review_pareto_figure(ev["classes"]), width="stretch", key=f"{key}_rp")
+    elif kind == "adders":
+        st.plotly_chart(adders_figure(ev["table"]), width="stretch", key=f"{key}_ad")
+        st.dataframe(ev["table"].assign(adders=ev["table"]["current"] - ev["table"]["previous"]), hide_index=True)
+    elif kind == "bin_corr":
+        st.plotly_chart(bin_corr_figure(ev["table"], ev["params"], ev["bin"]), width="stretch", key=f"{key}_bc")
     elif kind == "die_map":
         st.plotly_chart(die_map_figure(ev["codes"], ev["gx"], ev["gy"], ev["r_eff"], ev["title"]), width="stretch",
                         key=f"{key}_dm")
 
 
+LEVEL_FMT = {"random": "隨機 random", "basic": "基礎 basic", "intermediate": "中級 intermediate", "advanced": "進階 advanced"}
+SIZE_FMT = {"small": "小 small", "medium": "中 medium", "large": "大 large"}
+Q_HELP = {"cause": "case.q_cause", "action": "case.q_action", "decision": "case.q_decision", "priority": "case.q_priority"}
+
+
+def nl(text: str) -> str:
+    """Markdown line breaks for multi-line texts."""
+    return (text or "").replace("\n", "  \n")
+
+
+def bi_block(zh: str, en: str) -> str:
+    """Multi-line text in the chosen guide language; English lines in italics one by one (Markdown cannot italicise
+    across line breaks)."""
+    from metro_toolkit.guide.render import lang
+
+    zh_md = "  \n".join(ln for ln in zh.splitlines())
+    en_md = "  \n".join(f"*{ln.strip()}*" if ln.strip() else "" for ln in en.splitlines())
+    return {"zh": zh_md, "en": "  \n".join(ln for ln in en.splitlines())}.get(lang(), f"{zh_md}  \n{en_md}")
+
+
+def bi_line(entry: dict) -> str:
+    """A {zh, en} label on one line, in the chosen guide language."""
+    return bi(entry["zh"], entry["en"]).replace("  \n", " · ")
+
+
+def bi_plain(entry: dict) -> str:
+    """A {zh, en} label for drop-downs and multi-selects, which do not render Markdown."""
+    from metro_toolkit.guide.render import lang
+
+    return {"zh": entry["zh"], "en": entry["en"]}.get(lang(), f"{entry['zh']} · {entry['en']}")
+
+
+def type_title(case_type: str) -> str:
+    from metro_toolkit import cases
+
+    return bi_plain(cases.type_info(case_type)["title"])
+
+
 def page_case():
     from metro_toolkit import cases
-    from metro_toolkit.guide.render import lang
 
     st.header("Case study 案例練習")
     st.caption(bi("隨機產生一個真實情境：先讀交接內容與資料，判斷原因、第一步處置、產品處置、要通知誰，並寫一則訊息；"
-                  "送出後看標準答案、理由、各角色的範例訊息與分數。所有資料都是合成的練習資料。",
+                  "送出後看標準答案、理由、各角色的範例訊息與分數。🎲🎲 會產生多重問題；🧩 可以自己組合問題；✍️ 可以寫自己的案例範本。"
+                  "所有資料都是合成的練習資料。",
                   "A random, realistic situation: read the handover and the data, decide the cause, the first action, the "
                   "disposition and who to notify, and write one message; then see the model answers, the reasoning, model "
-                  "messages for every role and your score. All data is synthetic practice data."))
+                  "messages for every role and your score. 🎲🎲 makes a multi-issue case, 🧩 lets you combine issues "
+                  "yourself, ✍️ lets you write your own case templates. All data is synthetic practice data."))
     lib = cases.library()
-    domains = ["all", "focus"] + list(lib["domains"])
-    c1, c2, c3 = st.columns([2, 2, 1])
+    has_custom = bool(cases.custom_types())
+    domains = ["all", "focus"] + [d for d in lib["domains"] if d != "mix" and (d != "custom" or has_custom)]
+    c1, c2, c3, c4 = st.columns([2, 2, 1, 1.2])
     domain = c1.selectbox("範圍 Domain", domains, key="case_domain", help=H("case.domain"),
                           format_func=lambda d: {"all": "全部 All", "focus": "🎯 針對我的弱點 My weak spots"}.get(d) or
-                          bi(lib["domains"][d]["zh"], lib["domains"][d]["en"]).replace("  \n", " · "))
+                          bi_plain(lib["domains"][d]))
     level = c2.selectbox("難度 Level", ["random", *cases.LEVELS], key="case_level", help=H("case.level"),
-                         format_func={"random": "隨機 random", "basic": "基礎 basic", "intermediate": "中級 intermediate",
-                                      "advanced": "進階 advanced"}.get)
+                         format_func=LEVEL_FMT.get)
+    lv = None if level == "random" else level
     c3.write("")
     if c3.button("🎲 隨機案例", type="primary", key="case_new", help=H("case.new")):
         if domain == "focus":  # weighted toward your low-scoring case types and areas (see My case reports)
-            case = cases.focus_case(cases.history(), None, None if level == "random" else level)
+            st.session_state["case_id"] = cases.focus_id(cases.history(), None, lv)
         else:
-            case = cases.random_case(None, None if domain == "all" else domain, None if level == "random" else level)
-        st.session_state["case_id"] = case.id
+            st.session_state["case_id"] = cases.random_id(None, None if domain == "all" else domain, lv)
+    c4.write("")
+    if c4.button("🎲🎲 多重問題 Multi-issue", key="case_mix", help=H("case.mix")):
+        st.session_state["case_id"] = cases.mix_id(None, lv)
+    with st.expander("🧩 案例組合器 Case builder（單一或多重問題 · one or several issues）"):
+        case_builder()
+    with st.expander("✍️ 我的案例範本 My case templates（只存在這台電腦 · saved on this PC only）"):
+        case_templates()
     with st.expander("用案例編號重練 · Replay a case by its ID"):
         rc1, rc2 = st.columns([3, 1])
         typed = rc1.text_input("案例編號 Case ID", key="case_replay_id", help=H("case.replay"),
@@ -1138,54 +1203,242 @@ def page_case():
                 cases.parse_id(typed)
                 st.session_state["case_id"] = typed.strip()
             except (ValueError, KeyError):
-                st.error(bi("案例編號格式不對（例：spc_chamber_shift-I-04217）。", "Not a valid case ID (e.g. spc_chamber_shift-I-04217)."))
+                st.error(bi("案例編號格式不對，或這台電腦上沒有這個自建案例／範本（例：spc_chamber_shift-I-04217）。",
+                            "Not a valid case ID, or the built case / template is not on this PC "
+                            "(e.g. spc_chamber_shift-I-04217)."))
 
     cid = st.session_state.get("case_id")
     if not cid:
-        st.info(bi(f"按「🎲 隨機案例」開始。共有 {len(lib['cases'])} 種案例、3 種難度，每次的數值、機台與時間都不同。",
-                   f"Press 🎲 to start. There are {len(lib['cases'])} case types and 3 levels; numbers, tools and timing "
-                   "change every time."))
+        st.info(bi(f"按「🎲 隨機案例」開始。共有 {len(lib['cases'])} 種單一情境案例、3 種難度，每次的數值、機台與時間都不同；"
+                   "🎲🎲 會把 2–3 個問題放在同一個情境。",
+                   f"Press 🎲 to start. There are {len(lib['cases'])} single-situation case types and 3 levels; numbers, "
+                   "tools and timing change every time; 🎲🎲 puts 2–3 problems in one situation."))
         case_history()
         return
-    case = cached_case(cid)
-    dom = lib["domains"][case.spec["domain"]]
-    st.subheader(bi(case.text("title", "zh"), case.text("title", "en")).replace("  \n", " · "))
-    st.caption(f"{cid} · {bi(dom['zh'], dom['en']).replace('  ' + chr(10), ' · ')} · {case.level}")
-    st.info(bi(case.text("brief", "zh"), case.text("brief", "en")))
+    try:
+        case = cached_case(cid, case_stamp(cid))
+    except (ValueError, KeyError, FileNotFoundError):
+        st.error(bi(f"無法開啟 {cid}（範本或自建案例可能已刪除）。", f"Cannot open {cid} (the template or built case may be gone)."))
+        return
+    dom = lib["domains"].get(case.spec["domain"], {"zh": case.spec["domain"], "en": case.spec["domain"]})
+    st.subheader(bi_line({"zh": case.text("title", "zh"), "en": case.text("title", "en")}))
+    st.caption(f"{cid} · {bi_line(dom)} · {case.level}")
+    st.info(bi_block(case.text("brief", "zh"), case.text("brief", "en")))
 
     st.markdown("#### 證據 Evidence")
     for i, ev in enumerate(case.evidence):
         render_evidence(ev, f"case_{cid}_{i}")
+    case_form(case)
 
+
+def case_stamp(case_id: str) -> float:
+    """Changes when a template is edited, so the page does not serve the old version from its cache."""
+    from metro_toolkit.cases.custom import template_stamp
+
+    case_type = case_id.rsplit("-", 2)[0]
+    return template_stamp(case_type) if case_type.startswith("my_") else 0.0
+
+
+def case_form(case):
+    from metro_toolkit import cases
+    from metro_toolkit.guide.render import _langs, lang
+
+    cid = case.id
     answers_key = f"case_answers_{cid}"
     st.markdown("#### 你的判斷 Your call")
-    roles = list(lib_roles())
+    lib = cases.library()
+    fmt = lib.get("formats", {}).get(case.spec.get("message_format") or "")
     with st.form(f"case_form_{cid}"):
-        def opt_fmt(q):
-            return lambda o: bi(case.option_text(q, o, "zh"), case.option_text(q, o, "en")).replace("  \n", " · ")
+        answers, n, group = {}, 0, None
+        for q in case.questions:
+            if q.group and q.group != group:
+                group = q.group
+                st.markdown(f"**{bi_line(q.group)}**")
+            n += 1
+            p = q.prompt or q.label
+            label = f"{n}. {p['zh']} {p['en']}"
 
-        cause = st.radio("1. 根本原因最可能是？ Most likely root cause?", case.options["cause"], index=None,
-                         format_func=opt_fmt("cause"), key=f"q_cause_{cid}", help=H("case.q_cause"))
-        action = st.radio("2. 第一步要做什麼？ First action?", case.options["action"], index=None,
-                          format_func=opt_fmt("action"), key=f"q_action_{cid}", help=H("case.q_action"))
-        decision = st.radio("3. 產品／結論怎麼處置？ Disposition / decision?", case.options["decision"], index=None,
-                            format_func=opt_fmt("decision"), key=f"q_decision_{cid}", help=H("case.q_decision"))
-        notify = st.multiselect("4. 要通知誰？（可複選；不需升級就不選） Who to notify? (none = e-log only)", roles,
-                                key=f"q_notify_{cid}", help=H("case.q_notify"),
-                                format_func=lambda r: cases.role_name(r, "zh" if lang() != "en" else "en"))
+            def fmt_opt(o, q=q):
+                return bi_plain({"zh": q.option_text(o, "zh"), "en": q.option_text(o, "en")})
+
+            if q.kind == "single":
+                answers[q.key] = st.radio(label, q.options, index=None, format_func=fmt_opt, key=f"q_{q.key}_{cid}",
+                                          help=H(Q_HELP.get(q.category, "case.q_cause")))
+            elif q.kind == "multi":
+                answers[q.key] = st.multiselect(label, q.options, format_func=fmt_opt, key=f"q_{q.key}_{cid}",
+                                                help=H("case.q_causes"))
+            else:
+                answers[q.key] = st.multiselect(label, q.options, key=f"q_{q.key}_{cid}", help=H("case.q_notify"),
+                                                format_func=lambda r: cases.role_name(r, "zh" if lang() != "en" else "en"))
         target = case.spec["message_role"]
-        message = st.text_area(f"5. 寫給 {cases.role_name(target, 'zh')} · {cases.role_name(target, 'en')} 的訊息 "
-                               "Your message", key=f"q_msg_{cid}", height=140, help=H("case.message"))
+        fname = f"（{fmt['name']['zh']} · {fmt['name']['en']}）" if fmt else ""
+        message = st.text_area(f"{n + 1}. 寫給 {cases.role_name(target, 'zh')} · {cases.role_name(target, 'en')} 的訊息 "
+                               f"Your message{fname}", value=cases.message_template(case, _langs()), key=f"q_msg_{cid}",
+                               height=200 if fmt else 140, help=H("case.message"))
         submitted = st.form_submit_button("送出並看答案 Submit and see the answers", type="primary", help=H("case.submit"))
     if submitted:
-        if None in (cause, action, decision):
-            st.warning(bi("請先回答 1–3 題。", "Please answer questions 1–3 first."))
+        if any(q.kind == "single" and answers.get(q.key) is None for q in case.questions):
+            st.warning(bi("請先回答所有單選題。", "Please answer every single-choice question first."))
         else:
-            st.session_state[answers_key] = {"cause": cause, "action": action, "decision": decision,
-                                             "notify": notify, "message": message}
+            st.session_state[answers_key] = {**answers, "message": message}
             st.session_state[f"case_saved_{cid}"] = []  # a new attempt: nothing of it saved yet
     if answers_key in st.session_state:
         case_debrief(case, st.session_state[answers_key])
+
+
+def case_builder():
+    """🧩 Choose the issues yourself: linked (one fab run) or separate (several problems in one handover)."""
+    from metro_toolkit import cases
+    from metro_toolkit.cases import compose
+
+    st.caption(bi("**連動**：1–3 個問題發生在同一段製程資料裡（同一批 SPC、良率與 die map），可能互相遮蓋；**獨立**：2–3 個不相關的案例"
+                  "放在同一次交接，練習判斷先後。建好的案例會存在這台電腦（data/cases/built/），可以用案例編號重練。",
+                  "**Linked**: 1–3 issues in the same fab data (the same SPC, yield and die maps), which can hide each "
+                  "other. **Separate**: 2–3 unrelated cases in one handover, to practise what comes first. Built cases "
+                  "are saved on this PC (data/cases/built/) and replay by their case ID."))
+    m1, m2 = st.columns([2, 1])
+    mode = m1.radio("類型 Mode", ["linked", "separate"], horizontal=True, key="cb_mode", help=H("case.builder_mode"),
+                    format_func={"linked": "連動 linked（同一段資料）", "separate": "獨立 separate（同一次交接）"}.get)
+    lvl = m2.selectbox("難度 Level", cases.LEVELS, index=1, key="cb_level", format_func=LEVEL_FMT.get, help=H("case.level"))
+    if mode == "linked":
+        kinds = compose.issue_kinds()
+        n = st.radio("問題數 Issues", [1, 2, 3], index=1, horizontal=True, key="cb_n", help=H("case.builder_n"))
+        issues = []
+        for i in range(n):
+            cols = st.columns([2.2, 1.3, 1.3, 1.1, 1.6])
+            kind = cols[0].selectbox(f"問題 {i + 1} Issue", list(kinds), index=i % len(kinds), key=f"cb_kind_{i}",
+                                     format_func=lambda k: bi_plain(kinds[k]["label"]), help=H("case.builder_kind"))
+            step = cols[1].selectbox("製程站 Step", kinds[kind]["steps"], key=f"cb_step_{i}_{kind}",
+                                     help=H("case.builder_step"))
+            where = cols[2].selectbox("位置 Where", compose.where_choices(kind, step), key=f"cb_where_{i}_{kind}_{step}",
+                                      help=H("case.builder_where"))
+            size = cols[3].selectbox("大小 Size", compose.SIZES, index=1, key=f"cb_size_{i}", format_func=SIZE_FMT.get,
+                                     help=H("case.builder_size"))
+            start = cols[4].slider("開始批 Start lot", 5, 36, 16 + 4 * i, key=f"cb_start_{i}", help=H("case.builder_start"))
+            issues.append({"kind": kind, "step": step, "where": where, "size": size, "start_lot": int(start), "sign": 1})
+        settings = {"mode": "linked", "issues": issues}
+    else:
+        types = st.multiselect("選 2–3 個案例類型 Pick 2–3 case types", cases.case_types(), max_selections=3, key="cb_types",
+                               format_func=type_title, help=H("case.builder_types"))
+        settings = {"mode": "separate", "types": types}
+    if st.button("🧩 建立案例 Build case", type="primary", key="cb_build", help=H("case.builder_build")):
+        try:
+            compose.validate_settings(settings)
+            st.session_state["case_id"] = cases.make_id(compose.save_settings(settings), lvl, 0)
+        except ValueError as e:
+            st.error(str(e))
+
+
+def case_templates():
+    """✍️ Write your own case on top of a built-in data pattern; saved only on this PC (data/cases/custom/)."""
+    from metro_toolkit import cases
+    from metro_toolkit.cases import custom
+
+    st.caption(bi("把工作上遇到的情境改寫成練習題：選一個資料模式（圖表與可引用的數值），寫上狀況、正確答案與錯誤選項、要通知誰、範例訊息與要點。"
+                  "範本只存在這台電腦的 data/cases/custom/（不會上傳 GitHub）。請不要寫真實的 lot ID、產品、recipe 名稱或人名。",
+                  "Turn a real-work situation into practice: pick a data pattern (the charts and the values you can quote), "
+                  "then write the situation, the right answers and wrong options, who to notify, a model message and its "
+                  "key points. Templates are saved only on this PC in data/cases/custom/ (never on GitHub). Do not use "
+                  "real lot IDs, product or recipe names, or people's names."))
+    lib = cases.library()
+    tpls = custom.load_templates()
+    if "tp_goto" in st.session_state:  # just saved: open that template
+        st.session_state["tp_pick"] = st.session_state.pop("tp_goto")
+    if "tp_saved" in st.session_state:
+        saved, unknown = st.session_state.pop("tp_saved")
+        st.success(f"已存 Saved: {saved}")
+        if unknown:
+            st.warning(bi("這些 {名稱} 在資料模式裡沒有，會顯示成 —：", "These {names} are not in the data pattern and "
+                          "will show as —: ") + ", ".join(unknown))
+    pick = st.selectbox("範本 Template", ["__new__", *tpls], key="tp_pick", help=H("case.tpl_pick"),
+                        format_func=lambda t: "＋ 新範本 New template" if t == "__new__" else bi_plain(tpls[t]["title"]))
+    cur = tpls.get(pick, {})
+    k = f"tp_{pick}"
+    bases = custom.base_types()
+    base = st.selectbox("資料模式 Data pattern", bases, index=bases.index(cur["base"]) if cur else 0, key=f"{k}_base",
+                        format_func=type_title, help=H("case.tpl_base"))
+    ph = tpl_placeholders(base)
+    st.caption("可引用的數值（範例值）Values you can quote (example): " +
+               " · ".join(f"`{{{name}}}` {str(val)[:24]}" for name, val in ph.items()))
+
+    def two(label, key, height=None, value=None):
+        c1, c2 = st.columns(2)
+        value = value or {}
+        if height:
+            zh = c1.text_area(f"{label}（中文）", value.get("zh", ""), key=f"{k}_{key}_zh", height=height, help=H("case.tpl_text"))
+            en = c2.text_area(f"{label} (English)", value.get("en", ""), key=f"{k}_{key}_en", height=height, help=H("case.tpl_text"))
+        else:
+            zh = c1.text_input(f"{label}（中文）", value.get("zh", ""), key=f"{k}_{key}_zh", help=H("case.tpl_text"))
+            en = c2.text_input(f"{label} (English)", value.get("en", ""), key=f"{k}_{key}_en", help=H("case.tpl_text"))
+        return {"zh": zh, "en": en}
+
+    tpl = {"base": base, "title": two("標題 Title", "title", value=cur.get("title")),
+           "brief": two("狀況 Brief", "brief", 110, cur.get("brief")), "options": {}}
+    for q, pool_name, name in (("cause", "causes", "根本原因 Root cause"), ("action", "actions", "第一步 First action"),
+                               ("decision", "decisions", "處置 Disposition")):
+        pool = lib["pools"][pool_name]
+        own = custom.CUSTOM_ID[q]
+        ids = [own, *pool]
+        right = st.selectbox(f"正確的{name}", ids, index=ids.index(cur[q]) if cur.get(q) in ids else 1,
+                             key=f"{k}_{q}", help=H("case.tpl_answer"),
+                             format_func=lambda o, pool=pool: "✏️ 我自己寫 Write my own" if o.startswith("U_") else
+                             bi_plain(pool[o]))
+        if right == own:
+            tpl["options"][own] = two(f"自己的{name}", f"{q}_own", value=(cur.get("options") or {}).get(own))
+        wrong_ids = [o for o in pool if o != right]
+        tpl[q] = right
+        tpl[f"{q}_options"] = st.multiselect(f"錯誤選項（至少 2 個） Wrong options (2+) · {name}", wrong_ids,
+                                             default=[o for o in cur.get(f"{q}_options", []) if o in wrong_ids],
+                                             key=f"{k}_{q}_wrong", format_func=lambda o, pool=pool: bi_plain(pool[o]),
+                                             help=H("case.tpl_wrong"))
+    roles = list(lib_roles())
+    r1, r2, r3, r4 = st.columns([2, 1.3, 1.5, 1])
+    tpl["notify"] = r1.multiselect("要通知誰 Notify", roles, default=cur.get("notify", []), key=f"{k}_notify",
+                                   format_func=lambda r: cases.role_name(r, "zh"), help=H("case.tpl_notify"))
+    tpl["message_role"] = r2.selectbox("訊息寫給 Message to", roles, index=roles.index(cur.get("message_role", "PE")),
+                                       key=f"{k}_role", format_func=lambda r: cases.role_name(r, "zh"), help=H("case.tpl_role"))
+    fmts = ["", *lib.get("formats", {})]
+    tpl["message_format"] = r3.selectbox("報告格式 Format", fmts, index=fmts.index(cur.get("message_format") or ""),
+                                         key=f"{k}_fmt", help=H("case.tpl_format"),
+                                         format_func=lambda f: "一般訊息 plain" if not f else bi_plain(lib["formats"][f]["name"]))
+    tpl["urgency"] = r4.selectbox("急迫度 Urgency", [3, 2, 1], index=[3, 2, 1].index(cur.get("urgency", 2)),
+                                  key=f"{k}_urg", help=H("case.tpl_urgency"))
+    tpl["model_message"] = two("範例訊息 Model message", "model", 120, cur.get("model_message"))
+    kp_text = "\n".join(f"{kp['zh']} | {kp['en']} | {', '.join(kp['any'])}" for kp in cur.get("keypoints", []))
+    raw = st.text_area("訊息要點：每行「中文 | English | 關鍵字1, 關鍵字2」 Key points: one per line \"zh | en | word1, word2\"",
+                       kp_text, key=f"{k}_kps", height=100, help=H("case.tpl_keypoints"))
+    tpl["keypoints"] = []
+    for line in raw.splitlines():
+        parts = [x.strip() for x in line.split("|")]
+        if len(parts) >= 3:
+            tpl["keypoints"].append({"zh": parts[0], "en": parts[1], "any": [w.strip() for w in parts[2].split(",") if w.strip()]})
+    tpl["explanation"] = two("為什麼 Explanation", "why", 110, cur.get("explanation"))
+
+    b1, b2, b3 = st.columns(3)
+    if b1.button("💾 儲存範本 Save template", type="primary", key=f"{k}_save", help=H("case.tpl_save")):
+        try:
+            clean = custom.validate_template(tpl)
+            t = custom.save_template(clean, pick.removeprefix("my_") if cur else None, replace=bool(cur))
+            st.session_state["tp_saved"] = (t, custom.unknown_placeholders(clean))
+            st.session_state["tp_goto"] = t
+            st.rerun()
+        except ValueError as e:
+            st.error(str(e))
+    if cur:
+        if b2.button("▶️ 練習這個範本 Practise it", key=f"{k}_play", help=H("case.tpl_practise")):
+            st.session_state["case_id"] = cases.make_id(pick, "intermediate", int(np.random.default_rng().integers(100000)))
+        sure = b3.checkbox("確定刪除 I am sure", key=f"{k}_sure", help=H("case.tpl_delete"))
+        if b3.button("🗑️ 刪除範本 Delete", key=f"{k}_delete", disabled=not sure, help=H("case.tpl_delete")):
+            custom.delete_template(pick)
+            st.session_state.pop("tp_pick", None)
+            st.rerun()
+
+
+@st.cache_data(show_spinner=False)
+def tpl_placeholders(base: str) -> dict:
+    from metro_toolkit.cases.custom import placeholders
+
+    return placeholders(base)
 
 
 def lib_roles():
@@ -1201,25 +1454,37 @@ def case_debrief(case, answers: dict):
     result = cases.score(case, answers)
     st.markdown("---")
     st.markdown("#### 答案與講評 Debrief")
-    k = st.columns(5)
+    cats = {}
+    for q in case.questions:
+        r = result["questions"][q.key]
+        got, mx = cats.get(q.category, (0.0, 0.0))
+        cats[q.category] = (got + r["points"], mx + r["max"])
+    names = {"cause": "原因 cause", "action": "第一步 action", "decision": "處置 decision", "priority": "先後 priority",
+             "notify": "通知 notify"}
+    k = st.columns(len(cats) + 1)
     k[0].metric("總分 Score", f"{result['total']:.0f} / 100", help=H("case.score"))
-    names = {"cause": "原因 cause", "action": "第一步 action", "decision": "處置 decision", "notify": "通知 notify"}
-    for col, q in zip(k[1:], ("cause", "action", "decision", "notify")):
-        r = result["questions"][q]
-        col.metric(f"{'✓' if r['ok'] else '✗'} {names[q]}", f"{r['points']:.0f} / {r['max']}")
-    for q, title in (("cause", "根本原因 Root cause"), ("action", "第一步處置 First action"), ("decision", "處置 Disposition")):
-        r = result["questions"][q]
-        mark = "✓" if r["ok"] else "✗"
-        st.markdown(f"**{mark} {title}**：" + bi(case.option_text(q, r["correct"], "zh"), case.option_text(q, r["correct"], "en"))
-                    .replace("  \n", " · "))
-    n = result["questions"]["notify"]
-    right = ", ".join(cases.role_name(r, "zh") for r in n["correct"]) or "不需升級（e-log 記錄即可） no escalation, e-log only"
-    extra = (f"；漏了 missed: {', '.join(cases.role_name(r, 'zh') for r in n['missing'])}" if n["missing"] else "") + \
-            (f"；多了 extra: {', '.join(cases.role_name(r, 'zh') for r in n['extra'])}" if n["extra"] else "")
-    st.markdown(f"**{'✓' if n['ok'] else '△'} 通知 Notify**：{right}{extra}")
+    for col, (cat, (got, mx)) in zip(k[1:], cats.items()):
+        col.metric(f"{'✓' if abs(got - mx) < 1e-6 else '✗'} {names.get(cat, cat)}", f"{got:.0f} / {mx:.0f}")
+    group = None
+    for q in case.questions:
+        r = result["questions"][q.key]
+        if q.group and q.group != group:
+            group = q.group
+            st.markdown(f"**{bi_line(q.group)}**")
+        both = (lambda o: bi_line({"zh": q.option_text(o, "zh"), "en": q.option_text(o, "en")}))
+        if q.kind == "single":
+            model = " ／或 or ".join(both(o) for o in r["accepted"])
+            st.markdown(f"{'✓' if r['ok'] else '✗'} **{bi_line(q.label)}**：{model}")
+        else:
+            right = "、".join(both(o) for o in r["correct"]) or (
+                "不需升級（e-log 記錄即可） no escalation, e-log only" if q.kind == "roles" else "—")
+            extra = (f"；漏了 missed: {'、'.join(both(o) for o in r['missing'])}" if r["missing"] else "") + \
+                    (f"；多了 extra: {'、'.join(both(o) for o in r['extra'])}" if r["extra"] else "")
+            st.markdown(f"{'✓' if r['ok'] else '△'} **{bi_line(q.label)}**：{right}{extra}")
     st.markdown("**為什麼 Why**")
     for lg in _langs():
-        st.markdown(case.text("explanation", lg) if lg == "zh" or len(_langs()) == 1 else f"*{case.text('explanation', lg)}*")
+        st.markdown(nl(case.text("explanation", lg)) if lg == "zh" or len(_langs()) == 1 else
+                    "  \n".join(f"*{ln}*" for ln in case.text("explanation", lg).splitlines() if ln.strip()))
 
     target = case.spec["message_role"]
     st.markdown(f"**給 {cases.role_name(target, 'zh')} 的訊息 · Message to {cases.role_name(target, 'en')}**")
@@ -1270,7 +1535,7 @@ def case_history():
 
 
 QUESTION_NAME = {"cause": ("根本原因", "Root cause"), "action": ("第一步", "First action"),
-                 "decision": ("處置", "Disposition"), "notify": ("通知對象", "Who to notify")}
+                 "decision": ("處置", "Disposition"), "priority": ("先後", "Priority"), "notify": ("通知對象", "Who to notify")}
 QUESTION_TIP = {
     "cause": ("先比對：哪些 chamber／機台／量測機台一起動、從哪一片開始、平均值還是均勻度在變，再對照原因選項。",
               "Compare first: which chambers / tools / metrology tools moved together, from which wafer, and whether the "
@@ -1281,6 +1546,9 @@ QUESTION_TIP = {
     "decision": ("產品處置看「真的影響產品嗎」：量測問題放行、製程偏移 hold 等 disposition、模型或 recipe 問題先修正再判。",
                  "Disposition asks whether product is really affected: a metrology problem releases, a process shift "
                  "holds for disposition, a model or recipe problem is fixed before judging."),
+    "priority": ("多件事同時發生時，先處理「產品正在受影響」的那件（先止血：hold／隔離），再處理今天要做但沒有立即風險的，最後是可以排程的。",
+                 "With several problems at once, first handle the one where product is at risk now (contain it: hold / "
+                 "isolate), then what needs action today without immediate risk, then what can be scheduled."),
     "notify": ("想一下誰要採取行動、誰承擔風險：機台找 EE、製程找 PE、良率影響找 PIE／YE、hold 與客戶風險找主管／QE；誤報不用升級。",
                "Ask who must act and who carries the risk: tool → EE, process → PE, yield impact → PIE / YE, holds and "
                "customer risk → Manager / QE; a false alarm needs no escalation."),
@@ -1332,7 +1600,7 @@ def page_reports():
         st.caption(bi(f"顯示 {len(view)} / {len(reports)} 份報告（最新在上）。", f"Showing {len(view)} of {len(reports)} reports, newest first."))
         if view.empty:
             return
-        title = lambda ty: lib["cases"][ty]["title"]["zh"] + " · " + lib["cases"][ty]["title"]["en"]  # noqa: E731
+        title = lambda ty: " · ".join(cases.type_info(ty)["title"][lg] for lg in ("zh", "en"))  # noqa: E731
         table = view.assign(title=view["type"].map(title), area=view["domain"].map(dname))
         st.dataframe(table[["time", "case", "score", "level", "area", "title"]], hide_index=True, use_container_width=True,
                      column_config={"time": st.column_config.DatetimeColumn("時間 Time", format="YYYY-MM-DD HH:mm"),
@@ -1397,7 +1665,7 @@ def report_cross_study(hist, dname):
         q.index = [("全部 All" if d == "all" else dname(d)) for d in q.index]
         st.dataframe(q, use_container_width=True, column_config={
             k: st.column_config.ProgressColumn(f"{v[0]} {v[1]} %", min_value=0, max_value=100, format="%.0f")
-            for k, v in QUESTION_NAME.items()})
+            for k, v in QUESTION_NAME.items() if k in q.columns})
     else:
         st.caption(bi("較早存的報告沒有逐題紀錄；之後存的練習會出現在這裡。",
                       "Older saves have no per-question record; attempts you save from now on appear here."))
@@ -1428,10 +1696,9 @@ def report_cross_study(hist, dname):
                            f"應為「{cases.option_label(qn, model, 'zh')}」（{n} 次）",
                            f"{QUESTION_NAME[qn][1]}: you chose \"{cases.option_label(qn, chosen, 'en')}\" "
                            f"where it was \"{cases.option_label(qn, model, 'en')}\" ({n}×)"))
-    for (ty, i), n in prof["msg_missed"].most_common(3):
-        kp = lib["cases"][ty]["keypoints"][i]
-        tips.append(bi(f"訊息常漏：{kp['zh']}（{lib['cases'][ty]['title']['zh']}，{n} 次）",
-                       f"Message point you miss: {kp['en']} ({lib['cases'][ty]['title']['en']}, {n}×)"))
+    for (ty, kzh, ken), n in prof["msg_missed"].most_common(3):
+        ttl = cases.type_info(ty)["title"]
+        tips.append(bi(f"訊息常漏：{kzh}（{ttl['zh']}，{n} 次）", f"Message point you miss: {ken} ({ttl['en']}, {n}×)"))
     untried = [d for d, r in prof["by_domain"].iterrows() if r["attempts"] == 0]
     if untried:
         tips.append(bi("還沒練過：" + "、".join(lib["domains"][d]["zh"] for d in untried),
@@ -1440,10 +1707,10 @@ def report_cross_study(hist, dname):
         st.markdown(f"- {tip}")
 
     w = cases.focus_weights(prof).sort_values(ascending=False).head(5)
-    st.caption(bi("「🎯 針對我的弱點」最常出的題型：" + "、".join(f"{lib['cases'][ty]['title']['zh']} {p:.0%}" for ty, p in w.items()),
-                  "🎯 My weak spots will pick most often: " + ", ".join(f"{lib['cases'][ty]['title']['en']} {p:.0%}" for ty, p in w.items())))
+    st.caption(bi("「🎯 針對我的弱點」最常出的題型：" + "、".join(f"{cases.type_info(ty)['title']['zh']} {p:.0%}" for ty, p in w.items()),
+                  "🎯 My weak spots will pick most often: " + ", ".join(f"{cases.type_info(ty)['title']['en']} {p:.0%}" for ty, p in w.items())))
     if st.button("🎯 練習我的弱點 Practise my weak spots", type="primary", key="rep_focus", help=H("case.focus")):
-        st.session_state["case_id"] = cases.focus_case(hist).id
+        st.session_state["case_id"] = cases.focus_id(hist)
         st.session_state["case_domain"] = "focus"
         st.session_state["nav_goto"] = "Case study 案例練習"
         st.rerun()

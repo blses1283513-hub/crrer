@@ -35,7 +35,7 @@ proving gauge capability, and turning site data into SPC and root cause.
 cd metro-toolkit
 pip install -r requirements.txt          # or: pip install -e ".[dashboard,dev]"
 
-python -m pytest                         # ~175 tests: physics limits, statistics, cases, end-to-end
+python -m pytest                         # ~210 tests: physics limits, statistics, cases, end-to-end
 PYTHONPATH=src python -m metro_toolkit.demo            # report -> reports/demo/report.md
 streamlit run src/metro_toolkit/dashboard/app.py       # interactive dashboard
 ```
@@ -71,8 +71,9 @@ Full step-by-step Windows instructions (including SemiYield and the other upstre
 6. **Data import** and **Fab simulator**: see the sections below.
 7. **DOE / recipe**: design an experiment, run it on a virtual ALD or CVD tool (or upload your own results),
    fit a response surface, optimise thickness + uniformity together, confirm, and check against the answer key.
-8. **Case study 案例練習**: 🎲 a random, realistic situation from any of the pages above; decide and write the
-   message, then get scored and debriefed (see below).
+8. **Case study 案例練習**: 🎲 a random, realistic situation from any of the pages above (plus inline defect
+   and cross-role request cases), 🎲🎲 multi-issue cases, a 🧩 case builder and ✍️ your own templates; decide and
+   write the message, then get scored and debriefed (see below).
 9. **My case reports 我的案例報告**: browse, search, open and retry your saved case reports, plus a cross study
    of where you lose points (see below).
 10. **Guide 參數與圖表說明**: every parameter and chart explanation in one searchable place (see below).
@@ -138,11 +139,40 @@ the other pages, so the evidence looks exactly like it would there.
 | Recipe studies | can the new spec stay on reflectometry? (thin: switch to SE; thick: keep it) |
 | DOE / recipe | setting a recipe from a 2-level DOE (curvature) · optimum on the edge of the range · a DOE with almost nothing significant |
 | Fab simulator | yield drop with a gate-oxide shift · yield drop with clean parameter SPC (particles) · many chambers OOC with steady yield (metrology offset) |
+| Inline defect | counts explode / hit the maxout, but review is mostly non-visible (nuisance recipe) · more defects on a split: incoming from the previous layer or added by the new condition (adder analysis) |
+| Cross-role requests | FA asks whether a recess was on target (routine sites fine, the outermost ring is not, or the whole wafer is on target) · YE asks which inline parameter goes with a bin (one strong correlation, or none) |
+
+The defect and request cases are written in the formats those roles use (inline defect summary in SWR style, FA
+reply, lot-report note, handover): the answer box is pre-filled with the headings, and the checklist ignores them.
+
+**Multi-issue cases and the case builder**
+
+* **🎲🎲 多重問題 Multi-issue** makes a random case with 2–3 problems, either:
+  * **linked**: issues injected into one fab-simulator run, so they share the SPC charts, yield trend and die map
+    and can hide each other (e.g. a metrology-tool offset over a real chamber shift). Seven issue kinds: one-chamber
+    shift, slow drift, worse uniformity (bowl), all chambers moved (recipe / incoming), metrology-tool offset,
+    edge-ring particles, centre-of-wafer defects (`cases/issues.yaml`). You answer which causes are present (select
+    all, 30), the first action on the most urgent issue (20), which signal comes first (10), the disposition (25)
+    and who to notify (15);
+  * **separate**: 2–3 unrelated cases in one shift handover. You answer cause / action / decision for each (75
+    shared), which comes first (10) and who to notify (15), and write a handover summary.
+* **🧩 案例組合器 Case builder**: choose linked or separate, then the issues yourself (kind, process step, chamber /
+  tool / metrology tool, size, start lot) or the 2–3 case types. A single built issue is scored like a normal case.
+  Settings are saved on this PC (`data/cases/built/`); the case ID `build_<hash>-<level>-00000` replays them.
+* **✍️ 我的案例範本 My case templates**: write your own case on top of a built-in data pattern (its charts and the
+  {values} you can quote): title, brief, right answer and wrong options (pool options or your own text), who to
+  notify, message role and format, model message, key points and explanation, in 繁中 and / or English. Saved only
+  on this PC in `data/cases/custom/` (git-ignored); a new template never overwrites another, delete asks for a
+  confirmation tick. Your templates appear as **我的案例 My cases** in the domain list, in 🎲 and in 🎯 weak spots.
+  Keep real lot IDs, product and recipe names and people's names out of them.
+* "Handle first" follows urgency: product at risk now (contain it) before act-today items before items that can be
+  scheduled.
 
 * **Levels**: basic, intermediate, advanced. Harder cases have smaller signals, and on intermediate / advanced
   the brief may say the measurement was already re-verified, which changes the right first action (verify vs
   hold and inhibit).
-* **Case IDs** such as `spc_chamber_shift-I-04217` (type, level B / I / A, seed) always rebuild the same case.
+* **Case IDs** such as `spc_chamber_shift-I-04217` (type, level B / I / A, seed) always rebuild the same case
+  (`mix-…` too; `build_…` and `my_…` on the PC that has their settings / template).
   Paste one under **用案例編號重練 · Replay a case by its ID** to retry it or to discuss the same case with someone else.
 * **Study log**: **存到我的練習紀錄 Save to my study log** writes a full debrief of each attempt to its own Markdown
   file, `data/cases/<case id>_<date-time>.md` (nothing is overwritten), and adds a line to `data/cases/history.jsonl`.
@@ -155,14 +185,14 @@ the other pages, so the evidence looks exactly like it would there.
   full-text search ("RTP02", "inhibit", …), the report shown in full, download, and **🔁 Retry this case** (same ID,
   same data, so you can compare scores). Older `<case id>.md` saves are listed too.
 * **Cross study 交叉分析** (tab on that page): score over attempts, mean score by area, accuracy per question
-  (cause / action / decision / notify) per area, and a list of what to work on: weakest area, the question you
+  (cause / action / decision / priority / notify) per area, and a list of what to work on: weakest area, the question you
   lose most on (with a hint), roles you forget or notify when not needed, wrong answers you repeat, message points
   you miss and areas not tried yet. Per-question results are recorded for attempts saved from this version on.
 * **🎯 My weak spots** (Case study → Domain, or the button in the cross study): 🎲 then picks case types with low
   recent scores most often, other types in your weak areas next, untried types after that and mastered ones
   rarely; the level steps up after a recent score >= 85 and down after one < 50 (unless you fix the level).
-* Texts live in `src/metro_toolkit/cases/cases.yaml` (zh + en) and data in `cases/generators.py`, so you can add
-  your own case types. Answers follow generic OCAP practice; in real work your fab's OCAP and sign-off rules decide.
+* Texts live in `src/metro_toolkit/cases/cases.yaml` (zh + en), data in `cases/generators.py`, multi-issue
+  building blocks in `cases/issues.yaml` + `cases/compose.py`, your templates in `cases/custom.py`. Answers follow generic OCAP practice; in real work your fab's OCAP and sign-off rules decide.
 
 ## Vocabulary study files (Eudic 歐路詞典)
 
@@ -299,7 +329,8 @@ metro-toolkit/
 │   ├── datagen/            synthetic thickness data, fab simulator + answer key, MSA study data
 │   ├── doe/                designs · model · optimize · virtual (process tools with an answer key)
 │   ├── guide/              chart & parameter guide: params_*.yaml · charts_*.yaml · insights (data → status)
-│   ├── cases/              case study practice: cases.yaml (texts, answers) · generators.py (23 case types)
+│   ├── cases/              case study practice: cases.yaml · generators.py (27 case types) · issues.yaml +
+│   │                       compose.py (multi-issue, builder) · custom.py (your templates)
 │   ├── ingest/             readers · mapping · convert · checks · store (your own data)
 │   ├── dashboard/app.py    Streamlit app
 │   ├── dashboard/figures.py chart builders shared by the pages and the case study

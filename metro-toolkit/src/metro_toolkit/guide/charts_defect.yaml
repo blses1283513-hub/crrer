@@ -1,0 +1,213 @@
+# Case study page: inline defect inspection and cross-role requests. Template values (from insights.*):
+#   defect_counts   {n_wafers} {n_maxout} {maxout} {max_count} {top_wafer} {median_count}
+#   review_pareto   {n_reviewed} {top_class} {top_share} {nonvisible_share} {real_share} {n_classes}
+#   adder_compare   {n_split} {n_base} {split_prev} {base_prev} {split_adders} {base_adders} {prev_ratio} {adder_ratio} {source}
+#   bin_corr        {bin} {n_wafers} {best_param} {best_r} {second_param} {second_r} {worst_wafer} {worst_loss}
+#   every chart     {finding} {status}
+# All data on this page is SYNTHETIC practice data (generated case studies, no real lots, tools or recipes).
+
+charts:
+  defect_counts:
+    page: "Case study 案例練習"
+    title: {zh: "每片晶圓的 inline inspection 缺陷數", en: "Inline inspection count per wafer"}
+    legend:
+      - item: "▮ 藍色長條 defect count 每片缺陷數 · blue bars (split = blue, baseline = orange)"
+        zh: "每片晶圓一根長條＝inline inspection 在這一層報出的缺陷數（defect count）。若這批有 split 與 baseline，split 晶圓是藍色、baseline 晶圓是橘色，兩組要分開看。注意：這是檢查機台「抓到的訊號數」，還沒經過 review，裡面包含 nuisance（雜訊、色差、grain、前層缺陷），不等於真缺陷數。本資料 {n_wafers} 片，最多是 {top_wafer}（{max_count} 顆）。"
+        en: "One bar per wafer = the defect count reported by the inline inspection at this layer. When the lot has a split and a baseline, split wafers are blue and baseline wafers orange; read the two groups separately. Note: this is the number of signals the inspection tool caught, before review; it includes nuisance (noise, colour variation, grain, previous-layer defects) and is not the number of real defects. Here {n_wafers} wafers, highest {top_wafer} ({max_count})."
+      - item: "┄ 紅色虛線 maxout 檢查上限 · red dashed line"
+        zh: "檢查機台的計數上限（maxout，本資料 {maxout} 顆）：缺陷多到這個數字時機台停止計數、也停止存缺陷資料，所以碰到這條線的晶圓（本資料 {n_maxout} 片）真正的數量只知道「至少 {maxout}」，是下限不是數值。這些片之間、以及和其他片之間都不能直接比大小，也不能拿去算平均。"
+        en: "The inspection tool's count limit (maxout, here {maxout}): once a wafer reaches it the tool stops counting and stops saving defect data, so for wafers touching this line (here {n_maxout}) the true count is only known to be at least {maxout}: a floor, not a value. They cannot be ranked against each other or the other wafers, and must not go into an average."
+      - item: "— 灰線 median 中位數 · grey line"
+        zh: "所有晶圓缺陷數的中位數（本資料 {median_count} 顆）＝這批的「正常水準」。用中位數而不用平均，是因為一兩片高缺陷或 maxout 的晶圓拉不動它；高於中位數 3 倍以上的晶圓值得先看 wafer map。"
+        en: "Median count of all wafers (here {median_count}) = the normal level of this lot. The median is used instead of the mean so that one or two high or maxed-out wafers cannot drag it; a wafer above 3× the median deserves a look at its wafer map first."
+    axes:
+      zh: "X 軸＝晶圓 ID（依 slot 或 split／baseline 分組排列）；Y 軸＝這一層 inline inspection 報出的缺陷數（顆／片，未經 review 換算）。同一張圖只放同一層、同一個檢查 recipe、同一個靈敏度的結果，數字才可以互相比較。"
+      en: "X = wafer ID (in slot order or grouped split / baseline); Y = defect count reported by the inline inspection at this layer (defects per wafer, not yet converted by review). Only results from the same layer, the same inspection recipe and the same sensitivity go on one chart; only then are the numbers comparable."
+    what:
+      zh: "Inline inspection（明場／暗場光學檢查）是缺陷監控的第一道訊號：它在製程中途就告訴你哪幾片缺陷多，比良率早好幾週。但它報的是「訊號數」，不是「真缺陷數」：靈敏度設得越高，抓到的 nuisance 越多；換 recipe、換層、換靈敏度，數字就不能比。這張圖回答：(1) 有沒有晶圓碰到 maxout（數字失真，要先處理）；(2) 有沒有晶圓明顯高於中位數（要看 map 與 review）；(3) split 和 baseline 看起來有沒有差（只是初步，原因要用 adder 分析確認）。這是合成練習資料。"
+      en: "Inline inspection (brightfield / darkfield optical) is the first signal of defect monitoring: mid-route it tells you which wafers are dirty, weeks before yield. But it reports signals, not real defects: the higher the sensitivity, the more nuisance it catches, and a different recipe, layer or sensitivity makes numbers incomparable. The chart answers: (1) did any wafer hit maxout (the number is distorted and must be handled first); (2) is any wafer clearly above the median (look at its map and review); (3) do split and baseline look different (only a first look; the cause needs adder analysis). This is synthetic practice data."
+    read:
+      zh: "好：所有長條在中位數附近、沒有晶圓碰到紅線、split 和 baseline 高度相近。壞：(1) 有晶圓碰到 maxout → 該片真實數量未知，常見於大面積缺陷（刮傷、殘留、剝落）、晶圓本身異常，或檢查 recipe 太敏感（大量 nuisance），要先看 wafer map 和 review 分辨；(2) 單片遠高於中位數 → 該片特有事件，看 map 的位置與圖樣：中心一團、邊緣一圈（edge ring）、環狀、一直線（刮傷／handling）、局部一團（cluster），圖樣比數字更能指出來源；(3) 整組（split 或 baseline）一起偏高 → 可能是條件差異，也可能是進料不同，要做 adder 分析；(4) 長條忽高忽低但沒有圖樣 → 可能是檢查本身的雜訊。記住：數字要先經過 review 換算成真缺陷，才能拿去 hold 貨或比較條件。"
+      en: "Good: all bars near the median, no wafer touching the red line, split and baseline at a similar height. Bad: (1) wafers at maxout → their true count is unknown; common causes are large-area defects (scratch, residue, peeling), an abnormal wafer, or an over-sensitive recipe (massive nuisance); tell them apart with the wafer map and review; (2) one wafer far above the median → an event specific to that wafer; read the map location and signature: centre cluster, edge ring, ring, straight line (scratch / handling), local cluster; the signature points to the source better than the number; (3) a whole group (split or baseline) high → maybe the condition, maybe different incoming; run adder analysis; (4) bars jumping up and down with no signature → possibly inspection noise. Remember: counts must be converted to real defects by review before they are used to hold material or compare conditions."
+    action:
+      act:
+        zh: "有晶圓 maxout，依 OCAP：(1) 先打開 maxout 晶圓的 wafer map，判斷是真的大面積缺陷（刮傷、剝落、殘留）還是 recipe 太敏感造成的 nuisance 洪水；(2) 對這些晶圓做 review（光學或 SEM review，隨機抽樣），估計真缺陷比例；(3) 若是真缺陷 → 請 EE 檢查該站機台（腔體、手臂、chuck），hold 同時段經過的 WIP，由 PIE／YE 決定 disposition；(4) 若是 nuisance → 請 inspection recipe owner 降靈敏度或加 nuisance filter，以較低靈敏度重新檢查取得真實數量；(5) e-log 標記這些晶圓的數字是下限（≥ {maxout}），不納入 SPC 平均。"
+        en: "Wafers at maxout, per OCAP: (1) open the wafer map of the maxed-out wafers and decide whether it is a real large-area defect (scratch, peeling, residue) or a nuisance flood from an over-sensitive recipe; (2) review these wafers (optical or SEM review, random sample) to estimate the real-defect fraction; (3) if real → EE checks the tool at that step (chamber, robot, chuck), hold the WIP that went through it in the same window, and PIE / YE decide the disposition; (4) if nuisance → the inspection recipe owner lowers the sensitivity or adds a nuisance filter, then re-inspect at the lower sensitivity to get a real count; (5) mark these counts in the e-log as floors (≥ {maxout}) and keep them out of the SPC average."
+      watch:
+        zh: "沒有 maxout，但有晶圓高於中位數 3 倍以上（最高 {top_wafer}，{max_count} 顆）：先看該片的 wafer map 圖樣，再安排 review 確認是不是真缺陷；確認前不要用數字下結論或 hold 貨。記錄並追蹤下一批同層同 recipe 的結果，看是單片事件還是趨勢。"
+        en: "No maxout, but a wafer above 3× the median (highest {top_wafer}, {max_count}): look at its wafer-map signature first, then schedule review to confirm whether the defects are real; do not conclude or hold material on the count alone. Record it and track the next lots at the same layer and recipe to see whether it is a one-off or a trend."
+      good:
+        zh: "所有晶圓在正常水準（中位數 {median_count} 顆），沒有 maxout。照常記錄，數字進 SPC 管制圖；依抽樣計畫照常做 review，確認 nuisance 比例沒有變化。"
+        en: "All wafers at the normal level (median {median_count}), no maxout. Record as usual and feed the counts to the SPC chart; keep the planned review sampling to confirm the nuisance share has not changed."
+    record:
+      zh: "[Inline defect] {n_wafers} 片 · 中位數 {median_count} 顆 · 最高 {top_wafer}（{max_count} 顆）· maxout（≥ {maxout}）：{n_maxout} 片 · 狀態 {status} · map 圖樣：＿＿ · review 結果：＿＿ · 處置：＿＿"
+      en: "[Inline defect] {n_wafers} wafers · median {median_count} · highest {top_wafer} ({max_count}) · maxout (≥ {maxout}): {n_maxout} wafers · status {status} · map signature: ___ · review result: ___ · action: ___"
+    roles:
+      RDA:
+        zh: "【Inline defect review 需求】{finding}。請優先 review {top_wafer} 與 maxout 晶圓（{n_maxout} 片），隨機抽樣做 SEM review 並分類，回報真缺陷比例、主要缺陷類型與 wafer map 上的位置（中心／邊緣／環狀／刮傷）。"
+        en: "[Inline defect review request] {finding}. Please review {top_wafer} and the maxed-out wafers ({n_maxout}) first: random-sample SEM review with classification, and report the real-defect fraction, the main defect types and their location on the wafer map (centre / edge / ring / scratch)."
+      PE:
+        zh: "【缺陷數異常】{finding}。數字仍是 inspection 訊號數，review 確認中。請先確認這段期間該層是否有 recipe、條件或進料變更；若 split 組偏高，會再用 adder 分析分辨是本層還是前層帶來。"
+        en: "[Defect count alert] {finding}. These are still inspection signals; review is in progress. Please check for recipe, condition or incoming-material changes at this layer in this window; if the split group is high, we will run adder analysis to separate this layer from incoming."
+      EE:
+        zh: "【機台確認】{top_wafer} 缺陷數 {max_count} 顆（中位數 {median_count}），{n_maxout} 片達 maxout。請提供該站同時段的 PM、零件更換、警報與 particle monitor 紀錄；若 wafer map 為刮傷或 handling 圖樣，請優先檢查手臂與 chuck。"
+        en: "[Tool check] {top_wafer} has {max_count} defects (median {median_count}); {n_maxout} wafers hit maxout. Please send the PM, part-swap, alarm and particle-monitor history of that step for the same window; if the wafer map shows a scratch or handling signature, check the robot and chuck first."
+      PIE_YE:
+        zh: "【缺陷影響評估】{n_wafers} 片中 {n_maxout} 片 maxout（數字為下限），最高 {top_wafer}。review 換算真缺陷數後會提供 killer 比例與位置；請先評估是否需要 hold 這些晶圓，以及後續 disposition。"
+        en: "[Defect impact] {n_maxout} of {n_wafers} wafers hit maxout (counts are floors); highest {top_wafer}. After review converts counts to real defects we will send the killer fraction and locations; please assess whether to hold these wafers and their disposition."
+      MGR_QE:
+        zh: "【狀態】Inline defect：{status}。{finding}。進行中：wafer map 判讀與 review；待決定：maxout 晶圓是否 hold、是否需重新檢查。紀錄：e-log 已更新（maxout 數字標記為下限）。"
+        en: "[Status] Inline defect: {status}. {finding}. In progress: wafer-map reading and review. Decision needed: whether to hold the maxed-out wafers and whether to re-inspect. Records: e-log updated (maxout counts marked as floors)."
+
+  review_pareto:
+    page: "Case study 案例練習"
+    title: {zh: "缺陷 review 分類（Pareto 圖）", en: "Defect review classification (Pareto)"}
+    legend:
+      - item: "▮ 藍色長條 real defect class 真缺陷類別 · blue bars"
+        zh: "每一類真缺陷一根長條（例如 particle、residue、scratch、pattern defect、void），由高到低排列，長條上的數字是佔全部 review 缺陷的百分比。本資料共 review {n_reviewed} 顆、{n_classes} 類，最多是 {top_class}（{top_share}%）。Pareto 的意義：前一兩類通常就佔大部分，先處理它們最有效。"
+        en: "One bar per real defect class (e.g. particle, residue, scratch, pattern defect, void), sorted high to low; the label is its share of all reviewed defects. Here {n_reviewed} defects reviewed in {n_classes} classes, top {top_class} ({top_share}%). The point of a Pareto: the first one or two classes usually carry most of the total, so fixing them pays most."
+      - item: "▮ 灰色長條 Non-visible（nuisance）· grey bar"
+        zh: "Review 時在該位置看不到任何真實缺陷的比例（本資料 {nonvisible_share}%）。這些是 nuisance：檢查機台因雜訊、色差、膜厚變化、grain 或圖形變異而報出的假訊號。灰色比例越高，代表檢查 recipe 越敏感、數字裡雜訊越多。"
+        en: "Share of review sites where no real defect is seen (here {nonvisible_share}%). These are nuisance: false signals the inspection tool reports from noise, colour variation, film-thickness variation, grain or pattern variation. The larger the grey share, the more sensitive the recipe and the more noise in the counts."
+    axes:
+      zh: "X 軸＝缺陷類別（由高到低排列，Non-visible 以灰色表示）；Y 軸＝佔全部 review 缺陷的比例（%）。分母是 review 的顆數，不是 inspection 報出的總數。"
+      en: "X = defect class (sorted high to low, Non-visible in grey); Y = share of all reviewed defects (%). The denominator is the number of reviewed defects, not the total the inspection reported."
+    what:
+      zh: "Review（光學或 SEM review）把 inspection 的「訊號」換成「真缺陷」：抽一部分缺陷位置去拍照、分類，就知道數字裡有多少是真的、主要是哪一類。這張圖回答：(1) inspection 數字可不可信（Non-visible 比例）；(2) 真缺陷以哪一類為主（決定要找哪一站、哪個機制）。檢查 recipe 永遠在 capture rate（抓到真缺陷的比例）和 nuisance rate（假訊號比例）之間取捨：靈敏度調高，真缺陷抓得多，nuisance 也多；調低，乾淨但可能漏抓 killer。這是合成練習資料。"
+      en: "Review (optical or SEM review) converts inspection signals into real defects: image and classify a sample of defect sites to learn how much of the count is real and which class dominates. The chart answers: (1) can the inspection counts be trusted (the Non-visible share); (2) which real class dominates (it points to the step and mechanism to chase). An inspection recipe always trades capture rate (share of real defects caught) against nuisance rate (share of false signals): higher sensitivity catches more real defects and more nuisance; lower sensitivity is clean but may miss killers. This is synthetic practice data."
+    read:
+      zh: "好：Non-visible 低於 25%（大部分訊號是真的）、真缺陷集中在一兩類且和預期製程機制一致、review 樣本數足夠（每片數十顆以上、隨機抽樣）。壞：(1) Non-visible ≥ 50% → 數字大部分是雜訊，不能用 count 觸發 hold 或比較條件，要先調 recipe；(2) Non-visible 25–50% → 比較數量前要先用 review 換算真缺陷數（count × 真缺陷比例）；(3) 出現新的類別或某類比例突然上升 → 新的缺陷機制，追對應的製程站；(4) review 只有十幾顆 → 百分比誤差大，結論不穩，要加抽。注意 review 抽樣方式：只挑大的、亮的缺陷會高估真缺陷比例。"
+      en: "Good: Non-visible below 25% (most signals are real), real defects concentrated in one or two classes consistent with the expected process mechanism, enough review samples (tens per wafer or more, randomly sampled). Bad: (1) Non-visible ≥ 50% → the counts are mostly noise; counts must not trigger holds or compare conditions; tune the recipe first; (2) Non-visible 25–50% → convert counts to real defects with the review (count × real fraction) before comparing; (3) a new class appears or one class jumps → a new defect mechanism; chase the matching step; (4) only a dozen or so reviewed → the percentages have large error and the conclusion is unstable; review more. Watch the sampling: picking only large or bright defects overestimates the real fraction."
+    action:
+      act:
+        zh: "Non-visible ≥ 50%，inspection 數字主要是 nuisance，依 OCAP：(1) 暫停用這個 recipe 的 count 觸發 hold 或判斷條件好壞，改用 review 後的真缺陷數；(2) 請 inspection recipe owner 調整 recipe：提高 threshold、縮小或重新定義 care area、加入或重新訓練 nuisance filter（依 review 分類結果）、調整光學條件（波長、光圈、偏振）；(3) 調整後用同一批晶圓重新檢查並 review，驗證 capture rate 沒有下降（已知真缺陷仍抓得到）而 nuisance rate 下降；(4) 新 recipe 經驗證後再放行，並記錄版本變更。"
+        en: "Non-visible ≥ 50%: the inspection counts are mostly nuisance. Per OCAP: (1) stop using this recipe's counts to trigger holds or judge conditions; use review-converted real counts instead; (2) the inspection recipe owner tunes the recipe: raise the threshold, shrink or redefine care areas, add or retrain the nuisance filter (using the review classes), adjust optics (wavelength, aperture, polarisation); (3) re-inspect and review the same wafers after tuning to verify the capture rate held (known real defects still caught) while the nuisance rate fell; (4) release the new recipe only after verification and record the version change."
+      watch:
+        zh: "Non-visible 偏高（{nonvisible_share}%）：比較晶圓或條件前，先用 review 把 count 換算成真缺陷數（真缺陷比例 {real_share}%）。記錄並追蹤下幾批的 nuisance 比例；若持續上升，安排 recipe 檢討。"
+        en: "Non-visible is high ({nonvisible_share}%): before comparing wafers or conditions, convert counts to real defects with the review (real fraction {real_share}%). Record and track the nuisance share over the next lots; if it keeps rising, schedule a recipe review."
+      good:
+        zh: "Non-visible 比例低，inspection 數字大致可信；主要真缺陷為 {top_class}（{top_share}%）。照常記錄 Pareto，與前幾批比較類別分布有沒有改變。"
+        en: "Non-visible share is low and the inspection counts are broadly trustworthy; the main real class is {top_class} ({top_share}%). Record the Pareto as usual and compare the class mix with previous lots."
+    record:
+      zh: "[Defect review] review {n_reviewed} 顆 · {n_classes} 類 · 最多 {top_class}（{top_share}%）· Non-visible {nonvisible_share}% · 真缺陷 {real_share}% · 狀態 {status} · recipe 調整：＿＿ · 處置：＿＿"
+      en: "[Defect review] {n_reviewed} reviewed · {n_classes} classes · top {top_class} ({top_share}%) · Non-visible {nonvisible_share}% · real {real_share}% · status {status} · recipe change: ___ · action: ___"
+    roles:
+      RDA:
+        zh: "【Review 分類結果】{finding}。請確認 review 抽樣為隨機抽樣、樣本數足夠；並針對 {top_class} 挑代表性缺陷做 SEM／EDX 或切面，確認成分與發生的層別，協助判斷來源製程站。"
+        en: "[Review classification] {finding}. Please confirm the review sample was random and large enough, and pick representative {top_class} defects for SEM / EDX or cross-section to confirm composition and the layer of origin, so we can narrow down the source step."
+      PE:
+        zh: "【缺陷類別】review {n_reviewed} 顆，主要真缺陷為 {top_class}（{top_share}%），Non-visible {nonvisible_share}%。請評估 {top_class} 和本站製程條件的關聯（例如殘留 → 清洗／蝕刻終點，particle → 腔體狀態），是否需要調整條件。"
+        en: "[Defect classes] {n_reviewed} reviewed; main real class {top_class} ({top_share}%), Non-visible {nonvisible_share}%. Please assess how {top_class} relates to this step's process conditions (e.g. residue → clean / etch endpoint, particle → chamber condition) and whether a condition change is needed."
+      EE:
+        zh: "【檢查／製程機台】Non-visible {nonvisible_share}%。若比例偏高，請協助確認 inspection 機台狀態（光源、對焦、校正）是否正常；若 {top_class} 為 particle 類，請提供製程機台同時段的 PM 與 particle monitor 紀錄。"
+        en: "[Inspection / process tool] Non-visible {nonvisible_share}%. If it is high, please check the inspection tool condition (light source, focus, calibration); if {top_class} is a particle-type class, please send the PM and particle-monitor history of the process tool for the same window."
+      PIE_YE:
+        zh: "【真缺陷換算】inspection 數字中真缺陷約 {real_share}%，主要為 {top_class}。比較晶圓或條件時請用換算後的真缺陷數；若 {top_class} 屬 killer 類，會再提供受影響晶圓清單供 disposition。"
+        en: "[Real-defect conversion] About {real_share}% of the inspection count is real, mainly {top_class}. Please compare wafers or conditions on the converted real counts; if {top_class} is a killer class, we will send the affected wafer list for disposition."
+      MGR_QE:
+        zh: "【狀態】Defect review：{status}。{finding}。進行中：review 分類與 recipe 評估；待決定：是否調整 inspection recipe、count 是否暫停作為 hold 依據。紀錄：e-log 已更新。"
+        en: "[Status] Defect review: {status}. {finding}. In progress: review classification and recipe assessment. Decision needed: whether to tune the inspection recipe and whether to suspend counts as a hold criterion. Records: e-log updated."
+
+  adder_compare:
+    page: "Case study 案例練習"
+    title: {zh: "每片晶圓前層 vs 本層缺陷數（adder），split vs baseline", en: "Previous layer vs this layer per wafer (adders), split vs baseline"}
+    legend:
+      - item: "▮ 淺藍長條 previous layer 前層數量 · light blue bars"
+        zh: "同一片晶圓在前一層 inspection 的缺陷數＝進料（incoming）缺陷。本資料前層平均：split {split_prev} 顆、baseline {base_prev} 顆，split／baseline＝{prev_ratio} 倍。"
+        en: "The same wafer's count at the previous-layer inspection = incoming defects. Here the previous-layer mean is {split_prev} for split and {base_prev} for baseline; split / baseline = {prev_ratio}×."
+      - item: "▮ 藍色長條 this layer 本層數量 · blue bars"
+        zh: "同一片晶圓在本層 inspection 的缺陷數。本層數量包含前層留下來、還看得到的缺陷，加上本層新增的缺陷。Adder（新增缺陷）＝本層 − 前層（負值視為 0）。本資料平均 adder：split {split_adders} 顆、baseline {base_adders} 顆，split／baseline＝{adder_ratio} 倍。"
+        en: "The same wafer's count at this layer's inspection. It includes the previous-layer defects that are still visible plus the defects added at this layer. Adders = this layer − previous layer (negative treated as 0). Here the mean adders are {split_adders} for split and {base_adders} for baseline; split / baseline = {adder_ratio}×."
+      - item: "┊ 點狀垂直線 split | baseline 分隔 · dotted vertical line"
+        zh: "左邊是 split 晶圓（本資料 {n_split} 片），右邊是 baseline 晶圓（{n_base} 片）。兩組要在同一批、同一層、同一個檢查 recipe 下比較。"
+        en: "Split wafers on the left (here {n_split}), baseline wafers on the right ({n_base}). Both groups must be compared within the same lot, layer and inspection recipe."
+    axes:
+      zh: "X 軸＝晶圓 ID（split | baseline 分組）；每片晶圓兩根長條：淺藍＝前層、藍＝本層。Y 軸＝缺陷數（顆／片）。兩根長條的差＝該片的 adder。"
+      en: "X = wafer ID (grouped split | baseline); two bars per wafer: light blue = previous layer, blue = this layer. Y = defect count (defects per wafer). The gap between the two bars = that wafer's adders."
+    what:
+      zh: "Split 組本層缺陷數比較高，不代表是 split 條件造成的：可能這些晶圓進來時就比較髒。Adder 分析用「同一片晶圓」的前層與本層檢查結果相減，把進料（incoming）缺陷和本層新增缺陷分開。這張圖回答：split／baseline 的差異來自哪裡 → 本資料判斷：{source}。只比總數會把前層的問題怪到本層的 split 上，或反過來漏掉 split 真正造成的問題。這是合成練習資料。"
+      en: "A split group with more defects at this layer does not mean the split condition caused them: the wafers may have arrived dirtier. Adder analysis subtracts the previous-layer result from this layer's result on the same wafer, separating incoming defects from defects added at this layer. The chart answers where the split / baseline difference comes from → here: {source}. Comparing totals alone either blames an upstream problem on this layer's split, or misses a problem the split really causes. This is synthetic practice data."
+    read:
+      zh: "好：split 與 baseline 的淺藍（前層）和 adder 都差不多（兩個倍數都 < 1.5）→ split 條件沒有增加缺陷。壞：(1) adder 倍數 ≥ 1.5（本資料 {adder_ratio} 倍）→ 本層 split 條件本身增加缺陷；(2) 前層倍數 ≥ 1.5（本資料 {prev_ratio} 倍）但 adder 相近 → 差異是進料帶來的，split 是被冤枉的，要往上游追；(3) 只有一兩片 adder 特別大 → 單片事件（handling、局部微粒），不是條件效應。注意：(a) 要同一片晶圓配對，不同晶圓不能相減；(b) 兩層的檢查 recipe 和靈敏度不同時，相減前要確認前層缺陷在本層還看得到（被覆蓋的缺陷可能看不到，出現負 adder）；(c) maxout 晶圓不能算 adder；(d) 片數少時倍數不穩，最好有 review 確認 adder 是真缺陷。"
+      en: "Good: split and baseline have similar previous-layer counts and similar adders (both ratios < 1.5) → the split condition adds no defects. Bad: (1) adder ratio ≥ 1.5 (here {adder_ratio}×) → the split condition itself adds defects at this layer; (2) previous-layer ratio ≥ 1.5 (here {prev_ratio}×) but similar adders → the difference came in with the wafers; the split is not to blame; trace upstream; (3) only one or two wafers with huge adders → a single-wafer event (handling, local particles), not a condition effect. Note: (a) match the same wafer; different wafers cannot be subtracted; (b) when the two layers use different recipes or sensitivities, check that previous-layer defects are still visible at this layer before subtracting (buried defects may disappear and give negative adders); (c) maxed-out wafers cannot give adders; (d) with few wafers the ratios are unstable; ideally review confirms the adders are real defects."
+    action:
+      act:
+        zh: "差異來源：{source}。依 OCAP：(1) 若是本層 → split 條件本身增加缺陷（adder {split_adders} vs {base_adders} 顆）：先不要把 split 條件轉為 POR，請 RDA review adder 分類找出機制，PE 調整條件後重做 split 驗證；(2) 若是前層 → split 晶圓進料較髒（前層 {split_prev} vs {base_prev} 顆）：split 條件不該被否定，往上游追前一站的機台與時間窗口，請 EE 確認，並在下次 split 時隨機分配晶圓、確保兩組進料相同；(3) 兩種情況都要在 e-log 記錄 adder 結果，作為 split 結論的依據。"
+        en: "Source of the difference: {source}. Per OCAP: (1) if this layer → the split condition adds defects (adders {split_adders} vs {base_adders}): do not convert the split condition to POR; RDA reviews the adder classes to find the mechanism, PE adjusts the condition and the split is repeated; (2) if the previous layer → the split wafers arrived dirtier (previous {split_prev} vs {base_prev}): do not reject the split condition; trace the upstream step's tool and time window with EE, and randomise wafer assignment in the next split so both groups get the same incoming; (3) in both cases record the adder result in the e-log as the basis of the split conclusion."
+      watch:
+        zh: "前層與 adder 倍數都未達 1.5，但仍有差異趨勢（前層 {prev_ratio} 倍、adder {adder_ratio} 倍）：記錄並追蹤；增加 split 片數或下一批重複 split，並用 review 確認 adder 為真缺陷後再下結論。"
+        en: "Neither ratio reaches 1.5, but there is a trend (previous {prev_ratio}×, adders {adder_ratio}×): record and track; add split wafers or repeat the split on the next lot, and confirm the adders are real defects by review before concluding."
+      good:
+        zh: "Split 與 baseline 的前層數量與 adder 都相近（前層 {prev_ratio} 倍、adder {adder_ratio} 倍）：以缺陷而言 split 條件沒有增加風險。照常記錄，作為 split 評估報告的一部分。"
+        en: "Split and baseline have similar previous-layer counts and adders (previous {prev_ratio}×, adders {adder_ratio}×): defect-wise the split condition adds no risk. Record as usual as part of the split evaluation report."
+    record:
+      zh: "[Adder] split {n_split} 片／baseline {n_base} 片 · 前層 {split_prev} vs {base_prev}（{prev_ratio} 倍）· adder {split_adders} vs {base_adders}（{adder_ratio} 倍）· 來源：{source} · 狀態 {status} · review：＿＿ · 處置：＿＿"
+      en: "[Adder] split {n_split} / baseline {n_base} wafers · previous {split_prev} vs {base_prev} ({prev_ratio}×) · adders {split_adders} vs {base_adders} ({adder_ratio}×) · source: {source} · status {status} · review: ___ · action: ___"
+    roles:
+      RDA:
+        zh: "【Adder review 需求】{finding}。請針對 adder 最多的 split 晶圓，只 review 本層新增（前層沒有）的缺陷位置，分類並回報主要類型；若來源是前層，請改 review 前層缺陷，確認是哪一站帶來。"
+        en: "[Adder review request] {finding}. On the split wafers with the most adders, please review only the sites new at this layer (absent at the previous layer), classify them and report the main types; if the source is the previous layer, review the previous-layer defects instead to confirm which step brought them in."
+      PE:
+        zh: "【Split 缺陷評估】{finding}。判斷來源：{source}。若是本層，split 條件會增加缺陷（adder {split_adders} vs {base_adders} 顆），建議暫不轉 POR、先調整條件；若是前層，split 條件本身沒問題，差異來自進料。"
+        en: "[Split defect assessment] {finding}. Source: {source}. If this layer, the split condition adds defects (adders {split_adders} vs {base_adders}); we suggest not converting it to POR until the condition is fixed. If the previous layer, the split condition itself is fine and the difference is incoming."
+      EE:
+        zh: "【上游機台確認】split 晶圓前層缺陷 {split_prev} 顆，baseline {base_prev} 顆（{prev_ratio} 倍）。若來源是前層，請提供前一站同時段的機台／chamber 紀錄（PM、警報、particle monitor），確認 split 晶圓是否走了不同機台。"
+        en: "[Upstream tool check] Split wafers had {split_prev} previous-layer defects vs {base_prev} for baseline ({prev_ratio}×). If the source is the previous layer, please send the previous step's tool / chamber history for the same window (PM, alarms, particle monitor) and check whether the split wafers ran on a different tool."
+      PIE_YE:
+        zh: "【Split 結論】split {n_split} 片 vs baseline {n_base} 片，adder 倍數 {adder_ratio}，前層倍數 {prev_ratio}；來源：{source}。請據此評估 split 條件能否轉 POR，以及這批 split 晶圓的 disposition。"
+        en: "[Split conclusion] {n_split} split vs {n_base} baseline wafers; adder ratio {adder_ratio}, previous-layer ratio {prev_ratio}; source: {source}. Please use this to decide whether the split condition can go to POR and the disposition of the split wafers."
+      MGR_QE:
+        zh: "【狀態】Split adder 分析：{status}。{finding}。進行中：adder review 與來源確認；待決定：split 條件是否轉 POR、上游是否需開異常單。紀錄：e-log 已更新。"
+        en: "[Status] Split adder analysis: {status}. {finding}. In progress: adder review and source confirmation. Decision needed: whether the split condition goes to POR and whether to open an excursion report upstream. Records: e-log updated."
+
+  bin_corr:
+    page: "Case study 案例練習"
+    title: {zh: "Bin 損失 vs inline 量測，每個參數一張小圖", en: "Bin loss vs inline metrology, one panel per parameter"}
+    legend:
+      - item: "● 點 wafer 每片晶圓 · dots"
+        zh: "每個點＝一片晶圓：X＝該片在這個 inline 參數的晶圓平均值（inline metrology，例如膜厚、CD、overlay），Y＝該片在 {bin} 的損失（%）。本資料 {n_wafers} 片；損失最高的是 {worst_wafer}（{worst_loss}%）。"
+        en: "Each dot = one wafer: X = its wafer mean of this inline parameter (inline metrology, e.g. thickness, CD, overlay), Y = its loss in {bin} (%). Here {n_wafers} wafers; highest loss {worst_wafer} ({worst_loss}%)."
+      - item: "┄ 灰色虛線 least-squares fit 最小平方迴歸線 · grey dashed line"
+        zh: "最小平方法擬合的直線，只用來看方向（正斜率＝參數越大損失越高）。線很平、點很散，代表這個參數和損失沒有明顯的線性關係。"
+        en: "The least-squares straight line, only to show the direction (positive slope = higher parameter, higher loss). A flat line with scattered dots means no clear linear relation between this parameter and the loss."
+      - item: "r 標題中的 Pearson 相關係數 · Pearson r in each panel title"
+        zh: "線性相關係數，介於 −1 與 +1：|r| ≥ 0.7 強相關，0.4–0.7 中度，< 0.4 弱或無。本資料最高是 {best_param}（r = {best_r}），其次 {second_param}（r = {second_r}）。r 只量線性關係，非線性（例如窗口兩側都失效的 U 形）會被低估。"
+        en: "Linear correlation coefficient between −1 and +1: |r| ≥ 0.7 strong, 0.4–0.7 moderate, < 0.4 weak or none. Here the highest is {best_param} (r = {best_r}), then {second_param} (r = {second_r}). r measures only linear relations; a non-linear one (e.g. a U shape failing on both sides of the window) is underestimated."
+    axes:
+      zh: "每張小圖：X 軸＝該 inline 參數的晶圓平均值（單位依參數）；Y 軸＝{bin} 損失（%，該 bin 失效晶粒 ÷ 總晶粒）。每張小圖的 X 軸刻度各自獨立，不能跨圖比斜率，只比 r。"
+      en: "Each panel: X = the wafer mean of that inline parameter (units per parameter); Y = {bin} loss (%, dies failing that bin ÷ all dies). Each panel has its own X scale, so compare r between panels, never the slopes."
+    what:
+      zh: "Sort bin 只告訴你哪一個電性測項失敗，不告訴你是哪一站造成的。這張圖把 bin 損失和每個 inline 量測參數逐一配對，看哪一個參數和損失一起變動，用來縮小嫌疑範圍。它回答：(1) {bin} 損失最可能和哪個參數有關（{best_param}，r = {best_r}）；(2) 哪些參數可以先排除（平的小圖）。相關只是線索，不是證明：可能有混淆因子（兩者都受同一台機台或同一段時間影響）、少數離群點撐起來的 r、或片數太少。這是合成練習資料。"
+      en: "A sort bin only says which electrical test failed, not which step caused it. This chart pairs the bin loss with each inline metrology parameter in turn to see which one moves with the loss, narrowing the suspects. It answers: (1) which parameter {bin} loss most likely relates to ({best_param}, r = {best_r}); (2) which parameters can be set aside (flat panels). Correlation is a lead, not proof: there may be a confounder (both driven by the same tool or the same time window), an r propped up by a few outliers, or too few wafers. This is synthetic practice data."
+    read:
+      zh: "好（以縮小範圍而言）：一個參數明顯強相關、方向和物理機制相符（例如 CD 越小 → 電阻 bin 越高），其他小圖平坦。壞或要小心：(1) r 由一兩個離群點撐起來（把該點遮住 r 就消失）→ 先看離群晶圓（例如 {worst_wafer}）本身發生什麼事；(2) 好幾個參數同時相關 → 它們可能彼此相關或共用同一台機台（commonality），要分層看；(3) 片數少（< 15 片）時 r 很不穩，0.5 可能只是巧合；(4) 方向和物理機制相反 → 很可能是混淆。所有小圖都平坦也是答案：inline 量測參數不是原因，失效來源可能是缺陷（轉向 defect review、PFA）或沒有量測的參數。"
+      en: "Good (for narrowing down): one parameter clearly strong, its direction consistent with the physics (e.g. smaller CD → higher resistance bin), other panels flat. Bad or careful: (1) r propped up by one or two outliers (hide the point and r disappears) → look at what happened to the outlier wafer itself (e.g. {worst_wafer}); (2) several parameters correlate at once → they may correlate with each other or share a tool (commonality); stratify; (3) with few wafers (< 15) r is unstable and 0.5 may be chance; (4) direction opposite to the physics → likely confounding. All panels flat is also an answer: inline metrology rules itself out, and the loss is likely defect-driven (go to defect review, PFA) or from an unmeasured parameter."
+    action:
+      act:
+        zh: "{best_param} 與 {bin} 損失強相關（r = {best_r}），依 OCAP：(1) 先確認不是離群點造成：檢查 {worst_wafer} 等極端晶圓，遮掉後 r 是否仍高；(2) 檢查 commonality：高損失晶圓是否也走同一台機台／同一段時間，若是，相關可能是混淆；(3) 和 PE／YE 確認物理機制（該參數如何影響這個 bin 的電性）；(4) 用 split 或 DOE 驗證：刻意把 {best_param} 推到兩側，看 {bin} 損失是否跟著變；(5) 必要時請 RDA 對失效晶粒做 PFA 確認失效模式；確認後收緊該參數的 SPC／規格。"
+        en: "{best_param} correlates strongly with {bin} loss (r = {best_r}). Per OCAP: (1) rule out outliers: check extreme wafers such as {worst_wafer} and whether r stays high without them; (2) check commonality: do the high-loss wafers share a tool or time window? If so, the correlation may be confounded; (3) confirm the physical mechanism with PE / YE (how this parameter affects this bin's electrical result); (4) confirm with a split or DOE: deliberately push {best_param} to both sides and see whether {bin} loss follows; (5) if needed, RDA runs PFA on failing dies to confirm the failure mode; once confirmed, tighten the parameter's SPC / spec."
+      watch:
+        zh: "只有中度相關（{best_param}，r = {best_r}）：可能是部分原因或巧合。記錄並追蹤：加入更多晶圓（下幾批）重算 r，同時查 commonality 與離群點；在相關變強或被 split 驗證前，不要調整製程。"
+        en: "Only a moderate correlation ({best_param}, r = {best_r}): a partial cause or chance. Record and track: add wafers from the next lots and recompute r, while checking commonality and outliers; do not change the process until the correlation strengthens or a split confirms it."
+      good:
+        zh: "所有參數與 {bin} 損失都只有弱相關（最高 {best_param}，r = {best_r}）：inline 量測參數可以排除。照常記錄，並把方向轉到缺陷：請 RDA 對 {worst_wafer} 等高損失晶圓做 defect review 或 PFA。"
+        en: "Every parameter correlates only weakly with {bin} loss (highest {best_param}, r = {best_r}): inline metrology rules itself out. Record as usual and turn to defects: ask RDA for defect review or PFA on high-loss wafers such as {worst_wafer}."
+    record:
+      zh: "[Bin 相關] {bin} · {n_wafers} 片 · 最高相關 {best_param}（r = {best_r}）· 其次 {second_param}（r = {second_r}）· 最差 {worst_wafer}（{worst_loss}%）· 狀態 {status} · commonality／離群點：＿＿ · 驗證（split／PFA）：＿＿"
+      en: "[Bin correlation] {bin} · {n_wafers} wafers · top {best_param} (r = {best_r}) · next {second_param} (r = {second_r}) · worst {worst_wafer} ({worst_loss}%) · status {status} · commonality / outliers: ___ · confirmation (split / PFA): ___"
+    roles:
+      RDA:
+        zh: "【失效分析需求】{finding}。請對 {worst_wafer}（{bin} 損失 {worst_loss}%）的失效晶粒做 PFA，確認失效模式；若相關性弱，請改看該片的 inline defect review，判斷是否為缺陷造成。"
+        en: "[FA request] {finding}. Please run PFA on failing dies of {worst_wafer} ({bin} loss {worst_loss}%) to confirm the failure mode; if the correlation is weak, look at that wafer's inline defect review instead to judge whether defects are the cause."
+      PE:
+        zh: "【參數相關】{bin} 損失與 {best_param} 相關 r = {best_r}（其次 {second_param}，r = {second_r}），{n_wafers} 片。請評估物理機制是否合理，以及是否可以安排 split／DOE 驗證；驗證前不建議調整 recipe。"
+        en: "[Parameter correlation] {bin} loss vs {best_param}: r = {best_r} (next {second_param}, r = {second_r}), {n_wafers} wafers. Please assess whether the physical mechanism makes sense and whether a split / DOE can confirm it; we suggest no recipe change before confirmation."
+      EE:
+        zh: "【Commonality 確認】{bin} 損失最高的晶圓（例如 {worst_wafer}）正在和 {best_param} 做相關比對。請提供量測 {best_param} 那一站的機台／chamber 履歷，確認高損失晶圓是否集中在同一台，以排除機台造成的混淆。"
+        en: "[Commonality check] The highest {bin} loss wafers (e.g. {worst_wafer}) are being correlated with {best_param}. Please send the tool / chamber history of the step that sets {best_param}, to check whether high-loss wafers cluster on one tool and rule out tool confounding."
+      PIE_YE:
+        zh: "【良率線索】{finding}。目前只是相關，尚未證實因果；建議以 split／DOE 或 PFA 確認。若確認，會提出 {best_param} 的規格收緊建議與受影響晶圓清單。"
+        en: "[Yield lead] {finding}. This is a correlation, not yet proven cause; we suggest confirming with a split / DOE or PFA. If confirmed, we will propose tightening the {best_param} spec and send the affected wafer list."
+      MGR_QE:
+        zh: "【狀態】{bin} 損失相關分析：{status}。{finding}。進行中：commonality 與離群點檢查；待決定：是否安排 split／DOE 或 PFA 驗證。紀錄：e-log 已更新。"
+        en: "[Status] {bin} loss correlation: {status}. {finding}. In progress: commonality and outlier checks. Decision needed: whether to run a split / DOE or PFA to confirm. Records: e-log updated."

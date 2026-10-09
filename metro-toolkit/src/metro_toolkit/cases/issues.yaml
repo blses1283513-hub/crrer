@@ -1,0 +1,175 @@
+# Issue building blocks for multi-issue ("linked") cases: several of these happen in ONE fab-simulator run, so they
+# show up in the same SPC charts, yield trend and die maps, and can hide each other (compose.py).
+#
+#   event        fab-simulator event type (config/fab_sim.yaml): shift | drift | bowl | recipe | metro_offset | defects
+#   where        chamber | all | metro (a metrology tool) | tool (a tool of the inline-inspection step)
+#   steps        process steps it can be put on (the first one is the default)
+#   size         small / medium / large: x the step's wafer sigma (shift, recipe, metro_offset; drift = total over the
+#                window), x the step's local sigma (bowl), or the defect-density multiplier (defects)
+#   n_lots       how many lots the issue lasts
+#   cause / action / decision / notify / message_role   answers for this issue on its own (pool ids in cases.yaml)
+#   urgency      3 = product at risk now, 2 = act today, 1 = can wait; the most urgent issue is handled first
+#   stat / chart / group   which SPC view shows it best
+#   symptom      what the handover says (no cause given away); finding / ask / why: model message and explanation
+#   keywords     words a good message uses to name this issue
+# Placeholders: {param} {unit} {where} {step} {start} (first lot) {size} (magnitude) {impact} (yield change, pp).
+# All synthetic: generic fab practice, no company data.
+
+kinds:
+  shift:
+    event: shift
+    label: {zh: "單一 chamber 偏移", en: "One-chamber shift"}
+    where: chamber
+    steps: [GATE_OX, CAP_HK, TIN_DEP, ILD_CMP, PAD_OX]
+    size: {small: 1.8, medium: 2.8, large: 3.8}
+    n_lots: 10
+    cause: C_CHAMBER_SHIFT
+    action: A_VERIFY
+    decision: D_HOLD
+    notify: [EE, PE, PIE_YE, MGR_QE]
+    message_role: EE
+    urgency: 3
+    stat: mean
+    chart: IMR
+    group: chamber_id
+    symptom: {zh: "{param} 的 SPC 在 {where} 從 {start} 起偏離中心線", en: "{param} SPC on {where} has been off the centre line since {start}"}
+    finding: {zh: "{where} 的 {param} 自 {start} 起偏移約 {size} {unit}，其他 chamber 正常（單一 chamber 製程偏移；良率變化 {impact} 個百分點）", en: "{param} on {where} has shifted by about {size} {unit} since {start} while the other chambers are normal (a single-chamber process shift; yield change {impact} pp)"}
+    ask: {zh: "先重測確認量測；確認後 hold 受影響 lot、inhibit {where}，請 EE 查 PM／零件／警報", en: "re-measure to rule out metrology; once confirmed, hold the affected lots, inhibit {where} and have EE check PMs / parts / alarms"}
+    why: {zh: "只有一個 chamber 動、突然且持續 → 單一 chamber 偏移", en: "only one chamber moved, suddenly and persistently → a single-chamber shift"}
+    keywords: ["{where}"]
+
+  drift:
+    event: drift
+    label: {zh: "慢漂移", en: "Slow drift"}
+    where: chamber
+    steps: [CAP_HK, GATE_OX, TIN_DEP, PAD_OX]
+    size: {small: 2.2, medium: 3.2, large: 4.2}
+    n_lots: 24
+    cause: C_DRIFT
+    action: A_PM
+    decision: D_RELEASE_WATCH
+    notify: [EE, PE]
+    message_role: EE
+    urgency: 2
+    stat: mean
+    chart: EWMA
+    group: chamber_id
+    symptom: {zh: "{param} 在 {where} 從 {start} 起慢慢往同一個方向走", en: "{param} on {where} has been creeping in one direction since {start}"}
+    finding: {zh: "{where} 的 {param} 自 {start} 起累積漂移約 {size} {unit}（消耗品老化型的慢漂移）", en: "{param} on {where} has drifted by about {size} {unit} in total since {start} (a slow, consumable-wear drift)"}
+    ask: {zh: "請 EE 確認 {where} 的 PM／消耗品時程，提前 PM，PM 前用 EWMA 追蹤", en: "ask EE to check {where}'s PM / consumable schedule and pull the PM in; track with EWMA until then"}
+    why: {zh: "單一 chamber、斜率穩定、沒有跳點 → 慢漂移，EWMA 比 I-MR 早看到", en: "one chamber, a steady slope, no jump → a slow drift, seen earlier on EWMA than on I-MR"}
+    keywords: ["{where}", "drift", "漂移"]
+
+  bowl:
+    event: bowl
+    label: {zh: "均勻度變差（碗形）", en: "Uniformity worse (bowl)"}
+    where: chamber
+    steps: [WL_ETCH, ILD_CMP, CAP_HK]
+    size: {small: 5.0, medium: 8.0, large: 11.0}
+    n_lots: 12
+    cause: C_SHAPE
+    action: A_WAFERMAP
+    decision: D_HOLD
+    notify: [EE, PE, PIE_YE]
+    message_role: EE
+    urgency: 2
+    stat: nu_1sigma_pct
+    chart: IMR
+    group: chamber_id
+    symptom: {zh: "{where} 的 {param} 片內 1σ%（不均勻度）從 {start} 起變大", en: "within-wafer 1σ % (non-uniformity) of {param} on {where} has risen since {start}"}
+    finding: {zh: "{where} 的 {param} 片內分布從 {start} 起變成中心對邊緣的碗形（平均值幾乎不變，看 1σ% 才看得到）", en: "{param} on {where} has turned into a centre-to-edge bowl since {start} (the mean barely moves; only the 1σ % shows it)"}
+    ask: {zh: "看 {where} 的晶圓圖確認形狀，請 EE 查對應硬體（噴頭、間距、加熱器）", en: "check {where}'s wafer maps to confirm the shape and have EE check the matching hardware (showerhead, gap, heater)"}
+    why: {zh: "平均值正常但不均勻度變大 → 形狀改變，只看平均值的 SPC 會漏掉", en: "the mean is fine but the non-uniformity rose → a shape change that a mean-only SPC misses"}
+    keywords: ["{where}", "1σ", "均勻", "uniform", "bowl", "碗"]
+
+  recipe:
+    event: recipe
+    label: {zh: "所有 chamber 一起偏", en: "All chambers moved together"}
+    where: all
+    steps: [GATE_OX, CAP_HK, TIN_DEP, ILD_CMP]
+    size: {small: 1.8, medium: 2.8, large: 3.8}
+    n_lots: 14
+    cause: C_RECIPE_ALL
+    action: A_CHANGE_REVIEW
+    decision: D_HOLD
+    notify: [PE, PIE_YE, MGR_QE]
+    message_role: PE
+    urgency: 3
+    stat: mean
+    chart: IMR
+    group: chamber_id
+    symptom: {zh: "{param} 的 SPC 從 {start} 起所有 chamber 同時偏移", en: "{param} SPC has moved on every chamber at once since {start}"}
+    finding: {zh: "{step} 的所有 chamber 自 {start} 起一起偏移約 {size} {unit}，每一批都一樣（recipe 或進料變更）", en: "every chamber at {step} has moved by about {size} {unit} since {start}, on every lot (a recipe or incoming-material change)"}
+    ask: {zh: "對照 {start} 前後的 recipe／進料／版本變更，請 PE 確認是否為預期變更", en: "check recipe / incoming-material / version changes around {start} and ask PE whether the change was intended"}
+    why: {zh: "所有 chamber 同時、同量偏移，且不分量測機台 → 製程端的共同原因（recipe／進料）", en: "every chamber moved at once by the same amount, on both metrology tools → a common process cause (recipe / incoming material)"}
+    keywords: ["{step}", "recipe", "所有 chamber", "all chambers", "進料", "incoming"]
+
+  metro_offset:
+    event: metro_offset
+    label: {zh: "量測機台偏差", en: "Metrology-tool offset"}
+    where: metro
+    steps: [GATE_OX, CAP_HK, TIN_DEP, ILD_CMP]
+    size: {small: 1.8, medium: 2.8, large: 3.8}
+    n_lots: 30
+    cause: C_METRO_OFFSET
+    action: A_REGROUP
+    decision: D_REMEASURE_RELEASE
+    notify: [EE, PE, MGR_QE]
+    message_role: PE
+    urgency: 2
+    stat: mean
+    chart: IMR
+    group: metro_tool_id
+    symptom: {zh: "{param} 的 SPC 從 {start} 起好幾個 chamber 都出現 OOC，而且一批高、一批正常交替", en: "{param} SPC has shown OOC on several chambers since {start}, alternating lot by lot between high and normal"}
+    finding: {zh: "{param} 依量測機台分組後只有 {where} 偏約 {size} {unit}：是量測機台偏差，產品沒變（良率變化 {impact} 個百分點）", en: "grouped by metrology tool, only {where} reads {param} off by about {size} {unit}: a metrology-tool offset, the product did not change (yield change {impact} pp)"}
+    ask: {zh: "請 PE 先不要依這些數值調製程；用黃金片比對並校正 {where}，期間改用另一台量測", en: "ask PE not to adjust the process on these readings; check {where} on a golden wafer and recalibrate it, measuring on the other tool meanwhile"}
+    why: {zh: "很多 chamber 一起 OOC、一批高一批正常、良率不動 → 量測機台（批次輪流用兩台量測）", en: "many chambers OOC together, alternating by lot, yield unchanged → the metrology tool (lots alternate between two metrology tools)"}
+    keywords: ["{where}", "量測機台", "metrology tool", "golden", "黃金片"]
+
+  particles:
+    event: defects
+    pattern: edge_ring
+    label: {zh: "外圈微粒事件", en: "Edge-ring particle event"}
+    where: tool
+    steps: [TIN_DEP]
+    size: {small: 3.0, medium: 4.5, large: 6.0}
+    n_lots: 4
+    cause: C_PARTICLE
+    action: A_FA
+    decision: D_HOLD
+    notify: [RDA, EE, PIE_YE, MGR_QE]
+    message_role: RDA
+    urgency: 3
+    stat: mean
+    chart: IMR
+    group: chamber_id
+    param: defect_density
+    symptom: {zh: "inline 缺陷密度從 {start} 起跳高，低良率晶圓外圈一整圈失效", en: "inline defect density has jumped since {start}, and low-yield wafers fail in a full edge ring"}
+    finding: {zh: "{start} 起約 4 批在 {where} 有微粒事件：缺陷呈外圈環狀，良率變化 {impact} 個百分點", en: "about 4 lots from {start} hit a particle event on {where}: defects in an edge ring, yield change {impact} pp"}
+    ask: {zh: "hold 受影響 lot，請 RDA review／SEM 外圈失效晶粒，請 EE 檢查 {where} 的腔體清潔與邊緣區", en: "hold the affected lots, have RDA review / SEM the edge-ring failing dies, and have EE check {where}'s chamber cleanliness and edge areas"}
+    why: {zh: "參數正常、缺陷密度跳高、失效是外圈環狀缺陷 → 微粒事件，不是參數偏移", en: "parameters normal, defect density up, edge-ring defect failures → a particle event, not a parameter shift"}
+    keywords: ["{where}", "缺陷", "defect", "微粒", "particle", "review", "sem"]
+
+  center_defects:
+    event: defects
+    pattern: center
+    label: {zh: "中心區缺陷群", en: "Centre-of-wafer defects"}
+    where: tool
+    steps: [TIN_DEP]
+    size: {small: 3.0, medium: 4.5, large: 6.0}
+    n_lots: 4
+    cause: C_DEFECT_CENTER
+    action: A_FA
+    decision: D_HOLD
+    notify: [RDA, EE, PIE_YE, MGR_QE]
+    message_role: RDA
+    urgency: 3
+    stat: mean
+    chart: IMR
+    group: chamber_id
+    param: defect_density
+    symptom: {zh: "inline 缺陷密度從 {start} 起跳高，低良率晶圓的失效集中在中心", en: "inline defect density has jumped since {start}, and low-yield wafers fail in the centre"}
+    finding: {zh: "{start} 起約 4 批在 {where} 出現中心區缺陷群（CoW），良率變化 {impact} 個百分點", en: "about 4 lots from {start} show a centre-of-wafer (CoW) defect cluster from {where}, yield change {impact} pp"}
+    ask: {zh: "hold 受影響 lot，請 RDA review／SEM 中心區失效晶粒，請 EE 檢查 {where} 中心相關的條件（噴嘴、殘留、夾持）", en: "hold the affected lots, have RDA review / SEM the centre failing dies, and have EE check {where}'s centre-related conditions (nozzle, residue, chuck)"}
+    why: {zh: "缺陷密度跳高、失效集中在晶圓中心 → 某台機台的中心區缺陷，要看空間圖樣找來源", en: "defect density up and failures concentrated at the wafer centre → a centre-of-wafer defect source on one tool; the spatial signature points to it"}
+    keywords: ["{where}", "中心", "center", "centre", "cow", "缺陷", "defect"]

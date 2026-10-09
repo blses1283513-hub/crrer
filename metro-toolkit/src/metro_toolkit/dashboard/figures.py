@@ -255,3 +255,92 @@ def die_map_figure(codes: np.ndarray, gx, gy, r_eff: float, title: str) -> go.Fi
     fig = layout(fig, title, "x (mm)", "y (mm)", 520)
     fig.update_yaxes(scaleanchor="x", scaleratio=1)
     return fig
+
+
+# --------------------------------------------------------------------------- inline defect inspection / cross-role requests
+GROUP_COLOR = {"split": viz.SERIES[0], "baseline": viz.SERIES[1], "lot": viz.SERIES[0]}
+GROUP_NAME = {"split": "split", "baseline": "baseline", "lot": "inspected count 檢查數量"}
+
+
+def defect_counts_figure(counts: pd.DataFrame, maxout: int, title: str) -> go.Figure:
+    """One bar per wafer (colour = split / baseline group), red dashed maxout line, grey median line."""
+    fig = go.Figure()
+    for grp, g in counts.groupby("group", sort=False):
+        fig.add_bar(x=g["wafer_id"], y=g["count"], name=GROUP_NAME.get(grp, grp),
+                    marker=dict(color=GROUP_COLOR.get(grp, viz.SERIES[0]), cornerradius=4),
+                    hovertemplate="%{x}<br>%{y:,} defects<extra>" + str(grp) + "</extra>")
+    med = float(counts["count"].median())
+    near = counts["count"].max() >= 0.3 * maxout  # far below the maxout, the line would flatten the bars
+    if near:
+        fig.add_hline(y=maxout, line=dict(color=viz.STATUS["critical"], dash="dash", width=1.5))
+    fig.add_hline(y=med, line=dict(color=viz.MUTED, width=1.5))
+    legend_line(fig, f"maxout 機台上限 = {maxout:,}" + ("" if near else "（遠高於圖上範圍 far above the chart）"),
+                viz.STATUS["critical"], "dash")
+    legend_line(fig, f"median 中位數 = {med:,.0f}", viz.MUTED)
+    layout(fig, title, "晶圓 wafer", "缺陷數 defect count")
+    fig.update_layout(bargap=0.25, legend=dict(orientation="h", y=1.02, yanchor="bottom", x=0))
+    fig.update_yaxes(range=[0, (max(maxout, counts["count"].max()) if near else counts["count"].max()) * 1.1])
+    return fig
+
+
+def review_pareto_figure(classes: pd.Series, nuisance: str = "Non-visible") -> go.Figure:
+    """Review classes high to low as % of reviewed defects: real classes blue, the non-visible (nuisance) class grey."""
+    s = classes.sort_values(ascending=False)
+    pct = 100 * s / max(s.sum(), 1)
+    fig = go.Figure()
+    for is_nv, name, color in ((False, "real defect classes 真缺陷類別", viz.SERIES[0]),
+                               (True, f"{nuisance} (nuisance) 看不到真缺陷", viz.MUTED)):
+        sel = (pct.index == nuisance) == is_nv
+        fig.add_bar(x=list(pct.index[sel]), y=pct[sel], name=name, text=[f"{v:.0f}%" for v in pct[sel]],
+                    textposition="outside", marker=dict(color=color, cornerradius=4),
+                    customdata=s[sel].to_numpy(), hovertemplate="%{x}: %{y:.1f}% (%{customdata} defects)<extra></extra>")
+    layout(fig, f"Review 分類 · {int(s.sum())} defects reviewed", "缺陷類別 class", "佔 review 比例 share (%)")
+    fig.update_layout(legend=dict(orientation="h", y=1.02, yanchor="bottom", x=0))
+    fig.update_xaxes(categoryorder="array", categoryarray=list(pct.index))
+    fig.update_yaxes(range=[0, pct.max() * 1.18])
+    return fig
+
+
+def adders_figure(t: pd.DataFrame) -> go.Figure:
+    """Per wafer: previous-layer count (light blue) and this-layer count (blue); split | baseline separated."""
+    t = pd.concat([t[t["group"] == "split"], t[t["group"] == "baseline"]])
+    fig = go.Figure()
+    fig.add_bar(x=t["wafer_id"], y=t["previous"], name="previous layer 前層數量", marker=dict(color=viz.SEQ_BLUE[1], cornerradius=4),
+                hovertemplate="%{x}<br>previous %{y:,}<extra></extra>")
+    fig.add_bar(x=t["wafer_id"], y=t["current"], name="this layer 本層數量", marker=dict(color=viz.SERIES[0], cornerradius=4),
+                customdata=(t["current"] - t["previous"]).to_numpy(),
+                hovertemplate="%{x}<br>this layer %{y:,} · adders %{customdata:,}<extra></extra>")
+    n_split = int((t["group"] == "split").sum())
+    fig.add_vline(x=n_split - 0.5, line=dict(color=viz.MUTED, dash="dot", width=1.5))
+    fig.add_annotation(x=(n_split - 1) / 2, y=1.0, yref="paper", text="split", showarrow=False, yanchor="bottom")
+    fig.add_annotation(x=n_split + (len(t) - n_split - 1) / 2, y=1.0, yref="paper", text="baseline", showarrow=False,
+                       yanchor="bottom")
+    legend_line(fig, "split | baseline 分隔", viz.MUTED, "dot")
+    layout(fig, "前層 vs 本層（adder = 本層 − 前層）· previous vs this layer", "晶圓 wafer", "缺陷數 defect count")
+    fig.update_layout(barmode="group", bargap=0.25, legend=dict(orientation="h", y=1.08, yanchor="bottom", x=0),
+                      margin=dict(t=110))
+    return fig
+
+
+def bin_corr_figure(t: pd.DataFrame, params: list[str], bin_name: str) -> go.Figure:
+    """Small multiples: bin loss vs each inline parameter, one dot per wafer, grey dashed least-squares line."""
+    from plotly.subplots import make_subplots
+
+    rs = {p: float(np.corrcoef(t[p], t["bin_loss"])[0, 1]) for p in params}
+    fig = make_subplots(rows=1, cols=len(params), shared_yaxes=True, horizontal_spacing=0.05,
+                        subplot_titles=[f"{p} · r = {rs[p]:+.2f}" for p in params])
+    for i, p in enumerate(params, start=1):
+        fig.add_scatter(x=t[p], y=t["bin_loss"], mode="markers", name="wafer 晶圓", showlegend=i == 1,
+                        marker=dict(size=9, color=viz.SERIES[0], line=dict(color=viz.SURFACE, width=2)),
+                        customdata=t[["wafer_id"]], hovertemplate="%{customdata[0]}<br>" + p + " %{x:.4g}<br>loss %{y:.1f}%"
+                                                                   "<extra></extra>", row=1, col=i)
+        b1, b0 = np.polyfit(t[p], t["bin_loss"], 1)
+        xs = np.linspace(t[p].min(), t[p].max(), 20)
+        fig.add_scatter(x=xs, y=b0 + b1 * xs, mode="lines", name="least-squares line 最小平方線", showlegend=i == 1,
+                        line=dict(color=viz.MUTED, dash="dash", width=1.5), hoverinfo="skip", row=1, col=i)
+        fig.update_xaxes(title_text=p, row=1, col=i)
+    layout(fig, f"{bin_name} 損失 vs inline 量測 · loss vs inline metrology", "", "bin 損失 loss (%)", height=360)
+    for i in range(2, len(params) + 1):
+        fig.update_yaxes(title_text="", row=1, col=i)
+    fig.update_layout(legend=dict(orientation="h", y=1.12, yanchor="bottom", x=0), margin=dict(t=120))
+    return fig

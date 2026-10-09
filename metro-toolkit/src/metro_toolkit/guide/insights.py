@@ -515,3 +515,90 @@ def fab_drivers(drv: pd.DataFrame, corr_rank: list[str] | None, cmp: dict | None
                              f"simple correlation ranks {f.v['corr_top']} first, not the true cause → correlation is not "
                              "causation; confirm with a split lot / DOE")
     return f
+
+
+# --------------------------------------------------------------------------- inline defect inspection / cross-role requests
+def defect_counts(counts: pd.DataFrame, maxout: int) -> Facts:
+    """counts: wafer_id, count (and optional group). v: n_wafers, n_maxout, maxout, max_count, top_wafer, median_count."""
+    top = counts.loc[counts["count"].idxmax()]
+    hit = counts[counts["count"] >= maxout]
+    f = Facts(v={"n_wafers": len(counts), "n_maxout": len(hit), "maxout": int(maxout), "max_count": int(top["count"]),
+                 "top_wafer": top["wafer_id"], "median_count": int(counts["count"].median())})
+    f.add(f"{len(counts)} 片檢查，中位數 {f.v['median_count']:,} 顆，最多 {top['wafer_id']}（{f.v['max_count']:,} 顆）",
+          f"{len(counts)} wafers inspected, median {f.v['median_count']:,} defects, highest {top['wafer_id']} "
+          f"({f.v['max_count']:,})")
+    if len(hit):
+        f.worse("act").add(f"{len(hit)} 片達到檢查機台上限 {maxout:,}（maxout）：實際數量未知，這些片的數字不能直接比較",
+                           f"{len(hit)} wafer(s) hit the inspection maxout of {maxout:,}: the true count is unknown and "
+                           "these numbers cannot be compared directly")
+    elif f.v["max_count"] > 3 * max(f.v["median_count"], 1):
+        f.worse("watch").add("有晶圓的數量超過中位數 3 倍：先看該片的 wafer map 與 review 再下結論",
+                             "one wafer is above 3× the median: look at its map and review before concluding")
+    return f
+
+
+def review_pareto(classes: pd.Series, nuisance: str = "Non-visible") -> Facts:
+    """classes: review counts per defect class (index = class). v: n_reviewed, top_class, top_share, nonvisible_share,
+    real_share, n_classes."""
+    s = classes.sort_values(ascending=False)
+    n = int(s.sum())
+    nv = 100 * float(s.get(nuisance, 0)) / max(n, 1)
+    f = Facts(v={"n_reviewed": n, "top_class": s.index[0], "top_share": round(100 * float(s.iloc[0]) / max(n, 1)),
+                 "nonvisible_share": round(nv), "real_share": round(100 - nv), "n_classes": int((s > 0).sum())})
+    f.add(f"review {n} 顆，最多是 {s.index[0]}（{f.v['top_share']:.0f}%）；non-visible（看不到真缺陷）佔 {nv:.0f}%",
+          f"{n} defects reviewed; top class {s.index[0]} ({f.v['top_share']:.0f}%); non-visible (no real defect seen) "
+          f"{nv:.0f}%")
+    if nv >= 50:
+        f.worse("act").add("一半以上是 nuisance：檢查數量主要是雜訊，不能代表真缺陷，要先調整檢查 recipe",
+                           "more than half is nuisance: the counts are mostly noise, not real defects; tune the "
+                           "inspection recipe first")
+    elif nv >= 25:
+        f.worse("watch").add("nuisance 比例偏高：比較數量前先用 review 換算真缺陷數",
+                             "a high nuisance share: convert counts to real defects with the review before comparing")
+    return f
+
+
+def adder_compare(t: pd.DataFrame) -> Facts:
+    """t: wafer_id, group (split / baseline), previous, current. v: n_split, n_base, split_prev, base_prev,
+    split_adders, base_adders, prev_ratio, adder_ratio, source."""
+    t = t.assign(adders=(t["current"] - t["previous"]).clip(lower=0))
+    g = t.groupby("group")[["previous", "adders"]].mean()
+    sp, bp = float(g.loc["split", "previous"]), float(g.loc["baseline", "previous"])
+    sa, ba = float(g.loc["split", "adders"]), float(g.loc["baseline", "adders"])
+    pr, ar = sp / max(bp, 1.0), sa / max(ba, 1.0)
+    src = ({"zh": "本層（split 條件本身）", "en": "this layer (the split condition itself)"} if ar >= 1.5 else
+           {"zh": "前層帶進來（incoming）", "en": "the previous layer (incoming)"} if pr >= 1.5 else
+           {"zh": "看不出差異", "en": "no clear difference"})
+    f = Facts(v={"n_split": int((t["group"] == "split").sum()), "n_base": int((t["group"] == "baseline").sum()),
+                 "split_prev": round(sp), "base_prev": round(bp), "split_adders": round(sa), "base_adders": round(ba),
+                 "prev_ratio": round(pr, 1), "adder_ratio": round(ar, 1), "source": src})
+    f.add(f"前層數量 split／baseline = {pr:.1f} 倍；本層 adder（本層 − 前層）split／baseline = {ar:.1f} 倍",
+          f"previous-layer counts split / baseline = {pr:.1f}×; this-layer adders (current − previous) split / "
+          f"baseline = {ar:.1f}×")
+    if ar >= 1.5 or pr >= 1.5:
+        f.worse("act").add(f"差異來源：{src['zh']}", f"the difference comes from {src['en']}")
+    return f
+
+
+def bin_corr(t: pd.DataFrame, params: list[str], bin_name: str) -> Facts:
+    """t: wafer_id, bin_loss (%), one column per inline parameter. v: bin, n_wafers, best_param, best_r, second_param,
+    second_r, worst_wafer, worst_loss."""
+    r = {p: float(np.corrcoef(t[p], t["bin_loss"])[0, 1]) for p in params}
+    order = sorted(r, key=lambda p: -abs(r[p]))
+    worst = t.loc[t["bin_loss"].idxmax()]
+    f = Facts(v={"bin": bin_name, "n_wafers": len(t), "best_param": order[0], "best_r": round(r[order[0]], 2),
+                 "second_param": order[1] if len(order) > 1 else "—",
+                 "second_r": round(r[order[1]], 2) if len(order) > 1 else None,
+                 "worst_wafer": worst["wafer_id"], "worst_loss": round(float(worst["bin_loss"]), 1)})
+    f.add(f"{bin_name} 損失與 {order[0]} 的相關係數 r = {r[order[0]]:+.2f}（{len(t)} 片）；最差 {worst['wafer_id']}"
+          f"（{f.v['worst_loss']:.1f}%）",
+          f"{bin_name} loss vs {order[0]}: r = {r[order[0]]:+.2f} ({len(t)} wafers); worst {worst['wafer_id']} "
+          f"({f.v['worst_loss']:.1f}%)")
+    if abs(r[order[0]]) >= 0.7:
+        f.worse("act").add(f"{order[0]} 與 bin 損失強相關：很可能是驅動因子，要和 PE／YE 確認機制",
+                           f"{order[0]} correlates strongly with the bin loss: a likely driver; confirm the mechanism "
+                           "with PE / YE")
+    elif abs(r[order[0]]) >= 0.4:
+        f.worse("watch").add("只有中度相關：可能是部分原因或巧合，要加更多晶圓確認",
+                             "only a moderate correlation: a partial cause or chance; add more wafers to confirm")
+    return f

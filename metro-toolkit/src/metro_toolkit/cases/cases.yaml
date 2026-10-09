@@ -41,6 +41,14 @@ pools:
     C_NOISE_DOE: {zh: "實驗雜訊太大、重複不足，效應被雜訊淹沒", en: "Too much experimental noise and too few replicates; the effects drown in noise"}
     C_ALIAS: {zh: "部分因子設計的混淆，把效應歸錯因子", en: "Aliasing in a fractional design attributed an effect to the wrong factor"}
     C_PARTICLE: {zh: "某台沉積機台的微粒事件（外圈環狀缺陷）", en: "A particle event on one deposition tool (edge-ring defects)"}
+    C_DEFECT_CENTER: {zh: "某台機台造成的晶圓中心區缺陷群（CoW）", en: "A centre-of-wafer (CoW) defect cluster from one tool"}
+    C_NUISANCE: {zh: "檢查 recipe 太敏感：數量大多是 nuisance（review 看不到真缺陷），不是真缺陷變多", en: "The inspection recipe is too sensitive: most of the count is nuisance (nothing real at review), not more real defects"}
+    C_INCOMING: {zh: "缺陷在前層就已經存在（incoming），不是本層或 split 條件造成", en: "The defects were already there at the previous layer (incoming), not added by this layer or the split"}
+    C_SPLIT: {zh: "split 的新條件本身在這一層增加了缺陷（adder 變多）", en: "The new split condition itself adds defects at this layer (more adders)"}
+    C_SAMPLING_GAP: {zh: "異常只在晶圓最外圈，例行量測點位沒有涵蓋（抽樣盲區）", en: "The excursion sits only at the outermost edge, which the routine sampling plan does not cover (a sampling blind spot)"}
+    C_NOT_METRO: {zh: "量測顯示該參數全片都在 target：這個參數不是失效原因", en: "Metrology shows the parameter on target across the wafer: it is not the cause of the failure"}
+    C_PARAM_DRIVES: {zh: "某個 inline 參數的片間變異驅動了這個 bin 的損失", en: "Wafer-to-wafer variation of one inline parameter drives this bin's loss"}
+    C_NO_METRO_LINK: {zh: "沒有任何 inline 量測參數能解釋這個 bin：損失多半來自缺陷或其他機制", en: "No inline metrology parameter explains this bin: the loss is likely defect-driven or another mechanism"}
   actions:
     A_VERIFY: {zh: "先確認量測：同片重測（同機台＋參考機台）、查 GOF 與量測機台的監控片", en: "Verify the measurement first: re-measure the wafer (same and reference tool), check GOF and the metrology monitor wafer"}
     A_HOLD_INHIBIT: {zh: "hold 受影響 lot、inhibit 該 chamber，請 EE 檢查，修復後跑 qual 再放行", en: "Hold the affected lots, inhibit the chamber, have EE check it and run qual after the fix"}
@@ -61,6 +69,14 @@ pools:
     A_REPLICATE: {zh: "加重複與中心點、先確認量測 GR&R，降低雜訊後再分析", en: "Add replicates and centre points and check the measurement GR&R; reduce noise before analysing again"}
     A_RELEASE_RECIPE: {zh: "用目前模型的建議值直接發行新配方", en: "Release the new recipe straight from the current model"}
     A_FA: {zh: "hold 受影響 lot，拉片給 RDA 做 review／SEM，並對沉積機台做 commonality", en: "Hold the affected lots, pull wafers for RDA review / SEM, and run commonality on the deposition tools"}
+    A_TUNE_RECIPE: {zh: "用 review 結果調整檢查 recipe（threshold、care area、nuisance filter），確認真缺陷的 capture rate 後再用數量判斷", en: "Tune the inspection recipe from the review data (threshold, care areas, nuisance filter) and confirm the capture rate of real defects before judging by counts"}
+    A_PREV_LAYER: {zh: "做同片前後層比對（adder analysis），往前層與前層機台追來源", en: "Run a same-wafer previous-vs-current layer comparison (adder analysis) and trace the source upstream to the previous layer and its tools"}
+    A_SPLIT_REVIEW: {zh: "review／SEM split 片的 adder，和 baseline 比對缺陷類型，把結果回饋給 PE 與製程負責人", en: "Review / SEM the split wafers' adders, compare defect types with the baseline, and feed back to PE and the process owner"}
+    A_REPLY_FULLMAP: {zh: "回覆 FA 全片 49 點資料並標出邊緣異常；請 PE／EE 檢查邊緣相關硬體，並把邊緣點加進例行抽樣", en: "Reply to FA with the full 49-site map and flag the edge; ask PE / EE to check the edge-related hardware, and add edge sites to routine sampling"}
+    A_REPLY_DATA: {zh: "回覆 FA 量測資料（含全片圖）證明參數在 target，建議往其他機制查", en: "Reply to FA with the metrology data (full map included) showing the parameter on target, and suggest other mechanisms to check"}
+    A_SEND_PE: {zh: "把相關圖與晶圓清單交給 YE／PE，建議用 split 或 DOE 確認機制", en: "Send the correlation plot and wafer list to YE / PE and propose a split or DOE to confirm the mechanism"}
+    A_SUGGEST_FA: {zh: "回覆 YE：量測參數沒有關聯；建議對失效晶粒做 defect review／FA", en: "Reply to YE that metrology shows no link, and suggest defect review / FA on the failing dies"}
+    A_CHANGE_REVIEW: {zh: "對照最近的 recipe／進料／版本變更，請 PE 確認是否為預期中的變更", en: "Check recent recipe / incoming-material / version changes and ask PE whether the change was intended"}
   decisions:
     D_HOLD: {zh: "受影響 lot hold，等 PIE／PE 做 disposition", en: "Hold the affected lots pending disposition by PIE / PE"}
     D_RELEASE: {zh: "產品照常放行，不需要 hold", en: "Release product as normal; no hold"}
@@ -76,6 +92,26 @@ pools:
     D_MODEL_NOT_READY: {zh: "這個 DOE 還不能用來定配方，先補實驗", en: "This DOE cannot set the recipe yet; run more experiments first"}
     D_RELEASE_PROCESS: {zh: "用模型的最佳點直接進入確認實驗與 qual", en: "Take the model's optimum straight to confirmation runs and qual"}
     D_SCRAP: {zh: "受影響晶圓全部報廢", en: "Scrap all affected wafers"}
+    D_NO_HOLD_COUNTS: {zh: "不要只憑這些數量 hold 或判退；用調整後的 recipe 重新檢查", en: "Do not hold or reject on these counts alone; re-inspect with the tuned recipe"}
+    D_CONFIRM_SOURCE: {zh: "先確認缺陷來源，再決定是否全面轉換條件（不要先怪 split）", en: "Confirm the defect source before deciding on full conversion (do not blame the split yet)"}
+    D_NO_CONVERT: {zh: "來源修好之前不要全面轉換到新條件", en: "Do not convert to the new condition until the adder source is fixed"}
+    D_SPLIT_CONFIRM: {zh: "先用 split／DOE 確認，再決定是否調整該參數的 target", en: "Confirm with a split / DOE before deciding to re-target that parameter"}
+    D_NO_METRO_ACTION: {zh: "不調整量測或製程參數；繼續 FA／缺陷調查", en: "No metrology or process change; continue the FA / defect investigation"}
+
+# formats: the report layout a message is written in (the answer box is pre-filled with these headings)
+formats:
+  swr:
+    name: {zh: "Inline 缺陷摘要（SWR 格式）", en: "Inline defect summary (SWR style)"}
+    sections: [{zh: "問題／目的", en: "Problem / purpose"}, {zh: "主要觀察", en: "Key observations"}, {zh: "結論／建議", en: "Conclusion / recommendation"}, {zh: "預期效益", en: "Expected gain"}]
+  fa_reply:
+    name: {zh: "回覆 FA 請求", en: "Reply to an FA request"}
+    sections: [{zh: "你的請求", en: "Your request"}, {zh: "量測結果", en: "Metrology results"}, {zh: "判讀", en: "Interpretation"}, {zh: "建議下一步", en: "Suggested next step"}]
+  lot_note:
+    name: {zh: "批次報告備註", en: "Lot report note"}
+    sections: [{zh: "摘要", en: "Summary"}, {zh: "數據", en: "Data"}, {zh: "判讀", en: "Interpretation"}, {zh: "請求", en: "Ask"}]
+  handover:
+    name: {zh: "交接摘要", en: "Handover summary"}
+    sections: [{zh: "先處理", en: "First"}, {zh: "其他事項", en: "Other items"}, {zh: "已做", en: "Done so far"}, {zh: "需要決定", en: "Decisions needed"}]
 
 domains:
   film: {zh: "Film stack & fit 膜厚擬合", en: "Film stack & fit"}
@@ -85,6 +121,10 @@ domains:
   study: {zh: "Recipe studies 量測技術評估", en: "Recipe studies"}
   doe: {zh: "DOE / recipe 實驗設計", en: "DOE / recipe"}
   fab: {zh: "Fab simulator 良率事件", en: "Fab simulator"}
+  defect: {zh: "Inline defect 缺陷檢查", en: "Inline defect inspection"}
+  request: {zh: "跨部門請求 Cross-role requests", en: "Cross-role requests"}
+  mix: {zh: "多重問題 Multi-issue", en: "Multi-issue"}
+  custom: {zh: "我的案例 My cases", en: "My cases"}
 
 cases:
   # ---------------------------------------------------------------- SPC
@@ -688,3 +728,118 @@ cases:
     explanation:
       zh: "多個 chamber 同時偏、良率卻完全沒變 → 產品沒有改變，改變的是量測。依 metro_tool_id 分組就能看出只有一台量測機台偏。若 PE 依此調整 RTP 溫度，反而會把正常的閘極氧化層調壞，製造真正的 excursion。"
       en: "Several chambers moved together while yield did not change at all → the product did not change, the measurement did. Grouping by metro_tool_id shows a single metrology tool is off. If PE adjusted the RTP temperature on these readings, a healthy gate oxide would be pushed off target and create a real excursion."
+
+  # ---------------------------------------------------------------- inline defect inspection (real-workflow cases)
+  insp_nuisance_recipe:
+    domain: defect
+    title: {zh: "inline 檢查數量爆量", en: "Inline inspection counts explode"}
+    brief:
+      zh: "【RDA 來訊】{lot} 在 {layer} 的 inline 檢查：{count_text}。這層全部跑同一個 POR recipe、沒有 split。RDA 準備開 SWR、問要不要 hold lot。你是負責這台檢查機台 recipe 的 AE。"
+      en: "[Message from RDA] {lot} at the {layer} inline inspection: {count_text}. All wafers ran the same POR recipe, no split. RDA is about to open an SWR and asks whether to hold the lot. You are the AE who owns this inspection recipe."
+    cause: C_NUISANCE
+    cause_options: [C_NUISANCE, C_PARTICLE, C_RANDOM, C_INCOMING]
+    action: A_TUNE_RECIPE
+    action_options: [A_TUNE_RECIPE, A_FA, A_HOLD_INHIBIT, A_RECORD]
+    decision: D_NO_HOLD_COUNTS
+    decision_options: [D_NO_HOLD_COUNTS, D_HOLD, D_SCRAP, D_RELEASE]
+    notify: [RDA]
+    message_role: RDA
+    message_format: swr
+    model_message:
+      zh: "【問題／目的】{lot} {layer} inline 檢查數量爆量（{count_text}），需判斷是否為真缺陷。\n【主要觀察】review {review_n} 顆，non-visible 佔 {nonvisible_share}%；真缺陷以 {top_real_class} 為主，換算每片約 {real_per_wafer} 顆，和歷史相近。\n【結論／建議】數量主要是 nuisance，recipe 太敏感，不建議只憑數量 hold；我會用 review 結果調整 threshold／care area／nuisance filter，確認真缺陷的 capture rate 後重新檢查這批。\n【預期效益】數量回到可比較的範圍，避免誤 hold，也不會漏掉真缺陷。"
+      en: "[Problem / purpose] {lot} {layer} inline counts exploded ({count_text}); we need to know whether these are real defects.\n[Key observations] {review_n} defects reviewed, non-visible {nonvisible_share}%; real defects are mostly {top_real_class}, about {real_per_wafer} per wafer, in line with history.\n[Conclusion / recommendation] The count is mostly nuisance: the recipe is too sensitive, so I do not recommend holding on counts alone. I will tune the threshold / care areas / nuisance filter from the review data, confirm the capture rate of real defects, and re-inspect the lot.\n[Expected gain] Counts become comparable again, no false hold, and no real defect missed."
+    keypoints:
+      - {zh: "給出 nuisance（non-visible）比例", en: "Gives the nuisance (non-visible) share", any: ["{nonvisible_share}", "non-visible", "nuisance"]}
+      - {zh: "換算出真缺陷的數量", en: "Converts to real defects per wafer", any: ["{real_per_wafer}", "真缺陷", "real defect"]}
+      - {zh: "建議不要只憑數量 hold", en: "Advises not to hold on counts alone", any: ["不建議", "不要", "do not", "don't", "not recommend", "no hold"]}
+      - {zh: "說明會調整 recipe 並確認 capture rate", en: "Commits to tuning the recipe and checking the capture rate", any: ["threshold", "capture", "filter", "care area", "調整", "tune"]}
+    explanation:
+      zh: "全部同一個 POR recipe、沒有 split，數量卻爆量（{count_text}），而 review 有 {nonvisible_share}% 是 non-visible → 檢查機台在數雜訊（nuisance），不是真缺陷變多。碰到 maxout 的數字只是下限，無法比較。這時 hold lot 或拉 FA 都是被雜訊牽著走；正確做法是由 recipe 負責人用 review 結果調整 recipe，確認真缺陷的 capture rate 沒有掉，再重新檢查。真缺陷每片約 {real_per_wafer} 顆、類型 {top_real_class}，才是要追蹤的數字。"
+      en: "One POR recipe, no split, yet counts exploded ({count_text}) and {nonvisible_share}% of the review is non-visible → the tool is counting nuisance, not more real defects. A count at the maxout is only a floor and cannot be compared. Holding the lot or pulling FA here would chase noise; the recipe owner should tune the recipe from the review data, confirm the capture rate of real defects has not dropped, and re-inspect. The real defects (about {real_per_wafer} per wafer, mostly {top_real_class}) are the numbers to track."
+    urgency: 2
+
+  insp_split_vs_baseline:
+    domain: defect
+    title: {zh: "split 片缺陷比較多，是新條件造成的嗎？", en: "More defects on the split: is the new condition to blame?"}
+    brief:
+      zh: "【PE 來訊】{layer} 的 inline 檢查：split lot {lot_s}（{split}）的缺陷數約是 baseline lot {lot_b} 的 {total_ratio} 倍。PE 想在全面轉換到新條件前確認：多出來的缺陷是不是新條件造成的？兩批在前一層都有做 inline 檢查。"
+      en: "[Message from PE] {layer} inline inspection: split lot {lot_s} ({split}) shows about {total_ratio}× the defects of baseline lot {lot_b}. Before full conversion to the new condition, PE wants to know whether the extra defects come from it. Both lots were also inspected at the previous layer."
+    cause: C_SPLIT
+    cause_options: [C_SPLIT, C_INCOMING, C_NUISANCE, C_RANDOM]
+    action: A_SPLIT_REVIEW
+    action_options: [A_SPLIT_REVIEW, A_PREV_LAYER, A_TUNE_RECIPE, A_RECORD]
+    decision: D_NO_CONVERT
+    decision_options: [D_NO_CONVERT, D_CONFIRM_SOURCE, D_RELEASE, D_SCRAP]
+    notify: [RDA, PE, PIE_YE]
+    message_role: PE
+    message_format: swr
+    model_message:
+      zh: "【問題／目的】{layer}：split {lot_s} 缺陷約為 baseline {lot_b} 的 {total_ratio} 倍，需在轉換前確認來源。\n【主要觀察】同片前後層比對：前層 split／baseline = {prev_ratio} 倍；本層 adder split {split_adders} vs baseline {base_adders}（{adder_ratio} 倍）。\n【結論／建議】{verdict}。\n【預期效益】轉換決定建立在正確的來源上，避免誤判新條件或放過真正的問題。"
+      en: "[Problem / purpose] {layer}: split {lot_s} has about {total_ratio}× the defects of baseline {lot_b}; the source must be confirmed before conversion.\n[Key observations] Same-wafer previous vs current layer: previous layer split / baseline = {prev_ratio}×; this layer's adders split {split_adders} vs baseline {base_adders} ({adder_ratio}×).\n[Conclusion / recommendation] {verdict}.\n[Expected gain] The conversion decision rests on the real source: no wrongly blamed condition, no real problem let through."
+    keypoints:
+      - {zh: "比較前層數量", en: "Compares the previous layer", any: ["前層", "previous", "{prev_ratio}"]}
+      - {zh: "用 adder（本層 − 前層）判斷", en: "Uses the adders (current − previous)", any: ["adder", "{adder_ratio}", "{split_adders}"]}
+      - {zh: "明確說出來源", en: "States the source clearly", any: ["incoming", "前層帶", "本層", "this layer", "split 條件", "split condition", "new condition", "新條件"]}
+      - {zh: "對轉換決定給出建議", en: "Recommends on the conversion", any: ["轉換", "convert", "conversion"]}
+    explanation:
+      zh: "總數多 {total_ratio} 倍不代表新條件有問題。把同一片在前層與本層的數量相減（adder）才能分出來源：前層 split／baseline = {prev_ratio} 倍、本層 adder = {adder_ratio} 倍 → {verdict}。前層就多 → 往前層與前層機台追（incoming），不能怪 split；adder 多 → 新條件本身增加缺陷，要 review／SEM 類型並在修好前不轉換。"
+      en: "{total_ratio}× the total does not by itself convict the new condition. Subtracting each wafer's previous-layer count from its current count (adders) separates the sources: previous layer split / baseline = {prev_ratio}×, this-layer adders = {adder_ratio}× → {verdict}. More at the previous layer → trace upstream (incoming) and do not blame the split; more adders → the new condition adds defects, so review / SEM the types and do not convert until it is fixed."
+    urgency: 2
+
+  # ---------------------------------------------------------------- cross-role requests (real-workflow cases)
+  fa_request_recess:
+    domain: request
+    title: {zh: "FA 請量測確認 recess", en: "FA asks metrology to check a recess"}
+    brief:
+      zh: "【FA 請求】PFA 在 {wafer} 靠近晶圓邊緣的失效晶粒看到 {name} 比預期深，懷疑造成 open。請量測確認：{lot} 的 {name}（{param}，target {target} nm，USL {usl} nm）有沒有在規格內？例行 SPC（9 點，r ≤ 140 mm）一直正常。你調出了這片的全片 49 點量測。"
+      en: "[FA request] PFA on {wafer} found {name} deeper than expected in failing dies near the wafer edge, suspected to cause opens. Please confirm: was {lot}'s {name} ({param}, target {target} nm, USL {usl} nm) in spec? Routine SPC (9 sites, r ≤ 140 mm) has always been normal. You pulled this wafer's full 49-site map."
+    cause: C_SAMPLING_GAP
+    cause_options: [C_SAMPLING_GAP, C_NOT_METRO, C_METRO_OFFSET, C_SITE_OUTLIER]
+    action: A_REPLY_FULLMAP
+    action_options: [A_REPLY_FULLMAP, A_REPLY_DATA, A_RECORD, A_RETARGET]
+    decision: D_HOLD
+    decision_options: [D_HOLD, D_RELEASE, D_SCRAP, D_RETARGET]
+    notify: [RDA, PE, PIE_YE]
+    message_role: RDA
+    message_format: fa_reply
+    model_message:
+      zh: "【你的請求】{wafer} 邊緣失效晶粒 {name} 偏深，請確認 {lot} 是否在規格內。\n【量測結果】例行 9 點（r ≤ 140 mm）最大 {routine_max} nm（USL {usl}）；全片 49 點最外圈（r = 147 mm）平均 {edge_mean} nm，最大 {full_max} nm，共 {n_out} 點超出 USL。\n【判讀】{verdict}。\n【建議下一步】附上全片圖與 radial profile；如需要可提供失效晶粒附近的量測點座標。"
+      en: "[Your request] {name} looked deep in edge failing dies on {wafer}; is {lot} in spec?\n[Metrology results] Routine 9 sites (r ≤ 140 mm): max {routine_max} nm (USL {usl}); full 49-site map outermost ring (r = 147 mm): mean {edge_mean} nm, max {full_max} nm, {n_out} sites beyond the USL.\n[Interpretation] {verdict}.\n[Suggested next step] Full map and radial profile attached; site coordinates near the failing dies available on request."
+    keypoints:
+      - {zh: "給出最外圈的數值", en: "Gives the outer-ring numbers", any: ["{edge_mean}", "{full_max}", "147"]}
+      - {zh: "和規格（USL）比較", en: "Compares with the spec (USL)", any: ["usl", "{usl}", "規格", "spec"]}
+      - {zh: "說明例行抽樣涵蓋到哪裡", en: "Says what the routine plan covers", any: ["例行", "routine", "9 點", "9 sites", "140"]}
+      - {zh: "給出明確判讀", en: "Gives a clear interpretation", any: ["不是", "not the cause", "確實", "really", "deeper", "偏深", "on target", "在 target"]}
+    explanation:
+      zh: "FA 問的是「這個參數是不是原因」，量測要用資料回答，而不是只說「SPC 正常」。例行 9 點最外只到 r = 140 mm；全片 49 點多了 r = 147 mm 的一圈。{verdict}。若邊緣真的偏深：hold 受影響 lot 交 PIE／PE 判定、請 PE／EE 查邊緣相關硬體（研磨頭固定環、墊片狀況、邊緣去除條件），並把邊緣點加進例行抽樣；若全片都在 target：清楚回覆 FA 這個參數不是原因，讓調查轉向其他機制。"
+      en: "FA is asking whether this parameter is the cause; metrology must answer with data, not just \"SPC is normal\". The routine 9 sites stop at r = 140 mm; the full 49-site map adds a ring at r = 147 mm. {verdict}. If the edge really is deeper: hold the affected lots for PIE / PE disposition, have PE / EE check the edge-related hardware (retaining ring, pad condition, edge-removal settings), and add edge sites to routine sampling. If the wafer is on target everywhere: tell FA clearly that this parameter is not the cause so the investigation can move on."
+    urgency: 3
+
+  ye_bin_metro_corr:
+    domain: request
+    title: {zh: "YE 問：哪個 inline 參數和這個 bin 有關？", en: "YE asks: which inline parameter goes with this bin?"}
+    brief:
+      zh: "【YE 來訊】批次報告：{lots} 的 {bin} 片間差很多（平均損失 {mean_loss}%，最差 {worst_wafer} {worst_loss}%）。YE 問量測：{params} 裡有沒有哪個參數能解釋？你把 {n_wafers} 片的 inline 量測和 bin 損失對在一起。"
+      en: "[Message from YE] Lot report: {bin} varies a lot from wafer to wafer in {lots} (mean loss {mean_loss}%, worst {worst_wafer} at {worst_loss}%). YE asks metrology whether any of {params} explains it. You matched {n_wafers} wafers' inline data with their bin loss."
+    cause: C_PARAM_DRIVES
+    cause_options: [C_PARAM_DRIVES, C_NO_METRO_LINK, C_METRO_OFFSET, C_RANDOM]
+    action: A_SEND_PE
+    action_options: [A_SEND_PE, A_SUGGEST_FA, A_RETARGET, A_RECORD]
+    decision: D_SPLIT_CONFIRM
+    decision_options: [D_SPLIT_CONFIRM, D_NO_METRO_ACTION, D_RETARGET, D_HOLD]
+    notify: [PIE_YE, PE]
+    message_role: PIE_YE
+    message_format: lot_note
+    model_message:
+      zh: "【摘要】{bin} 與 inline 量測的比對（{n_wafers} 片）。\n【數據】最相關的是 {best_param}，r = {best_r}（每 1σ 約 {loss_per_sd}% 損失）。最差 {worst_wafer}（{worst_loss}%）。\n【判讀】{verdict}。\n【請求】{ask}。"
+      en: "[Summary] {bin} vs inline metrology ({n_wafers} wafers).\n[Data] The strongest link is {best_param}, r = {best_r} (about {loss_per_sd}% loss per 1σ). Worst {worst_wafer} ({worst_loss}%).\n[Interpretation] {verdict}.\n[Ask] {ask}."
+    keypoints:
+      - {zh: "給出最相關參數與 r", en: "Names the strongest parameter and its r", any: ["{best_param}", "{best_r}", "r ="]}
+      - {zh: "說明晶圓數量或範圍", en: "States how many wafers", any: ["{n_wafers}", "片", "wafers"]}
+      - {zh: "提醒相關不等於因果", en: "Warns correlation is not causation", any: ["因果", "causation", "確認", "confirm", "split", "doe"]}
+      - {zh: "給出下一步請求", en: "Gives the next ask", any: ["fa", "review", "split", "doe", "清單", "wafer list"]}
+    explanation:
+      zh: "YE 要的是「量測能不能解釋這個 bin」。把每片的 inline 參數和 bin 損失畫散佈圖：最強的是 {best_param}，r = {best_r}。|r| ≥ 0.7 → 很可能是驅動因子：把圖與晶圓清單交給 YE／PE，用 split／DOE 確認機制後再談調 target；所有 |r| 都很小 → 量測排除了自己，清楚回覆並建議 defect review／FA。兩種都是有價值的答案。"
+      en: "YE wants to know whether metrology can explain this bin. Scatter each wafer's inline parameters against the bin loss: the strongest is {best_param}, r = {best_r}. |r| ≥ 0.7 → a likely driver: send the plot and wafer list to YE / PE and confirm with a split / DOE before any re-target; every |r| small → metrology rules itself out: say so clearly and suggest defect review / FA. Both are valuable answers."
+    urgency: 2
+
