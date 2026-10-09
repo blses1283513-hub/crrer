@@ -7,3 +7,7 @@ review-rule: 每 5 場 — (1) 重複 ≥3 次的反對模式與 insights-queue 
 
 | # | date | debates covered | patterns found | promoted | cards merged/dropped | notes |
 |---|---|---|---|---|---|---|
+| R001 (app) | 2026-09-28 | 5 場（至 C005） | 最近 5 場皆因 critic 改變結論，未觸發縮小規則 | 無 | 無（無 90 天未用卡） | insights 待審 5 條；C004 因事實錯誤（SpaceX 已上市）標為 disputed |
+| R002 (app) | 2026-09-28 | 5 場（至 C010） | 最近 5 場皆因 critic 改變結論，未觸發縮小規則 | 無 | 無（無 90 天未用卡） | insights 待審 7 條；C004 因事實錯誤（SpaceX 已上市）標為 disputed |
+| R003 (app) | 2026-09-28 | 5 場（至 C015） | 最近 5 場皆因 critic 改變結論，未觸發縮小規則 | 無 | 無（無 90 天未用卡） | insights 待審 9 條 |
+| R004 (app) | 2026-09-28 | 5 場（至 C020） | 最近 5 場皆因 critic 改變結論，未觸發縮小規則 | 無 | 無（無 90 天未用卡） | insights 待審 13 條 |
