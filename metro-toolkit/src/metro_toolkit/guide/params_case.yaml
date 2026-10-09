@@ -53,8 +53,8 @@ params:
     zh: "**總分**：原因 40 + 第一步 25 + 處置 20 + 通知 15。訊息不計分，但會列出涵蓋了哪些要點。分數是練習的回饋，不代表真實工作的唯一正確做法。"
     en: "**Score**: cause 40 + first action 25 + disposition 20 + notify 15. The message is not scored, but the key points it covers are listed. The score is practice feedback, not the only right way to handle real work."
   case.save:
-    zh: "**存到練習紀錄**：把這題的報告（Markdown）存到這台電腦的 data/cases/（不會上傳 GitHub），並記錄分數，在「我的練習紀錄」看平均分數與各類別表現。"
-    en: "**Save to my study log**: saves this case's report (Markdown) to data/cases/ on this PC (never uploaded to GitHub) and logs the score, so \"My study log\" can show your average and how you do per domain."
+    zh: "**存到練習紀錄**：把這次作答的完整報告（Markdown）存到這台電腦的 data/cases/（不會上傳 GitHub）。每次作答各存一個檔（案例編號＋日期時間），不會覆蓋舊的。報告包含：你的答案與標準答案、理由、範例訊息、好訊息的要點、分數紀錄，以及每張圖的洞察、下一步與給各角色的訊息。語言跟著側欄的說明語言。"
+    en: "**Save to my study log**: saves the full report of this attempt (Markdown) to data/cases/ on this PC (never uploaded to GitHub). Every attempt gets its own file (case ID + date-time), so nothing is overwritten. The report has your answers vs the model answers, the reasoning, the model message, what a good message covers, your score history, and for every chart the insight, the next step and a message for every role. Its language follows the sidebar Guide language."
   case.download:
-    zh: "**下載報告**：下載這題的 Markdown 報告（狀況、你的答案與標準答案、理由、訊息與要點），可以貼到筆記或和同事討論。"
-    en: "**Download report**: downloads this case's Markdown report (situation, your answers vs the model answers, reasoning, messages and key points) for your notes or to discuss with colleagues."
+    zh: "**下載報告**：下載和「存到練習紀錄」相同內容的 Markdown 報告，可以貼到筆記或和同事討論。"
+    en: "**Download report**: downloads the same Markdown report that Save writes, for your notes or to discuss with colleagues."

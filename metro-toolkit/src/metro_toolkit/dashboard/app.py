@@ -1165,6 +1165,7 @@ def page_case():
         else:
             st.session_state[answers_key] = {"cause": cause, "action": action, "decision": decision,
                                              "notify": notify, "message": message}
+            st.session_state[f"case_saved_{cid}"] = []  # a new attempt: nothing of it saved yet
     if answers_key in st.session_state:
         case_debrief(case, st.session_state[answers_key])
 
@@ -1219,10 +1220,17 @@ def case_debrief(case, answers: dict):
     for key, facts in case.guide:
         explain(key, facts)
 
-    md = cases.report_markdown(case, answers, result, answers.get("message", ""), "zh" if _langs()[0] == "zh" else "en")
+    langs = _langs()
+    saved = st.session_state.setdefault(f"case_saved_{case.id}", [])  # this attempt's files, already in the log
+    past = cases.history()
+    if saved and "file" in past:
+        past = past[~past["file"].isin(saved)]
+    md = cases.report_markdown(case, answers, result, answers.get("message", ""),
+                               "both" if len(langs) == 2 else langs[0], past=past)
     c1, c2 = st.columns(2)
     if c1.button("存到我的練習紀錄 Save to my study log", key=f"case_save_{case.id}", help=H("case.save")):
         path = cases.save_attempt(case, result, md)
+        saved.append(path.name)
         c1.success(f"已存 Saved: `{path}`")
     c2.download_button("下載報告 Download report (.md)", md.encode("utf-8"), file_name=f"case_{case.id}.md",
                        mime="text/markdown", key=f"case_dl_{case.id}", help=H("case.download"))

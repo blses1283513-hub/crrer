@@ -127,31 +127,103 @@ def role_name(role: str, lang: str) -> str:
     return meta()["roles"][role][lang]
 
 
-def report_markdown(case: Case, answers: dict, result: dict, message: str, lang: str = "zh") -> str:
-    """A study-log entry: brief, your answers vs the model answers, explanation, messages, checklist."""
-    L = (lambda zh, en: zh if lang == "zh" else en)
+def report_markdown(case: Case, answers: dict, result: dict, message: str, lang: str = "zh",
+                    past: pd.DataFrame | None = None) -> str:
+    """A study-log entry: situation, your answers vs the model answers, why, your message vs the model message,
+    what a good message covers, score history (``past`` = earlier attempts) and, for every evidence chart, the
+    insight, the next step and a ready message for every role. ``lang``: "zh", "en" or "both"."""
+    from ..guide import STATUSES, charts, text
+
+    langs = ["zh", "en"] if lang == "both" else [lang]
+    main = langs[0]
+    L = (lambda zh, en: f"{zh} · {en}" if lang == "both" else (zh if lang == "zh" else en))  # headings
+    B = (lambda f: "\n\n".join(f(lg) for lg in langs))  # one block per language
+
+    def opt(q, o, lg):
+        return case.option_text(q, o, lg) if o else "—"
+
+    status = meta()["status"]
     q_name = {"cause": L("根本原因", "Root cause"), "action": L("第一步處置", "First action"),
               "decision": L("產品／結論處置", "Disposition / decision")}
-    lines = [f"# {L('案例', 'Case')} {case.id}: {case.text('title', lang)}", "",
+    lines = [f"# {L('案例', 'Case')} {case.id}: {B(lambda lg: case.text('title', lg)).replace(chr(10) * 2, ' · ')}", "",
              f"*{datetime.now():%Y-%m-%d %H:%M}* · {L('難度', 'Level')} {case.level} · "
              f"{L('分數', 'Score')} **{result['total']:.0f} / 100**", "",
-             f"## {L('狀況', 'Situation')}", "", case.text("brief", lang), "", f"## {L('你的判斷 vs 標準答案', 'Your answers vs the model answers')}", ""]
+             f"## {L('狀況', 'Situation')}", "", B(lambda lg: case.text("brief", lg)), "",
+             f"## {L('你的判斷 vs 標準答案', 'Your answers vs the model answers')}", ""]
     for q in ("cause", "action", "decision"):
         r = result["questions"][q]
-        mine = case.option_text(q, r["answer"], lang) if r["answer"] else "—"
+        mine = " / ".join(opt(q, r["answer"], lg) for lg in langs)
         lines.append(f"- **{q_name[q]}** {'✓' if r['ok'] else '✗'} {L('你', 'You')}: {mine}" +
-                     ("" if r["ok"] else f"  \n  {L('標準答案', 'Model answer')}: {case.option_text(q, r['correct'], lang)}"))
+                     ("" if r["ok"] else f"  \n  {L('標準答案', 'Model answer')}: "
+                                         + " / ".join(opt(q, r["correct"], lg) for lg in langs)))
     n = result["questions"]["notify"]
+    names = (lambda roles: ", ".join(" / ".join(role_name(r, lg) for lg in langs) for r in roles))
     lines.append(f"- **{L('通知對象', 'Who to notify')}** {'✓' if n['ok'] else '△'} "
-                 f"{L('應通知', 'Should notify')}: {', '.join(role_name(r, lang) for r in n['correct']) or L('不需升級（e-log 記錄即可）', 'no escalation (e-log only)')}"
-                 + (f"; {L('漏了', 'missed')}: {', '.join(role_name(r, lang) for r in n['missing'])}" if n["missing"] else "")
-                 + (f"; {L('多了', 'extra')}: {', '.join(role_name(r, lang) for r in n['extra'])}" if n["extra"] else ""))
-    lines += ["", f"## {L('為什麼', 'Why')}", "", case.text("explanation", lang), "",
-              f"## {L('給', 'Message to')} {role_name(case.spec['message_role'], lang)}", "",
+                 f"{L('應通知', 'Should notify')}: {names(n['correct']) or L('不需升級（e-log 記錄即可）', 'no escalation (e-log only)')}"
+                 + (f"; {L('漏了', 'missed')}: {names(n['missing'])}" if n["missing"] else "")
+                 + (f"; {L('多了', 'extra')}: {names(n['extra'])}" if n["extra"] else ""))
+    target = case.spec["message_role"]
+    lines += ["", f"## {L('為什麼', 'Why')}", "", B(lambda lg: case.text("explanation", lg)), "",
+              f"## {L('給', 'Message to')} {names([target])}", "",
               f"**{L('你寫的', 'Yours')}**", "", f"> {message.strip() or '—'}", "",
-              f"**{L('範例', 'Model message')}**", "", f"> {case.text('model_message', lang)}", ""]
-    for item, ok in message_checklist(case, message, lang):
-        lines.append(f"- {'✓' if ok else '✗'} {item}")
+              f"**{L('範例', 'Model message')}**", "", B(lambda lg: f"> {case.text('model_message', lg)}"), "",
+              f"### {L('好訊息的要點', 'What a good message covers')}", ""]
+    for lg in langs:
+        for item, ok in message_checklist(case, message, lg):
+            lines.append(f"- {'✓' if ok else '✗'} {item}")
+
+    # score history: earlier attempts plus this one
+    lines += ["", f"## {L('分數紀錄', 'Score history')}", ""]
+    rows = [] if past is None or not len(past) else past.to_dict("records")
+    rows.append({"time": f"{datetime.now():%Y-%m-%d %H:%M}", "case": case.id, "type": case.type,
+                 "domain": case.spec["domain"], "level": case.level, "score": result["total"]})
+    hist = pd.DataFrame(rows)
+    lines += [f"- {L('案例數', 'Cases')}: {len(hist)} · {L('平均', 'Mean')}: {hist['score'].mean():.0f} · "
+              f"{L('最近 5 次', 'Last 5')}: {hist['score'].tail(5).mean():.0f}", "",
+              f"| {L('範圍', 'Area')} | {L('次數', 'Count')} | {L('平均', 'Mean')} |", "| --- | ---: | ---: |"]
+    for dom, g in hist.groupby("domain", sort=True):
+        dname = " / ".join(library()["domains"].get(dom, {}).get(lg, dom) for lg in langs)
+        lines.append(f"| {dname} | {len(g)} | {g['score'].mean():.0f} |")
+    same = hist[hist["type"] == case.type]
+    lines += ["", f"**{L('同類型案例', 'This case type')}** ({len(same)})", ""]
+    lines += [f"- {r['time']} · {r['case']} · {r['level']} · {r['score']:.0f}" for r in same.to_dict("records")]
+
+    # every evidence chart: insight, action, who to tell (same text as the chart's guide panel)
+    lines += ["", f"## {L('每張圖：洞察、處置、跟誰說', 'Every chart: insight, action, who to tell')}"]
+    roles = meta()["roles"]
+    for key, facts in case.guide:
+        c = charts().get(key)
+        if c is None:
+            continue
+        stl = status.get(facts.status, {})
+        lines += ["", f"### {B(lambda lg: text(c.get('title'), lg)).replace(chr(10) * 2, ' · ')}", "",
+                  f"**{L('狀態', 'Status')}**: {stl.get('icon', '')} {' / '.join(stl.get(lg, facts.status) for lg in langs)}", "",
+                  f"#### {L('代表什麼與洞察', 'Insight')}", "",
+                  f"**{L('這張圖代表什麼', 'What it shows')}**", "", B(lambda lg: text(c.get("what"), lg, facts)), "",
+                  f"**{L('怎麼判讀', 'How to read it (good vs bad)')}**", "", B(lambda lg: text(c.get("read"), lg, facts)), ""]
+        if facts.zh or facts.en:
+            lines += [f"**{L('這份資料的判讀', 'What this data says')}**", ""]
+            for lg in langs:
+                lines += [f"- {x}" for x in (facts.zh if lg == "zh" else facts.en)]
+            lines.append("")
+        lines += [f"#### {L('下一步', 'Action')}", ""]
+        for s_ in [facts.status] + [x for x in STATUSES if x != facts.status]:
+            act = c.get("action", {}).get(s_)
+            if act:
+                here = f" ← {L('目前狀態', 'current')}" if s_ == facts.status else ""
+                lines += [f"**{status[s_]['icon']} {' / '.join(status[s_][lg] for lg in langs)}**{here}", "",
+                          B(lambda lg: text(act, lg, facts)), ""]
+        if c.get("record"):
+            lines += [f"**{L('記錄（e-log / SPC comment）', 'What to record (e-log / SPC comment)')}**", ""]
+            lines.append("\n>\n".join(f"> {text(c['record'], lg, facts)}" for lg in langs))
+            lines.append("")
+        lines += [f"#### {L('跟誰說', 'Who to tell')}", ""]
+        for rk, r in roles.items():
+            msg = c.get("roles", {}).get(rk)
+            if msg:
+                lines += [f"**{' / '.join(r[lg] for lg in langs)}**", ""]
+                lines.append("\n>\n".join(f"> {text(msg, lg, facts)}" for lg in langs))
+                lines.append("")
     lines += ["", "---", L("合成練習資料；實際處置以所屬晶圓廠的 OCAP 與簽核流程為準。",
                            "Synthetic practice data; in real work follow your fab's OCAP and sign-off rules.")]
     return "\n".join(lines)
@@ -169,13 +241,19 @@ def cases_dir(folder: Path | None = None) -> Path:
 
 
 def save_attempt(case: Case, result: dict, md: str, folder: Path | None = None) -> Path:
+    """Every attempt gets its own file (<case id>_<date-time>.md) and a line in history.jsonl."""
     folder = cases_dir(folder)
-    path = folder / f"{case.id}.md"
+    now = datetime.now()
+    path = folder / f"{case.id}_{now:%Y%m%d-%H%M%S}.md"
+    k = 2
+    while path.exists():  # two saves within the same second
+        path = folder / f"{case.id}_{now:%Y%m%d-%H%M%S}-{k}.md"
+        k += 1
     path.write_text(md, encoding="utf-8")
     with open(folder / "history.jsonl", "a", encoding="utf-8") as fh:
-        fh.write(json.dumps({"time": f"{datetime.now():%Y-%m-%d %H:%M}", "case": case.id, "type": case.type,
-                             "domain": case.spec["domain"], "level": case.level, "score": result["total"]},
-                            ensure_ascii=False) + "\n")
+        fh.write(json.dumps({"time": f"{now:%Y-%m-%d %H:%M}", "case": case.id, "type": case.type,
+                             "domain": case.spec["domain"], "level": case.level, "score": result["total"],
+                             "file": path.name}, ensure_ascii=False) + "\n")
     return path
 
 

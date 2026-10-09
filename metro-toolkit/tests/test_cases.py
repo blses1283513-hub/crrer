@@ -110,9 +110,21 @@ def test_report_and_history(tmp_path):
     result = cases.score(c, answers)
     md = cases.report_markdown(c, answers, result, "edge ring 磨耗", "zh")
     assert c.id in md and "為什麼" in md and "✗" in md and "合成練習資料" in md
-    path = cases.save_attempt(c, result, md, tmp_path)
-    assert path.exists() and cases.history(tmp_path)["score"].iloc[0] == result["total"]
-    assert "Why" in cases.report_markdown(c, answers, result, "", "en")
+    for head in ("好訊息的要點", "分數紀錄", "代表什麼與洞察", "這份資料的判讀", "下一步", "跟誰說", "目前狀態"):
+        assert head in md, head
+    assert all(cases.role_name(r, "zh") in md for r in meta()["roles"])  # a message for every role
+    assert "{" not in md.split("## 每張圖")[1]  # every template filled with the case's numbers
+    first = cases.save_attempt(c, result, md, tmp_path)
+    second = cases.save_attempt(c, result, md, tmp_path)
+    assert first.exists() and second.exists() and first != second  # one file per attempt
+    hist = cases.history(tmp_path)
+    assert len(hist) == 2 and hist["score"].iloc[0] == result["total"] and hist["file"].iloc[1] == second.name
+    md2 = cases.report_markdown(c, answers, result, "", "zh", past=hist)
+    assert "案例數: 3" in md2 and md2.count(c.id) >= 4
+    en = cases.report_markdown(c, answers, result, "", "en")
+    assert "Why" in en and "Who to tell" in en and "Score history" in en and "為什麼" not in en
+    both = cases.report_markdown(c, answers, result, "", "both")
+    assert "為什麼 · Why" in both and "Insight" in both and c.text("model_message", "en") in both
 
 
 def test_case_study_page(tmp_path, monkeypatch):
@@ -139,4 +151,9 @@ def test_case_study_page(tmp_path, monkeypatch):
     assert [m.value for m in at.metric if m.label.startswith("總分")] == ["100 / 100"]
     assert any("怎麼讀這張圖" in e.label for e in at.expander)
     [b for b in at.button if b.key == f"case_save_{cid}"][0].click().run()
-    assert (tmp_path / "cases" / f"{cid}.md").exists()
+    [b for b in at.button if b.key == f"case_save_{cid}"][0].click().run()  # saving again: a second file
+    files = sorted((tmp_path / "cases").glob(f"{cid}_*.md"))
+    assert len(files) == 2 and not at.exception
+    for f in files:  # the same attempt is counted once, never twice, in the score history
+        md = f.read_text(encoding="utf-8")
+        assert "案例數 · Cases: 1" in md and "跟誰說 · Who to tell" in md

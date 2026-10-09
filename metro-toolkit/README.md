@@ -141,9 +141,13 @@ the other pages, so the evidence looks exactly like it would there.
   hold and inhibit).
 * **Case IDs** such as `spc_chamber_shift-I-04217` (type, level B / I / A, seed) always rebuild the same case.
   Paste one under **用案例編號重練 · Replay a case by its ID** to retry it or to discuss the same case with someone else.
-* **Study log**: **存到我的練習紀錄 Save to my study log** writes the debrief as Markdown to `data/cases/<case id>.md` and adds a line to
-  `data/cases/history.jsonl`. The page shows your history (case count, mean and last-5 score, mean by area). `data/` is git-ignored;
-  `METRO_CASES_PATH` moves the folder.
+* **Study log**: **存到我的練習紀錄 Save to my study log** writes a full debrief of each attempt to its own Markdown
+  file, `data/cases/<case id>_<date-time>.md` (nothing is overwritten), and adds a line to `data/cases/history.jsonl`.
+  The file has: your answers vs the model answers, why, your message vs the model message, what a good message
+  covers, your score history (count, mean, last 5, mean by area, earlier attempts at this case type), and for every
+  evidence chart the insight (what it shows, how to read it, what this data says), the next step and e-log record,
+  and a ready message for every role. Its language follows the sidebar **Guide language**; the 📥 download is the
+  same file. `data/` is git-ignored; `METRO_CASES_PATH` moves the folder.
 * Texts live in `src/metro_toolkit/cases/cases.yaml` (zh + en) and data in `cases/generators.py`, so you can add
   your own case types. Answers follow generic OCAP practice; in real work your fab's OCAP and sign-off rules decide.
 
