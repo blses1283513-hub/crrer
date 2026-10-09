@@ -157,3 +157,71 @@ def test_case_study_page(tmp_path, monkeypatch):
     for f in files:  # the same attempt is counted once, never twice, in the score history
         md = f.read_text(encoding="utf-8")
         assert "案例數 · Cases: 1" in md and "跟誰說 · Who to tell" in md
+
+
+def _attempts(folder, wrong_spc=True):
+    """Save four attempts: two SPC chamber-shift cases answered wrongly (cause, notify), two right ones."""
+    for cid, bad in (("spc_chamber_shift-B-00001", wrong_spc), ("spc_chamber_shift-I-00002", wrong_spc),
+                     ("wafer_tilt-B-00003", False), ("msa_matching-B-00004", False)):
+        c = cases.generate(cid)
+        ans = {k: c.correct[k] for k in ("cause", "action", "decision")} | {"notify": c.correct["notify"]}
+        if bad:
+            ans["cause"] = next(o for o in c.options["cause"] if o != c.correct["cause"])
+            ans["notify"] = ["EE"]
+        r = cases.score(c, ans)
+        cases.save_attempt(c, r, cases.report_markdown(c, ans, r, "ok", "both"), folder, message="ok")
+
+
+def test_list_reports_and_cross_study(tmp_path):
+    _attempts(tmp_path)
+    (tmp_path / "wafer_tilt-B-00009.md").write_text("# old save\n分數 **55 / 100**", encoding="utf-8")  # pre-detail
+    (tmp_path / "notes.md").write_text("not a report", encoding="utf-8")
+    rep = cases.list_reports(tmp_path)
+    assert len(rep) == 5 and rep["time"].is_monotonic_decreasing
+    assert rep.set_index("case").loc["wafer_tilt-B-00009", "score"] == 55
+    assert set(cases.search_reports(rep, "OLD SAVE")["case"]) == {"wafer_tilt-B-00009"}
+
+    hist = cases.history(tmp_path)
+    prof = cases.study_profile(hist)
+    assert prof["n_detail"] == 4
+    assert prof["by_question"].loc["spc", "cause"] == 0 and prof["by_question"].loc["wafer", "cause"] == 100
+    assert prof["missed_roles"] and ("cause", "C_CHAMBER_SHIFT") == next(iter(prof["wrong"]))[:2]
+    assert prof["by_domain"].loc["film", "attempts"] == 0 and prof["msg_missed"]
+
+    w = cases.focus_weights(prof)
+    assert w.sum() == pytest.approx(1) and w.idxmax() == "spc_chamber_shift"
+    assert w[[k for k in w.index if k.startswith("spc")]].sum() > 0.4  # the weak area gets the most practice
+    assert w["wafer_tilt"] < w["stack_float_n_thin"]  # mastered < never tried
+    assert cases.focus_level(prof, "spc_chamber_shift") == "basic"  # poor score: one level down from intermediate
+    assert cases.focus_level(prof, "wafer_tilt") == "intermediate"  # good score: one level up
+    assert cases.focus_case(hist, 5).id == cases.focus_case(hist, 5).id
+    assert cases.study_profile(cases.history(tmp_path / "empty"))["n_detail"] == 0  # empty log works
+
+
+def test_reports_page(tmp_path, monkeypatch):
+    from streamlit.testing.v1 import AppTest
+
+    monkeypatch.setenv("METRO_IMPORT_PATH", str(tmp_path / "imp"))
+    monkeypatch.setenv("METRO_CASES_PATH", str(tmp_path / "cases"))
+    app = Path(__file__).resolve().parents[1] / "src" / "metro_toolkit" / "dashboard" / "app.py"
+    at = AppTest.from_file(str(app), default_timeout=300)
+    at.run()
+    at.sidebar.radio(key="nav_page").set_value("My case reports 我的案例報告").run()
+    assert not at.exception and at.info  # nothing saved yet
+    _attempts(tmp_path / "cases")
+    at.run()
+    assert not at.exception
+    assert [m.value for m in at.metric if m.label.startswith("報告數")] == ["4"]
+    assert any("最弱的範圍" in m.value for m in at.markdown)  # cross study recommendations
+    at.text_input(key="rep_search").set_value("msa_matching").run()
+    assert at.selectbox(key="rep_open").options == [next(o for o in at.selectbox(key="rep_open").options)]
+    at.text_input(key="rep_search").set_value("").run()
+    [b for b in at.button if b.key == "rep_retry"][0].click().run()
+    assert at.sidebar.radio(key="nav_page").value == "Case study 案例練習" and not at.exception
+    assert at.session_state["case_id"] in {f.split("_2")[0] for f in cases.list_reports(tmp_path / "cases")["file"]}
+    at.sidebar.radio(key="nav_page").set_value("My case reports 我的案例報告").run()
+    [b for b in at.button if b.key == "rep_focus"][0].click().run()
+    assert at.sidebar.radio(key="nav_page").value == "Case study 案例練習" and not at.exception
+    at.selectbox(key="case_domain").set_value("focus").run()
+    [b for b in at.button if b.key == "case_new"][0].click().run()
+    assert not at.exception and at.session_state["case_id"]

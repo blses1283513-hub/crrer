@@ -5,9 +5,11 @@ params:
     zh: |
       **範圍 Domain**：只從某一類工作抽案例（SPC、晶圓圖、膜厚擬合、MSA、量測技術評估、DOE、良率事件），或「全部」隨機。
       想加強某個弱項時固定範圍；模擬真實值班時用「全部」，因為現場不會先告訴你是哪一類問題。
+      「🎯 針對我的弱點」：依你存過的練習紀錄出題，近期分數低的題型與範圍最常出、沒練過的其次、已經很熟的很少出；難度也會跟著你最近的分數升降（≥85 升一級、<50 降一級）。
     en: |
       **Domain**: draw cases from one area of the job only (SPC, wafer map, film fit, MSA, technique choice, DOE, yield events), or from all of them.
       Fix the domain to drill a weak spot; use "all" to simulate a real shift, where nobody tells you in advance what kind of problem it is.
+      "🎯 My weak spots" picks from your saved study log: case types and areas with low recent scores come up most, types you have not tried next, ones you have mastered rarely; the level follows your recent score too (>= 85 one level up, < 50 one level down).
   case.level:
     zh: |
       **難度 Level**
@@ -58,3 +60,18 @@ params:
   case.download:
     zh: "**下載報告**：下載和「存到練習紀錄」相同內容的 Markdown 報告，可以貼到筆記或和同事討論。"
     en: "**Download report**: downloads the same Markdown report that Save writes, for your notes or to discuss with colleagues."
+  case.focus:
+    zh: "**練習我的弱點**：依交叉分析的結果抽一題（近期分數低的題型與範圍最常出），直接帶你到 Case study 頁作答。"
+    en: "**Practise my weak spots**: draws a case from the cross study (low-scoring case types and areas most often) and takes you to the Case study page to answer it."
+  reports.filter:
+    zh: "**篩選**：依範圍、難度、分數區間縮小報告清單；不選代表全部。"
+    en: "**Filter**: narrow the report list by area, level and score range; leave empty for all."
+  reports.search:
+    zh: "**搜尋報告內容**：在所有報告的全文裡找字（不分大小寫），例如機台名 RTP02、inhibit、Cpk、某個角色。"
+    en: "**Search**: finds text anywhere in the reports (not case-sensitive), e.g. a tool name like RTP02, inhibit, Cpk or a role."
+  reports.open:
+    zh: "**打開報告**：選一份報告在下面完整顯示，可下載成 .md。"
+    en: "**Open a report**: pick one to show it in full below; it can be downloaded as .md."
+  reports.retry:
+    zh: "**重練這一題**：用同一個案例編號（同樣的數據）回到 Case study 頁重做一次，比較前後分數。"
+    en: "**Retry this case**: opens the same case ID (same data) on the Case study page so you can redo it and compare scores."

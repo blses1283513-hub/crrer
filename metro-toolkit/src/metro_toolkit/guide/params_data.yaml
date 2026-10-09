@@ -27,6 +27,7 @@ params:
       - **Recipe studies 量測 recipe 研究**：reflectometry 與 SE 的精度比較、膜厚與 n 的相關性；決定量測手法與要 float 哪些參數。
       - **DOE / recipe 實驗設計與配方最佳化**：設計實驗、建立回應曲面、找出同時滿足目標值與均勻度的製程配方；支援 PE 做 recipe tuning。
       - **Case study 案例練習**：隨機產生真實情境的案例（SPC、晶圓圖、膜厚、MSA、DOE、良率事件），你判斷原因、處置、通知對象並寫訊息，再看標準答案與評分；練習在真實工作中怎麼處理與溝通。
+      - **My case reports 我的案例報告**：瀏覽、搜尋、打開你存過的案例報告並重練；「交叉分析」找出你最常失分的範圍、題目、漏通知的角色與訊息要點，並可用「🎯 針對我的弱點」出題。
       - **Guide 參數與圖表說明**：所有控制項與圖表說明的總表，可當教材或查閱。
       左側「資料來源」只在 Wafer map 與 SPC 頁面出現；其他頁面使用各自的模擬資料或上傳檔案。
     en: |
@@ -40,6 +41,7 @@ params:
       - **Recipe studies**: precision of reflectometry vs SE, thickness–n correlation; deciding the technique and which parameters to float.
       - **DOE / recipe**: designs experiments, fits a response surface and finds a process recipe that meets both target and uniformity; supports the PE's recipe tuning.
       - **Case study**: generates a random, realistic case (SPC, wafer map, film fit, MSA, DOE, yield event); you decide the cause, the action and who to tell and write the message, then compare with the model answers and a score. Practice for handling and communicating real situations.
+      - **My case reports**: browse, search, open and retry your saved case reports; the cross study shows which areas, questions, roles and message points cost you the most, and "🎯 My weak spots" drills them.
       - **Guide**: the full reference of every control and chart explanation, for study or look-up.
       The sidebar "Data source" appears only on the Wafer map and SPC pages; the other pages use their own simulated data or uploads.
   data.source:

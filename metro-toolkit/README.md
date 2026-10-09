@@ -35,7 +35,7 @@ proving gauge capability, and turning site data into SPC and root cause.
 cd metro-toolkit
 pip install -r requirements.txt          # or: pip install -e ".[dashboard,dev]"
 
-python -m pytest                         # ~170 tests: physics limits, statistics, cases, end-to-end
+python -m pytest                         # ~175 tests: physics limits, statistics, cases, end-to-end
 PYTHONPATH=src python -m metro_toolkit.demo            # report -> reports/demo/report.md
 streamlit run src/metro_toolkit/dashboard/app.py       # interactive dashboard
 ```
@@ -72,7 +72,9 @@ Full step-by-step Windows instructions (including SemiYield and the other upstre
    fit a response surface, optimise thickness + uniformity together, confirm, and check against the answer key.
 8. **Case study 案例練習**: 🎲 a random, realistic situation from any of the pages above; decide and write the
    message, then get scored and debriefed (see below).
-9. **Guide 參數與圖表說明**: every parameter and chart explanation in one searchable place (see below).
+9. **My case reports 我的案例報告**: browse, search, open and retry your saved case reports, plus a cross study
+   of where you lose points (see below).
+10. **Guide 參數與圖表說明**: every parameter and chart explanation in one searchable place (see below).
 
 ## Five lessons the demo makes concrete
 
@@ -148,6 +150,16 @@ the other pages, so the evidence looks exactly like it would there.
   evidence chart the insight (what it shows, how to read it, what this data says), the next step and e-log record,
   and a ready message for every role. Its language follows the sidebar **Guide language**; the 📥 download is the
   same file. `data/` is git-ignored; `METRO_CASES_PATH` moves the folder.
+* **My case reports 我的案例報告** (page): every saved report, newest first, with filters (area, level, score),
+  full-text search ("RTP02", "inhibit", …), the report shown in full, download, and **🔁 Retry this case** (same ID,
+  same data, so you can compare scores). Older `<case id>.md` saves are listed too.
+* **Cross study 交叉分析** (tab on that page): score over attempts, mean score by area, accuracy per question
+  (cause / action / decision / notify) per area, and a list of what to work on: weakest area, the question you
+  lose most on (with a hint), roles you forget or notify when not needed, wrong answers you repeat, message points
+  you miss and areas not tried yet. Per-question results are recorded for attempts saved from this version on.
+* **🎯 My weak spots** (Case study → Domain, or the button in the cross study): 🎲 then picks case types with low
+  recent scores most often, other types in your weak areas next, untried types after that and mastered ones
+  rarely; the level steps up after a recent score >= 85 and down after one < 50 (unless you fix the level).
 * Texts live in `src/metro_toolkit/cases/cases.yaml` (zh + en) and data in `cases/generators.py`, so you can add
   your own case types. Answers follow generic OCAP practice; in real work your fab's OCAP and sign-off rules decide.
 

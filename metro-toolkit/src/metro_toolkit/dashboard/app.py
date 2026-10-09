@@ -1100,16 +1100,20 @@ def page_case():
                   "disposition and who to notify, and write one message; then see the model answers, the reasoning, model "
                   "messages for every role and your score. All data is synthetic practice data."))
     lib = cases.library()
-    domains = ["all"] + list(lib["domains"])
+    domains = ["all", "focus"] + list(lib["domains"])
     c1, c2, c3 = st.columns([2, 2, 1])
     domain = c1.selectbox("範圍 Domain", domains, key="case_domain", help=H("case.domain"),
-                          format_func=lambda d: "全部 All" if d == "all" else bi(lib["domains"][d]["zh"], lib["domains"][d]["en"]).replace("  \n", " · "))
+                          format_func=lambda d: {"all": "全部 All", "focus": "🎯 針對我的弱點 My weak spots"}.get(d) or
+                          bi(lib["domains"][d]["zh"], lib["domains"][d]["en"]).replace("  \n", " · "))
     level = c2.selectbox("難度 Level", ["random", *cases.LEVELS], key="case_level", help=H("case.level"),
                          format_func={"random": "隨機 random", "basic": "基礎 basic", "intermediate": "中級 intermediate",
                                       "advanced": "進階 advanced"}.get)
     c3.write("")
     if c3.button("🎲 隨機案例", type="primary", key="case_new", help=H("case.new")):
-        case = cases.random_case(None, None if domain == "all" else domain, None if level == "random" else level)
+        if domain == "focus":  # weighted toward your low-scoring case types and areas (see My case reports)
+            case = cases.focus_case(cases.history(), None, None if level == "random" else level)
+        else:
+            case = cases.random_case(None, None if domain == "all" else domain, None if level == "random" else level)
         st.session_state["case_id"] = case.id
     with st.expander("用案例編號重練 · Replay a case by its ID"):
         rc1, rc2 = st.columns([3, 1])
@@ -1229,7 +1233,7 @@ def case_debrief(case, answers: dict):
                                "both" if len(langs) == 2 else langs[0], past=past)
     c1, c2 = st.columns(2)
     if c1.button("存到我的練習紀錄 Save to my study log", key=f"case_save_{case.id}", help=H("case.save")):
-        path = cases.save_attempt(case, result, md)
+        path = cases.save_attempt(case, result, md, message=answers.get("message", ""))
         saved.append(path.name)
         c1.success(f"已存 Saved: `{path}`")
     c2.download_button("下載報告 Download report (.md)", md.encode("utf-8"), file_name=f"case_{case.id}.md",
@@ -1251,11 +1255,191 @@ def case_history():
             st.dataframe(hist.iloc[::-1], hide_index=True)
 
 
+QUESTION_NAME = {"cause": ("根本原因", "Root cause"), "action": ("第一步", "First action"),
+                 "decision": ("處置", "Disposition"), "notify": ("通知對象", "Who to notify")}
+QUESTION_TIP = {
+    "cause": ("先比對：哪些 chamber／機台／量測機台一起動、從哪一片開始、平均值還是均勻度在變，再對照原因選項。",
+              "Compare first: which chambers / tools / metrology tools moved together, from which wafer, and whether the "
+              "mean or the uniformity changed; then match that to the cause."),
+    "action": ("沒有確認量測之前，第一步是確認量測；已確認是製程問題，才 hold 與 inhibit。單點、已知原因則記錄即可。",
+               "Until the measurement is verified, the first step is to verify it; once it is a confirmed process "
+               "problem, hold and inhibit. A single point with a known cause is just recorded."),
+    "decision": ("產品處置看「真的影響產品嗎」：量測問題放行、製程偏移 hold 等 disposition、模型或 recipe 問題先修正再判。",
+                 "Disposition asks whether product is really affected: a metrology problem releases, a process shift "
+                 "holds for disposition, a model or recipe problem is fixed before judging."),
+    "notify": ("想一下誰要採取行動、誰承擔風險：機台找 EE、製程找 PE、良率影響找 PIE／YE、hold 與客戶風險找主管／QE；誤報不用升級。",
+               "Ask who must act and who carries the risk: tool → EE, process → PE, yield impact → PIE / YE, holds and "
+               "customer risk → Manager / QE; a false alarm needs no escalation."),
+}
+
+
+def page_reports():
+    from metro_toolkit import cases
+    from metro_toolkit.guide.render import lang
+
+    st.header("My case reports 我的案例報告")
+    st.caption(bi("你存下的每一次案例練習：篩選、搜尋、打開報告、重練同一題，以及「交叉分析」看分數都掉在哪裡。"
+                  "報告只存在這台電腦的 data/cases/。",
+                  "Every case attempt you saved: filter, search, open a report, retry the same case, and a cross "
+                  "study of where your points go. Reports stay on this PC in data/cases/."))
+    reports = cases.list_reports()
+    if reports.empty:
+        st.info(bi("還沒有存過報告。到「Case study 案例練習」做一題，送出後按「存到我的練習紀錄」。",
+                   "No saved reports yet. Do a case on the Case study page and press Save to my study log."))
+        return
+    lib = cases.library()
+    def dname(d):  # plain text (tables and selectors do not render Markdown)
+        names = lib["domains"][d]
+        return {"zh": names["zh"], "en": names["en"]}.get(lang(), f"{names['zh']} · {names['en']}")
+
+    hist = cases.history()
+    k = st.columns(4)
+    k[0].metric("報告數 Reports", len(reports))
+    k[1].metric("平均分數 Mean score", f"{reports['score'].mean():.0f}")
+    k[2].metric("最近 5 次 Last 5", f"{reports.sort_values('time')['score'].tail(5).mean():.0f}")
+    k[3].metric("練過的案例類型 Case types tried", f"{reports['type'].nunique()} / {len(lib['cases'])}")
+
+    t1, t2 = st.tabs(["📄 報告 Reports", "🔍 交叉分析 Cross study"])
+    with t1:
+        f1, f2, f3, f4 = st.columns([2, 2, 2, 2])
+        doms = f1.multiselect("範圍 Area", sorted(reports["domain"].unique()), format_func=dname, key="rep_domain",
+                              help=H("reports.filter"))
+        lvls = f2.multiselect("難度 Level", [lv for lv in cases.LEVELS if lv in set(reports["level"])], key="rep_level",
+                              help=H("reports.filter"))
+        lo, hi = f3.slider("分數 Score", 0, 100, (0, 100), key="rep_score", help=H("reports.filter"))
+        text = f4.text_input("搜尋報告內容 Search", key="rep_search", placeholder="RTP02, inhibit, Cpk…",
+                             help=H("reports.search"))
+        view = reports[(reports["score"].fillna(0) >= lo) & (reports["score"].fillna(0) <= hi)]
+        if doms:
+            view = view[view["domain"].isin(doms)]
+        if lvls:
+            view = view[view["level"].isin(lvls)]
+        view = cases.search_reports(view, text)
+        st.caption(bi(f"顯示 {len(view)} / {len(reports)} 份報告（最新在上）。", f"Showing {len(view)} of {len(reports)} reports, newest first."))
+        if view.empty:
+            return
+        title = lambda ty: lib["cases"][ty]["title"]["zh"] + " · " + lib["cases"][ty]["title"]["en"]  # noqa: E731
+        table = view.assign(title=view["type"].map(title), area=view["domain"].map(dname))
+        st.dataframe(table[["time", "case", "score", "level", "area", "title"]], hide_index=True, use_container_width=True,
+                     column_config={"time": st.column_config.DatetimeColumn("時間 Time", format="YYYY-MM-DD HH:mm"),
+                                    "case": "案例編號 Case ID", "title": "題目 Case", "area": "範圍 Area",
+                                    "level": "難度 Level",
+                                    "score": st.column_config.ProgressColumn("分數 Score", min_value=0, max_value=100,
+                                                                             format="%.0f")})
+        pick = st.selectbox("打開報告 Open a report", list(view["file"]), key="rep_open", help=H("reports.open"),
+                            format_func=lambda f: (lambda r: f"{r['time']:%Y-%m-%d %H:%M} · {r['case']} · "
+                                                             f"{r['score']:.0f}")(view.set_index("file").loc[f]))
+        row = view.set_index("file").loc[pick]
+        md = Path(row["path"]).read_text(encoding="utf-8")
+        b1, b2 = st.columns(2)
+        if b1.button("🔁 重練這一題 Retry this case", key="rep_retry", help=H("reports.retry")):
+            st.session_state["case_id"] = row["case"]
+            st.session_state["nav_goto"] = "Case study 案例練習"
+            st.rerun()
+        b2.download_button("下載這份報告 Download (.md)", md.encode("utf-8"), file_name=pick, mime="text/markdown",
+                           key="rep_dl")
+        with st.container(border=True):
+            st.markdown(md)
+    with t2:
+        report_cross_study(hist, dname)
+
+
+def report_cross_study(hist, dname):
+    from metro_toolkit import cases
+    from metro_toolkit.dashboard.figures import layout
+
+    lib = cases.library()
+    if hist.empty:
+        st.info(bi("練習紀錄（history.jsonl）是空的。", "The study log (history.jsonl) is empty."))
+        return
+    prof = cases.study_profile(hist)
+    h = hist.reset_index(drop=True)
+    fig = go.Figure()
+    fig.add_scatter(x=h.index + 1, y=h["score"], mode="markers", name="每次分數 Score per attempt",
+                    marker=dict(size=9, color=viz.SERIES[0], line=dict(color=viz.SURFACE, width=2)),
+                    customdata=h[["case"]], hovertemplate="#%{x} · %{customdata[0]}<br>%{y:.0f} / 100<extra></extra>")
+    fig.add_scatter(x=h.index + 1, y=h["score"].rolling(5, min_periods=1).mean(), mode="lines",
+                    name="最近 5 次平均 Rolling mean (5)", line=dict(color=viz.SERIES[1], width=2),
+                    hovertemplate="#%{x} · %{y:.0f}<extra></extra>")
+    layout(fig, "分數趨勢 Score over attempts", "第幾次 Attempt", "分數 Score", height=320)
+    fig.update_yaxes(range=[0, 105])
+    fig.update_layout(legend=dict(orientation="h", y=1.02, yanchor="bottom", x=0))
+    c1, c2 = st.columns(2)
+    c1.plotly_chart(fig, use_container_width=True, key="rep_trend")
+
+    dom = prof["by_domain"].reset_index()
+    dom = dom[dom["attempts"] > 0].sort_values("mean")
+    fig2 = go.Figure(go.Bar(x=dom["mean"], y=dom["domain"].map(lambda d: lib["domains"][d]["en"]), orientation="h",
+                            marker=dict(color=viz.SERIES[0], cornerradius=4), text=dom["mean"].map("{:.0f}".format),
+                            textposition="outside", customdata=dom[["attempts"]],
+                            hovertemplate="%{y}: %{x:.0f} (%{customdata[0]} attempts)<extra></extra>"))
+    layout(fig2, "各範圍平均分數 Mean score by area", "平均分數 Mean score", "", height=320)
+    fig2.update_xaxes(range=[0, 110])
+    c2.plotly_chart(fig2, use_container_width=True, key="rep_areas")
+
+    st.markdown("#### " + bi("分數掉在哪一題", "Which question loses the points").replace("  \n", " · "))
+    if prof["n_detail"]:
+        q = prof["by_question"].copy()
+        q.index = [("全部 All" if d == "all" else dname(d)) for d in q.index]
+        st.dataframe(q, use_container_width=True, column_config={
+            k: st.column_config.ProgressColumn(f"{v[0]} {v[1]} %", min_value=0, max_value=100, format="%.0f")
+            for k, v in QUESTION_NAME.items()})
+    else:
+        st.caption(bi("較早存的報告沒有逐題紀錄；之後存的練習會出現在這裡。",
+                      "Older saves have no per-question record; attempts you save from now on appear here."))
+
+    st.markdown("#### 建議 · What to work on")
+    tips = []
+    tried = prof["by_domain"][prof["by_domain"]["attempts"] > 0]
+    if len(tried):
+        worst = tried["mean"].astype(float).idxmin()
+        tips.append(bi(f"最弱的範圍：**{lib['domains'][worst]['zh']}**（平均 {tried.loc[worst, 'mean']:.0f} 分）。",
+                       f"Weakest area: **{lib['domains'][worst]['en']}** (mean {tried.loc[worst, 'mean']:.0f})."))
+    allq = prof["by_question"].loc["all"] if "all" in prof["by_question"].index else None
+    if allq is not None and allq.min() < 100:
+        wq = allq.astype(float).idxmin()
+        tips.append(bi(f"最常失分的題目：**{QUESTION_NAME[wq][0]}**（{allq[wq]:.0f}% 答對）。{QUESTION_TIP[wq][0]}",
+                       f"Question you lose most on: **{QUESTION_NAME[wq][1]}** ({allq[wq]:.0f}% right). {QUESTION_TIP[wq][1]}"))
+    if prof["missed_roles"]:
+        ms = prof["missed_roles"].most_common(3)
+        tips.append(bi("最常漏通知：" + "、".join(f"{cases.role_name(r, 'zh')}（{n} 次）" for r, n in ms),
+                       "Roles you forget most: " + ", ".join(f"{cases.role_name(r, 'en')} ({n}×)" for r, n in ms)))
+    if prof["extra_roles"]:
+        ms = prof["extra_roles"].most_common(2)
+        tips.append(bi("常多通知（不需要升級時也通知）：" + "、".join(f"{cases.role_name(r, 'zh')}（{n} 次）" for r, n in ms),
+                       "Roles you notify when not needed: " + ", ".join(f"{cases.role_name(r, 'en')} ({n}×)" for r, n in ms)))
+    for (qn, model, chosen), n in prof["wrong"].most_common(3):
+        if model and chosen:
+            tips.append(bi(f"{QUESTION_NAME[qn][0]}常選「{cases.option_label(qn, chosen, 'zh')}」，"
+                           f"應為「{cases.option_label(qn, model, 'zh')}」（{n} 次）",
+                           f"{QUESTION_NAME[qn][1]}: you chose \"{cases.option_label(qn, chosen, 'en')}\" "
+                           f"where it was \"{cases.option_label(qn, model, 'en')}\" ({n}×)"))
+    for (ty, i), n in prof["msg_missed"].most_common(3):
+        kp = lib["cases"][ty]["keypoints"][i]
+        tips.append(bi(f"訊息常漏：{kp['zh']}（{lib['cases'][ty]['title']['zh']}，{n} 次）",
+                       f"Message point you miss: {kp['en']} ({lib['cases'][ty]['title']['en']}, {n}×)"))
+    untried = [d for d, r in prof["by_domain"].iterrows() if r["attempts"] == 0]
+    if untried:
+        tips.append(bi("還沒練過：" + "、".join(lib["domains"][d]["zh"] for d in untried),
+                       "Not tried yet: " + ", ".join(lib["domains"][d]["en"] for d in untried)))
+    for tip in tips:
+        st.markdown(f"- {tip}")
+
+    w = cases.focus_weights(prof).sort_values(ascending=False).head(5)
+    st.caption(bi("「🎯 針對我的弱點」最常出的題型：" + "、".join(f"{lib['cases'][ty]['title']['zh']} {p:.0%}" for ty, p in w.items()),
+                  "🎯 My weak spots will pick most often: " + ", ".join(f"{lib['cases'][ty]['title']['en']} {p:.0%}" for ty, p in w.items())))
+    if st.button("🎯 練習我的弱點 Practise my weak spots", type="primary", key="rep_focus", help=H("case.focus")):
+        st.session_state["case_id"] = cases.focus_case(hist).id
+        st.session_state["case_domain"] = "focus"
+        st.session_state["nav_goto"] = "Case study 案例練習"
+        st.rerun()
+
+
 GUIDE_GROUPS = {"nav": "導覽 Navigation", "guide": "導覽 Navigation", "data": "資料來源 Data source",
                 "import": "資料匯入 Data import", "field": "標準欄位 Standard fields", "stack": "Film stack & fit",
                 "wafer": "Wafer map", "spc": "SPC 管制圖", "cap": "製程能力 Capability", "msa": "MSA 量測系統分析",
                 "study": "Recipe studies", "doe": "DOE / recipe", "fab": "Fab simulator", "pat": "晶圓圖樣 Wafer patterns",
-                "case": "Case study 案例練習"}
+                "case": "Case study 案例練習", "reports": "My case reports 我的案例報告"}
 
 
 def page_guide():
@@ -1310,11 +1494,14 @@ PAGES = {
     "Recipe studies": lambda df: page_studies(),
     "DOE / recipe": lambda df: page_doe(),
     "Case study 案例練習": lambda df: page_case(),
+    "My case reports 我的案例報告": lambda df: page_reports(),
     "Guide 參數與圖表說明": lambda df: page_guide(),
 }
 
 st.sidebar.title("metro-toolkit")
 st.sidebar.caption("Thin-film metrology analysis · synthetic sample or your own imported data")
+if "nav_goto" in st.session_state:  # a button on another page asked to switch page
+    st.session_state["nav_page"] = st.session_state.pop("nav_goto")
 choice = st.sidebar.radio("Page", list(PAGES), help=H("nav.page"), key="nav_page")
 language_switch()
 data = get_data() if choice in ("Wafer map", "SPC") else None
