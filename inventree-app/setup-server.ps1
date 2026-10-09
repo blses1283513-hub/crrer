@@ -21,7 +21,7 @@ Write-Host "== 庫存管理系統：主機設定 ==" -ForegroundColor Cyan
 foreach ($f in @("docker-compose.yml", ".env")) {
     if (-not (Test-Path (Join-Path $InstallDir $f))) { throw "在 $InstallDir 找不到 $f。請確認 InvenTree 已用 install.ps1 安裝，或用 -InstallDir 指定位置。" }
 }
-foreach ($f in @("Caddyfile.app", "docker-compose.override.yml", "start-inventree.ps1", "backup.ps1", "app\index.html", "app\icon.ico", "app\icon.png", "app\client-shortcut.ps1")) {
+foreach ($f in @("Caddyfile.app", "docker-compose.override.yml", "start-inventree.ps1", "backup.ps1", "restore.ps1", "app\index.html", "app\icon.ico", "app\icon.png", "app\client-shortcut.ps1")) {
     if (-not (Test-Path (Join-Path $here $f))) { throw "安裝套件缺少 $f，請重新下載完整的 inventree-app 資料夾。" }
 }
 if (-not (Test-Path $helperSrc)) { throw "找不到中文操作助手 $helperSrc，請下載完整的 repo（需要 inventree-ui-helper 資料夾）。" }
@@ -57,7 +57,7 @@ Write-Host "  1. 備份 .env 為 .env.bak-$ts"
 Write-Host "  2. .env 設定（讓其他電腦可連入、預設繁體中文）："
 $settings.GetEnumerator() | ForEach-Object { Write-Host "       $($_.Key)=$($_.Value)" }
 Write-Host "  3. 新增／更新檔案（官方檔案不修改）："
-Write-Host "       Caddyfile.app、docker-compose.override.yml、start-inventree.ps1、backup.ps1"
+Write-Host "       Caddyfile.app、docker-compose.override.yml、start-inventree.ps1、backup.ps1、restore.ps1"
 Write-Host "       app\（App 外框、中文操作助手、圖示、用戶端捷徑腳本）"
 if ($isAdmin) { Write-Host "  4. Windows 防火牆：允許 TCP 80 埠連入（私人／網域網路）" }
 else { Write-Host "  4. 防火牆：略過（目前不是系統管理員，完成後會告訴你怎麼補設）" }
@@ -87,7 +87,7 @@ Write-Host "✓ .env 已更新（原檔備份為 .env.bak-$ts）"
 # ---------- 3. 檔案 ----------
 $appDir = Join-Path $InstallDir "app"
 New-Item -ItemType Directory -Force -Path $appDir | Out-Null
-foreach ($f in @("Caddyfile.app", "docker-compose.override.yml", "start-inventree.ps1", "backup.ps1")) {
+foreach ($f in @("Caddyfile.app", "docker-compose.override.yml", "start-inventree.ps1", "backup.ps1", "restore.ps1")) {
     Copy-Item (Join-Path $here $f) $InstallDir -Force
 }
 Copy-Item (Join-Path $here "app\*") $appDir -Recurse -Force
@@ -125,16 +125,34 @@ if (-not $up) { throw "系統 5 分鐘內未就緒。請執行 docker compose ps
 Write-Host "✓ 系統已就緒"
 
 # ---------- 6. 桌面捷徑 ----------
-$lnk = Join-Path ([Environment]::GetFolderPath("Desktop")) "庫存管理系統.lnk"
-$shell = New-Object -ComObject WScript.Shell
-$s = $shell.CreateShortcut($lnk)
-$s.TargetPath = Join-Path $env:WINDIR "System32\WindowsPowerShell\v1.0\powershell.exe"
-$s.Arguments = "-NoProfile -ExecutionPolicy Bypass -File `"$(Join-Path $InstallDir 'start-inventree.ps1')`""
-$s.WorkingDirectory = $InstallDir
-$s.IconLocation = Join-Path $appDir "icon.ico"
-$s.Description = "庫存管理系統（主機）"
-$s.Save()
-Write-Host "✓ 桌面捷徑已建立"
+# WScript.Shell 內部以系統「非 Unicode 字碼頁」處理路徑，非中文系統會把中文檔名變成 ?????? 而存檔失敗。
+# 因此先以純英文檔名存到暫存資料夾，再用 PowerShell 搬到桌面並改成中文名稱。
+# 捷徑失敗不影響系統本身（此時系統已啟動完成），所以只提示、不中止。
+$psExe = Join-Path $env:WINDIR "System32\WindowsPowerShell\v1.0\powershell.exe"
+$startScript = Join-Path $InstallDir 'start-inventree.ps1'
+$shortcutArgs = "-NoProfile -ExecutionPolicy Bypass -File `"$startScript`""
+try {
+    $tmpLnk = Join-Path $env:TEMP ("inventree-app-" + [guid]::NewGuid().ToString("N") + ".lnk")
+    $shell = New-Object -ComObject WScript.Shell
+    $s = $shell.CreateShortcut($tmpLnk)
+    $s.TargetPath = $psExe
+    $s.Arguments = $shortcutArgs
+    $s.WorkingDirectory = $InstallDir
+    $s.IconLocation = Join-Path $appDir "icon.ico"
+    $s.Save()
+
+    $desktops = @([Environment]::GetFolderPath("DesktopDirectory"), (Join-Path $env:USERPROFILE "Desktop"))
+    if ($env:OneDrive) { $desktops += (Join-Path $env:OneDrive "Desktop") }
+    $desktop = $desktops | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1
+    if (-not $desktop) { throw "找不到桌面資料夾。" }
+    $final = Join-Path $desktop "庫存管理系統.lnk"
+    Move-Item $tmpLnk $final -Force
+    Write-Host "✓ 桌面捷徑已建立：$final"
+} catch {
+    Write-Host "⚠ 桌面捷徑建立失敗：$($_.Exception.Message)" -ForegroundColor Yellow
+    Write-Host "  不影響系統使用。請手動建立：在桌面按右鍵 → 新增 → 捷徑，位置貼上下面這一行：" -ForegroundColor Yellow
+    Write-Host "    `"$psExe`" $shortcutArgs" -ForegroundColor Cyan
+}
 
 # ---------- 完成 ----------
 Write-Host ""

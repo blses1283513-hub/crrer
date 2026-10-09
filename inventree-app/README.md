@@ -1,5 +1,7 @@
 # 庫存管理系統 App（多台電腦共用）
 
+> 完整的從零安裝流程（含換主機）請看 repo 根目錄的 [`inventree-install-guide.md`](../inventree-install-guide.md)。
+
 把已安裝好的 InvenTree 變成一個「App」：
 
 - **主機電腦**：桌面出現「庫存管理系統」圖示。點兩下會自動啟動 Docker 與系統，並開啟獨立視窗（沒有網址列，看起來像一般軟體）。
@@ -72,12 +74,21 @@ powershell -ExecutionPolicy Bypass -File .\backup.ps1
 
 系統不必停止。建議每天或每週備份一次，並另存一份到隨身碟或雲端。
 
-> 備份內含密碼，請妥善保管。需要還原時請告訴我，我再提供還原步驟。
+> 備份內含密碼，請妥善保管。
+
+**還原到新主機**（換電腦時用，會覆蓋新主機資料庫）：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\restore.ps1 -BackupZip "D:\inventree-backup-時間.zip"
+```
+
+完整換主機流程見 [`inventree-install-guide.md`](../inventree-install-guide.md) 第七章。還原腳本尚未實測，放入重要資料前請先演練一次。
 
 ## 常見問題
 
 | 狀況 | 處理 |
 |---|---|
+| 最後出現「Unable to save shortcut …??????.lnk」 | 系統語言非中文，捷徑元件不支援中文檔名；已修正，重新下載後再跑一次 `setup-server.ps1`（不重跑也可，系統已啟動） |
 | 其他電腦連不到 | ① 主機已開機且系統在執行 ② 兩台在同一個網路 ③ 主機網路設定為「私人網路」 ④ 防火牆已開放 80 埠 |
 | 主機 IP 變了 | 在路由器把 IP 固定給主機；IP 改變時，在主機重新執行 `setup-server.ps1`，其他電腦重建捷徑 |
 | 出現 INVE-E7 錯誤 | 你用的網址不在允許清單中。請用 `http://localhost`（主機上）或 `http://主機IP`，然後重新執行 `setup-server.ps1` |

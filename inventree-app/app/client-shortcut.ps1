@@ -30,14 +30,28 @@ foreach ($exe in @("msedge.exe", "chrome.exe")) {
 }
 if (-not $browser) { throw "找不到 Microsoft Edge 或 Google Chrome，請先安裝其中一個。" }
 
-$lnk = Join-Path ([Environment]::GetFolderPath("Desktop")) "庫存管理系統.lnk"
-$shell = New-Object -ComObject WScript.Shell
-$s = $shell.CreateShortcut($lnk)
-$s.TargetPath = $browser
-$s.Arguments = "--app=$url"
-$s.IconLocation = $icon
-$s.Description = "庫存管理系統（主機 $Server）"
-$s.Save()
+# WScript.Shell 內部以系統「非 Unicode 字碼頁」處理路徑，非中文系統會把中文檔名變成 ?????? 而存檔失敗。
+# 因此先以純英文檔名存到暫存資料夾，再用 PowerShell 搬到桌面並改成中文名稱。
+try {
+    $tmpLnk = Join-Path $env:TEMP ("inventree-app-" + [guid]::NewGuid().ToString("N") + ".lnk")
+    $shell = New-Object -ComObject WScript.Shell
+    $s = $shell.CreateShortcut($tmpLnk)
+    $s.TargetPath = $browser
+    $s.Arguments = "--app=$url"
+    $s.IconLocation = $icon
+    $s.Save()
 
-Write-Host ""
-Write-Host "完成！桌面已建立「庫存管理系統」捷徑，點兩下即可開啟。" -ForegroundColor Green
+    $desktops = @([Environment]::GetFolderPath("DesktopDirectory"), (Join-Path $env:USERPROFILE "Desktop"))
+    if ($env:OneDrive) { $desktops += (Join-Path $env:OneDrive "Desktop") }
+    $desktop = $desktops | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1
+    if (-not $desktop) { throw "找不到桌面資料夾。" }
+    $final = Join-Path $desktop "庫存管理系統.lnk"
+    Move-Item $tmpLnk $final -Force
+
+    Write-Host ""
+    Write-Host "完成！桌面已建立「庫存管理系統」捷徑，點兩下即可開啟。" -ForegroundColor Green
+} catch {
+    Write-Host "⚠ 桌面捷徑建立失敗：$($_.Exception.Message)" -ForegroundColor Yellow
+    Write-Host "  請手動建立：在桌面按右鍵 → 新增 → 捷徑，位置貼上下面這一行：" -ForegroundColor Yellow
+    Write-Host "    `"$browser`" --app=$url" -ForegroundColor Cyan
+}
