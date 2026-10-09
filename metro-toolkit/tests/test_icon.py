@@ -47,3 +47,12 @@ def test_shortcut_script_is_wired_to_the_icon_and_launcher():
     assert ps and all(ln.count('"') == 2 or ln.rstrip(" ^").endswith('"') for ln in ps)  # one quoted piece per line
     assert all(ln.rstrip().endswith("^") for ln in ps[:-1])  # continued lines are chained
     assert (ROOT / "Metro Toolkit.bat").exists() and ICO.exists()
+
+
+def test_browser_tab_uses_the_icon():
+    png = ROOT / "assets" / "metro-toolkit.png"
+    im = Image.open(png)
+    assert im.size == (256, 256) and im.mode == "RGBA"
+    app = (ROOT / "src" / "metro_toolkit" / "dashboard" / "app.py").read_text(encoding="utf-8")
+    assert 'page_icon=_tab_icon()' in app and 'assets" / "metro-toolkit.png' in app
+    assert "📏" in app  # falls back to an emoji if the file is missing

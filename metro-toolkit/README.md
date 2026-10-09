@@ -51,7 +51,7 @@ streamlit run src/metro_toolkit/dashboard/app.py
 
 After the one-time setup, no terminal or `cd` is needed on Windows: double-click **`Metro Toolkit.bat`**, or run
 `metro-toolkit` from any folder in the activated environment ([details](docs/SETUP_WINDOWS.md)). For a Desktop icon
-(a 3D **M** on a wafer), double-click **`Create Desktop Shortcut.bat`** once. The dashboard listens on `localhost`
+(a 3D **M** on a wafer), double-click **`Create Desktop Shortcut.bat`** once. The same icon is the browser tab icon. The dashboard listens on `localhost`
 only.
 
 A pre-generated report is in [`docs/example-report/report.md`](docs/example-report/report.md).
@@ -286,7 +286,7 @@ metro-toolkit/
 ├── config/                 films.yaml · sampling.yaml · limits.yaml · fab_sim.yaml · doe_processes.yaml
 ├── Metro Toolkit.bat       Windows double-click launcher (CRLF, no personal paths)
 ├── Create Desktop Shortcut.bat   makes the Desktop / Start menu shortcut with the icon
-├── assets/                 metro-toolkit.ico (3D M monogram on a wafer) + make_icon.py to redraw it
+├── assets/                 metro-toolkit.ico / .png (3D M on a wafer: Desktop icon, browser tab) + make_icon.py
 ├── data/sample/            synthetic site-level thickness data + excursion truth table
 ├── docs/example-report/    pre-generated demo report
 ├── src/metro_toolkit/

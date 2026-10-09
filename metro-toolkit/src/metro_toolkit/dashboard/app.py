@@ -91,7 +91,21 @@ from metro_toolkit.wafer.patterns import (  # noqa: E402
     feature_table,
 )
 
-st.set_page_config(page_title="metro-toolkit", layout="wide")
+
+
+def _tab_icon():
+    """The 3D M on a wafer (assets/metro-toolkit.png); a plain emoji if the file is not there."""
+    from PIL import Image
+
+    from metro_toolkit.config import ROOT
+
+    try:
+        return Image.open(ROOT / "assets" / "metro-toolkit.png").convert("RGBA")
+    except OSError:
+        return "📏"
+
+
+st.set_page_config(page_title="metro-toolkit", page_icon=_tab_icon(), layout="wide")
 
 
 
