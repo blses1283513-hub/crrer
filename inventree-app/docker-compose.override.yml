@@ -1,0 +1,10 @@
+# [inventree-app] 庫存管理系統 App 設定（由 setup-server.ps1 放置）
+# Docker Compose 會自動合併此檔與官方 docker-compose.yml，官方檔案不需修改。
+# 刪除此檔並執行 docker compose up -d，即可回到官方原始設定。
+services:
+    inventree-proxy:
+        volumes:
+            # 以 App 專用設定取代官方 Caddyfile（相同掛載點會被覆蓋）
+            - ./Caddyfile.app:/etc/caddy/Caddyfile:ro,z
+            # App 外框頁、中文操作助手、圖示
+            - ./app:/var/www/app:ro,z

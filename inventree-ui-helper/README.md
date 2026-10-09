@@ -1,5 +1,7 @@
 # InvenTree 中文操作助手
 
+> **已內建到「庫存管理系統 App」**（見 `../inventree-app/`）。使用 App 的電腦不需要再安裝 Tampermonkey；本頁的安裝方式只在不使用 App 時需要。
+
 一支瀏覽器擴充腳本，替 InvenTree 加上：
 
 | 功能 | 說明 |

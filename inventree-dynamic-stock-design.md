@@ -260,6 +260,14 @@ flowchart LR
 
 選用瀏覽器腳本而非伺服器外掛的原因：InvenTree 外掛只能新增面板，無法替內建按鈕加提示；腳本不必修改 InvenTree 本體，升級不受影響。缺點是每台電腦要安裝一次。
 
+## 3.2 多台電腦共用與 App 化（已實作，見 `inventree-app/`）
+
+- **架構**：一台主機跑 InvenTree（Docker），其他電腦以瀏覽器連 `http://主機IP`，共用同一份資料。
+- **App**：桌面捷徑以獨立視窗開啟 `/app/`；App 外框以同源 iframe 載入 InvenTree，並內建中文操作助手（不需 Tampermonkey）。
+- **設定**：`INVENTREE_SITE_URL`、`INVENTREE_ALLOWED_HOSTS`、`INVENTREE_TRUSTED_ORIGINS` 含主機 IP 與 localhost；`INVENTREE_LANGUAGE=zh-hant`（語言選擇可能只存在各瀏覽器，故設系統預設）。依 1.5.6 原始碼核對：未列入的網址會出現 INVE-E7 錯誤。
+- **不修改官方檔案**：以 `docker-compose.override.yml` 掛載自訂 `Caddyfile.app` 與 `app/`。
+- **備份**：`backup.ps1` 匯出資料庫（pg_dump）＋上傳檔案＋設定檔為 zip。
+
 ## 4. 查證結果（v0.1 的兩個待確認點）
 
 ### 4.1 InvenTree 是否支援多層變體？

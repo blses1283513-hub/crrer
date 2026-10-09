@@ -12,6 +12,10 @@
 (function () {
   'use strict';
 
+  // 避免重複載入（例如同時透過 App 內建與 Tampermonkey 載入）
+  if (window.__ithLoaded) return;
+  window.__ithLoaded = true;
+
   // ===================== 設定 =====================
   const CONFIG = {
     // 與 inventree-seed/config.json 的公司名稱一致（頂層庫位名稱）
