@@ -100,6 +100,10 @@ Every control, KPI tile and table column has a "?" tooltip, and every chart has:
 * **A status line read from the data**: 🟢 normal (record it), 🟡 watch (record and track) or 🔴 act (follow the
   OCAP), with the reason and the real numbers. For example, "RTP02-B went OOC within the last 5 points (WE1, WE2)" or
   "lowest Cpk = 0.87 < 1.0".
+* **Hover any SPC point to see why it is OOC (or why it is not)**: its value and unit, its distance from the
+  centre line in σ, the limits, and the rule that fired with the numbers behind it (WE1 one point beyond 3σ; WE2 two
+  of three beyond 2σ; WE3 four of five beyond 1σ; WE4 eight in a row on one side, each with the z values of the points
+  used; the EWMA limit; the CUSUM decision interval), in 繁中 and English.
 * **A "📖 怎麼讀這張圖 · How to read this chart" panel** with four tabs:
   1. legend and axes;
   2. what it shows, good vs bad patterns and what this data says;

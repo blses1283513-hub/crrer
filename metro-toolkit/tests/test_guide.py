@@ -294,3 +294,51 @@ def test_chart_axis_names_say_what_is_measured_and_are_black():
     assert F.unit_of("p", pd.DataFrame({"parameter": ["p"], "unit": ["Å"]})) == "Å"
     assert F.radial_figure(pd.DataFrame({"r_mm": [0, 50], "mean": [1, 1], "std": [0.1, 0.1]}), "ild_thk", "nm"
                            ).layout.yaxis.title.text == "ild_thk 環平均 ring mean (nm)"
+
+
+def test_spc_hover_explains_why_a_point_is_ooc():
+    from metro_toolkit.analysis import control_chart
+    from metro_toolkit.dashboard import figures as F
+
+    rng = np.random.default_rng(3)
+    x = np.concatenate([rng.normal(0, 1, 40), [5.0], rng.normal(0, 1, 5), rng.normal(1.6, 0.3, 12)])  # a spike, then a shift
+    n = len(x)
+    sw = pd.DataFrame({"timestamp": pd.date_range("2026-01-01", periods=n, freq="h"), "wafer_id": [f"W{i:03d}" for i in range(n)]})
+    for kind in ("IMR", "EWMA", "CUSUM"):
+        ch = control_chart(x, kind, phase1=30)
+        w = sw.assign(mean=x)
+        fig = F.spc_figure("A", w, ch, "mean", "#2a78d6", 30, "gate_ox_thk", "nm")
+        main, ooc_tr = fig.data[0], next(tr for tr in fig.data if tr.name == "OOC 違規點")
+        assert len(main.customdata) == n and main.hovertemplate == "%{customdata}<extra></extra>"
+        hit = set(map(int, ch.out_of_control))
+        assert hit and len(ooc_tr.customdata) == len(hit)
+        for i in range(n):
+            txt = main.customdata[i]
+            assert f"W{i:03d}" in txt and "gate_ox_thk wafer mean" in txt and "UCL" in txt
+            assert ("OOC 違規" in txt) == (i in hit) and ("in control" in txt) == (i not in hit)
+        if kind == "IMR":
+            flat = [t.replace("<br>", " ").replace("&nbsp;", "") for t in main.customdata]  # lines wrap for the tooltip
+            spike = flat[40]
+            assert "WE1" in spike and "beyond the ±3σ control limits" in spike and "+4.4" in spike  # rule + numbers
+            assert any("WE4" in t and "z = " in t and "all above the CL" in t for t in flat)  # the shift
+            assert "no rule WE1–WE4 fires" in flat[0]
+        elif kind == "EWMA":
+            first = main.customdata[sorted(hit)[0]].replace("<br>", " ")
+            assert "EWMA value" in first and "limit" in first
+        else:
+            first = main.customdata[sorted(hit)[0]].replace("<br>", " ")
+            assert "cumulative sum" in first and "decision interval" in first
+        assert fig.layout.hoverlabel.align == "left"
+    assert "把滑鼠移到任何一點" in str(guide.charts()["spc_chart"]["legend"]) and "Hover over any point" in str(guide.charts()["spc_chart"]["legend"])
+
+
+def test_hover_lines_are_short_enough_not_to_be_clipped():
+    from metro_toolkit.dashboard.figures import _cells, wrap_hover
+
+    text = "WE4 規則 4：最近 8 點（z = -0.7, -0.1, -0.6, -0.8, -0.0, -0.9, -0.5, -0.4）全都在 CL 下方：平均值已經移到一邊"
+    for width in (40, 56):
+        for line in wrap_hover(text, width).split("<br>"):
+            assert sum(_cells(c) for c in line) <= width + 2
+    en = "WE4: the last 8 points (z = -0.7, -0.1, -0.6, -0.8, -0.0, -0.9, -0.5, -0.4) are all below the CL: the mean has moved"
+    assert all(len(x) <= 62 for x in wrap_hover(en, 62).split("<br>")) and "".join(wrap_hover(en, 62).replace("<br>", " ").split()) == "".join(en.split())
+    assert wrap_hover("short") == "short"

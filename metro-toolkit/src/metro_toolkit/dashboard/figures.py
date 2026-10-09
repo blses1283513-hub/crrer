@@ -146,17 +146,128 @@ STAT_AXIS = {"mean": ("wafer mean 晶圓平均", True), "nu_1sigma_pct": ("withi
              "range": ("within-wafer range 片內全距", True)}  # (name, in the parameter's unit?)
 
 
+RULE_WINDOW = {2: 3, 3: 5, 4: 8, 5: 6, 6: 15, 7: 14, 8: 8}  # points each Western Electric / Nelson rule looks at
+
+
+def _cells(ch: str) -> int:
+    """Display width of a character: CJK counts double."""
+    return 2 if ord(ch) > 0x2E7F else 1
+
+
+def wrap_hover(text: str, width: int = 58, indent: str = "") -> str:
+    """Break a sentence into short lines (<br>) so a tooltip stays narrow enough not to be clipped by the chart edge.
+    Breaks at a space when there is one, otherwise after any character (Chinese text has no spaces)."""
+    lines, cur, w, last_space = [], "", 0, -1
+    for ch in text:
+        if w + _cells(ch) > width and cur:
+            if last_space > 0:
+                lines.append(cur[:last_space])
+                cur = cur[last_space + 1:]
+            else:
+                lines.append(cur)
+                cur = ""
+            w = sum(_cells(c) for c in cur)
+            last_space = cur.rfind(" ")
+        cur += ch
+        w += _cells(ch)
+        if ch == " ":
+            last_space = len(cur) - 1
+    lines.append(cur)
+    return f"<br>{indent}".join(x for x in lines if x.strip() or len(lines) == 1)
+
+
+def _zs(z, i: int, w: int) -> str:
+    return ", ".join(f"{v:+.1f}" for v in z[max(0, i - w + 1): i + 1])
+
+
+def ooc_reasons(ch, i: int, z) -> list[tuple[str, str]]:
+    """Why point i is out of control, as (中文, English) sentences with the numbers behind each rule.
+    i is the LAST point of the pattern a rule looks at (that is the point the chart marks)."""
+    from metro_toolkit.analysis.spc import RULE_TEXT
+
+    out = []
+    if ch.chart_type == "EWMA":
+        v = float(ch.statistic[i])
+        lim = float(ch.ucl[i] if v > ch.cl else ch.lcl[i])
+        return [(f"EWMA 值 {v:.4g} {'高於上' if v > ch.cl else '低於下'}限 {lim:.4g}（EWMA 的界限前幾點較窄，之後趨於穩定）",
+                 f"the EWMA value {v:.4g} is {'above the upper' if v > ch.cl else 'below the lower'} limit {lim:.4g} "
+                 "(EWMA limits are narrower over the first points, then settle)")]
+    if ch.chart_type == "CUSUM":
+        v, h = float(ch.statistic[i]), float(ch.ucl[i])
+        return [(f"累積和 {v:+.4g} 超出決策區間 ±h = ±{h:.4g}（{h / ch.sigma:.1f}σ）：單點離 CL 不遠，但連續同方向的偏差一直累積",
+                 f"the cumulative sum {v:+.4g} is beyond the decision interval ±h = ±{h:.4g} ({h / ch.sigma:.1f}σ): no single "
+                 "point is far from the CL, but small deviations in one direction have been adding up")]
+    for _, rule, _ in (v for v in ch.violations if v[0] == i):
+        w = RULE_WINDOW.get(rule, 1)
+        zs = _zs(z, i, w)
+        win = z[max(0, i - w + 1): i + 1]
+        up = (win > 0).sum() >= (win < 0).sum()
+        side_zh, side_en = ("上", "above") if up else ("下", "below")
+        if rule == 1:
+            out.append((f"WE1 規則 1：這一點離中心線 {z[i]:+.2f}σ，超出 ±3σ 管制界限（UCL / LCL）",
+                        f"WE1: this point is {z[i]:+.2f}σ from the centre line, beyond the ±3σ control limits (UCL / LCL)"))
+        elif rule == 2:
+            n = int((win > 2).sum() if up else (win < -2).sum())
+            out.append((f"WE2 規則 2：最近 3 點（z = {zs}）有 {n} 點在 CL {side_zh}方超過 2σ", f"WE2: {n} of the last 3 points "
+                        f"(z = {zs}) are more than 2σ {side_en} the CL"))
+        elif rule == 3:
+            n = int((win > 1).sum() if up else (win < -1).sum())
+            out.append((f"WE3 規則 3：最近 5 點（z = {zs}）有 {n} 點在 CL {side_zh}方超過 1σ", f"WE3: {n} of the last 5 points "
+                        f"(z = {zs}) are more than 1σ {side_en} the CL"))
+        elif rule == 4:
+            out.append((f"WE4 規則 4：最近 8 點（z = {zs}）全都在 CL {side_zh}方：平均值已經移到一邊",
+                        f"WE4: the last 8 points (z = {zs}) are all {side_en} the CL: the mean has moved to one side"))
+        else:
+            out.append((f"規則 {rule}：{RULE_TEXT[rule]}（最近 {w} 點 z = {zs}）", f"Rule {rule}: {RULE_TEXT[rule]} "
+                        f"(last {w} points, z = {zs})"))
+    return out
+
+
+def spc_hover(ch, sw: pd.DataFrame, z, quantity: str, unit: str) -> list[str]:
+    """One hover text per point: its value, distance from the centre line, limits and the OOC verdict with the reason."""
+    u = f" {unit}" if unit else ""
+    hit = {int(i) for i in ch.out_of_control}
+    texts = []
+    for i in range(len(ch.statistic)):
+        v = float(ch.statistic[i])
+        wid = str(sw.wafer_id.iloc[i]) if "wafer_id" in sw and i < len(sw) else f"#{i + 1}"
+        when = pd.Timestamp(sw.timestamp.iloc[i]).strftime("%Y-%m-%d %H:%M") if i < len(sw) else ""
+        head = [f"<b>{wid}</b> · {when}", f"{quantity}: <b>{v:.4f}</b>{u}"]
+        if ch.chart_type == "IMR":
+            head.append(f"離 CL {z[i]:+.2f}σ · from the CL {ch.cl:.4g}")
+        head.append(f"UCL {ch.ucl[i]:.4f} / LCL {ch.lcl[i]:.4f}")
+        if i in hit:
+            body = [f"<b>🔴 OOC 違規 · out of control</b>"]
+            for zh, en in ooc_reasons(ch, i, z):
+                body += [wrap_hover(f"• {zh}", 56, "&nbsp;&nbsp;"), f"<i>{wrap_hover(en, 62)}</i>"]
+            body.append("<i>→ 先確認量測，再依 OCAP</i>")
+            body.append("<i>verify the measurement first, then follow the OCAP</i>")
+        else:
+            if ch.chart_type == "IMR":
+                why = (f"離 CL 只有 {abs(z[i]):.2f}σ（< 3σ），且這一點沒有觸發規則 WE1–WE4",
+                       f"only {abs(z[i]):.2f}σ from the CL (< 3σ) and no rule WE1–WE4 fires at this point")
+            elif ch.chart_type == "EWMA":
+                why = (f"EWMA 值在界限之內（{ch.lcl[i]:.4g} … {ch.ucl[i]:.4g}）",
+                       f"the EWMA value is inside its limits ({ch.lcl[i]:.4g} … {ch.ucl[i]:.4g})")
+            else:
+                why = (f"累積和在 ±h 之內（h = {ch.ucl[i]:.4g}）", f"the cumulative sum is inside ±h (h = {ch.ucl[i]:.4g})")
+            body = ["🟢 正常 in control", wrap_hover(f"• {why[0]}", 56, "&nbsp;&nbsp;"), f"<i>{wrap_hover(why[1], 62)}</i>"]
+        texts.append("<br>".join(head + ["─────────"] + body))
+    return texts
+
+
 def spc_figure(group, sw: pd.DataFrame, ch, stat: str, color: str, phase1: int, param: str = "",
                unit: str = "") -> go.Figure:
     """One control chart: points, limits, CL, end of Phase I, OOC rings. sw = this group's wafers in time order."""
     x = sw.timestamp
     z = (np.asarray(ch.statistic) - ch.cl) / ch.sigma if ch.sigma > 0 else np.zeros(len(sw))
     fig = go.Figure()
+    sname, in_unit0 = STAT_AXIS.get(stat, (stat, False))
+    quantity = f"{param} {sname}" if param else sname
+    hover = spc_hover(ch, sw, z, quantity, unit if in_unit0 else "%" if stat == "nu_1sigma_pct" else "")
     fig.add_scatter(x=x, y=ch.statistic, mode="lines+markers", name=f"{group} {STAT_LABEL.get(stat, stat)}",
-                    line=dict(color=color, width=1.5), marker=dict(size=5),
-                    customdata=np.column_stack([sw.wafer_id, z]),
-                    hovertemplate="%{customdata[0]}<br>%{y:.4f}<br>" +
-                                  ("偏離 CL %{customdata[1]:+.1f}σ<extra></extra>" if ch.chart_type == "IMR" else "<extra></extra>"))
+                    line=dict(color=color, width=1.5), marker=dict(size=5), customdata=hover,
+                    hovertemplate="%{customdata}<extra></extra>")
     fig.add_scatter(x=x, y=ch.ucl, mode="lines", name=LIMIT_NAME[ch.chart_type], line=dict(color=viz.STATUS["critical"], width=1),
                     hovertemplate="UCL %{y:.4f}<extra></extra>")
     fig.add_scatter(x=x, y=ch.lcl, mode="lines", showlegend=False, line=dict(color=viz.STATUS["critical"], width=1),
@@ -172,10 +283,12 @@ def spc_figure(group, sw: pd.DataFrame, ch, stat: str, color: str, phase1: int, 
     if ooc.size:
         fig.add_scatter(x=x.iloc[ooc], y=ch.statistic[ooc], mode="markers", name="OOC 違規點",
                         marker=dict(size=11, color="rgba(0,0,0,0)", line=dict(color=viz.STATUS["critical"], width=2)),
-                        hovertemplate="OOC 違規點<br>%{y:.4f}<extra></extra>")
+                        customdata=[hover[int(i)] for i in ooc], hovertemplate="%{customdata}<extra></extra>")
     name, in_unit = STAT_AXIS.get(stat, (stat, False))
     ylab = f"{param} · {name}" if param else name
     ylab = with_unit(ylab, unit if in_unit else "%" if stat == "nu_1sigma_pct" else "")
+    fig.update_layout(hoverlabel=dict(align="left", bgcolor=viz.SURFACE, bordercolor=viz.AXIS, namelength=-1,
+                                      font=dict(color=viz.INK, size=12)))
     return layout(fig, f"{group}  {ch.chart_type}", "量測時間 measurement time", ylab, 340)
 
 
