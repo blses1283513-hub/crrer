@@ -159,8 +159,8 @@ the other pages, so the evidence looks exactly like it would there.
    * **🧑‍🏫 Ask Claude** (optional): a tutor that answers any question about this case using the case data, your
      answers and the comments. It needs `pip install -e ".[tutor]"`, an internet connection and Anthropic
      credentials (`ANTHROPIC_API_KEY`, `ant auth login`, or a key typed on the page, kept only for that browser
-     session). It uses `claude-opus-5-5` with server-side fallbacks (a declined question is retried on Anthropic's
-     recommended fallback model). Every question costs API usage, and what you type is sent to Anthropic: never type
+     session). It uses `claude-haiku-5-5`, a fast, low-cost model (a declined question is shown as declined, and you
+     can rephrase it). Every question costs API usage, and what you type is sent to Anthropic: never type
      real lots, products, recipes, names or company data; questions that look company-confidential are not sent. The
      conversation is saved in the report.
 

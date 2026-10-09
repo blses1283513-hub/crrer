@@ -14,8 +14,7 @@ from collections.abc import Iterator
 
 from . import Case, message_checklist, role_name
 
-MODEL = "claude-opus-5-5"
-FALLBACK_BETA = "server-side-fallback-2026-07-01"  # fallbacks="default": a declined question is retried server-side
+MODEL = "claude-haiku-5-5"  # fast and low-cost; Haiku has no server-side fallback, so a declined question stays declined
 # words that suggest real company material; such questions are kept on this PC
 BLOCKED = re.compile(r"micron|美光|confidential|機密|機敏|proprietary|internal use only|僅限內部", re.I)
 
@@ -111,14 +110,12 @@ def ask(system: str, history: list[dict], api_key: str | None = None, client=Non
 
     try:
         client = client or make_client(api_key)
-        with client.beta.messages.stream(
+        with client.messages.stream(
             model=MODEL,
             max_tokens=16000,
             system=[{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}],
             messages=history,
             output_config={"effort": "medium"},
-            betas=[FALLBACK_BETA],
-            fallbacks="default",
         ) as stream:
             yield from stream.text_stream
             final = stream.get_final_message()

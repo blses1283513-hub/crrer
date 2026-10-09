@@ -156,7 +156,7 @@ class FakeStream:
 class FakeClient:
     def __init__(self, chunks=("Because ", "only one chamber moved."), stop="end_turn"):
         self.calls, self.chunks, self.stop = [], chunks, stop
-        self.beta = SimpleNamespace(messages=SimpleNamespace(stream=self._stream))
+        self.messages = SimpleNamespace(stream=self._stream)
 
     def _stream(self, **kw):
         self.calls.append(kw)
@@ -174,8 +174,8 @@ def test_tutor_request_and_guard():
     out = "".join(tutor.ask(system, [{"role": "user", "content": "Why not metrology?"}], client=fake))
     assert out == "Because only one chamber moved."
     kw = fake.calls[0]
-    assert kw["model"] == "claude-opus-5-5" and kw["fallbacks"] == "default"
-    assert kw["betas"] == ["server-side-fallback-2026-07-01"] and kw["output_config"] == {"effort": "medium"}
+    assert kw["model"] == "claude-haiku-5-5" and "fallbacks" not in kw and "betas" not in kw
+    assert kw["output_config"] == {"effort": "medium"}
     assert kw["system"][0]["cache_control"] == {"type": "ephemeral"} and kw["messages"][-1]["content"] == "Why not metrology?"
     declined = "".join(tutor.ask(system, [{"role": "user", "content": "x"}], client=FakeClient((), "refusal")))
     assert "declined" in declined

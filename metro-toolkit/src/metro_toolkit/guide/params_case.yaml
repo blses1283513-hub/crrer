@@ -69,8 +69,8 @@ params:
     zh: "**Anthropic API key**（選填）：如果電腦已設定 ANTHROPIC_API_KEY 或用 `ant auth login` 登入，就不用填。填在這裡的金鑰只存在這次瀏覽器工作階段，不會寫進任何檔案；關掉頁面就不見。"
     en: "**Anthropic API key** (optional): not needed if ANTHROPIC_API_KEY is set or you signed in with `ant auth login`. A key typed here is kept only for this browser session and is never written to any file; it is gone when you close the page."
   case.tutor_ask:
-    zh: "**送出問題**：把你的問題連同這一題的資料（合成練習資料）、你的答案與講評送給 Claude（claude-opus-5-5），回答會即時顯示。若 Claude 婉拒回答，伺服器會自動改用建議的備援模型再試（fallbacks）。每個問題都會用到 API 額度。看起來像公司機密的問題不會送出。存檔時對話會寫進報告。"
-    en: "**Ask**: sends your question with this case's data (synthetic practice data), your answers and the comments to Claude (claude-opus-5-5); the answer streams in. If Claude declines, the server retries on its recommended fallback model (fallbacks). Every question uses API credit. A question that looks company-confidential is not sent. Saving puts the conversation in the report."
+    zh: "**送出問題**：把你的問題連同這一題的資料（合成練習資料）、你的答案與講評送給 Claude（claude-haiku-5-5，快速、低成本的模型），回答會即時顯示。若 Claude 婉拒回答，會顯示提示請你換個方式問。每個問題都會用到 API 額度。看起來像公司機密的問題不會送出。存檔時對話會寫進報告。"
+    en: "**Ask**: sends your question with this case's data (synthetic practice data), your answers and the comments to Claude (claude-haiku-5-5, a fast, low-cost model); the answer streams in. If Claude declines, you are asked to rephrase. Every question uses API credit. A question that looks company-confidential is not sent. Saving puts the conversation in the report."
   case.download:
     zh: "**下載報告**：下載和「存到練習紀錄」相同內容的 Markdown 報告，可以貼到筆記或和同事討論。"
     en: "**Download report**: downloads the same Markdown report that Save writes, for your notes or to discuss with colleagues."
