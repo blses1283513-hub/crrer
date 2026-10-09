@@ -1,0 +1,307 @@
+# Why-texts for every answer option and role (metro_toolkit.cases.why). Generic: true in every case, no placeholders.
+#
+# options.<id>.when    the evidence pattern (or situation) in which this option is the right answer
+# options.<C_id>.looks what the charts in this toolkit would show if this were the cause
+# roles.<role>.need    when that role must be told (what they act on or decide)
+# roles.<role>.skip    why they need not be told when the situation does not involve them
+# All synthetic: generic fab practice, no company data.
+
+options:
+  # ------------------------------------------------------------------ causes
+  C_CHAMBER_SHIFT:
+    when: {zh: "只有一個 chamber 突然跳到新的水準並持續停在那裡，其他 chamber 正常，而且不論哪台量測機台量的都一樣；起點通常對得上 PM、零件更換、腔體條件改變或警報。", en: "Only one chamber jumps to a new level and stays there while the other chambers are normal, on every metrology tool alike; the start usually lines up with a PM, part swap, chamber-condition change or alarm."}
+    looks: {zh: "依 chamber 分組的 SPC 只有那條線出現階梯式跳動、之後持續偏離，依量測機台分組則兩台一起偏；若影響電性，良率趨勢在同一時間點下降，die map 以參數型失效為主。", en: "SPC grouped by chamber shows a step on that one line that stays off, while grouped by metrology tool both tools move together; if it hurts the device, the yield trend drops at the same point and the die map is dominated by parametric fails."}
+  C_DRIFT:
+    when: {zh: "單一 chamber 朝同一方向穩定、緩慢地移動，沒有跳點，單點多半還在規格內，且距上次 PM 已接近或超過 PM 週期。", en: "One chamber moves slowly and steadily in one direction with no jump, single points mostly still in spec, and the chamber is close to or past its PM cycle."}
+    looks: {zh: "EWMA 圖一路單向爬升並先出界，I-MR 圖的單點卻遲遲不出界；只有該 chamber 的線有斜率，PM 後會整個跳回去。", en: "The EWMA chart climbs steadily in one direction and crosses its limit first while I-MR single points stay inside; only that chamber's line has a slope, and it jumps back after the PM."}
+  C_METRO_OFFSET:
+    when: {zh: "所有 chamber 同時偏、而且隨 lot 一批高一批正常交替；依量測機台分組後只有一台量測機台的線偏，良率與電性沒有變。", en: "Every chamber moves at once and it alternates lot by lot between high and normal; grouped by metrology tool only one tool's line is off, and yield / electrical results are unchanged."}
+    looks: {zh: "依 chamber 分組的 SPC 每條線都出現鋸齒狀的高低交替；改依量測機台分組後只有一台整條平移、另一台正常；良率趨勢平穩，同一片在參考機台重測就回到正常。", en: "SPC grouped by chamber shows every line zig-zagging between high and normal; regrouped by metrology tool, one tool's whole line is offset and the other is normal; the yield trend stays flat and a re-measure on the reference tool reads normal."}
+  C_RECIPE_ALL:
+    when: {zh: "所有 chamber 在同一時間點一起、同量偏移，每一批都一樣，而且兩台量測機台量到的都一樣；時間點對得上 recipe、進料或版本變更。", en: "Every chamber moves at the same moment by the same amount, on every lot and on both metrology tools; the timing matches a recipe, incoming-material or version change."}
+    looks: {zh: "依 chamber 分組的 SPC 所有線在同一點一起階梯平移，依量測機台分組也是兩台一起平移，沒有一高一低的交替；若影響電性，良率趨勢在同一點一起變。", en: "SPC grouped by chamber shows every line stepping together at one point, and grouped by metrology tool both tools step together with no lot-by-lot alternation; if it hurts the device, the yield trend moves at the same point."}
+  C_SHAPE:
+    when: {zh: "晶圓平均值的 SPC 正常，但片內 1σ%（不均勻度）變大、下游在晶圓某個區域（例如邊緣）變差：中心與邊緣反向變化而互相抵消。", en: "The wafer-mean SPC is normal but the within-wafer 1σ % (non-uniformity) has risen and downstream sees one wafer zone (e.g. the edge) get worse: centre and edge moved in opposite directions and cancel in the mean."}
+    looks: {zh: "平均值 SPC 平穩，片內 1σ% 圖在該 chamber 往上跳；晶圓圖與徑向剖面出現中心對邊緣的形狀，Zernike 某一項（碗形、tilt 或 edge roll）明顯變大。", en: "The mean SPC is flat while the 1σ % chart on that chamber steps up; the wafer map and radial profile show a centre-to-edge shape, and one Zernike term (bowl, tilt or edge roll) grows clearly."}
+  C_OFF_TARGET:
+    when: {zh: "製程長期穩定、沒有 OOC，Cp 足夠但 Cpk 偏低：變異夠小，只是平均值一直不在規格中心，而且量測 matching 已排除系統偏差。", en: "The process is stable for a long time with no OOC, Cp is fine but Cpk is low: the spread is small and the mean simply sits away from the spec centre, with metrology matching ruling out a gauge bias."}
+    looks: {zh: "SPC 點都在管制界限內、沒有趨勢或跳動，但整條中心線離規格中心有一段固定距離；直方圖窄而且整體偏向規格的一側。", en: "SPC points stay inside the limits with no trend or step, but the whole centre line sits a fixed distance from the spec centre; the histogram is narrow and shifted toward one side of the spec."}
+  C_RANDOM:
+    when: {zh: "只有單一點超出界限，前後的點都穩定、沒有其他 SPC 規則違規，重測（或後續的點）回到正常範圍，同一 chamber、機台或晶圓沒有重複發生。", en: "A single point is outside the limits, its neighbours are steady, no other SPC rule fires, a re-measure (or the following points) is back in the normal range, and nothing repeats on the same chamber, tool or wafer."}
+    looks: {zh: "SPC 只有一個孤立的尖點，前後沒有趨勢、沒有連續同側，EWMA 幾乎不動；其他 chamber、量測機台與良率趨勢都沒有對應的變化。", en: "The SPC shows one isolated spike with no trend or run on one side before or after, and the EWMA barely moves; no other chamber, metrology tool or the yield trend shows anything matching."}
+  C_EDGE_RING:
+    when: {zh: "只有最外圈改變、內圈正常（邊緣滾降），隨 RF 小時慢慢變嚴重，而且 edge ring／focus ring 已接近使用壽命。", en: "Only the outermost ring changes while the inside is normal (edge roll-off), it worsens gradually with RF hours, and the edge / focus ring is close to end of life."}
+    looks: {zh: "晶圓圖只有外圈變色，徑向剖面在最外圈下掉，Zernike 以 edge roll 項最大；片內 1σ% 慢慢上升，若影響良率，die map 的失效集中在最外圈晶粒且是參數型失效。", en: "The wafer map changes only at the outer ring, the radial profile drops at the edge and the Zernike edge-roll term is largest; 1σ % creeps up, and if yield is hit the die map shows parametric fails on the outermost dies."}
+  C_HEATER_TILT:
+    when: {zh: "晶圓一側厚、對面一側薄，是單一方向的傾斜，不是中心對稱的形狀，而且量測座標／notch 方向設定已確認正確。", en: "One side of the wafer is thick and the opposite side thin, a one-directional tilt rather than a centre-symmetric shape, with the metrology coordinates / notch orientation confirmed correct."}
+    looks: {zh: "晶圓圖從一側到另一側呈現漸層，Zernike 以 tilt 項最大；徑向剖面的平均看不太出來，但不同方向的剖面一高一低。", en: "The wafer map shades from one side to the other with the Zernike tilt term largest; the averaged radial profile hides it, but profiles along different directions sit high and low."}
+  C_SITE_OUTLIER:
+    when: {zh: "片內只有一個量測點特別離群，周圍點正常、沒有連續的空間形狀，重測該點就恢復；製程不會只改變單一點。", en: "One site stands out while its neighbours are normal and there is no continuous spatial shape, and re-measuring that site brings it back; a process does not change at a single site."}
+    looks: {zh: "晶圓圖上只有一個孤立的色塊，Zernike 各項都不大但殘差集中在那一點；片內 1σ% 被單點拉高，而平均值幾乎不動，該點的量測 GOF 可能偏差。", en: "The wafer map shows one isolated spot, no Zernike term is large but the residual sits on that site; the 1σ % is pulled up by the one point while the mean barely moves, and that site's GOF may be poor."}
+  C_SHOWERHEAD:
+    when: {zh: "PM 後第一批就出現、中心對邊緣的碗形變大，PM 時更換或重裝過噴頭、間距或研磨頭等硬體；PM 前同一 chamber 是正常的。", en: "A larger centre-to-edge bowl appears on the first wafers after a PM in which hardware such as the showerhead, gap or polishing head was replaced or re-installed; the same chamber was normal before the PM."}
+    looks: {zh: "晶圓圖呈中心對稱的碗形（中心高邊緣低或相反），Zernike 以 bowl 項最大，徑向剖面從中心到邊緣單調變化；片內 1σ% 在 PM 那一點階梯式上升。", en: "The wafer map shows a centre-symmetric bowl (centre high and edge low, or the reverse), the Zernike bowl term is largest and the radial profile changes monotonically from centre to edge; the 1σ % steps up exactly at the PM."}
+  C_FIXED_LAYER:
+    when: {zh: "擬合很好（χ² 小、殘差平）但結果和 TEM 或參考值不符，差異大約等於底層實際厚度的改變量，而量測 recipe 裡的底層厚度是固定值。", en: "The fit looks excellent (small χ², flat residuals) yet the result disagrees with TEM or a reference, by roughly the real change of an underlayer whose thickness is fixed in the metrology recipe."}
+    looks: {zh: "膜厚擬合的 χ² 小、殘差沒有結構，但擬合出的厚度和 TEM／參考值有固定的偏差；把底層改成實際值（或 feed-forward）後偏差消失。所有 chamber 與量測機台都一樣偏。", en: "The film fit shows a small χ² and structureless residuals, but the fitted thickness carries a fixed bias versus TEM / the reference that vanishes once the underlayer is set to its real value (or fed forward); every chamber and metrology tool reads the same bias."}
+  C_CORR:
+    when: {zh: "超薄膜的 recipe 同時浮動厚度與 n，重複量測的厚度標準差很大，固定 n 後就變小；兩個參數的相關係數接近 1，硬體正常。", en: "An ultra-thin-film recipe floats both thickness and n, repeat measurements give a large thickness standard deviation that shrinks once n is fixed, the two parameters correlate near 1, and the hardware is fine."}
+    looks: {zh: "擬合 χ² 正常，但重複量測中厚度和 n 反向互換（光學厚度不變），參數相關係數接近 ±1；固定 n 後重複性的長條明顯變短。", en: "The fit χ² is normal, but across repeats thickness and n trade against each other (the optical thickness stays constant) with a parameter correlation near ±1; fixing n shortens the repeatability bar clearly."}
+  C_NOISE_TOOL:
+    when: {zh: "同一台量測機台上所有 recipe 與監控片的重複性一起變差，和光源時數或硬體老化同步，其他量測機台正常。", en: "Repeatability worsens on every recipe and the monitor wafer of one metrology tool together, in step with lamp hours or hardware ageing, while the other metrology tools are fine."}
+    looks: {zh: "擬合殘差在整個波長範圍都變成隨機的雜訊（沒有固定結構），χ² 普遍上升；GR&R 的重複性長條變大，監控片 SPC 的散布在該量測機台變寬，換一台量就正常。", en: "Fit residuals turn into random noise across the whole wavelength range (no fixed structure) and χ² rises generally; the GR&R repeatability bar grows and the monitor-wafer SPC widens on that tool only, reading normally on another tool."}
+  C_WRONG_DISP:
+    when: {zh: "擬合在某個波長區段有系統性的殘差、χ² 偏高，厚度相對參考值的偏差會隨厚度或材料條件改變；換成正確的 n,k 模型後就消失。", en: "The fit leaves systematic residuals in one wavelength region with a high χ², and the bias versus the reference changes with thickness or material condition; it disappears once the right n,k model is used."}
+    looks: {zh: "擬合殘差有規律的波形或在特定波長區段集中，χ² 明顯高於平常；和參考值比較時偏差隨厚度變化，像斜率而不是固定 offset。", en: "Fit residuals show a regular wave or cluster in one wavelength band, with χ² clearly above normal; against the reference the bias changes with thickness, like a slope rather than a fixed offset."}
+  C_REPEAT:
+    when: {zh: "GR&R 幾乎全部來自重複性（同一台機台重複量同一點的雜訊），再現性很小；平均值對得上參考片也不代表精度夠。", en: "Almost all of the GR&R comes from repeatability (the noise of repeated measurements on one tool) and reproducibility is small; an average that matches the reference wafer says nothing about precision."}
+    looks: {zh: "GR&R 分解的長條以 repeatability 為主、reproducibility 很短，%GRR 與 P/T 都偏高、ndc 低；同一片重複量測的散布在每片晶圓上都一樣大。", en: "The GR&R breakdown bars are dominated by repeatability with a short reproducibility bar, %GRR and P/T are both high and ndc is low; the repeat scatter is equally large on every wafer."}
+  C_REPRO:
+    when: {zh: "每台量測機台自己的重複性都很好，但合在一起的 GR&R 以再現性為主：機台之間有系統性差異（calibration、recipe 版本或 n,k 檔不同）。", en: "Each metrology tool repeats very well on its own, but the combined GR&R is dominated by reproducibility: the tools differ systematically (calibration, recipe version or n,k file)."}
+    looks: {zh: "GR&R 長條以 reproducibility 為主、repeatability 很短；依機台分開畫時，每台的點都很集中但彼此錯開，SPC 依量測機台分組會看到各自固定的水準差。", en: "The GR&R bars are dominated by reproducibility with a short repeatability bar; plotted per tool, each tool's points are tight but offset from the others, and SPC grouped by metrology tool shows a fixed level difference per tool."}
+  C_PART_RANGE:
+    when: {zh: "%GRR（以研究變異為分母）很高、ndc 很低，但 P/T 良好，而且研究晶圓的厚度範圍遠小於規格寬度：分母太小，不是量測雜訊大。", en: "%GRR (study variation) is high and ndc low while P/T is good, and the study wafers span far less than the spec width: the denominator is too small, not the measurement noise too large."}
+    looks: {zh: "GR&R 長條中 part-to-part 變異很短，量測誤差的絕對值其實很小；各研究晶圓的平均值擠在很窄的範圍，P/T 遠低於 30%（常在 10% 以下）。", en: "In the GR&R bars the part-to-part variation is very short while the absolute measurement error is small; the study wafers' means crowd into a narrow range and P/T is well below 30 % (often below 10 %)."}
+  C_OFFSET:
+    when: {zh: "matching 時新機台與參考機台之間的差異是一個固定值，不隨厚度改變：平均偏差超出允許範圍，而斜率在 1 附近。", en: "In matching, the difference between the tool and the reference is a constant that does not change with thickness: the mean offset is out of tolerance while the slope is close to 1."}
+    looks: {zh: "Bland-Altman 圖上整條差異帶平行地離開 0，帶子是水平的；Deming 迴歸的斜率接近 1，截距（平均偏差）超出允許範圍。", en: "On the Bland-Altman plot the whole difference band sits parallel away from 0 and is horizontal; the Deming slope is close to 1 while the intercept (mean offset) is out of tolerance."}
+  C_SLOPE:
+    when: {zh: "matching 時機台間的差異隨厚度變大（越厚差越多）：Deming 斜率超出 1 的允許範圍，通常來自波長或角度 calibration、色散模型。", en: "In matching the tool-to-tool difference grows with thickness: the Deming slope is outside its tolerance around 1, usually from wavelength or angle calibration or the dispersion model."}
+    looks: {zh: "Bland-Altman 圖上的差異帶是傾斜的：薄的晶圓差異小、厚的差異大；Deming 迴歸的斜率明顯偏離 1。", en: "On the Bland-Altman plot the difference band is tilted: small difference on thin wafers, large on thick ones; the Deming slope departs clearly from 1."}
+  C_TECH_REFL:
+    when: {zh: "目標膜很薄（通常 < 5 nm），反射儀在這個厚度的 P/T 遠高於 10%（甚至超過 100%），而 SE 的 P/T 低得多。", en: "The target film is very thin (typically < 5 nm), reflectometry's P/T at this thickness is far above 10 % (even above 100 %), and SE's P/T is far lower."}
+    looks: {zh: "技術比較中反射儀的重複性長條遠大於 SE，P/T 遠超過 10%；反射光譜對厚度幾乎沒有反應（不同厚度的光譜幾乎重疊）。", en: "In the technique comparison the reflectometry repeatability bar is far longer than SE's and its P/T is far above 10 %; the reflectance spectra barely respond to thickness (spectra for different thicknesses almost overlap)."}
+  C_TECH_OK:
+    when: {zh: "膜夠厚（數十 nm 以上），反射儀在這個厚度與規格寬度下的 P/T 遠低於 10%，不需要換量測技術。", en: "The film is thick enough (tens of nm and up) and reflectometry's P/T at this thickness and spec width is well below 10 %, so no change of technique is needed."}
+    looks: {zh: "技術比較中反射儀與 SE 的重複性都小，反射儀的 P/T 遠低於 10%；反射光譜隨厚度有明顯的干涉條紋移動。", en: "In the technique comparison both reflectometry and SE repeat well and reflectometry's P/T is well below 10 %; the reflectance spectra show clear interference-fringe movement with thickness."}
+  C_SPEC_WRONG:
+    when: {zh: "只有在產品資料證明規格外的變異不影響電性或良率、且規格負責人（PE／PIE）同意走變更管理時才成立；量測精度不夠永遠不是放寬規格的理由。", en: "Only when product data prove that variation outside the spec does not hurt electrical results or yield and the spec owner (PE / PIE) agrees through change control; a gauge that lacks precision is never a reason to widen a spec."}
+    looks: {zh: "良率或電性對該參數的散布圖在規格外仍然是平的、沒有損失；而量測本身的 P/T 合格，問題不在量測能力。", en: "The yield or electrical scatter against the parameter stays flat with no loss beyond the spec limits, while the gauge's own P/T passes, so the issue is not measurement capability."}
+  C_CURVATURE:
+    when: {zh: "2 水準設計加中心點時，中心點和角點平均的差異顯著（curvature p 值小）：線性模型看不到彎曲，最佳點會被推到角落。", en: "In a 2-level design with centre points, the centre points differ significantly from the corner average (small curvature p-value): a linear model cannot see the bend and pushes the optimum into a corner."}
+    looks: {zh: "DOE 的 curvature 檢定顯著，中心點落在角點連線之外；線性模型的等高線是平行直線、最佳點在角落，殘差在中心點系統性偏一邊。", en: "The DOE curvature test is significant and the centre points fall off the line through the corners; the linear model's contours are parallel straight lines with the optimum in a corner, and the residuals at the centre points sit systematically on one side."}
+  C_EDGE:
+    when: {zh: "優化器建議的最佳點落在實驗範圍的邊界上，而且回應往範圍外的方向還在改善：模型不能外插，真正的最佳點在範圍外。", en: "The optimiser's suggested optimum sits on the boundary of the tested range and the response is still improving toward the outside: the model cannot extrapolate and the true optimum lies outside."}
+    looks: {zh: "等高線圖的最佳區域貼著實驗範圍的邊緣、往外仍然在變好，範圍內看不到封閉的最佳點；desirability 在邊界上最高。", en: "On the contour plot the best region hugs the edge of the tested range and still improves outward, with no closed optimum inside; desirability peaks right on the boundary."}
+  C_NOISE_DOE:
+    when: {zh: "DOE 幾乎沒有顯著項、預測 R² 低、殘差 RMSE 大，而且沒有重複或量測雜訊偏高：效應被雜訊淹沒，不代表因子沒有作用。", en: "The DOE shows almost no significant terms, a low predicted R² and a large residual RMSE, with no replicates or with high measurement noise: the effects drown in noise, which does not mean the factors do nothing."}
+    looks: {zh: "DOE 的效應 Pareto 所有長條都在顯著線以下，預測 R² 很低；重複點之間的差異和效應一樣大，殘差大而沒有結構，量測 GR&R 可能偏高。", en: "Every bar of the DOE effect Pareto stays below the significance line and predicted R² is very low; replicate points differ as much as the effects, residuals are large and structureless, and the measurement GR&R may be high."}
+  C_ALIAS:
+    when: {zh: "部分因子設計中，顯著的效應和另一個效應（常是交互作用）混淆在一起；fold-over 或確認實驗顯示效應其實來自別的因子。", en: "In a fractional design a significant effect is aliased with another effect (often an interaction), and a fold-over or confirmation run shows the effect really comes from a different factor."}
+    looks: {zh: "效應 Pareto 中某個主效應很大，但 alias 表顯示它和其他大因子的交互作用混淆；確認實驗的結果和模型預測不符，fold-over 後效應換到另一項。", en: "The effect Pareto shows a large main effect, but the alias table shows it confounded with an interaction of other large factors; confirmation runs miss the model prediction and after a fold-over the effect moves to another term."}
+  C_PARTICLE:
+    when: {zh: "參數 SPC 正常，但少數幾批的 inline 缺陷密度突然跳高，失效是外圈一整圈的缺陷型失效，commonality 指向同一台沉積機台。", en: "Parameter SPC is in control, but inline defect density jumps for a few lots, the fails are defect-type fails in a full edge ring, and commonality points to one deposition tool."}
+    looks: {zh: "參數 SPC 平穩，缺陷數量趨勢在幾批跳高後回落；缺陷圖與 die map 呈外圈環狀，review Pareto 以微粒為主，良率趨勢在同幾批下降。", en: "Parameter SPC is flat while the defect-count trend spikes for a few lots and falls back; the defect map and die map form an edge ring, the review Pareto is led by particles, and the yield trend drops on the same lots."}
+  C_DEFECT_CENTER:
+    when: {zh: "缺陷密度跳高、失效集中在晶圓中心，參數 SPC 正常，commonality 指向同一台機台（中心相關：噴嘴、殘留、夾持）。", en: "Defect density jumps with fails concentrated at the wafer centre, parameter SPC is normal, and commonality points to one tool (centre-related: nozzle, residue, chuck)."}
+    looks: {zh: "缺陷圖與 die map 在晶圓中心形成一團（CoW），外圈乾淨；缺陷數量趨勢在少數幾批跳高，良率同時下降，參數 SPC 沒有訊號。", en: "The defect map and die map form a cluster at the wafer centre (CoW) with a clean edge; the defect-count trend spikes for a few lots as yield drops, with no signal on parameter SPC."}
+  C_NUISANCE:
+    when: {zh: "同一個 POR 檢查 recipe、沒有 split 或製程變更，數量卻暴增甚至 maxout，而 review 大多看不到東西（non-visible）：機台在數 nuisance。", en: "On the same POR inspection recipe with no split or process change, counts explode or even max out while review mostly sees nothing (non-visible): the tool is counting nuisance."}
+    looks: {zh: "缺陷數量趨勢暴增或卡在 maxout，review Pareto 以 non-visible／nuisance 為大宗，真缺陷的數量和平常差不多；缺陷圖可能是均勻散布或順著色差、粗糙區域，良率沒有對應變化。", en: "The defect-count trend explodes or sits at the maxout, the review Pareto is mostly non-visible / nuisance while the real-defect count is as usual; the defect map is spread evenly or follows colour / roughness areas, and yield shows no matching change."}
+  C_INCOMING:
+    when: {zh: "同一片晶圓在前一層的缺陷數就已經比較多，本層的 adder（本層減前層）和 baseline 差不多：缺陷是帶進來的，不是本層或 split 造成。", en: "The same wafers already carried more defects at the previous layer, while this layer's adders (current minus previous) match the baseline: the defects came in, not from this layer or the split."}
+    looks: {zh: "前後層比對中 split 片在前層就偏多，adder 長條和 baseline 相同；本層缺陷圖上的缺陷大多能在前層同位置找到。", en: "The previous-vs-current comparison shows the split wafers already high at the previous layer with adder bars equal to the baseline; most defects on this layer's map are found at the same spots on the previous layer."}
+  C_SPLIT:
+    when: {zh: "前一層 split 與 baseline 差不多，但本層的 adder 在 split 片明顯較多：新條件本身在這一層增加了缺陷。", en: "The previous layer is about the same for split and baseline, but this layer's adders are clearly higher on the split wafers: the new condition itself adds defects at this layer."}
+    looks: {zh: "前後層比對中前層數量相近、split 的 adder 長條明顯高於 baseline；review Pareto 中 split 多出某一類缺陷，缺陷在前層同位置找不到。", en: "The previous-vs-current comparison shows similar previous-layer counts but split adder bars clearly above baseline; the review Pareto shows an extra defect type on the split, not found at the same spots on the previous layer."}
+  C_SAMPLING_GAP:
+    when: {zh: "例行抽樣點全部正常、SPC 一直沒訊號，但全片圖顯示只有例行點位沒涵蓋到的最外圈偏離，而且失效晶粒也在那一圈。", en: "Every routine site is normal and SPC has never flagged, but the full-wafer map shows only the outermost ring, which routine sampling does not cover, off target, and the failing dies sit in that ring."}
+    looks: {zh: "例行點的 SPC 平穩；全片圖與徑向剖面在最外圈（超出例行點的半徑）突然偏離，內圈都在 target；die map 的失效集中在同一圈。", en: "Routine-site SPC is flat; the full-wafer map and radial profile depart suddenly at the outermost ring (beyond the routine sites' radius) while the inner sites are on target; the die map's fails sit in the same ring."}
+  C_NOT_METRO:
+    when: {zh: "被懷疑的參數在全片圖（含最外圈）每一點都在 target 附近、和失效位置沒有對應：這個參數不是失效原因。", en: "The suspected parameter is near target at every site of the full-wafer map, outer ring included, with no match to the failure locations: it is not the cause of the failure."}
+    looks: {zh: "全片圖與徑向剖面平整、所有點都在規格內，包含例行點以外的邊緣點；失效晶粒的位置和參數圖沒有空間上的對應。", en: "The full-wafer map and radial profile are flat with every site in spec, edge sites beyond the routine plan included; the failing dies show no spatial match to the parameter map."}
+  C_PARAM_DRIVES:
+    when: {zh: "把每片晶圓的 inline 參數對 bin 損失作圖時，有一個參數的相關明顯很強（|r| 約 0.7 以上），而且方向合理；其他參數沒有。", en: "Plotting each wafer's inline parameters against the bin loss, one parameter correlates clearly and strongly (|r| about 0.7 or more) in a plausible direction, and the others do not."}
+    looks: {zh: "bin 相關圖中只有一個參數的散布圖呈清楚的斜線（|r| 高），其他參數的點雲是平的；損失最大的晶圓落在該參數的同一端。", en: "In the bin correlation only one parameter's scatter forms a clear sloped line (high |r|) while the others are flat clouds; the worst-loss wafers sit at one end of that parameter."}
+  C_NO_METRO_LINK:
+    when: {zh: "所有 inline 量測參數對 bin 損失的相關都很弱（|r| 都小），參數也都在規格內：量測排除了自己，損失多半來自缺陷或其他機制。", en: "Every inline metrology parameter correlates only weakly with the bin loss (all |r| small) and all sit in spec: metrology rules itself out, and the loss is likely defect-driven or another mechanism."}
+    looks: {zh: "bin 相關圖中每個參數的散布圖都是平的點雲、|r| 都小；損失最大的晶圓在各參數上都落在正常範圍中間。", en: "In the bin correlation every parameter's scatter is a flat cloud with small |r|; the worst-loss wafers sit in the middle of the normal range on every parameter."}
+  C_INSP_BLIND:
+    when: {zh: "疊圖顯示目前監控站的 capture rate 很低（低於約 30%），另一站卻能抓到大部分失效晶粒：監控站看不到這些 killer，它的 SPC 正常也證明不了什麼。", en: "The overlay shows a low capture rate at the current monitor step (below about 30 %) while another step catches most failing dies: the monitor cannot see these killers, so its clean SPC proves nothing."}
+    looks: {zh: "probe 疊圖上失效晶粒大多沒有落在監控站的缺陷上，卻和另一站的缺陷重合；capture rate 一站低一站高，監控站的缺陷 SPC 平穩而良率在掉。", en: "On the probe overlay most failing dies carry no defect from the monitor step but do coincide with the other step's defects; capture rate is low at one step and high at the other, and the monitor's defect SPC is flat while yield falls."}
+  C_KILLER_SOURCE:
+    when: {zh: "監控站抓到的缺陷大多落在失效晶粒上：capture rate 高、kill ratio 明顯高於隨機落點的機率，監控有效，問題在缺陷來源。", en: "The defects the monitor catches mostly land on failing dies: a high capture rate and a kill ratio well above the chance of landing there at random, so the monitor works and the problem is the defect source."}
+    looks: {zh: "probe 疊圖上大部分失效晶粒都帶有監控站的缺陷，capture rate 高、kill ratio 遠高於隨機機率；缺陷密度上升與良率下降同步。", en: "On the probe overlay most failing dies carry a monitor-step defect, capture rate is high and the kill ratio far above chance; the defect density rise and the yield drop move together."}
+  C_CONFOUNDED:
+    when: {zh: "split 的分組和另一個實驗（例如 litho FEM 偏離條件的晶圓）重疊，差異集中在受干擾的晶圓上；只用標準條件晶圓重算時差異消失。", en: "The split groups overlap another experiment (e.g. off-nominal litho FEM wafers), the difference sits on the disturbed wafers, and it disappears when recomputed on nominal wafers only."}
+    looks: {zh: "split 檢查中受其他實驗影響的晶圓不平均地落在某一組，而且良率特別低；依實際條件、排除受干擾晶圓重算後，組間差異接近 0。", en: "The split check shows the wafers hit by the other experiment unevenly spread, concentrated in one group with especially low yield; recomputed by actual condition without them, the group difference is close to 0."}
+  C_SPLIT_MISSET:
+    when: {zh: "run log 顯示某一組晶圓實際跑的 recipe 和計畫不同，所以「這組沒差」或「這組比較好」的結論其實是在比兩組相同的條件。", en: "The run log shows one group actually ran a different recipe from its plan, so the claim that this group makes no difference (or is better) really compares two identical conditions."}
+    looks: {zh: "split 檢查中計畫條件與實際條件對不上，某一組全部跑成另一組的 recipe；依實際條件分組後那一組不存在，兩組良率幾乎重疊。", en: "The split check shows planned and actual conditions not matching, one group having run entirely on another group's recipe; grouped by actual condition that group does not exist and the two groups' yields almost overlap."}
+  C_SPLIT_VALID:
+    when: {zh: "run log 與計畫一致、沒有其他實驗干擾，只看標準條件的晶圓差異仍然成立：差異就是條件本身造成的。", en: "The run log matches the plan, no other experiment interferes, and the difference still holds on nominal wafers only: the condition itself causes it."}
+    looks: {zh: "split 檢查全部打勾：每片的 recipe 與計畫相符、沒有重疊實驗；計畫分組與實際分組算出的差異一致，超過雜訊。", en: "The split check passes everywhere: every wafer's recipe matches the plan and nothing overlaps; the difference computed from planned and from actual groups agrees and exceeds the noise."}
+  C_NET_GAIN:
+    when: {zh: "新條件某區變好、某區變差，但依每區晶粒數加權後的淨效果為正，而且超過約 2 個標準誤。", en: "The new condition improves one zone and worsens another, but the net effect weighted by each zone's die share is positive and beyond about 2 standard errors."}
+    looks: {zh: "分區良率圖中變好的區域（常是晶粒最多的區域）增益大，變差區域的損失較小；加權淨效果的誤差棒完全在 0 以上。", en: "The zone yield chart shows a large gain in the improved zone (often the one with most dies) and a smaller loss in the worse zone; the weighted net effect's error bar sits entirely above 0."}
+  C_ZONE_CANCEL:
+    when: {zh: "新條件某區變好、某區變差，依晶粒數加權後的淨效果在雜訊範圍內（不到約 2 個標準誤）：增益被抵消，整體看不出好處。", en: "The new condition improves one zone and worsens another, and the die-weighted net effect is within the noise (less than about 2 standard errors): the gain is cancelled, with no overall benefit."}
+    looks: {zh: "分區良率圖中某區的增益和另一區的損失大小相當，加權淨效果的誤差棒跨過 0。", en: "The zone yield chart shows a gain in one zone about as large as the loss in another, and the weighted net effect's error bar crosses 0."}
+  C_PROBE_LAG:
+    when: {zh: "缺陷來源已經修好、inline 密度已經回落，但本週到 probe 的低良率 lot 都是修好前製造的：probe 比製程晚幾週，DLY 還沒反映修正。", en: "The defect source is already fixed and inline density has already dropped, but this week's low-yield lots at probe were all processed before the fix: probe lags processing by weeks, so DLY does not show the fix yet."}
+    looks: {zh: "DLY 趨勢仍在目標下方，但 inline 缺陷密度在修正那一週後就降下來；本週 probe 的 lot 製程日期都在修正之前，修正後的 lot 還沒到 probe。", en: "The DLY trend is still below goal, but inline defect density dropped right after the fix week; this week's probed lots were all processed before the fix, and post-fix lots have not reached probe yet."}
+  C_OUTLIER_WAFERS:
+    when: {zh: "整週 DLY 被少數已知原因（並已處置）的異常晶圓拉低，排除它們後的基準線在目標之上，隨機與系統性損失都正常。", en: "The weekly DLY is dragged down by a few excursion wafers with a known, already-handled cause; without them the baseline is above goal and both random and systematic loss are normal."}
+    looks: {zh: "DLY 趨勢本週掉到目標下，但不含標記晶圓的線仍在目標之上；各金屬層 opens／shorts 通過率正常，inline 密度沒有上升。", en: "The DLY trend dips below goal this week, but the line without the flagged wafers stays above it; opens / shorts passing on every metal level is normal and inline density has not risen."}
+  C_LEVEL_SYSTEMATIC:
+    when: {zh: "某一金屬層的 opens 或 shorts 通過率持續下降、系統性損失越來越大，而 inline killer 密度沒有對應上升，也不是少數晶圓造成。", en: "Opens or shorts passing on one metal level keeps falling and the systematic loss keeps growing, without a matching rise in inline killer density and not from a few wafers."}
+    looks: {zh: "DLY 趨勢連續數週往下，層別通過率只有一層的 opens 或 shorts 一路下滑，其他層平穩；inline 密度平穩，排除標記晶圓後仍是紅燈。", en: "The DLY trend falls for several weeks, level passing shows opens or shorts on one level sliding while the other levels hold; inline density is flat and it stays red without the flagged wafers."}
+  C_SUBSURFACE:
+    when: {zh: "SEM 俯視只看到粗糙或分不出類別，但同一位置的缺陷在下一層又出現：是表面下或被覆蓋的真實缺陷。", en: "SEM top-down sees only roughness or cannot classify, but the defects reappear at the same location at the next layer: a real defect below the surface or covered."}
+    looks: {zh: "跨層重複圖上 cluster 的缺陷大多在下一層同位置（容許半徑內）再出現；review Pareto 以「無法分類／粗糙」為主，失效可能在 probe 對上同一區。", en: "The layer-repeat chart shows most cluster defects reappearing at the same spots (within the radius) at the next layer; the review Pareto is led by unclassified / roughness, and probe fails may line up with the same area."}
+  C_SURFACE_ARTIFACT:
+    when: {zh: "光學檢查看到色差或粗糙，SEM 分不出類別，而且在下一層同位置幾乎都沒有再出現：只是表面的假訊號（nuisance）。", en: "Optical inspection sees a colour change or roughness, SEM cannot classify it, and almost none of it reappears at the same spot at the next layer: a surface-only signal (nuisance)."}
+    looks: {zh: "跨層重複圖上 cluster 的缺陷在下一層同位置的重現比例接近隨機；review 以色差／粗糙為主，probe 在該區沒有額外失效。", en: "The layer-repeat chart shows the cluster's repeat rate at the next layer close to chance; review is led by colour / roughness, and probe shows no extra fails in that area."}
+
+  # ------------------------------------------------------------------ actions
+  A_VERIFY:
+    when: {zh: "量測結果還沒被確認（沒有同片重測、參考機台比對或 GOF／監控片檢查）時的 OCAP 第一步；已經確認過量測，就不要再停在這一步。", en: "Step one of the OCAP while the measurement has not been confirmed yet (no re-measure, reference-tool check or GOF / monitor-wafer check); once the measurement is already confirmed, do not stop at this step again."}
+  A_HOLD_INHIBIT:
+    when: {zh: "單一 chamber 的製程偏移已確認是真的（量測已排除）而且會影響產品時：hold 受影響 lot、inhibit 該 chamber、EE 修復後跑 qual；量測還沒確認就停機是太早。", en: "When a single-chamber process shift is confirmed real (metrology ruled out) and puts product at risk: hold the affected lots, inhibit the chamber, EE fixes it and qual follows; doing it before the measurement is confirmed is premature."}
+  A_RECORD:
+    when: {zh: "沒有持續的特殊原因時：單一點已重測正常、或只是需要留紀錄的觀察；只要訊號持續、重複或已影響產品，只記錄就是漏處理。", en: "When there is no sustained special cause: a single point already re-measured normal, or an observation that only needs a record; if the signal persists, repeats or touches product, recording alone misses it."}
+  A_RETARGET:
+    when: {zh: "製程穩定、沒有 OOC、Cp 足夠但 Cpk 低（平均不在中心），且量測 matching 已排除偏差時，和 PE 走變更管理調 target；拿來處理偏移或漂移只會把真正的原因藏起來。", en: "When the process is stable with no OOC, Cp is fine but Cpk low (the mean off centre) and matching has ruled out a gauge bias: re-target with PE through change control; using it on a shift or drift only hides the real cause."}
+  A_PM:
+    when: {zh: "單一 chamber 慢慢單向漂移、單點仍在規格內、接近 PM 週期時：提前 PM／換消耗品，期間提高抽樣並用 EWMA 追蹤。", en: "When one chamber drifts slowly in one direction, single points are still in spec and the PM cycle is near: pull the PM / consumable change in and raise sampling with EWMA tracking until then."}
+  A_REGROUP:
+    when: {zh: "很多 chamber 同時 OOC、隨 lot 一高一低交替，懷疑是量測端時：先依量測機台重新分組 SPC，再用黃金片比對各量測機台。", en: "When many chambers go OOC at once, alternating lot by lot, and metrology is suspected: re-plot the SPC by metrology tool first, then compare the tools on a golden wafer."}
+  A_WAFERMAP:
+    when: {zh: "平均值正常但片內 1σ% 變大、形狀還沒確認時：先看該 chamber 的晶圓圖找出形狀，再依形狀請 EE 查對應硬體。", en: "When the mean is normal but the 1σ % has risen and the shape is not yet known: look at that chamber's wafer maps to find the shape first, then ask EE to check the hardware that matches it."}
+  A_EE_HW:
+    when: {zh: "量測已確認、晶圓圖的形狀已經指向特定硬體（edge ring、加熱器、噴頭、水平）時：請 EE 檢查並 hold 該 chamber 後續 lot；量測還沒確認就先做是太早。", en: "When the measurement is confirmed and the wafer-map shape already points at specific hardware (edge ring, heater, showerhead, levelling): have EE check it and hold that chamber's next lots; doing it before the measurement is confirmed is premature."}
+  A_FIX_RECIPE:
+    when: {zh: "問題在量測 recipe 的模型（固定的底層值不對、浮動了高度相關的參數），硬體正常時：修正 recipe 並重新驗證後再發行。", en: "When the problem is the metrology recipe's model (a wrong fixed underlayer value, strongly correlated parameters floated) and the hardware is fine: fix the recipe and re-validate before release."}
+  A_TOOL_FIX:
+    when: {zh: "GR&R 以單一機台的重複性為主（同機台重複量的雜訊大）時：檢查並修正對焦、光源、stage 等硬體，修好後重做 GR&R。", en: "When the GR&R is dominated by one tool's repeatability (large noise on repeated measurements): check and fix focus, lamp, stage and similar hardware, then redo the GR&R."}
+  A_MATCH:
+    when: {zh: "每台機台自己的重複性都好、但 GR&R 以再現性（機台間差異）為主時：用黃金片比對各機台的 recipe 與 calibration，修正後重做 matching。", en: "When each tool repeats well but the GR&R is dominated by reproducibility (tool-to-tool differences): compare recipe and calibration across the tools on a golden wafer, fix them and redo matching."}
+  A_CALIBRATE:
+    when: {zh: "某一台量測機台對參考機台的 matching 不合格（平均偏差或斜率超出允許範圍）時：該機台停量這個 recipe、重新 calibration，期間改用參考機台。", en: "When one metrology tool fails matching against the reference (mean offset or slope out of tolerance): take it off this recipe and recalibrate, using the reference tool meanwhile."}
+  A_RESELECT:
+    when: {zh: "%GRR 高、ndc 低但 P/T 良好，而研究晶圓的範圍遠小於規格寬度時：重選涵蓋製程範圍的研究晶圓，並以 P/T 判斷量測能力。", en: "When %GRR is high and ndc low but P/T is good, and the study wafers span far less than the spec width: re-select study wafers that span the process range and judge capability by P/T."}
+  A_CHANGE_TECH:
+    when: {zh: "反射儀在這個厚度的 P/T 遠高於 10%、而 SE 可以達到時（通常是超薄膜）：改用 SE 量測，重新驗證 GR&R 後再發行。", en: "When reflectometry's P/T at this thickness is far above 10 % while SE can reach it (typically ultra-thin films): move the measurement to SE and re-validate the GR&R before release."}
+  A_KEEP_TECH:
+    when: {zh: "反射儀在這個厚度與規格寬度下的 P/T 已遠低於 10% 時（通常是較厚的膜）：維持反射儀，用 GR&R 確認後發行，不必換技術。", en: "When reflectometry's P/T at this thickness and spec width is already well below 10 % (typically thicker films): keep reflectometry, confirm with a GR&R and release, with no change of technique."}
+  A_AUGMENT:
+    when: {zh: "雜訊夠小、但模型結構不足時：2 水準設計看到 curvature 就加軸點擴成 CCD；最佳點落在範圍邊界就往改善方向移動範圍。", en: "When the noise is small enough but the model structure falls short: add axial points (CCD) when a 2-level design shows curvature, or move the range toward the optimum when it sits on the boundary."}
+  A_REPLICATE:
+    when: {zh: "DOE 幾乎沒有顯著項、預測 R² 低、殘差大時：先找雜訊來源（量測 GR&R 或製程），加重複與中心點、降低雜訊後再分析，而不是急著擴大實驗範圍。", en: "When the DOE shows almost no significant terms, a low predicted R² and large residuals: find the noise source (measurement GR&R or process), add replicates and centre points and reduce noise before analysing again, rather than widening the design."}
+  A_RELEASE_RECIPE:
+    when: {zh: "只有在模型已經驗證過時才成立：沒有未建模的 curvature、最佳點在範圍內、預測 R² 好、重複點雜訊小，而且確認實驗符合預測；否則直接發行是在賭模型。", en: "Only when the model is already validated: no unmodelled curvature, the optimum inside the range, a good predicted R², low replicate noise and confirmation runs that match the prediction; otherwise releasing it is a bet on the model."}
+  A_FA:
+    when: {zh: "參數正常但缺陷密度跳高、失效是缺陷型（外圈環狀或中心群聚）而且已造成良率損失時：hold 受影響 lot，拉片給 RDA review／SEM，並對機台做 commonality 找來源。", en: "When parameters are normal but defect density has jumped, the fails are defect-type (an edge ring or a centre cluster) and yield is already lost: hold the affected lots, pull wafers for RDA review / SEM and run tool commonality to find the source."}
+  A_TUNE_RECIPE:
+    when: {zh: "review 證明數量是 nuisance 或只是表面假訊號（看不到真缺陷、下一層不再出現）時：用 review 資料調整檢查 recipe，確認真缺陷的 capture rate 沒有下降，再用數量判斷。", en: "When review proves the count is nuisance or a surface-only signal (nothing real at review, not repeating at the next layer): tune the inspection recipe from the review data and confirm the real-defect capture rate has not dropped before judging by counts."}
+  A_PREV_LAYER:
+    when: {zh: "缺陷變多、但還不知道是本層增加還是前層帶進來，或同一片在前層就已經偏多時：做同片前後層比對（adder），往前層與前層機台追來源。", en: "When defects rose but it is not yet known whether this layer added them or they came in, or the same wafers were already high at the previous layer: run the same-wafer previous-vs-current comparison (adders) and trace upstream to the previous layer and its tools."}
+  A_SPLIT_REVIEW:
+    when: {zh: "前層數量相近、但 split 片在本層的 adder 明顯較多時：review／SEM split 片的 adder、和 baseline 比對類型，結果回饋給 PE 與製程負責人。", en: "When previous-layer counts are similar but the split wafers' adders at this layer are clearly higher: review / SEM the split adders, compare types with the baseline and feed back to PE and the process owner."}
+  A_REPLY_FULLMAP:
+    when: {zh: "FA 問某參數是否為原因，而全片圖顯示例行點位涵蓋不到的最外圈確實偏離時：回覆全片資料並標出邊緣，請 PE／EE 查邊緣硬體，並把邊緣點加進例行抽樣。", en: "When FA asks whether a parameter is the cause and the full-wafer map shows the outermost ring, outside the routine sites, really off: reply with the full map and flag the edge, ask PE / EE to check edge hardware, and add edge sites to routine sampling."}
+  A_REPLY_DATA:
+    when: {zh: "FA 問某參數是否為原因，而全片圖（含邊緣）每一點都在 target 時：用資料回覆參數不是原因，建議往其他機制查，讓調查往前走。", en: "When FA asks whether a parameter is the cause and the full-wafer map, edge included, is on target everywhere: reply with the data that the parameter is not the cause and suggest other mechanisms, so the investigation moves on."}
+  A_SEND_PE:
+    when: {zh: "某個 inline 參數和 bin 損失有強而合理的相關（|r| 約 0.7 以上）時：把相關圖與晶圓清單交給 YE／PE，建議用 split 或 DOE 確認機制；相關不等於因果，不要直接調 target。", en: "When one inline parameter correlates strongly and plausibly with the bin loss (|r| about 0.7 or more): send the plot and wafer list to YE / PE and propose a split or DOE to confirm the mechanism; correlation is not causation, so do not re-target directly."}
+  A_SUGGEST_FA:
+    when: {zh: "所有 inline 量測參數和 bin 損失都沒有明顯相關時：清楚回覆 YE 量測排除了自己，建議對失效晶粒做 defect review／FA。", en: "When no inline metrology parameter correlates clearly with the bin loss: tell YE clearly that metrology rules itself out and suggest defect review / FA on the failing dies."}
+  A_CHANGE_REVIEW:
+    when: {zh: "所有 chamber 同時、同量偏移，而且兩台量測機台量到的都一樣時：對照該時間點前後的 recipe、進料與版本變更，請 PE 確認是否為預期中的變更。", en: "When every chamber moved at once by the same amount, on both metrology tools alike: check the recipe, incoming-material and version changes around that time and ask PE whether the change was intended."}
+  A_MOVE_MONITOR:
+    when: {zh: "目前監控站的 capture rate 低、另一站高時：把缺陷監控移到（或加上）capture rate 高的那一站，設定抽樣、SPC 與 review。", en: "When the current monitor step's capture rate is low and another step's is high: move (or add) the defect monitor to the high-capture step with sampling, SPC and review."}
+  A_SOURCE_FIX:
+    when: {zh: "監控站的 capture rate 與 kill ratio 都高、監控有效時：把疊圖、kill ratio 與預期良率回收交給 PE／EE 修缺陷來源，監控站維持不變。", en: "When the monitor step's capture rate and kill ratio are both high and the monitor works: give PE / EE the overlay, the kill ratio and the expected yield gain to fix the defect source, keeping the monitor as is."}
+  A_RERUN_SPLIT:
+    when: {zh: "split 受到其他實驗干擾、或 run log 顯示有一組沒有照計畫跑時：回報這次 split 無法下結論，重新設計（隨機分配、避免重疊實驗、run 前確認 recipe）後重跑。", en: "When the split was disturbed by another experiment or the run log shows a group did not run as planned: report it as inconclusive and rerun it redesigned (randomised wafers, no overlapping experiment, recipes checked before the run)."}
+  A_REPORT_SPLIT:
+    when: {zh: "run log 與計畫一致、沒有重疊實驗、只看標準條件晶圓差異也成立時：整理 split 結論（含實驗檢查）交給 PE／YE，進入轉換評估。", en: "When the run log matches the plan, nothing overlaps and the difference holds on nominal wafers alone: write up the split conclusion, setup check included, for PE / YE and move to the conversion review."}
+  A_ADOPT_FOLLOWUP:
+    when: {zh: "依晶粒數加權後的淨效果明確為正（超過約 2 個標準誤）時：依變更管理轉換，並對變差的區域開追蹤項目。", en: "When the die-weighted net effect is clearly positive (beyond about 2 standard errors): convert through change control and open a follow-up on the zone that got worse."}
+  A_FIX_ZONE_RESPLIT:
+    when: {zh: "某區的增益被另一區的損失抵消、加權淨效果在雜訊內時：維持 POR，請 PE 先解決變差的區域，再重做 split。", en: "When one zone's gain is cancelled by another zone's loss and the weighted net effect is within the noise: keep POR, have PE fix the zone that got worse, then re-split."}
+  A_TRACK_LEADING:
+    when: {zh: "紅燈來自修正前製造、現在才到 probe 的 lot，而 inline 密度已經回落時：紅燈照報並寫明原因，用 inline 密度當領先指標，追蹤修正後第一批 lot 的 probe。", en: "When the red comes from lots processed before the fix that are only now reaching probe, and inline density has already dropped: report the red with its reason, use inline density as the leading indicator and follow the first post-fix lots at probe."}
+  A_REPORT_BOTH:
+    when: {zh: "紅燈是少數已知原因的異常晶圓造成、排除後基準線在目標之上時：同時報告含與不含異常晶圓的數字並寫明原因，異常另開追蹤，不刪資料。", en: "When the red comes from a few excursion wafers with a known cause and the baseline without them is above goal: report the number with and without them and why, track the excursion separately and never delete data."}
+  A_ESCALATE_LEVEL:
+    when: {zh: "某一金屬層的 opens／shorts 系統性損失持續變大、不是少數晶圓也不是 probe 延遲時：對該層 module 開 excursion，做 commonality、看該層 inline 資料、對失效晶粒做 FA。", en: "When one metal level's systematic opens / shorts loss keeps growing and it is neither a few wafers nor probe lag: open an excursion on that level's module with commonality, that level's inline data and FA on the failing dies."}
+  A_XSECTION:
+    when: {zh: "SEM 俯視分不出類別、但缺陷在下一層同位置再出現時：換 review 方式（傾斜 SEM、EDX）、在 cluster 做 FIB 切面，並追到下一層與 probe。", en: "When SEM top-down cannot classify the defects but they reappear at the same spot at the next layer: use other review modes (tilted SEM, EDX), cut a FIB cross-section in the cluster and follow it to the next layer and probe."}
+
+  # ------------------------------------------------------------------ decisions
+  D_HOLD:
+    when: {zh: "產品可能真的受影響（製程偏移、形狀改變、缺陷事件或抽樣盲區的偏離），而影響大小要由 PIE／PE 判定時：先 hold 受影響 lot，等 disposition；不要直接放行或報廢。", en: "When product may really be affected (a process shift, a shape change, a defect event or an excursion in a sampling blind spot) and PIE / PE must judge how much: hold the affected lots pending disposition; neither release nor scrap outright."}
+  D_RELEASE:
+    when: {zh: "資料顯示產品沒有受影響時：單一機率點已重測正常、只是表面假訊號、或被懷疑的參數在全片都在 target；還沒驗證前就放行是太早。", en: "When the data show product is not affected: a single chance point already re-measured normal, a surface-only artefact, or a suspected parameter shown on target across the wafer; releasing before any of this is verified is premature."}
+  D_RELEASE_WATCH:
+    when: {zh: "單一 chamber 慢漂移、產品單點仍在規格內時：規格內的產品照常放行，該 chamber 提前 PM 並加強監控；不必 hold，也不要用調 target 掩蓋老化。", en: "When one chamber drifts slowly while product points are still in spec: release in-spec product, pull the chamber's PM in and monitor more closely; no hold, and no re-target to mask the wear."}
+  D_REMEASURE_RELEASE:
+    when: {zh: "數值可疑的是量測、不是產品（量測機台偏差、單一量測點異常、單點 OOC 還沒重測）時：在參考機台重測確認後放行。", en: "When the suspect is the reading, not the product (a metrology-tool offset, a single bad site, a single OOC point not yet re-measured): release after re-measuring on the reference tool."}
+  D_RETARGET:
+    when: {zh: "製程穩定、沒有 OOC、只是平均不在規格中心（Cp 夠、Cpk 低）時：繼續生產並排定 target 調整；有偏移、漂移或量測偏差時不是這個選項。", en: "When the process is stable with no OOC and the mean simply sits off the spec centre (Cp fine, Cpk low): keep running and schedule the re-target; not the answer for a shift, a drift or a gauge bias."}
+  D_RECIPE_FIX:
+    when: {zh: "生產中的量測數值被 recipe 的模型偏差帶偏時（例如固定的底層值不對）：在修正 recipe 之前，不要依這些數值調製程或判退產品。", en: "When production readings are biased by the metrology recipe's model (e.g. a wrong fixed underlayer): do not adjust the process or reject product on these readings until the recipe is fixed."}
+  D_RECIPE_NOT_READY:
+    when: {zh: "新的或要沿用的量測 recipe 在驗證時精度不夠（重複性差、P/T 太高、參數相關太強）時：還不能發行，修正後重新驗證。", en: "When a new or carried-over metrology recipe lacks precision at validation (poor repeatability, P/T too high, parameters too correlated): it is not ready to release; fix it and re-validate."}
+  D_RECIPE_OK:
+    when: {zh: "量測 recipe 的 P/T 遠低於 10%、重複性與擬合都正常時：可以進入驗證／發行。", en: "When the metrology recipe's P/T is well below 10 % and repeatability and fit are normal: it can go to validation / release."}
+  D_GAUGE_NOT_OK:
+    when: {zh: "GR&R 真的不合格（重複性或再現性造成 P/T 也偏高）時：量測系統暫停用於 SPC 與放行判定，修正後重做 GR&R。", en: "When the GR&R really fails (repeatability or reproducibility pushing P/T up as well): stop using the gauge for SPC and release decisions, fix it and redo the GR&R."}
+  D_GAUGE_OK:
+    when: {zh: "%GRR 高只是因為研究晶圓範圍太窄、而 P/T 良好時：量測系統可用，以 P/T 判斷。", en: "When the high %GRR only comes from a too-narrow set of study wafers and P/T is good: the gauge is usable, judged by P/T."}
+  D_ROUTE_REF:
+    when: {zh: "某一台量測機台 matching 不合格（offset 或斜率超出）時：該機台停量此 recipe，產品改到參考機台，已量測的 lot 標記複核。", en: "When one metrology tool fails matching (offset or slope out of tolerance): stop this recipe on it, route product to the reference tool and flag lots it already measured for review."}
+  D_MODEL_NOT_READY:
+    when: {zh: "DOE 模型還有 curvature 沒建模、最佳點在邊界、或雜訊淹沒效應時：還不能用來定配方，先補實驗。", en: "When the DOE model still has unmodelled curvature, an optimum on the boundary, or effects drowned in noise: it cannot set the recipe yet; run more experiments first."}
+  D_RELEASE_PROCESS:
+    when: {zh: "只有在模型已經可信時（curvature 已建模、最佳點在範圍內、雜訊小、預測 R² 好）：才把最佳點帶進確認實驗與 qual；否則是太早。", en: "Only when the model is trustworthy (curvature modelled, optimum inside the range, low noise, good predicted R²): take the optimum to confirmation runs and qual; otherwise it is premature."}
+  D_SCRAP:
+    when: {zh: "只有在 PIE／PE 依資料判定晶圓超出規格且無法重工或使用時；從 SPC 訊號、缺陷數量或單一量測直接報廢永遠不是第一步。", en: "Only when PIE / PE, on the data, judge the wafers out of spec beyond rework or use; scrapping straight from an SPC signal, a defect count or a single reading is never the first step."}
+  D_NO_HOLD_COUNTS:
+    when: {zh: "數量暴增但 review 證明大多是 nuisance、真缺陷沒有變多時：不要只憑數量 hold 或判退，用調整後的 recipe 重新檢查。", en: "When counts exploded but review shows they are mostly nuisance with no more real defects: do not hold or reject on the counts alone; re-inspect with the tuned recipe."}
+  D_CONFIRM_SOURCE:
+    when: {zh: "split 片的缺陷在前層就已經偏多（incoming）、本層 adder 和 baseline 相近時：先確認缺陷來源，再決定是否全面轉換，不要先怪 split。", en: "When the split wafers were already high at the previous layer (incoming) and this layer's adders match the baseline: confirm the defect source before deciding on full conversion, and do not blame the split yet."}
+  D_NO_CONVERT:
+    when: {zh: "前層相近、但 split 條件在本層明顯增加 adder 時：來源修好之前不要全面轉換到新條件。", en: "When previous-layer counts are similar but the split condition clearly adds defects at this layer: do not convert to the new condition until the adder source is fixed."}
+  D_SPLIT_CONFIRM:
+    when: {zh: "某個 inline 參數和 bin 損失強相關時：先用 split／DOE 確認因果，再決定是否調整該參數的 target。", en: "When one inline parameter correlates strongly with the bin loss: confirm cause and effect with a split / DOE before deciding to re-target that parameter."}
+  D_NO_METRO_ACTION:
+    when: {zh: "量測參數都和損失無關、或被懷疑的參數已證明在 target 時：不調整量測或製程參數，繼續 FA／缺陷調查。", en: "When no metrology parameter relates to the loss, or the suspected parameter is shown on target: make no metrology or process change and continue the FA / defect investigation."}
+  D_SWITCH_MONITOR:
+    when: {zh: "原監控站的 capture rate 低、看不到這種失效時：不要再用它的 count 放行這種失效，換到抓得到 killer 的監控站後再判斷。", en: "When the old monitor's capture rate is low and it cannot see this fail mode: stop clearing lots for it on that monitor's counts and judge on the step that catches the killers."}
+  D_FIX_SOURCE:
+    when: {zh: "監控站的 capture rate 與 kill ratio 都高、監控有效時：依預期良率回收排定修缺陷來源的優先順序。", en: "When the monitor's capture rate and kill ratio are both high and the monitor works: rank the defect-source fix by its expected yield gain."}
+  D_INCONCLUSIVE:
+    when: {zh: "split 被另一個實驗混淆、或有一組沒有照計畫跑時：這次結果既不能用來轉換、也不能用來放棄新條件，判定無法下結論並重跑。", en: "When the split is confounded by another experiment or a group did not run as planned: the result can neither convert nor reject the new condition, so call it inconclusive and rerun."}
+  D_SPLIT_VALID:
+    when: {zh: "run log 與計畫一致、沒有重疊實驗、只看標準條件晶圓差異也成立時：split 結果有效，可以進入轉換評估。", en: "When the run log matches the plan, nothing overlaps and the difference holds on nominal wafers alone: the split is valid and can go to the conversion review."}
+  D_ADOPT_SPLIT:
+    when: {zh: "依晶粒數加權後的淨效果明確為正（超過約 2 個標準誤）時：轉換到新條件，變差的區域列入追蹤。", en: "When the die-weighted net effect is clearly positive (beyond about 2 standard errors): convert to the new condition with the worse zone on follow-up."}
+  D_KEEP_POR:
+    when: {zh: "新條件的增益被另一區的損失抵消、加權淨效果在雜訊內時：維持 POR，新條件修正後再評估。", en: "When the new condition's gain is cancelled by a loss in another zone and the weighted net effect is within the noise: keep POR and re-evaluate the new condition after it is fixed."}
+  D_KEEP_FIX_VERIFY:
+    when: {zh: "紅燈來自修正前製造、現在才到 probe 的 lot，而 inline 密度已經回落時：維持修正、不要判定修正失敗，用修正後的 lot 驗證。", en: "When the red comes from lots processed before the fix that are only now at probe, and inline density has already dropped: keep the fix, do not call it failed, and verify with post-fix lots."}
+  D_BASELINE_OK:
+    when: {zh: "紅燈是少數已知原因的異常晶圓造成、排除後基準線在目標之上、隨機與系統性損失都正常時：不需要新的產線行動，異常另行追蹤。", en: "When the red comes from a few excursion wafers with a known cause, the baseline without them is above goal and both random and systematic loss are normal: no new line action, with the excursion tracked on its own."}
+  D_RED_ESCALATE:
+    when: {zh: "排除異常晶圓後仍是紅燈、也不是 probe 延遲，而有一層的系統性損失持續變大時：紅燈是真的，列為本週最大損失項目並升級。", en: "When it stays red without the excursion wafers, it is not probe lag, and one level's systematic loss keeps growing: the red is real, so make it this week's top detractor and escalate."}
+  D_FLAG_TRACK:
+    when: {zh: "缺陷在下一層同位置再出現、是真的但影響還沒確認時：lot 繼續生產但標記這幾片與 cluster 區域，等切面與 probe 結果確認。", en: "When the defects reappear at the same spot at the next layer, so they are real but their impact is not yet known: let the lot continue with the wafers and cluster area flagged until the cross-section and probe confirm."}
+
+roles:
+  RDA:
+    need: {zh: "有缺陷或失效晶粒需要 review、SEM、切面或拉片取樣時要通知 RDA：缺陷事件、檢查 recipe 的 nuisance 問題、分不出類別的缺陷，以及 FA 請求的回覆，都要讓 RDA 知道哪幾片、哪幾顆、在哪裡。", en: "Tell RDA whenever defects or failing dies need review, SEM, cross-section or pulled wafers: a defect event, a nuisance question on the inspection recipe, defects review cannot classify, and replies to an FA request, so they know which wafers, which dies and where."}
+    skip: {zh: "問題只在參數、量測或 recipe 本身（chamber 偏移、漂移、量測機台偏差、GR&R、DOE），沒有缺陷要 review、也沒有晶圓要拉片分析時，不必通知 RDA。", en: "When the issue is purely a parameter, metrology or recipe question (a chamber shift, a drift, a metrology-tool offset, a GR&R, a DOE) with no defects to review and no wafers to pull for analysis, RDA need not be told."}
+  PE:
+    need: {zh: "製程可能偏離 POR、或需要決定 recipe、target、split 或轉換時要通知 PE；量測數值有偏差時也要告訴 PE，避免依錯誤數值調製程。", en: "Tell PE when the process may be off POR or a recipe, target, split or conversion decision is needed; also tell PE when readings are biased, so nobody adjusts the process on wrong numbers."}
+    skip: {zh: "製程本身沒有被質疑、也不需要 recipe、target 或 split 的決定時（例如單一機率點已重測正常，或只是檢查 recipe 的調整、研究晶圓的選擇），不必通知 PE。", en: "When the process itself is not in question and no recipe, target or split decision is needed (e.g. a chance point already re-measured normal, or only an inspection-recipe tuning or a choice of study wafers), PE need not be told."}
+  EE:
+    need: {zh: "有機台或 chamber 的硬體要檢查、inhibit、PM，或量測機台要修理、calibration 時要通知 EE，並告訴他們從什麼時候開始、和 PM／零件更換／警報的時間關係。", en: "Tell EE when tool or chamber hardware must be checked, inhibited or PM'd, or a metrology tool repaired or recalibrated, with when it started and how it lines up with PMs / part swaps / alarms."}
+    skip: {zh: "問題不在硬體時（target 置中、量測 recipe 模型、split 判讀、良率相關分析、單一機率點），沒有機台需要檢查或 inhibit，不必通知 EE。", en: "When the issue is not hardware (centring the target, a metrology recipe model, reading a split, a yield correlation, a single chance point), there is no tool to check or inhibit, so EE need not be told."}
+  PIE_YE:
+    need: {zh: "產品被 hold、可能影響電性或良率、需要 disposition，或要決定 split 轉換、良率 KPI 時要通知 PIE／YE，並附上受影響的 lot／wafer 清單。", en: "Tell PIE / YE when product is on hold, electrical results or yield may be affected, a disposition is needed, or a split conversion or yield KPI is being decided, with the list of affected lots / wafers."}
+    skip: {zh: "產品沒有受影響、也不需要 disposition 時（只是量測問題、單一機率點已重測正常、GR&R 或量測 recipe 驗證），不必通知 PIE／YE。", en: "When product is not affected and no disposition is needed (a measurement-only problem, a chance point already re-measured normal, a GR&R or a metrology recipe validation), PIE / YE need not be told."}
+  MGR_QE:
+    need: {zh: "有產品 hold、機台停機、量測系統或 recipe 的放行狀態改變、品質能力或 KPI 問題，或需要開異常單、OCAP 紀錄與主管決定時，要通知主管／QE。", en: "Tell the manager / QE when product is held, a tool is down, a gauge's or recipe's release status changes, a capability or KPI issue arises, or an excursion report, OCAP record or management decision is needed."}
+    skip: {zh: "單一機率點已重測正常，只要記在 e-log／SPC 註解、不需要升級；工程師之間的分析或請求（沒有 hold、沒有放行風險、沒有要主管決定的事）也不必通知主管／QE。", en: "A single chance point already re-measured normal is recorded in the e-log / SPC comment with no escalation; an engineer-to-engineer analysis or request with no hold, no release risk and no decision for management does not need the manager / QE either."}

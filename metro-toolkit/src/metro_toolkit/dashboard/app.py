@@ -1512,13 +1512,16 @@ def case_debrief(case, answers: dict):
     k[0].metric("總分 Score", f"{result['total']:.0f} / 100", help=H("case.score"))
     for col, (cat, (got, mx)) in zip(k[1:], cats.items()):
         col.metric(f"{'✓' if abs(got - mx) < 1e-6 else '✗'} {names.get(cat, cat)}", f"{got:.0f} / {mx:.0f}")
+    from metro_toolkit.cases import why
+
+    wrong = {c["key"]: c for c in why.comments(case, result)}
     group = None
     for q in case.questions:
         r = result["questions"][q.key]
         if q.group and q.group != group:
             group = q.group
             st.markdown(f"**{bi_line(q.group)}**")
-        both = (lambda o: bi_line({"zh": q.option_text(o, "zh"), "en": q.option_text(o, "en")}))
+        both = (lambda o: bi_line({"zh": q.option_text(o, "zh"), "en": q.option_text(o, "en")}))  # noqa: E731
         if q.kind == "single":
             model = " ／或 or ".join(both(o) for o in r["accepted"])
             st.markdown(f"{'✓' if r['ok'] else '✗'} **{bi_line(q.label)}**：{model}")
@@ -1528,6 +1531,8 @@ def case_debrief(case, answers: dict):
             extra = (f"；漏了 missed: {'、'.join(both(o) for o in r['missing'])}" if r["missing"] else "") + \
                     (f"；多了 extra: {'、'.join(both(o) for o in r['extra'])}" if r["extra"] else "")
             st.markdown(f"{'✓' if r['ok'] else '△'} **{bi_line(q.label)}**：{right}{extra}")
+        if q.key in wrong:
+            why_box(case, wrong[q.key])
     st.markdown("**為什麼 Why**")
     for lg in _langs():
         st.markdown(nl(case.text("explanation", lg)) if lg == "zh" or len(_langs()) == 1 else
@@ -1546,6 +1551,8 @@ def case_debrief(case, answers: dict):
         for item, ok in cases.message_checklist(case, answers.get("message", ""), lg):
             st.markdown(f"- {'✓' if ok else '✗'} {item}")
 
+    followup = case_followup(case, answers, result, list(wrong.values()))
+
     st.markdown("**每張圖的完整讀圖說明、處置與各角色訊息 · Full chart reading, actions and messages for every role**")
     for key, facts in case.guide:
         explain(key, facts)
@@ -1556,15 +1563,98 @@ def case_debrief(case, answers: dict):
     if saved and "file" in past:
         past = past[~past["file"].isin(saved)]
     md = cases.report_markdown(case, answers, result, answers.get("message", ""),
-                               "both" if len(langs) == 2 else langs[0], past=past)
+                               "both" if len(langs) == 2 else langs[0], past=past, followup=followup)
     c1, c2 = st.columns(2)
     if c1.button("存到我的練習紀錄 Save to my study log", key=f"case_save_{case.id}", help=H("case.save")):
-        path = cases.save_attempt(case, result, md, message=answers.get("message", ""))
+        path = cases.save_attempt(case, result, md, message=answers.get("message", ""), followup=followup)
         saved.append(path.name)
         c1.success(f"已存 Saved: `{path}`")
     c2.download_button("下載報告 Download report (.md)", md.encode("utf-8"), file_name=f"case_{case.id}.md",
                        mime="text/markdown", key=f"case_dl_{case.id}", help=H("case.download"))
     case_history()
+
+
+def why_box(case, c: dict):
+    """The comment on one wrong answer: what you chose, when that is right, why not here, what the data shows."""
+    from metro_toolkit.cases import why
+    from metro_toolkit.guide.render import _langs
+
+    with st.container(border=True):
+        st.caption("💬 為什麼不對 · Why it doesn't fit")
+        langs = _langs()
+        for lg in langs:
+            lines = why.comment_lines(case, c, lg)
+            if lg == "en" and len(langs) == 2:
+                lines = [f"*{ln}*" for ln in lines]
+            st.markdown("  \n".join(lines))
+
+
+def case_followup(case, answers: dict, result: dict, wrong: list) -> dict:
+    """🤔 Follow-up: your own note, ready questions on each wrong answer, a similar case to test yourself, and an
+    optional Claude tutor. Returns {note, chat, retry_of} for the saved report and the study log."""
+    from metro_toolkit import cases
+    from metro_toolkit.cases import tutor, why
+    from metro_toolkit.guide.render import _langs, lang
+
+    cid = case.id
+    st.markdown("#### 🤔 跟進：釐清誤解 · Follow-up: clear up a misunderstanding")
+    note = st.text_area("我原本以為…，因為… · What I thought, and why", key=f"fu_note_{cid}", height=90,
+                        placeholder="例：我以為所有 chamber 一起偏是 recipe 改了，因為… · e.g. I thought all chambers moving "
+                                    "meant a recipe change, because…", help=H("case.fu_note"))
+    ready = [(c, qa) for c in wrong for qa in why.followup_answers(case, c, "zh")]
+    if ready:
+        st.caption("常見的追問 · Ready questions")
+        for c in wrong:
+            zh, en = why.followup_answers(case, c, "zh"), why.followup_answers(case, c, "en")
+            for (qz, az), (qe, ae) in zip(zh, en):
+                with st.expander(f"❓ {qz} · {qe}" if len(_langs()) == 2 else (qz if lang() == "zh" else qe)):
+                    for lg, a in (("zh", az), ("en", ae)):
+                        if lg in _langs():
+                            st.markdown(a if lg == "zh" or len(_langs()) == 1 else
+                                        "  \n".join(f"*{ln}*" for ln in a.splitlines() if ln.strip()))
+    retry_of = st.session_state.get(f"case_retry_of_{cid}")
+    if retry_of:
+        st.caption(f"🔁 這題是重練 {retry_of} · This case retries {retry_of}")
+    if st.button("🔁 換一組數字再練一次 Try a similar case", key=f"fu_retry_{cid}", help=H("case.fu_retry")):
+        ctype, level, _ = cases.parse_id(cid)
+        new = cases.make_id(ctype, level, int(np.random.default_rng().integers(1, 100000)))
+        st.session_state[f"case_retry_of_{new}"] = cid
+        st.session_state["case_id"] = new
+        st.rerun()
+
+    st.markdown("##### 🧑‍🏫 問 Claude · Ask Claude")
+    st.caption(bi("用 Claude 當家教，針對這一題追問。會送到 Anthropic 的內容：這題（合成練習資料）、你的答案與訊息、上面的講評、和對話。"
+                  "每個問題會用到 API 額度。請不要輸入真實的 lot、產品、recipe、人名或公司資料；看起來像公司機密的問題不會送出。",
+                  "Use Claude as a tutor for this case. What is sent to Anthropic: this case (synthetic practice data), your answers "
+                  "and message, the comments above and the conversation. Each question uses API credit. Do not type real lots, "
+                  "products, recipes, names or company data; a question that looks company-confidential is not sent."))
+    chat = st.session_state.setdefault(f"tutor_{cid}", [])
+    if not tutor.available():
+        st.info(bi("要使用這個功能，請先安裝：`pip install -e \".[tutor]\"`", "To use this, install it first: `pip install -e \".[tutor]\"`"))
+        return {"note": note, "chat": chat, "retry_of": retry_of}
+    key = st.text_input("Anthropic API key（選填；只存在這次瀏覽器工作階段 · optional, kept for this browser session only）",
+                        type="password", key="tutor_api_key", help=H("case.tutor_key"))
+    for turn in chat:
+        with st.chat_message("user" if turn["role"] == "user" else "assistant"):
+            st.markdown(turn["content"])
+    ver = st.session_state.setdefault(f"tutor_ver_{cid}", 0)
+    question = st.text_area("你的問題 · Your question", key=f"tutor_q_{cid}_{ver}", height=80,
+                            placeholder="例：為什麼這題不是量測機台偏差？ · e.g. Why isn't this a metrology-tool offset?")
+    if st.button("送出問題 Ask", key=f"tutor_ask_{cid}", help=H("case.tutor_ask")):
+        problem = tutor.guard(question)
+        if problem:
+            st.warning(problem)
+        else:
+            chat.append({"role": "user", "content": question.strip()})
+            with st.chat_message("user"):
+                st.markdown(question.strip())
+            system = tutor.system_prompt(case, answers, result, lang())
+            with st.chat_message("assistant"):
+                reply = st.write_stream(tutor.ask(system, [dict(t) for t in chat], key or None))
+            chat.append({"role": "assistant", "content": reply if isinstance(reply, str) else "".join(map(str, reply))})
+            st.session_state[f"tutor_ver_{cid}"] = ver + 1  # a fresh, empty question box
+            st.rerun()
+    return {"note": note, "chat": chat, "retry_of": retry_of}
 
 
 def case_history():
@@ -1752,6 +1842,25 @@ def report_cross_study(hist, dname):
                        "Not tried yet: " + ", ".join(lib["domains"][d]["en"] for d in untried)))
     for tip in tips:
         st.markdown(f"- {tip}")
+
+    if prof.get("notes") or prof.get("retries"):
+        st.markdown("#### " + bi("我的誤解筆記", "My misunderstanding notes").replace("  \n", " · "))
+        st.caption(bi("你在「跟進」寫下的想法，答錯的地方，以及重練後的分數。",
+                      "What you wrote in the follow-up, what you got wrong, and how the retry went."))
+        for n in prof.get("notes", [])[:8]:
+            ttl = cases.type_info(n["type"])["title"] if n.get("type") in cases.case_types() else {"zh": n["type"], "en": n["type"]}
+            wrong = "；".join(f"{cases.option_label(w[2], w[1], 'zh')} → {cases.option_label(w[2], w[0], 'zh')}"
+                             for w in n["wrong"] if len(w) > 2 and w[2] in ("cause", "action", "decision"))
+            wrong_en = "; ".join(f"{cases.option_label(w[2], w[1], 'en')} → {cases.option_label(w[2], w[0], 'en')}"
+                                 for w in n["wrong"] if len(w) > 2 and w[2] in ("cause", "action", "decision"))
+            after = (f" · 重練 retry **{n['retry_score']:.0f}**" + (" ✓" if n["retry_score"] >= 85 else "")
+                     if n.get("retry_score") is not None else " · " + bi("還沒重練", "not retried yet").replace("  \n", " "))
+            st.markdown(f"- **{ttl['zh']} · {ttl['en']}** ({n['case']}, {n['score']:.0f}{after})  \n"
+                        f"  > {n['note']}" + (f"  \n  {bi('答錯：' + wrong, 'Wrong: ' + wrong_en)}" if wrong else ""))
+        better = [r for r in prof.get("retries", []) if r.get("before") is not None and r.get("score") is not None]
+        if better:
+            up = sum(r["score"] > r["before"] for r in better)
+            st.caption(bi(f"重練 {len(better)} 次，其中 {up} 次分數比原本高。", f"{len(better)} retries, {up} scored higher than the original."))
 
     w = cases.focus_weights(prof).sort_values(ascending=False).head(5)
     st.caption(bi("「🎯 針對我的弱點」最常出的題型：" + "、".join(f"{cases.type_info(ty)['title']['zh']} {p:.0%}" for ty, p in w.items()),

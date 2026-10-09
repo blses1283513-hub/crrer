@@ -282,11 +282,13 @@ def role_name(role: str, lang: str) -> str:
 
 
 def report_markdown(case: Case, answers: dict, result: dict, message: str, lang: str = "zh",
-                    past: pd.DataFrame | None = None) -> str:
-    """A study-log entry: situation, your answers vs the model answers, why, your message vs the model message,
-    what a good message covers, score history (``past`` = earlier attempts) and, for every evidence chart, the
-    insight, the next step and a ready message for every role. ``lang``: "zh", "en" or "both"."""
+                    past: pd.DataFrame | None = None, followup: dict | None = None) -> str:
+    """A study-log entry: situation, your answers vs the model answers, why each wrong answer does not fit, why,
+    your message vs the model message, what a good message covers, your follow-up (``followup`` = {note, chat,
+    retry_of}), score history (``past`` = earlier attempts) and, for every evidence chart, the insight, the next step
+    and a ready message for every role. ``lang``: "zh", "en" or "both"."""
     from ..guide import STATUSES, charts, text
+    from .why import report_section
 
     langs = ["zh", "en"] if lang == "both" else [lang]
     L = (lambda zh, en: f"{zh} · {en}" if lang == "both" else (zh if lang == "zh" else en))  # headings
@@ -317,6 +319,7 @@ def report_markdown(case: Case, answers: dict, result: dict, message: str, lang:
             lines.append(f"{head} {'✓' if r['ok'] else '△'} {L('應選', 'Should be')}: {txt(r['correct']) or none}"
                          + (f"; {L('漏了', 'missed')}: {txt(r['missing'])}" if r["missing"] else "")
                          + (f"; {L('多了', 'extra')}: {txt(r['extra'])}" if r["extra"] else ""))
+    lines += report_section(case, result, langs)
     quote = (lambda t: "\n".join(f"> {ln}" if ln.strip() else ">" for ln in t.strip().splitlines()) or "> —")
     target = case.spec["message_role"]
     lines += ["", f"## {L('為什麼', 'Why')}", "", B(lambda lg: case.text("explanation", lg)), "",
@@ -327,6 +330,17 @@ def report_markdown(case: Case, answers: dict, result: dict, message: str, lang:
     for lg in langs:
         for item, ok in message_checklist(case, message, lg):
             lines.append(f"- {'✓' if ok else '✗'} {item}")
+
+    fu = followup or {}
+    if fu.get("note") or fu.get("chat") or fu.get("retry_of"):
+        lines += ["", f"## {L('跟進：釐清誤解', 'Follow-up: clearing up misunderstandings')}", ""]
+        if fu.get("retry_of"):
+            lines += [f"{L('這是重練', 'This retries')} {fu['retry_of']}", ""]
+        if fu.get("note"):
+            lines += [f"**{L('我原本以為', 'What I thought')}**", "", quote(fu["note"]), ""]
+        for turn in fu.get("chat") or []:
+            who = L("我", "Me") if turn["role"] == "user" else "Claude"
+            lines += [f"**{who}**", "", quote(turn["content"]), ""]
 
     # score history: earlier attempts plus this one
     lines += ["", f"## {L('分數紀錄', 'Score history')}", ""]
@@ -416,8 +430,10 @@ def attempt_detail(case: Case, result: dict, message: str = "") -> dict:
             "wrong": wrong, "msg_missed": [{"zh": z[0], "en": e[0]} for z, e in checklist if not e[1]]}
 
 
-def save_attempt(case: Case, result: dict, md: str, folder: Path | None = None, message: str = "") -> Path:
-    """Every attempt gets its own file (<case id>_<date-time>.md) and a line in history.jsonl."""
+def save_attempt(case: Case, result: dict, md: str, folder: Path | None = None, message: str = "",
+                 followup: dict | None = None) -> Path:
+    """Every attempt gets its own file (<case id>_<date-time>.md) and a line in history.jsonl (with your follow-up
+    note, how many questions you asked the tutor, and the case this one retried, if any)."""
     folder = cases_dir(folder)
     now = datetime.now()
     path = folder / f"{case.id}_{now:%Y%m%d-%H%M%S}.md"
@@ -429,9 +445,22 @@ def save_attempt(case: Case, result: dict, md: str, folder: Path | None = None, 
     with open(folder / "history.jsonl", "a", encoding="utf-8") as fh:
         fh.write(json.dumps({"time": f"{now:%Y-%m-%d %H:%M}", "case": case.id, "type": case.type,
                              "domain": case.spec["domain"], "level": case.level, "score": result["total"],
-                             "file": path.name, **attempt_detail(case, result, message)},
+                             "file": path.name, **attempt_detail(case, result, message),
+                             **_followup_fields(followup)},
                             ensure_ascii=False) + "\n")
     return path
+
+
+def _followup_fields(followup: dict | None) -> dict:
+    fu = followup or {}
+    out = {}
+    if (fu.get("note") or "").strip():
+        out["followup"] = fu["note"].strip()
+    if fu.get("chat"):
+        out["tutor_turns"] = sum(1 for t in fu["chat"] if t["role"] == "user")
+    if fu.get("retry_of"):
+        out["retry_of"] = fu["retry_of"]
+    return out
 
 
 def history(folder: Path | None = None) -> pd.DataFrame:
@@ -563,8 +592,25 @@ def study_profile(hist: pd.DataFrame) -> dict:
             wrong[(val[2] if len(val) > 2 else q, model, chosen)] += 1
         for it in _row_msg_missed(r):
             msg[(r.get("type"), it["zh"], it["en"])] += 1
+    notes = []  # your follow-up notes, newest first, with what you got wrong and how the retry went
+    by_case = {r.get("case"): r for r in recs}
+    retried = {}
+    for r in recs:
+        if isinstance(r.get("retry_of"), str):
+            retried.setdefault(r["retry_of"], []).append(r)
+    for r in reversed(recs):
+        note = r.get("followup")
+        if not isinstance(note, str) or not note.strip():
+            continue
+        again = [x for x in retried.get(r.get("case"), []) if isinstance(x.get("score"), (int, float))]
+        notes.append({"time": r.get("time"), "case": r.get("case"), "type": r.get("type"), "note": note,
+                      "score": r.get("score"), "wrong": [v for v in (r.get("wrong") or {}).values()],
+                      "retry_score": again[-1]["score"] if again else None})
+    retries = [{"case": r["case"], "retry_of": r["retry_of"], "score": r.get("score"),
+                "before": by_case.get(r["retry_of"], {}).get("score")} for r in recs if isinstance(r.get("retry_of"), str)]
     return {"by_type": types, "by_domain": by_domain, "by_question": by_question, "n_detail": len(detail),
-            "missed_roles": missed, "extra_roles": extra, "wrong": wrong, "msg_missed": msg}
+            "missed_roles": missed, "extra_roles": extra, "wrong": wrong, "msg_missed": msg, "notes": notes,
+            "retries": retries}
 
 
 UNTRIED_POOL = 4.5  # total weight of the types in never-tried areas (0.35 each for up to 13 of them)

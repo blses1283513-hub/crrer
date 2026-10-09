@@ -59,6 +59,18 @@ params:
   case.save:
     zh: "**存到練習紀錄**：把這次作答的完整報告（Markdown）存到這台電腦的 data/cases/（不會上傳 GitHub）。每次作答各存一個檔（案例編號＋日期時間），不會覆蓋舊的。報告包含：你的答案與標準答案、理由、範例訊息、好訊息的要點、分數紀錄，以及每張圖的洞察、下一步與給各角色的訊息。語言跟著側欄的說明語言。"
     en: "**Save to my study log**: saves the full report of this attempt (Markdown) to data/cases/ on this PC (never uploaded to GitHub). Every attempt gets its own file (case ID + date-time), so nothing is overwritten. The report has your answers vs the model answers, the reasoning, the model message, what a good message covers, your score history, and for every chart the insight, the next step and a message for every role. Its language follows the sidebar Guide language."
+  case.fu_note:
+    zh: "**我原本以為…**：寫下你答錯時心裡的理由（例如「我以為所有 chamber 一起偏就是 recipe 改了」）。存檔時會寫進這次的報告與練習紀錄；「我的案例報告 → 交叉分析」會列出你的誤解筆記，以及重練後有沒有改善。只存在這台電腦。"
+    en: "**What I thought**: write down the reasoning behind your wrong answer (e.g. \"I thought all chambers moving meant a recipe change\"). Saving puts it in this attempt's report and your study log; My case reports → Cross study lists your misunderstanding notes and whether the retry went better. Stays on this PC."
+  case.fu_retry:
+    zh: "**換一組數字再練一次**：同一種案例、同樣難度、新的隨機數字（有時結果也不同），用來確認誤解已經釐清。新案例會記錄它是重練哪一題，交叉分析會比較前後分數。"
+    en: "**Try a similar case**: the same case type and level with new random numbers (sometimes a different outcome), to check the misunderstanding is cleared. The new case records which attempt it retries, and the cross study compares the scores."
+  case.tutor_key:
+    zh: "**Anthropic API key**（選填）：如果電腦已設定 ANTHROPIC_API_KEY 或用 `ant auth login` 登入，就不用填。填在這裡的金鑰只存在這次瀏覽器工作階段，不會寫進任何檔案；關掉頁面就不見。"
+    en: "**Anthropic API key** (optional): not needed if ANTHROPIC_API_KEY is set or you signed in with `ant auth login`. A key typed here is kept only for this browser session and is never written to any file; it is gone when you close the page."
+  case.tutor_ask:
+    zh: "**送出問題**：把你的問題連同這一題的資料（合成練習資料）、你的答案與講評送給 Claude（claude-opus-5-5），回答會即時顯示。若 Claude 婉拒回答，伺服器會自動改用建議的備援模型再試（fallbacks）。每個問題都會用到 API 額度。看起來像公司機密的問題不會送出。存檔時對話會寫進報告。"
+    en: "**Ask**: sends your question with this case's data (synthetic practice data), your answers and the comments to Claude (claude-opus-5-5); the answer streams in. If Claude declines, the server retries on its recommended fallback model (fallbacks). Every question uses API credit. A question that looks company-confidential is not sent. Saving puts the conversation in the report."
   case.download:
     zh: "**下載報告**：下載和「存到練習紀錄」相同內容的 Markdown 報告，可以貼到筆記或和同事討論。"
     en: "**Download report**: downloads the same Markdown report that Save writes, for your notes or to discuss with colleagues."

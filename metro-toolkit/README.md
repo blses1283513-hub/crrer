@@ -144,6 +144,25 @@ the other pages, so the evidence looks exactly like it would there.
 3. Submit: score out of 100 (cause 40, action 25, decision 20, notify 15 by overlap), the model answers with the
    reasoning, your message beside a model message, and a checklist of what a good message must contain (the number,
    the tool / chamber, the impact, the ask).
+4. **💬 Why it doesn't fit**: under every wrong answer, a comment in 繁中 + English: what you chose, when that answer
+   *would* be right (the evidence it needs), why not here (sharper notes for the common mix-ups), what this case's
+   data actually shows (the chart findings with their numbers), the model answer and when it is right, and the chart
+   that decides it. Missed and extra roles get the same: why that role must or need not be told. The comments are
+   also in the saved report.
+5. **🤔 Follow-up**: clear up a misunderstanding before moving on.
+   * **What I thought, and why**: write your reasoning down; it goes into the report and the study log, and
+     My case reports → Cross study lists your misunderstanding notes and how the retry went.
+   * **Ready questions** for each wrong answer: "Why isn't it X?", "What would the charts look like if it were X?",
+     "What should I check first next time?", answered with this case's numbers.
+   * **🔁 Try a similar case**: the same type and level with new numbers, linked to this attempt so the cross study
+     can compare the scores.
+   * **🧑‍🏫 Ask Claude** (optional): a tutor that answers any question about this case using the case data, your
+     answers and the comments. It needs `pip install -e ".[tutor]"`, an internet connection and Anthropic
+     credentials (`ANTHROPIC_API_KEY`, `ant auth login`, or a key typed on the page, kept only for that browser
+     session). It uses `claude-opus-5-5` with server-side fallbacks (a declined question is retried on Anthropic's
+     recommended fallback model). Every question costs API usage, and what you type is sent to Anthropic: never type
+     real lots, products, recipes, names or company data; questions that look company-confidential are not sent. The
+     conversation is saved in the report.
 
 | Area | Case types |
 | --- | --- |
@@ -350,7 +369,8 @@ metro-toolkit/
 │   ├── doe/                designs · model · optimize · virtual (process tools with an answer key)
 │   ├── guide/              chart & parameter guide: params_*.yaml · charts_*.yaml · insights (data → status)
 │   ├── cases/              case study practice: cases.yaml · generators.py + generators_yield.py (32 case types) · issues.yaml +
-│   │                       compose.py (multi-issue, builder) · custom.py (your templates)
+│   │                       compose.py (multi-issue, builder) · custom.py (your templates) · why.py + why_*.yaml (comments on wrong
+│   │                       answers) · tutor.py (Claude tutor)
 │   ├── ingest/             readers · mapping · convert · checks · store (your own data)
 │   ├── dashboard/app.py    Streamlit app
 │   ├── dashboard/figures.py chart builders shared by the pages and the case study
