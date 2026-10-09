@@ -1,17 +1,16 @@
-﻿# 把 Firefly III 變成電腦上的 App：在桌面建立「記帳」捷徑（獨立視窗、無網址列、自訂螢火蟲圖示）。
-# 只會做兩件事：複製圖示到 %LOCALAPPDATA%\FireflyIII，並在桌面建立一個 .lnk 捷徑。不會改動其他設定。
-# 用法（在 firefly-iii 資料夾的 PowerShell）：
+# Create a desktop shortcut that opens Firefly III as a standalone app window (no address bar),
+# using the custom firefly icon. This script is ASCII-only on purpose so it works on any Windows locale.
+# It only (1) copies the icon to %LOCALAPPDATA%\FireflyIII and (2) creates one .lnk on the Desktop.
+# Usage (in the firefly-iii folder):
 #   powershell -ExecutionPolicy Bypass -File scripts\install-app.ps1
-# 指定網址（預設讀取 .env 的 APP_URL）：
 #   powershell -ExecutionPolicy Bypass -File scripts\install-app.ps1 -Url http://100.x.y.z:8080
 param(
-  [string]$Url = '',
-  [string]$Name = '記帳'
+  [string]$Url = ''
 )
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 
-# 1. 網址
+# 1. URL (default: APP_URL from .env)
 if (-not $Url) {
   $envFile = Join-Path $root '.env'
   if (Test-Path $envFile) {
@@ -20,9 +19,9 @@ if (-not $Url) {
   }
 }
 if (-not $Url) { $Url = 'http://localhost:8080' }
-Write-Host "網址：$Url"
+Write-Host "URL     : $Url"
 
-# 2. 找瀏覽器（優先 Edge，其次 Chrome）
+# 2. Browser (Edge first, then Chrome)
 $candidates = @(
   "${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe",
   "$env:ProgramFiles\Microsoft\Edge\Application\msedge.exe",
@@ -31,30 +30,50 @@ $candidates = @(
   "$env:LOCALAPPDATA\Google\Chrome\Application\chrome.exe"
 )
 $browser = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
-if (-not $browser) { throw '找不到 Edge 或 Chrome，請先安裝其中一個。' }
-Write-Host "瀏覽器：$browser"
+if (-not $browser) { throw 'Neither Edge nor Chrome was found. Please install one of them.' }
+Write-Host "Browser : $browser"
 
-# 3. 複製圖示到固定位置（之後搬動 firefly-iii 資料夾，圖示也不會消失）
+# 3. Copy icon to a stable location
 $icoSrc = Join-Path $root 'icon\firefly-app.ico'
-if (-not (Test-Path $icoSrc)) { throw "找不到圖示：$icoSrc" }
+if (-not (Test-Path $icoSrc)) { throw "Icon not found: $icoSrc" }
 $iconDir = Join-Path $env:LOCALAPPDATA 'FireflyIII'
 New-Item -ItemType Directory -Force -Path $iconDir | Out-Null
 $icoDst = Join-Path $iconDir 'firefly-app.ico'
 Copy-Item $icoSrc $icoDst -Force
+Write-Host "Icon    : $icoDst"
 
-# 4. 建立桌面捷徑（--app 模式：獨立視窗、無網址列）
+# 4. Desktop folder (must exist)
 $desktop = [Environment]::GetFolderPath('Desktop')
-$lnkPath = Join-Path $desktop "$Name.lnk"
+Write-Host "Desktop : $desktop  (exists: $(Test-Path $desktop))"
+if (-not (Test-Path $desktop)) {
+  $alt = Join-Path $env:USERPROFILE 'Desktop'
+  if (Test-Path $alt) { $desktop = $alt } else { throw "Desktop folder not found: $desktop" }
+}
+
+# 5. Create the shortcut with an ASCII name first (avoids Unicode problems in the COM call)
+$lnkAscii = Join-Path $desktop 'Firefly.lnk'
 $shell = New-Object -ComObject WScript.Shell
-$lnk = $shell.CreateShortcut($lnkPath)
+$lnk = $shell.CreateShortcut($lnkAscii)
 $lnk.TargetPath = $browser
 $lnk.Arguments = "--app=$Url"
 $lnk.IconLocation = "$icoDst,0"
-$lnk.Description = 'Firefly III 記帳'
+$lnk.Description = 'Firefly III'
 $lnk.WorkingDirectory = Split-Path -Parent $browser
 $lnk.Save()
+if (-not (Test-Path $lnkAscii)) { throw "Shortcut was not created: $lnkAscii" }
+
+# 6. Try to rename it to the Chinese name (written as Unicode code points so the file encoding does not matter)
+$zhName = -join ([char]0x8A18, [char]0x5E33)
+$final = $lnkAscii
+try {
+  $zhPath = Join-Path $desktop ($zhName + '.lnk')
+  Move-Item -LiteralPath $lnkAscii -Destination $zhPath -Force
+  $final = $zhPath
+} catch {
+  Write-Host 'Could not rename to the Chinese name; keeping Firefly.lnk' -ForegroundColor Yellow
+}
 
 Write-Host ''
-Write-Host "完成：桌面已建立捷徑「$Name」。雙擊即可開啟。" -ForegroundColor Green
-Write-Host '可以對捷徑按右鍵 → 釘選到工作列 / 開始。'
-Write-Host '提醒：Docker Desktop 需要在執行中，記帳頁面才打得開。'
+Write-Host "Done. Shortcut created: $final" -ForegroundColor Green
+Write-Host 'Double-click it to open. Right-click -> Pin to taskbar / Start if you like.'
+Write-Host 'Docker Desktop must be running, otherwise the page will not open.'

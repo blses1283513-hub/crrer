@@ -125,7 +125,7 @@ New-NetFirewallRule -DisplayName "Firefly III" -Direction Inbound -Protocol TCP 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts\install-app.ps1
 ```
-這個腳本只做兩件事：複製圖示到 `%LOCALAPPDATA%\FireflyIII`，並在桌面建立一個 `記帳.lnk` 捷徑（使用 Edge，沒有 Edge 時用 Chrome，以 `--app` 模式開啟）。它會讀取 `.env` 的 `APP_URL` 當網址，也可以手動指定：`-Url http://100.x.y.z:8080`。要移除時，刪除桌面捷徑和 `%LOCALAPPDATA%\FireflyIII` 即可。
+這個腳本只做兩件事：複製圖示到 `%LOCALAPPDATA%\FireflyIII`，並在桌面建立一個捷徑（先以 `Firefly.lnk` 建立，再嘗試改名為「記帳」；改名失敗時就保留 `Firefly.lnk`）（使用 Edge，沒有 Edge 時用 Chrome，以 `--app` 模式開啟）。它會讀取 `.env` 的 `APP_URL` 當網址，也可以手動指定：`-Url http://100.x.y.z:8080`。要移除時，刪除桌面捷徑和 `%LOCALAPPDATA%\FireflyIII` 即可。
 
 - 捷徑可以按右鍵「釘選到工作列」或「釘選到開始」。
 - 使用前需要 Docker Desktop 正在執行，否則頁面打不開。
