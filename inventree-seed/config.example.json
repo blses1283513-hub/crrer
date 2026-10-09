@@ -1,0 +1,20 @@
+{
+  "_comment": "複製成 config.json 後修改。代碼 code 會用於料號（IPN），請只用英數字；name 是顯示名稱。",
+  "companies": [
+    {"code": "A", "name": "A 公司", "owner_group": "company-A"},
+    {"code": "B", "name": "B 公司", "owner_group": "company-B"},
+    {"code": "C", "name": "C 公司", "owner_group": "company-C"}
+  ],
+  "products_per_company": 10,
+  "product_names": {},
+  "styles": [
+    {"code": "S1", "name": "樣式1"},
+    {"code": "S2", "name": "樣式2"},
+    {"code": "S3", "name": "樣式3"},
+    {"code": "S4", "name": "樣式4"},
+    {"code": "S5", "name": "樣式5"}
+  ],
+  "sizes": ["XL", "L", "M"],
+  "default_minimum_stock": 10,
+  "warehouse_name": "主倉"
+}
