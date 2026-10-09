@@ -567,13 +567,22 @@ def study_profile(hist: pd.DataFrame) -> dict:
             "missed_roles": missed, "extra_roles": extra, "wrong": wrong, "msg_missed": msg}
 
 
+UNTRIED_POOL = 4.5  # total weight of the types in never-tried areas (0.35 each for up to 13 of them)
+
+
 def focus_weights(profile: dict) -> pd.Series:
     """How often each case type should come up when practising weak spots: types with low recent scores most,
-    other types in a weak area next, types never tried after that, mastered types (recent score near 100) rarely."""
+    other types in a weak area next, types never tried after that, mastered types (recent score near 100) rarely.
+    Types in areas you have never tried share at most UNTRIED_POOL of weight between them, so new areas added to the
+    library do not crowd out your weak areas."""
     t = profile["by_type"].set_index("type")
     recent = t["recent"].astype(float)
     w = (3.0 * (1.0 - recent / 100.0)).clip(lower=0.05)
-    w[t["attempts"] == 0] = 0.35
+    untried = t["attempts"] == 0
+    tried_dom = set(t.loc[~untried, "domain"])
+    new_area = untried & ~t["domain"].isin(tried_dom)
+    w[untried] = 0.35
+    w[new_area] = min(0.35, UNTRIED_POOL / max(int(new_area.sum()), 1))
     dom_mean = profile["by_domain"]["mean"].astype(float)
     boost = t["domain"].map(1.0 + (1.0 - dom_mean / 100.0)).fillna(1.0)  # untried area: no boost
     w = w * boost

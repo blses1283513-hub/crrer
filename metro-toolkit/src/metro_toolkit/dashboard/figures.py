@@ -1028,3 +1028,344 @@ def area_hover(dom: pd.DataFrame, names: dict) -> list[str]:
         out.append(hover_card([f"<b>{names.get(r['domain'], r['domain'])}</b>", f"平均分數 mean score <b>{r['mean']:.0f}</b>", f"練過 attempts {int(r['attempts'])}"],
                               verdict, label, [(zh, en)]))
     return out
+
+
+# --------------------------------------------------------------------------- yield analysis, splits and weekly KPIs
+ZONE_TXT = {"centre": "中心 centre", "mid": "中間 middle", "edge": "邊緣 edge"}
+
+
+def _zone(x, y, r_max: float = 147.0) -> str:
+    r = float(np.hypot(x, y)) / r_max
+    return "centre" if r < 0.5 else "edge" if r > 0.8 else "mid"
+
+
+def probe_die_hover(dies: pd.DataFrame, defects: pd.DataFrame, steps: list[str], bin_name: str) -> list[str]:
+    by_die = {s: defects[defects.step == s].groupby("die").size() for s in steps}
+    out = []
+    for i, r in dies.iterrows():
+        on = {s: int(by_die[s].get(i, 0)) for s in steps}
+        head = [f"<b>die</b> x {r.x:.0f}, y {r.y:.0f} mm · {ZONE_TXT[_zone(r.x, r.y)]}",
+                f"probe：<b>{bin_name if r.fail else 'pass 通過'}</b>",
+                "inline：" + "，".join(f"{s} {n} 顆" for s, n in on.items())]
+        seen = [s for s, n in on.items() if n]
+        if r.fail and seen:
+            out.append(hover_card(head, "act", "inline 看得到 seen inline",
+                                  [(f"失效晶粒上有 {'、'.join(seen)} 的缺陷：算進該站的 capture rate",
+                                    f"the failing die carries a defect from {', '.join(seen)}: it counts toward that step's capture rate")]))
+        elif r.fail:
+            out.append(hover_card(head, "watch", "inline 沒看到 not seen inline",
+                                  [("失效但兩站都沒有缺陷：檢查站看不到（capture 缺口），或是其他失效機制",
+                                    "failing, but neither step shows a defect here: a capture gap, or another fail mechanism")]))
+        elif seen:
+            out.append(hover_card(head, None, "non-killer",
+                                  [("有缺陷但晶粒通過：這顆缺陷沒有致命，會拉低該站的 kill ratio",
+                                    "a defect, but the die passes: it did not kill, and it lowers that step's kill ratio")]))
+        else:
+            out.append(hover_card(head, "good", "通過、無缺陷 pass, clean", []))
+    return out
+
+
+def probe_overlay_figure(dies: pd.DataFrame, defects: pd.DataFrame, steps: list[str], bin_name: str, title: str = "") -> go.Figure:
+    """Probe fail map (red = fail dies) with each inline step's defects on top (open circle / cross)."""
+    cards = probe_die_hover(dies, defects, steps, bin_name)
+    fig = go.Figure()
+    for fail, name, color in ((False, "pass 通過", viz.GRID), (True, f"{bin_name} 失效", viz.STATUS["critical"])):
+        sel = (dies["fail"] == fail).to_numpy()
+        fig.add_scatter(x=dies.x[sel], y=dies.y[sel], mode="markers", name=f"{name} ({int(sel.sum())})",
+                        marker=dict(symbol="square", size=11, color=color, opacity=0.85 if fail else 1),
+                        customdata=[c for c, s in zip(cards, sel) if s], hovertemplate=card_template())
+    fail = dies["fail"].to_numpy()
+    for s, sym, color in zip(steps, ("circle-open", "x-thin-open"), (viz.SERIES[0], viz.SERIES[1])):
+        d = defects[defects.step == s]
+        on = fail[d["die"].to_numpy()]
+        cards_d = [hover_card([f"<b>{s}</b> defect", f"x {x:.1f}, y {y:.1f} mm"], "act" if o else None,
+                              "落在失效晶粒 on a fail die" if o else "落在良品晶粒 on a passing die",
+                              [("可能是 killer：和 probe 失效對上" if o else "沒有造成失效（或不是致命缺陷）",
+                                "a candidate killer: it matches a probe fail" if o else "it did not cause a fail (not a killer here)")])
+                   for x, y, o in zip(d.x, d.y, on)]
+        fig.add_scatter(x=d.x, y=d.y, mode="markers", name=f"{s} defects ({len(d)})",
+                        marker=dict(symbol=sym, size=8, color=color, line=dict(width=2, color=color)),
+                        customdata=cards_d, hovertemplate=card_template())
+    fig.add_shape(type="circle", x0=-150, y0=-150, x1=150, y1=150, line=dict(color=viz.AXIS))
+    legend_line(fig, "wafer edge 晶圓邊緣", viz.AXIS)
+    fig = layout(fig, title or f"{bin_name} 失效圖 + inline 缺陷", "x (mm)", "y (mm)", 560)
+    fig.update_yaxes(scaleanchor="x", scaleratio=1)
+    return fig
+
+
+def capture_kill_hover(table: pd.DataFrame, monitor: str, what: str) -> list[str]:
+    out = []
+    for _, r in table.iterrows():
+        tag = "（監控站 monitor）" if r["step"] == monitor else ""
+        head = [f"<b>{r['step']}</b>{tag}", f"capture rate <b>{r['capture']:.0f}%</b> · kill ratio <b>{r['kill_ratio']:.0f}%</b>",
+                f"{int(r['defects'])} 顆缺陷，{int(r['on fail dies'])} 顆落在失效晶粒"]
+        if what == "capture":
+            rule = (f"判斷：capture rate = 失效晶粒中有這站缺陷的比例；≥ 60% 看得到、30–60% 部分、< 30% 看不到；這站 {r['capture']:.0f}%",
+                    f"rule: capture rate = share of failing dies carrying a defect from this step; 60% or more sees them, 30–60% "
+                    f"partly, below 30% is blind; this step {r['capture']:.0f}%")
+            v = "good" if r["capture"] >= 60 else "watch" if r["capture"] >= 30 else "act"
+            label = {"good": "看得到 sees the killers", "watch": "只看到部分 partial", "act": "看不到 blind"}[v]
+            nxt = (("這站的 SPC 不能證明沒問題：監控要移到看得到的那一站", "a clean SPC here proves nothing: monitor at the step that sees them")
+                   if v == "act" and r["step"] == monitor else None)
+            out.append(hover_card(head, v, label, [rule], nxt))
+        else:
+            rule = (f"判斷：kill ratio = 落在失效晶粒的缺陷比例，扣掉隨機落上的機率 {r['chance']:.1f}%；越高代表這站抓到的越是 killer",
+                    f"rule: kill ratio = share of defects landing on failing dies, minus the {r['chance']:.1f}% chance of landing "
+                    "there at random; higher means this step catches more killers")
+            out.append(hover_card(head, None, "kill ratio", [rule]))
+    return out
+
+
+def capture_kill_figure(table: pd.DataFrame, monitor: str) -> go.Figure:
+    names = [f"{s} (monitor 監控站)" if s == monitor else s for s in table["step"]]
+    fig = go.Figure()
+    fig.add_bar(x=names, y=table["capture"], name="capture rate 抓到的失效比例", marker=dict(color=viz.SERIES[0], cornerradius=4),
+                text=[f"{v:.0f}%" for v in table["capture"]], textposition="outside",
+                customdata=capture_kill_hover(table, monitor, "capture"), hovertemplate=card_template())
+    fig.add_bar(x=names, y=table["kill_ratio"], name="kill ratio 致命比例", marker=dict(color=viz.SERIES[1], cornerradius=4),
+                text=[f"{v:.0f}%" for v in table["kill_ratio"]], textposition="outside",
+                customdata=capture_kill_hover(table, monitor, "kill"), hovertemplate=card_template())
+    for y_, dash in ((60, "dot"), (30, "dash")):
+        fig.add_hline(y=y_, line=dict(color=viz.MUTED, dash=dash, width=1.2))
+    legend_line(fig, "capture 60%（看得到 sees them）", viz.MUTED, "dot")
+    legend_line(fig, "capture 30%（以下看不到 blind below）", viz.MUTED, "dash")
+    layout(fig, "各檢查站的 capture rate 與 kill ratio", "inline 檢查站 inspection step", "比例 share (%)", 380)
+    fig.update_layout(barmode="group", bargap=0.35, legend=dict(orientation="h", y=1.02, yanchor="bottom", x=0))
+    fig.update_yaxes(range=[0, 108])
+    return fig
+
+
+SPLIT_COLOR = {"POR": viz.SERIES[0], "B-low": viz.SERIES[1], "B-high": viz.SERIES[2]}
+
+
+def split_wafer_hover(t: pd.DataFrame) -> list[str]:
+    out = []
+    for _, r in t.iterrows():
+        head = [f"<b>{r['wafer_id']}</b>（slot {int(r['slot'])}）", f"良率 yield <b>{r['yield']:.1f}%</b>",
+                f"計畫 planned {r['planned']} · run log {r['actual']} · FEM {r['fem']}"]
+        if r["planned"] != r["actual"]:
+            out.append(hover_card(head, "act", "沒照計畫跑 not run as planned",
+                                  [(f"計畫是 {r['planned']}，run log 卻是 {r['actual']}：這片不能代表 {r['planned']}",
+                                    f"planned {r['planned']} but the run log shows {r['actual']}: this wafer cannot stand for {r['planned']}")],
+                                  ("依實際 recipe 分組；缺的那組要補跑", "group by the actual recipe; rerun the missing group")))
+        elif r["fem"] != "nominal":
+            out.append(hover_card(head, "act", "被另一個實驗影響 confounded",
+                                  [("這片同時跑了 litho FEM 的偏離條件：良率差異可能來自 FEM，不是 split 條件",
+                                    "this wafer also carried an off-nominal litho FEM cell: its yield may reflect the FEM, not the split")],
+                                  ("比較 split 時排除這片（或兩組平衡）", "leave it out of the split comparison (or balance the groups)")))
+        else:
+            out.append(hover_card(head, "good", "乾淨 clean", [("照計畫跑、FEM 標準條件：可以用來比較", "ran as planned at nominal FEM: usable for the comparison")]))
+    return out
+
+
+def split_check_figure(t: pd.DataFrame, title: str = "") -> go.Figure:
+    """Yield per wafer: colour = recipe actually run, circle = nominal FEM, x = off-nominal FEM, red ring = not run as planned."""
+    cards = split_wafer_hover(t)
+    fig = go.Figure()
+    for g, color in SPLIT_COLOR.items():
+        for fem, sym in (("nominal", "circle"), ("off", "x")):
+            sel = ((t["actual"] == g) & (t["fem"] == fem)).to_numpy()
+            if not sel.any():
+                continue
+            mis = (t["planned"] != t["actual"]).to_numpy()[sel]
+            fig.add_scatter(x=t["slot"][sel], y=t["yield"][sel], mode="markers",
+                            name=f"{g}" + (" · FEM off-nominal 偏離條件" if fem == "off" else ""),
+                            marker=dict(symbol=sym, size=12, color=color,
+                                        line=dict(width=[3 if m else 1 for m in mis],
+                                                  color=[viz.STATUS["critical"] if m else viz.SURFACE for m in mis])),
+                            customdata=[c for c, s in zip(cards, sel) if s], hovertemplate=card_template())
+    if (t["planned"] != t["actual"]).any():
+        legend_marker(fig, "紅框 = 沒照計畫跑 red ring = not run as planned", viz.SURFACE, "circle", 12,
+                      dict(width=3, color=viz.STATUS["critical"]))
+    for g, color in SPLIT_COLOR.items():
+        m = t.loc[t["planned"] == g, "yield"].mean()
+        if np.isfinite(m):
+            fig.add_hline(y=m, line=dict(color=color, dash="dot", width=1))
+    legend_line(fig, "各計畫組平均 planned-group mean", viz.MUTED, "dot", 1)
+    layout(fig, title or "每片良率：顏色 = 實際 recipe，形狀 = FEM 條件", "slot", "良率 yield (%)", 420)
+    fig.update_layout(legend=dict(orientation="h", y=1.02, yanchor="bottom", x=0), margin=dict(t=110))
+    return fig
+
+
+def zone_hover(zt: pd.DataFrame, grp: str) -> list[str]:
+    out = []
+    for _, r in zt.iterrows():
+        head = [f"<b>{ZONE_TXT[r['zone']]}</b> · {grp}", f"晶粒比例 die share {r['share']:.0f}%",
+                f"POR {r['por']:.1f}% · B {r['b']:.1f}% · Δ <b>{r['delta']:+.1f} pp</b> ± {2 * r['se']:.1f}（2 SE）",
+                f"加權貢獻 weighted {r['weighted']:+.2f} pp"]
+        rule = ("判斷：|Δ| 超過 2 個標準誤才算真的差異；加權貢獻 = Δ × 晶粒比例，三區相加就是整片淨效果",
+                "rule: a difference is real only beyond 2 standard errors; weighted = Δ × die share, and the three add up to the "
+                "whole-wafer net")
+        if r["delta"] > 2 * r["se"]:
+            out.append(hover_card(head, "good", "B 較好 B better", [rule]))
+        elif r["delta"] < -2 * r["se"]:
+            out.append(hover_card(head, "act", "B 較差 B worse", [rule], ("轉換時要追蹤這一區，或先修好再轉", "follow this zone up when converting, or fix it first")))
+        else:
+            out.append(hover_card(head, None, "差異在雜訊內 within noise", [rule]))
+    return out
+
+
+def zone_yield_figure(zt: pd.DataFrame, net: float, net_se: float, title: str = "") -> go.Figure:
+    labels = [f"{ZONE_TXT[z]}<br>{s:.0f}% dies" for z, s in zip(zt["zone"], zt["share"])]
+    fig = go.Figure()
+    for col, name, color in (("por", "POR", viz.SERIES[0]), ("b", "B", viz.SERIES[1])):
+        fig.add_bar(x=labels, y=zt[col], name=name, marker=dict(color=color, cornerradius=4),
+                    error_y=dict(type="data", array=list(zt["se"]), color=viz.INK_2, thickness=1.2) if col == "b" else None,
+                    customdata=zone_hover(zt, name), hovertemplate=card_template())
+    for x, d in zip(labels, zt["delta"]):
+        fig.add_annotation(x=x, y=float(zt[["por", "b"]].max().max()) + 3, text=f"Δ {d:+.1f} pp", showarrow=False,
+                           font=dict(color=viz.STATUS["critical"] if d < 0 else viz.INK))
+    legend_line(fig, "誤差線 = ± 1 SE of Δ", viz.INK_2, width=1)
+    lo = float(zt[["por", "b"]].min().min())
+    layout(fig, title or f"各區良率 · 加權淨效果 net {net:+.2f} ± {net_se:.2f} pp", "區域 zone（晶粒比例 die share）", "良率 yield (%)", 400)
+    fig.update_layout(barmode="group", bargap=0.3, legend=dict(orientation="h", y=1.02, yanchor="bottom", x=0))
+    fig.update_yaxes(range=[lo - 6, float(zt[["por", "b"]].max().max()) + 6])
+    return fig
+
+
+def dly_hover(w: pd.DataFrame, goal: float) -> list[str]:
+    out = []
+    for _, r in w.iterrows():
+        head = [f"<b>{r['week']}</b>（probe week）", f"DLY <b>{r['dly']:.1f}%</b> · 目標 goal {goal:g}%"]
+        if abs(r["dly_ex"] - r["dly"]) >= 0.3:
+            head.append(f"不含標記晶圓 without flagged wafers {r['dly_ex']:.1f}%")
+        rule = (f"判斷：低於目標 {goal:g}% 是紅燈；差距若只來自少數晶圓，要同時報告含與不含的數字",
+                f"rule: below the {goal:g}% goal is red; if a few wafers make the gap, report the number with and without them")
+        if r["dly"] < goal:
+            out.append(hover_card(head, "act", "紅燈 red", [rule], ("先分辨：少數晶圓？隨機還是系統性？probe 延遲？", "sort it out first: a few wafers? random or systematic? probe lag?")))
+        elif r["dly"] < goal + 0.5:
+            out.append(hover_card(head, "watch", "接近目標 near goal", [rule]))
+        else:
+            out.append(hover_card(head, "good", "綠燈 green", [rule]))
+    return out
+
+
+def loss_hover(w: pd.DataFrame, col: str) -> list[str]:
+    base = float(w[col].iloc[:4].mean())
+    name = {"random_loss": ("隨機缺陷損失", "random-defect loss"), "sys_loss": ("系統性損失", "systematic loss")}[col]
+    out = []
+    for _, r in w.iterrows():
+        d = float(r[col] - base)
+        head = [f"<b>{r['week']}</b> · {name[0]} {name[1]}", f"<b>{r[col]:.2f} pp</b>（基準 baseline {base:.2f}，{d:+.2f}）"]
+        rule = ("判斷：比前四週基準多 ≥ 0.8 pp 就是這一類損失在變大；隨機看 inline 密度，系統性看各層 opens／shorts",
+                "rule: 0.8 pp or more above the first-four-week baseline means this kind of loss is growing; random follows the "
+                "inline density, systematic shows in the per-level opens / shorts")
+        v = "act" if d >= 0.8 else "watch" if d >= 0.4 else "good"
+        out.append(hover_card(head, v, {"act": "變大 growing", "watch": "略增 slightly up", "good": "正常 normal"}[v], [rule]))
+    return out
+
+
+def density_hover(w: pd.DataFrame, fix_week: str | None) -> list[str]:
+    base = float(w["density"].iloc[:4].mean())
+    out = []
+    for _, r in w.iterrows():
+        k = r["density"] / base
+        head = [f"<b>{r['week']}</b>（process week 製程週）", f"inline killer 密度 density <b>{r['density']:.3f}/cm²</b>（基準 {base:.3f}，{k:.1f}×）"]
+        if fix_week and r["week"] == fix_week:
+            head.append(f"修正週 fix week：{fix_week}")
+        rule = ("判斷：> 1.8 × 基準是缺陷事件；這是領先指標，這週製造的 lot 約 3 週後才到 probe",
+                "rule: above 1.8× baseline is a defect event; this is the leading indicator: lots processed this week reach "
+                "probe about 3 weeks later")
+        v = "act" if k > 1.8 else "watch" if k > 1.3 else "good"
+        out.append(hover_card(head, v, {"act": "缺陷事件 event", "watch": "偏高 high", "good": "正常 normal"}[v], [rule]))
+    return out
+
+
+def dly_trend_figure(w: pd.DataFrame, goal: float, fix_week: str | None = None) -> go.Figure:
+    """Row 1: DLY by probe week vs goal (red / green markers; dashed = without flagged wafers). Row 2: loss split into
+    random and systematic. Row 3: inline killer density by process week (the leading indicator)."""
+    from plotly.subplots import make_subplots
+
+    fig = make_subplots(rows=3, cols=1, shared_xaxes=True, vertical_spacing=0.07, row_heights=[0.42, 0.29, 0.29],
+                        subplot_titles=["DLY（probe 週）vs 目標", "損失拆解 loss split（probe 週）", "inline killer 密度（製程週）"])
+    col = [viz.STATUS["critical"] if d < goal else viz.STATUS["good"] for d in w["dly"]]
+    fig.add_scatter(x=w["week"], y=w["dly"], mode="lines+markers", name="DLY 所有晶圓 all wafers", line=dict(color=viz.INK_2, width=1.5),
+                    marker=dict(size=10, color=col), customdata=dly_hover(w, goal), hovertemplate=card_template(), row=1, col=1)
+    if (w["dly_ex"] - w["dly"]).abs().max() >= 0.3:
+        fig.add_scatter(x=w["week"], y=w["dly_ex"], mode="lines", name="DLY 不含標記晶圓 without flagged wafers",
+                        line=dict(color=viz.SERIES[0], dash="dash", width=1.5), hoverinfo="skip", row=1, col=1)
+    fig.add_hline(y=goal, line=dict(color=viz.STATUS["critical"], dash="dash", width=1.2), row=1, col=1)
+    legend_line(fig, f"goal 目標 = {goal:g}%", viz.STATUS["critical"], "dash")
+    legend_marker(fig, "綠燈 green（≥ goal）", viz.STATUS["good"], "circle", 10)
+    legend_marker(fig, "紅燈 red（< goal）", viz.STATUS["critical"], "circle", 10)
+    for c, name, color in (("random_loss", "隨機缺陷損失 random loss", viz.SERIES[0]), ("sys_loss", "系統性損失 systematic loss", viz.SERIES[1])):
+        fig.add_bar(x=w["week"], y=w[c], name=name, marker=dict(color=color), customdata=loss_hover(w, c),
+                    hovertemplate=card_template(), row=2, col=1)
+    base = float(w["density"].iloc[:4].mean())
+    fig.add_scatter(x=w["week"], y=w["density"], mode="lines+markers", name="inline killer density 密度 (/cm²)",
+                    line=dict(color=viz.SERIES[2], width=1.5), marker=dict(size=7), customdata=density_hover(w, fix_week),
+                    hovertemplate=card_template(), row=3, col=1)
+    fig.add_hline(y=1.8 * base, line=dict(color=viz.MUTED, dash="dot", width=1), row=3, col=1)
+    legend_line(fig, "1.8 × 基準 baseline（事件線 event line）", viz.MUTED, "dot")
+    if fix_week:
+        fig.add_vline(x=fix_week, line=dict(color=viz.SERIES[2], dash="dash", width=1.5))
+        legend_line(fig, f"修正 fix（{fix_week}）", viz.SERIES[2], "dash")
+    layout(fig, "每週 defect-limited yield（DLY）", "", "", 680)
+    fig.update_layout(barmode="stack", legend=dict(orientation="h", y=-0.08, yanchor="top", x=0), margin=dict(b=120))
+    fig.update_yaxes(title_text="DLY (%)", row=1, col=1)
+    fig.update_yaxes(title_text="損失 loss (pp)", row=2, col=1)
+    fig.update_yaxes(title_text="密度 (/cm²)", row=3, col=1)
+    fig.update_xaxes(title_text="週 week", row=3, col=1)
+    return fig
+
+
+def level_hover(g: pd.DataFrame, base: float, level: str, mode: str) -> list[str]:
+    out = []
+    for _, r in g.iterrows():
+        d = base - float(r["pass_pct"])
+        head = [f"<b>{level} {mode}</b> · {r['week']}", f"通過率 passing <b>{r['pass_pct']:.2f}%</b>（基準 baseline {base:.2f}%，−{max(d, 0):.2f} pp）"]
+        rule = ("判斷：比前四週基準低 ≥ 1 pp 是系統性問題、0.5–1 pp 要追一週；只有一層掉 → 找該層的 module",
+                "rule: 1 pp or more below the first-four-week baseline is a systematic problem, 0.5–1 pp needs another week; "
+                "only one level dropping → look at that level's module")
+        v = "act" if d >= 1.0 else "watch" if d >= 0.5 else "good"
+        out.append(hover_card(head, v, {"act": "系統性下降 systematic drop", "watch": "略降 slightly down", "good": "正常 normal"}[v], [rule]))
+    return out
+
+
+def level_pass_figure(lv: pd.DataFrame) -> go.Figure:
+    from plotly.subplots import make_subplots
+
+    weeks = list(dict.fromkeys(lv["week"]))
+    fig = make_subplots(rows=1, cols=2, shared_yaxes=True, horizontal_spacing=0.05,
+                        subplot_titles=["opens 斷路 通過率", "shorts 短路 通過率"])
+    for j, mode in enumerate(("opens", "shorts"), start=1):
+        for i, (level, g) in enumerate(lv[lv["mode"] == mode].groupby("level", sort=True)):
+            base = float(g[g["week"].isin(weeks[:4])]["pass_pct"].mean())
+            fig.add_scatter(x=g["week"], y=g["pass_pct"], mode="lines+markers", name=level, legendgroup=level, showlegend=j == 1,
+                            line=dict(color=viz.SERIES[i], width=1.5), marker=dict(size=6),
+                            customdata=level_hover(g, base, level, mode), hovertemplate=card_template(), row=1, col=j)
+        fig.update_xaxes(title_text="probe 週 week", row=1, col=j)
+    layout(fig, "各金屬層 opens／shorts 通過率", "", "通過率 passing (%)", 380)
+    fig.update_yaxes(title_text="", row=1, col=2)
+    fig.update_layout(legend=dict(orientation="h", y=1.12, yanchor="bottom", x=0), margin=dict(t=110))
+    return fig
+
+
+def layer_repeat_figure(d1: pd.DataFrame, d2: pd.DataFrame, radius: float, layers: list[str], title: str = "") -> go.Figure:
+    """This layer's defects (blue circles) and the next layer's (orange crosses); hover says whether each one repeats."""
+    def nearest(a, b):
+        if not len(a) or not len(b):
+            return np.full(len(a), np.inf)
+        return np.hypot(a.x.to_numpy()[:, None] - b.x.to_numpy()[None, :], a.y.to_numpy()[:, None] - b.y.to_numpy()[None, :]).min(axis=1)
+
+    n1, n2 = nearest(d1, d2), nearest(d2, d1)
+    rule = (f"判斷：下一層 ±{radius} mm 內有缺陷 = 同位置再出現；cluster 一半以上再出現 → 真的實體缺陷",
+            f"rule: a defect within ±{radius} mm at the other layer = it repeats; more than half of a cluster repeating → a real "
+            "physical defect")
+    c1 = [hover_card([f"<b>{layers[0]}</b> defect" + (" · cluster" if c else ""), f"x {x:.1f}, y {y:.1f} mm",
+                      f"下一層最近的缺陷 nearest next-layer defect {d:.2f} mm" if np.isfinite(d) else "下一層沒有缺陷"],
+                     "act" if d <= radius else None, "再出現 repeats" if d <= radius else "沒再出現 does not repeat", [rule])
+          for x, y, c, d in zip(d1.x, d1.y, d1["cluster"], n1)]
+    c2 = [hover_card([f"<b>{layers[1]}</b> defect", f"x {x:.1f}, y {y:.1f} mm", f"本層最近的缺陷 nearest earlier defect {d:.2f} mm"],
+                     "act" if d <= radius else None, "同位置 same place as before" if d <= radius else "這層新出現 new at this layer", [rule])
+          for x, y, d in zip(d2.x, d2.y, n2)]
+    fig = go.Figure()
+    fig.add_scatter(x=d1.x, y=d1.y, mode="markers", name=f"{layers[0]} ({len(d1)})", customdata=c1, hovertemplate=card_template(),
+                    marker=dict(symbol="circle-open", size=9, color=viz.SERIES[0], line=dict(width=2)))
+    fig.add_scatter(x=d2.x, y=d2.y, mode="markers", name=f"{layers[1]} ({len(d2)})", customdata=c2, hovertemplate=card_template(),
+                    marker=dict(symbol="x-thin-open", size=8, color=viz.SERIES[1], line=dict(width=2, color=viz.SERIES[1])))
+    fig.add_shape(type="circle", x0=-150, y0=-150, x1=150, y1=150, line=dict(color=viz.AXIS))
+    legend_line(fig, "wafer edge 晶圓邊緣", viz.AXIS)
+    fig = layout(fig, title or "本層 vs 下一層缺陷位置", "x (mm)", "y (mm)", 540)
+    fig.update_yaxes(scaleanchor="x", scaleratio=1)
+    return fig

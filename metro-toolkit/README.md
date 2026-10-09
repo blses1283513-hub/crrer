@@ -115,6 +115,11 @@ Every control, KPI tile and table column has a "?" tooltip, and every chart has:
   * Fab simulator and defects: a lot against the yield alert line; a die's failure cause and device window; trade-off,
     detection delay, confusion-matrix cells and drivers; inspection counts against the maxout, the nuisance share,
     previous-layer vs this-layer adders, bin loss vs inline metrology.
+  * Yield and splits: a die on the probe-overlay map (seen inline, a capture gap, or a non-killer); each step's
+    capture rate against the 30 / 60% lines; a split wafer that ran the wrong recipe or carried an off-nominal FEM
+    cell; a zone's B − POR against 2 standard errors; a week against the DLY goal, its random / systematic loss and the
+    inline density against 1.8× baseline; a metal level's opens / shorts drop against 0.5 / 1 pp; a defect that does
+    or does not come back at the next layer.
   * Study log: each attempt and each area against the 85 / 50 score bands that 🎯 weak-spot mode uses.
 
 The sidebar switch **說明語言 Guide language** selects 繁中 + English, 繁中 or English (your settings are kept
@@ -149,11 +154,14 @@ the other pages, so the evidence looks exactly like it would there.
 | Recipe studies | can the new spec stay on reflectometry? (thin: switch to SE; thick: keep it) |
 | DOE / recipe | setting a recipe from a 2-level DOE (curvature) · optimum on the edge of the range · a DOE with almost nothing significant |
 | Fab simulator | yield drop with a gate-oxide shift · yield drop with clean parameter SPC (particles) · many chambers OOC with steady yield (metrology offset) |
-| Inline defect | counts explode / hit the maxout, but review is mostly non-visible (nuisance recipe) · more defects on a split: incoming from the previous layer or added by the new condition (adder analysis) |
+| Inline defect | counts explode / hit the maxout, but review is mostly non-visible (nuisance recipe) · more defects on a split: incoming from the previous layer or added by the new condition (adder analysis) · a cluster SEM review cannot classify ("rough surface"): does it come back at the same place at the next layer (a real, possibly sub-surface defect: cross-section it) or vanish (a surface artefact: tune the recipe)? |
 | Cross-role requests | FA asks whether a recess was on target (routine sites fine, the outermost ring is not, or the whole wafer is on target) · YE asks which inline parameter goes with a bin (one strong correlation, or none) |
+| Yield analysis & splits | inline defects vs probe fails: capture rate and kill ratio per inspection step (is the monitor blind, or does it work and the source needs fixing?) with the expected gain from Y = exp(−D·A·KR) · can this split be used? (a litho FEM on the same wafers confounds it, a group never ran per the run log, or it is clean) · better centre, worse edge: the die-weighted net decides convert or keep POR · weekly KPI red: DLY vs goal, random vs systematic loss, inline density by process week, opens / shorts per metal level (a fix still waiting for probe, a few excursion wafers, or a real systematic loss on one level) |
 
-The defect and request cases are written in the formats those roles use (inline defect summary in SWR style, FA
-reply, lot-report note, handover): the answer box is pre-filled with the headings, and the checklist ignores them.
+The defect, request and yield cases are written in the formats those roles use (inline defect summary in SWR style,
+FA reply, lot-report note, handover, split conclusion report, weekly KPI summary): the answer box is pre-filled with
+the headings, and the checklist ignores them. In every case of these areas the data decides the right answer: the same
+case type can turn out either way, so the charts have to be read, not guessed.
 
 **Multi-issue cases and the case builder**
 
@@ -203,7 +211,7 @@ reply, lot-report note, handover): the answer box is pre-filled with the heading
 * **🎯 My weak spots** (Case study → Domain, or the button in the cross study): 🎲 then picks case types with low
   recent scores most often, other types in your weak areas next, untried types after that and mastered ones
   rarely; the level steps up after a recent score >= 85 and down after one < 50 (unless you fix the level).
-* Texts live in `src/metro_toolkit/cases/cases.yaml` (zh + en), data in `cases/generators.py`, multi-issue
+* Texts live in `src/metro_toolkit/cases/cases.yaml` (zh + en), data in `cases/generators.py` and `cases/generators_yield.py` (yield, split, KPI and unclassified-defect cases), multi-issue
   building blocks in `cases/issues.yaml` + `cases/compose.py`, your templates in `cases/custom.py`. Answers follow generic OCAP practice; in real work your fab's OCAP and sign-off rules decide.
 
 ## Vocabulary study files (Eudic 歐路詞典)
@@ -341,7 +349,7 @@ metro-toolkit/
 │   ├── datagen/            synthetic thickness data, fab simulator + answer key, MSA study data
 │   ├── doe/                designs · model · optimize · virtual (process tools with an answer key)
 │   ├── guide/              chart & parameter guide: params_*.yaml · charts_*.yaml · insights (data → status)
-│   ├── cases/              case study practice: cases.yaml · generators.py (27 case types) · issues.yaml +
+│   ├── cases/              case study practice: cases.yaml · generators.py + generators_yield.py (32 case types) · issues.yaml +
 │   │                       compose.py (multi-issue, builder) · custom.py (your templates)
 │   ├── ingest/             readers · mapping · convert · checks · store (your own data)
 │   ├── dashboard/app.py    Streamlit app

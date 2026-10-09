@@ -602,3 +602,187 @@ def bin_corr(t: pd.DataFrame, params: list[str], bin_name: str) -> Facts:
         f.worse("watch").add("只有中度相關：可能是部分原因或巧合，要加更多晶圓確認",
                              "only a moderate correlation: a partial cause or chance; add more wafers to confirm")
     return f
+
+
+# --------------------------------------------------------------------------- yield analysis, splits and weekly KPIs
+ZONE = {"centre": ("中心", "centre"), "mid": ("中間", "middle"), "edge": ("邊緣", "edge")}
+
+
+def zone_of(r, r_max: float) -> np.ndarray:
+    """centre (r < 0.5 R) | mid | edge (r > 0.8 R): the radial zones yield is usually split into."""
+    r = np.asarray(r, float) / r_max
+    return np.where(r < 0.5, "centre", np.where(r > 0.8, "edge", "mid"))
+
+
+def probe_overlay(dies: pd.DataFrame, bin_name: str, r_max: float) -> Facts:
+    """dies: x, y, fail (bool). v: bin, n_dies, n_fail, fail_pct, fail_zone, zone_pct."""
+    fail = dies[dies["fail"]]
+    zones = pd.Series(zone_of(np.hypot(fail.x, fail.y), r_max)).value_counts()
+    share = zones / pd.Series(zone_of(np.hypot(dies.x, dies.y), r_max)).value_counts()  # fail rate per zone
+    z = str(share.idxmax())
+    f = Facts(v={"bin": bin_name, "n_dies": len(dies), "n_fail": len(fail), "fail_pct": round(100 * len(fail) / len(dies), 1),
+                 "fail_zone": _bi(ZONE[z][0], ZONE[z][1]), "zone_pct": round(100 * float(zones.get(z, 0)) / max(len(fail), 1))})
+    f.add(f"{bin_name} 失效 {len(fail)} 顆（{f.v['fail_pct']}%），失效率最高的是{ZONE[z][0]}區（佔失效 {f.v['zone_pct']}%）",
+          f"{bin_name}: {len(fail)} failing dies ({f.v['fail_pct']}%); the highest fail rate is in the {ZONE[z][1]} zone "
+          f"({f.v['zone_pct']}% of the fails)")
+    if f.v["fail_pct"] >= 5:
+        f.worse("act").add("失效率 ≥ 5%：要找出 inline 哪一站看得到這些失效", "fail rate of 5% or more: find which inline step sees these fails")
+    elif f.v["fail_pct"] >= 2:
+        f.worse("watch").add("失效率 2–5%：疊圖確認是否和 inline 缺陷有關", "fail rate 2–5%: overlay to check whether inline defects explain it")
+    return f
+
+
+def capture_kill(table: pd.DataFrame, monitor: str, area_cm2: float, n_dies: int) -> Facts:
+    """table: step, defects, capture (% of fail dies with a defect of this step), kill_ratio (% adjusted for chance),
+    chance (% of dies failing: a random defect lands on a fail die this often). Yield gain from the best-capturing step:
+    Y = exp(-D * A * KR) with D = defects / (n_dies * A).
+    v: monitor, mon_capture, mon_kr, best_step, best_capture, best_kr, chance, d_best, area, kr_best, gain."""
+    t = table.set_index("step")
+    best = str(t["capture"].idxmax())
+    d = float(t.loc[best, "defects"]) / (n_dies * area_cm2)
+    kr = float(t.loc[best, "kill_ratio"]) / 100
+    gain = 100 * (1 - np.exp(-d * area_cm2 * kr))
+    f = Facts(v={"monitor": monitor, "mon_capture": round(float(t.loc[monitor, "capture"])), "mon_kr": round(float(t.loc[monitor, "kill_ratio"])),
+                 "best_step": best, "best_capture": round(float(t.loc[best, "capture"])), "best_kr": round(float(t.loc[best, "kill_ratio"])),
+                 "chance": round(float(t["chance"].iloc[0]), 1), "d_best": round(d, 3), "area": area_cm2, "kr_best": round(kr, 2),
+                 "gain": round(gain, 1)})
+    for s, r in t.iterrows():
+        f.add(f"{s}：capture rate {r['capture']:.0f}%、kill ratio {r['kill_ratio']:.0f}%（{int(r['defects'])} 顆）",
+              f"{s}: capture rate {r['capture']:.0f}%, kill ratio {r['kill_ratio']:.0f}% ({int(r['defects'])} defects)")
+    f.add(f"以 {best} 估計：Y = exp(−D·A·KR)，D = {d:.3f}/cm²、A = {area_cm2} cm²、KR = {kr:.2f} → 去除這些缺陷約回收 {gain:.1f} 個百分點",
+          f"from {best}: Y = exp(−D·A·KR), D = {d:.3f}/cm², A = {area_cm2} cm², KR = {kr:.2f} → removing these defects returns "
+          f"about {gain:.1f} percentage points")
+    if f.v["mon_capture"] < 30:
+        f.worse("act").add(f"目前的監控站 {monitor} capture rate < 30%：它看不到這些 killer，SPC 正常不代表沒問題",
+                           f"the current monitor {monitor} has a capture rate below 30%: it cannot see these killers, so a clean "
+                           "SPC proves nothing")
+    elif f.v["mon_capture"] < 60:
+        f.worse("watch").add("監控站 capture rate 30–60%：只看得到部分 killer", "monitor capture rate 30–60%: it sees only part of the killers")
+    return f
+
+
+def split_check(t: pd.DataFrame) -> Facts:
+    """t: wafer_id, slot, planned (POR / B-low / B-high), actual (recipe in the run log), fem (nominal / off), yield.
+    v: n_wafers, n_misrun, misrun_group, n_fem_off, fem_b, fem_por, delta_all, delta_nom, d_setting, source."""
+    b_plan = t["planned"] != "POR"
+    mis = t[t["planned"] != t["actual"]]
+    off = t["fem"] != "nominal"
+    nom = t[~off]
+    delta_all = float(t.loc[b_plan, "yield"].mean() - t.loc[~b_plan, "yield"].mean())
+    delta_nom = float(nom.loc[nom["actual"] != "POR", "yield"].mean() - nom.loc[nom["actual"] == "POR", "yield"].mean())
+    d_set = float(t.loc[t["planned"] == "B-high", "yield"].mean() - t.loc[t["planned"] == "B-low", "yield"].mean())
+    fem_b, fem_por = int((off & b_plan).sum()), int((off & ~b_plan).sum())
+    confounded = abs(fem_b - fem_por) >= 3 and abs(delta_all - delta_nom) >= 1.2
+    src = ({"zh": "split 設定錯誤（run log 與計畫不符）", "en": "the split was set up wrong (the run log does not match the plan)"} if len(mis) else
+           {"zh": "第二個實驗（litho FEM）和 split 分組重疊（混淆）", "en": "a second experiment (litho FEM) overlaps the split groups (confounded)"}
+           if confounded else {"zh": "實驗乾淨，結果可用", "en": "a clean experiment, the result can be used"})
+    f = Facts(v={"n_wafers": len(t), "n_misrun": len(mis), "misrun_group": str(mis["planned"].iloc[0]) if len(mis) else "—",
+                 "n_fem_off": int(off.sum()), "fem_b": fem_b, "fem_por": fem_por, "delta_all": round(delta_all, 1),
+                 "delta_nom": round(delta_nom, 1), "d_setting": round(d_set, 1), "source": src})
+    f.add(f"依計畫分組：B − POR = {delta_all:+.1f} pp；只看 FEM 標準條件、依實際 recipe：{delta_nom:+.1f} pp",
+          f"by planned group: B − POR = {delta_all:+.1f} pp; nominal-FEM wafers only, by actual recipe: {delta_nom:+.1f} pp")
+    if len(mis):
+        f.worse("act").add(f"{len(mis)} 片計畫是 {f.v['misrun_group']}，run log 卻是別的 recipe：這組條件實際上沒有跑",
+                           f"{len(mis)} wafers planned as {f.v['misrun_group']} ran another recipe per the run log: that condition "
+                           "never actually ran")
+    if confounded:
+        f.worse("act").add(f"FEM 偏離條件的晶圓 B 組 {fem_b} 片、POR 組 {fem_por} 片：差異被第二個實驗混淆",
+                           f"off-nominal FEM wafers: {fem_b} in B, {fem_por} in POR: the difference is confounded by the second experiment")
+    return f
+
+
+def zone_split(t: pd.DataFrame, net: float, net_se: float) -> Facts:
+    """t: zone (centre / mid / edge), share (% of dies), por, b (mean yield %), delta, se (of the delta).
+    v: d_c, d_m, d_e, se_e, share_c, share_m, share_e, net, net_se, worst_zone, best_zone."""
+    t = t.set_index("zone")
+    worst, best = str(t["delta"].idxmin()), str(t["delta"].idxmax())
+    f = Facts(v={"d_c": round(float(t.loc["centre", "delta"]), 1), "d_m": round(float(t.loc["mid", "delta"]), 1),
+                 "d_e": round(float(t.loc["edge", "delta"]), 1), "se_e": round(float(t.loc["edge", "se"]), 2),
+                 "share_c": round(float(t.loc["centre", "share"])), "share_m": round(float(t.loc["mid", "share"])),
+                 "share_e": round(float(t.loc["edge", "share"])), "net": round(net, 2), "net_se": round(net_se, 2),
+                 "worst_zone": _bi(ZONE[worst][0], ZONE[worst][1]), "best_zone": _bi(ZONE[best][0], ZONE[best][1])})
+    f.add(f"B − POR：中心 {f.v['d_c']:+} pp、中間 {f.v['d_m']:+} pp、邊緣 {f.v['d_e']:+} pp；依晶粒數加權淨效果 {net:+.2f} ± {net_se:.2f} pp",
+          f"B − POR: centre {f.v['d_c']:+} pp, middle {f.v['d_m']:+} pp, edge {f.v['d_e']:+} pp; die-weighted net {net:+.2f} ± {net_se:.2f} pp")
+    loses = float(t.loc[worst, "delta"]) < -2 * float(t.loc[worst, "se"])
+    if net <= 2 * net_se:
+        f.worse("act").add("淨效果沒有超過 2 個標準誤：某區的增益被另一區的損失抵消，看不出整體好處",
+                           "the net effect is not beyond 2 standard errors: one zone's gain is cancelled by another's loss")
+    elif loses:
+        f.worse("watch").add(f"整體有增益，但{ZONE[worst][0]}區顯著變差：轉換時要追蹤這一區",
+                             f"a net gain, but the {ZONE[worst][1]} zone is significantly worse: follow that zone up when converting")
+    return f
+
+
+def dly_trend(w: pd.DataFrame, goal: float, fix_week: str | None) -> Facts:
+    """w (one row per week, time order): week, dly (% all wafers), dly_ex (% without flagged wafers), random_loss,
+    sys_loss (pp), density (inline killer defects / cm² of lots PROCESSED that week).
+    v: latest, dly_latest, dly_ex_latest, goal, n_red, red_weeks, rand_latest, sys_latest, rand_base, sys_base,
+    dens_latest, dens_base, dens_peak, dens_peak_week, fix_week."""
+    last = w.iloc[-1]
+    base = w.iloc[:4]
+    red = w[w["dly"] < goal]
+    peak = w.loc[w["density"].idxmax()]
+    f = Facts(v={"latest": last["week"], "dly_latest": round(float(last["dly"]), 1), "dly_ex_latest": round(float(last["dly_ex"]), 1),
+                 "goal": goal, "n_red": len(red), "red_weeks": ", ".join(red["week"]) or "—",
+                 "rand_latest": round(float(last["random_loss"]), 1), "sys_latest": round(float(last["sys_loss"]), 1),
+                 "rand_base": round(float(base["random_loss"].mean()), 1), "sys_base": round(float(base["sys_loss"].mean()), 1),
+                 "dens_latest": round(float(last["density"]), 3), "dens_base": round(float(base["density"].mean()), 3),
+                 "dens_peak": round(float(peak["density"]), 3), "dens_peak_week": peak["week"], "fix_week": fix_week or "—"})
+    f.add(f"{last['week']} DLY {f.v['dly_latest']}%（目標 {goal}%）；隨機缺陷損失 {f.v['rand_latest']} pp（基準 {f.v['rand_base']}）、"
+          f"系統性損失 {f.v['sys_latest']} pp（基準 {f.v['sys_base']}）",
+          f"{last['week']} DLY {f.v['dly_latest']}% (goal {goal}%); random-defect loss {f.v['rand_latest']} pp (baseline "
+          f"{f.v['rand_base']}), systematic loss {f.v['sys_latest']} pp (baseline {f.v['sys_base']})")
+    if abs(f.v["dly_ex_latest"] - f.v["dly_latest"]) >= 0.5:
+        f.add(f"不含標記晶圓時 {f.v['dly_ex_latest']}%：差距來自少數晶圓", f"without the flagged wafers {f.v['dly_ex_latest']}%: a few wafers make the gap")
+    if f.v["dens_peak"] > 1.8 * f.v["dens_base"]:
+        f.add(f"inline killer 密度在製程週 {peak['week']} 達 {f.v['dens_peak']}/cm²（基準 {f.v['dens_base']}），最近 {f.v['dens_latest']}",
+              f"inline killer density peaked at {f.v['dens_peak']}/cm² in process week {peak['week']} (baseline {f.v['dens_base']}); "
+              f"latest {f.v['dens_latest']}")
+    if last["dly"] < goal:
+        f.worse("act").add(f"{last['week']} 低於目標（紅燈）；紅燈週：{f.v['red_weeks']}", f"{last['week']} is below goal (red); red weeks: {f.v['red_weeks']}")
+    elif last["dly"] < goal + 0.5:
+        f.worse("watch").add("離目標不到 0.5 pp", "within 0.5 pp of the goal")
+    return f
+
+
+def level_pass(lv: pd.DataFrame) -> Facts:
+    """lv: week, level, mode (opens / shorts), pass_pct. Baseline = the first four weeks.
+    v: worst_level, worst_mode, worst_drop, worst_latest, worst_base."""
+    weeks = list(dict.fromkeys(lv["week"]))
+    base = lv[lv["week"].isin(weeks[:4])].groupby(["level", "mode"])["pass_pct"].mean()
+    last = lv[lv["week"] == weeks[-1]].set_index(["level", "mode"])["pass_pct"]
+    drop = (base - last).sort_values(ascending=False)
+    (lev, mode), d = drop.index[0], float(drop.iloc[0])
+    f = Facts(v={"worst_level": lev, "worst_mode": mode, "worst_drop": round(d, 2), "worst_latest": round(float(last[(lev, mode)]), 2),
+                 "worst_base": round(float(base[(lev, mode)]), 2)})
+    f.add(f"下降最多：{lev} {mode} 通過率 {f.v['worst_base']}% → {f.v['worst_latest']}%（−{d:.2f} pp）",
+          f"largest drop: {lev} {mode} passing {f.v['worst_base']}% → {f.v['worst_latest']}% (−{d:.2f} pp)")
+    if d >= 1.0:
+        f.worse("act").add(f"{lev} 的 {mode} 持續下降 ≥ 1 pp：系統性問題，要找該層 module", f"{lev} {mode} down by 1 pp or more: a systematic problem on that level's module")
+    elif d >= 0.5:
+        f.worse("watch").add("下降 0.5–1 pp：再追一週", "down 0.5–1 pp: watch one more week")
+    return f
+
+
+def layer_repeat(d1: pd.DataFrame, d2: pd.DataFrame, radius: float, cluster_loc: dict) -> Facts:
+    """d1 / d2: x, y of defects at this layer / the next layer's inspection; d1 also has 'cluster' (bool).
+    v: n1, n2, cluster_n, n_repeat, repeat_pct, radius, cluster_loc."""
+    c = d1[d1["cluster"]]
+    if len(d2) and len(c):
+        dist = np.hypot(c.x.to_numpy()[:, None] - d2.x.to_numpy()[None, :], c.y.to_numpy()[:, None] - d2.y.to_numpy()[None, :])
+        hit = int((dist.min(axis=1) <= radius).sum())
+    else:
+        hit = 0
+    pct = round(100 * hit / max(len(c), 1))
+    f = Facts(v={"n1": len(d1), "n2": len(d2), "cluster_n": len(c), "n_repeat": hit, "repeat_pct": pct, "radius": radius,
+                 "cluster_loc": cluster_loc})
+    f.add(f"本層 {len(d1)} 顆（cluster {len(c)} 顆，在{cluster_loc['zh']}）；其中 {hit} 顆（{pct}%）在下一層同位置（±{radius} mm）再出現",
+          f"{len(d1)} defects at this layer ({len(c)} in the cluster at the {cluster_loc['en']}); {hit} of them ({pct}%) reappear at "
+          f"the same place (±{radius} mm) at the next layer")
+    if pct >= 50:
+        f.worse("act").add("一半以上在下一層再出現：是真的實體缺陷（可能在表面下），SEM 俯視看不到不代表沒有",
+                           "more than half reappear at the next layer: a real physical defect (possibly below the surface); "
+                           "SEM top-down not seeing it does not mean it is not there")
+    elif pct >= 15:
+        f.worse("watch").add("部分再出現：再看一層或換 review 方式確認", "partly repeating: check one more layer or another review mode")
+    return f

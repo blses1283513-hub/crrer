@@ -66,6 +66,7 @@ from metro_toolkit.dashboard.figures import (  # noqa: E402
     attempt_hover,
     bin_corr_figure,
     bland_altman_figure,
+    capture_kill_figure,
     card_template,
     confusion_hover,
     defect_counts_figure,
@@ -73,24 +74,30 @@ from metro_toolkit.dashboard.figures import (  # noqa: E402
     die_hover,
     die_map_figure,
     doe_contour_figure,
+    dly_trend_figure,
     driver_hover,
     fit_figures,
     grr_figure,
+    layer_repeat_figure,
     layout,
     legend_line,
+    level_pass_figure,
     pareto_figure,
+    probe_overlay_figure,
     quantity,
     radial_figure,
     review_pareto_figure,
     rolling_hover,
     sensitivity_figure,
     spc_figure,
+    split_check_figure,
     tn_figure,
     tradeoff_hover,
     unit_of,
     wafer_map_figure,
     yield_trend_figure,
     zernike_figure,
+    zone_yield_figure,
 )
 from metro_toolkit.guide import insights as gi  # noqa: E402
 from metro_toolkit.guide.render import H, explain, language_switch  # noqa: E402
@@ -1129,6 +1136,21 @@ def render_evidence(ev: dict, key: str):
         st.dataframe(ev["table"].assign(adders=ev["table"]["current"] - ev["table"]["previous"]), hide_index=True)
     elif kind == "bin_corr":
         st.plotly_chart(bin_corr_figure(ev["table"], ev["params"], ev["bin"]), width="stretch", key=f"{key}_bc")
+    elif kind == "probe_overlay":
+        st.plotly_chart(probe_overlay_figure(ev["dies"], ev["defects"], ev["steps"], ev["bin"]), width="stretch", key=f"{key}_po")
+    elif kind == "capture_kill":
+        st.plotly_chart(capture_kill_figure(ev["table"], ev["monitor"]), width="stretch", key=f"{key}_ck")
+        st.dataframe(ev["table"].style.format(precision=1), hide_index=True)
+    elif kind == "split_check":
+        st.plotly_chart(split_check_figure(ev["table"]), width="stretch", key=f"{key}_sc")
+    elif kind == "zone_yield":
+        st.plotly_chart(zone_yield_figure(ev["table"], ev["net"], ev["net_se"]), width="stretch", key=f"{key}_zy")
+    elif kind == "dly_trend":
+        st.plotly_chart(dly_trend_figure(ev["w"], ev["goal"], ev.get("fix_week")), width="stretch", key=f"{key}_dly")
+    elif kind == "level_pass":
+        st.plotly_chart(level_pass_figure(ev["lv"]), width="stretch", key=f"{key}_lp")
+    elif kind == "layer_repeat":
+        st.plotly_chart(layer_repeat_figure(ev["d1"], ev["d2"], ev["radius"], ev["layers"]), width="stretch", key=f"{key}_lr")
     elif kind == "die_map":
         st.plotly_chart(die_map_figure(ev["codes"], ev["gx"], ev["gy"], ev["r_eff"], ev["title"]), width="stretch",
                         key=f"{key}_dm")

@@ -864,3 +864,7 @@ GENERATORS = {
     "doe_edge_optimum": doe_edge_optimum, "doe_noisy": doe_noisy, "fab_chamber_excursion": fab_chamber_excursion,
     "fab_particle_event": fab_particle_event, "fab_metro_offset": fab_metro_offset,
 }
+
+from .generators_yield import YIELD_GENERATORS  # noqa: E402 - needs the helpers above
+
+GENERATORS.update(YIELD_GENERATORS)

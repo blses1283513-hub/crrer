@@ -49,6 +49,18 @@ pools:
     C_NOT_METRO: {zh: "量測顯示該參數全片都在 target：這個參數不是失效原因", en: "Metrology shows the parameter on target across the wafer: it is not the cause of the failure"}
     C_PARAM_DRIVES: {zh: "某個 inline 參數的片間變異驅動了這個 bin 的損失", en: "Wafer-to-wafer variation of one inline parameter drives this bin's loss"}
     C_NO_METRO_LINK: {zh: "沒有任何 inline 量測參數能解釋這個 bin：損失多半來自缺陷或其他機制", en: "No inline metrology parameter explains this bin: the loss is likely defect-driven or another mechanism"}
+    C_INSP_BLIND: {zh: "目前的 inline 監控站看不到這些 killer（capture rate 低），另一站才看得到", en: "The current inline monitor step cannot see these killers (low capture rate); another step can"}
+    C_KILLER_SOURCE: {zh: "監控站抓到的真 killer 缺陷解釋了失效（capture rate 與 kill ratio 都高）：問題在缺陷來源", en: "Real killer defects caught by the monitor explain the fails (high capture rate and kill ratio): the problem is the defect source"}
+    C_CONFOUNDED: {zh: "另一個實驗（例如 litho FEM）和 split 分組重疊，差異被混淆", en: "Another experiment (e.g. a litho FEM) overlaps the split groups, so the difference is confounded"}
+    C_SPLIT_MISSET: {zh: "split 設定錯誤：有一組實際上沒有照計畫跑（run log 不符）", en: "The split was set up wrong: one group never ran as planned (the run log does not match)"}
+    C_SPLIT_VALID: {zh: "split 照計畫執行、沒有干擾，差異是條件本身造成的", en: "The split ran as planned with no interference; the difference comes from the condition itself"}
+    C_NET_GAIN: {zh: "B 在中心的增益大於邊緣的損失：依晶粒數加權後整體為正", en: "B's centre gain outweighs its edge loss: the die-weighted net is positive"}
+    C_ZONE_CANCEL: {zh: "B 在中心的增益被邊緣的損失抵消：整體看不出好處", en: "B's centre gain is cancelled by its edge loss: no overall gain"}
+    C_PROBE_LAG: {zh: "缺陷來源已修好，但修好前製造的 lot 現在才到 probe（probe 延遲）", en: "The defect source is already fixed, but lots processed before the fix are only now reaching probe (probe lag)"}
+    C_OUTLIER_WAFERS: {zh: "少數已知異常晶圓拉低整週平均；基準線在目標之上", en: "A few known excursion wafers drag the weekly average; the baseline is above goal"}
+    C_LEVEL_SYSTEMATIC: {zh: "某一金屬層的系統性損失（opens／shorts）持續變大", en: "A systematic loss (opens / shorts) on one metal level keeps growing"}
+    C_SUBSURFACE: {zh: "真的實體缺陷在表面下或被覆蓋：SEM 俯視只看到粗糙表面", en: "A real physical defect below the surface or covered: SEM top-down sees only roughness"}
+    C_SURFACE_ARTIFACT: {zh: "只在表面的假訊號（色差、粗糙度），下一層就消失：nuisance", en: "A surface-only signal (colour, roughness) that vanishes at the next layer: nuisance"}
   actions:
     A_VERIFY: {zh: "先確認量測：同片重測（同機台＋參考機台）、查 GOF 與量測機台的監控片", en: "Verify the measurement first: re-measure the wafer (same and reference tool), check GOF and the metrology monitor wafer"}
     A_HOLD_INHIBIT: {zh: "hold 受影響 lot、inhibit 該 chamber，請 EE 檢查，修復後跑 qual 再放行", en: "Hold the affected lots, inhibit the chamber, have EE check it and run qual after the fix"}
@@ -77,6 +89,16 @@ pools:
     A_SEND_PE: {zh: "把相關圖與晶圓清單交給 YE／PE，建議用 split 或 DOE 確認機制", en: "Send the correlation plot and wafer list to YE / PE and propose a split or DOE to confirm the mechanism"}
     A_SUGGEST_FA: {zh: "回覆 YE：量測參數沒有關聯；建議對失效晶粒做 defect review／FA", en: "Reply to YE that metrology shows no link, and suggest defect review / FA on the failing dies"}
     A_CHANGE_REVIEW: {zh: "對照最近的 recipe／進料／版本變更，請 PE 確認是否為預期中的變更", en: "Check recent recipe / incoming-material / version changes and ask PE whether the change was intended"}
+    A_MOVE_MONITOR: {zh: "把缺陷監控移到（或加上）capture rate 高的那一站，設定抽樣、SPC 與 review", en: "Move (or add) the defect monitor to the high-capture step, with sampling, SPC and review"}
+    A_SOURCE_FIX: {zh: "把疊圖、kill ratio 與預期良率回收交給 PE／EE 修缺陷來源，監控站維持不變", en: "Give PE / EE the overlay, the kill ratio and the expected yield gain to fix the defect source; keep the monitor as is"}
+    A_RERUN_SPLIT: {zh: "回報這次 split 無法下結論，重新設計（隨機分配晶圓、避免重疊實驗、run 前確認 recipe）後重跑", en: "Report the split as inconclusive and rerun it redesigned (randomised wafers, no overlapping experiment, recipes checked before the run)"}
+    A_REPORT_SPLIT: {zh: "整理 split 結論（含實驗檢查）交給 PE／YE，進入轉換評估", en: "Write up the split conclusion (setup check included) for PE / YE and move to the conversion review"}
+    A_ADOPT_FOLLOWUP: {zh: "依變更管理轉換到 B，並對變差的區域（邊緣）開追蹤項目", en: "Convert to B through change control and open a follow-up on the zone that got worse (edge)"}
+    A_FIX_ZONE_RESPLIT: {zh: "維持 POR，請 PE 先解決 B 的邊緣損失，再重做 split", en: "Keep POR, have PE fix B's edge loss first, then re-split"}
+    A_TRACK_LEADING: {zh: "紅燈照報並寫明原因；用 inline 密度當領先指標，並追蹤修正後第一批 lot 的 probe", en: "Report the red with its reason; use the inline density as the leading indicator and follow the first post-fix lots at probe"}
+    A_REPORT_BOTH: {zh: "同時報告含與不含異常晶圓的數字並寫明原因，異常另開追蹤，不刪資料", en: "Report the number with and without the excursion wafers and why; track the excursion separately and never delete data"}
+    A_ESCALATE_LEVEL: {zh: "對該層 module 開 excursion：commonality、該層 inline 資料、失效晶粒 FA", en: "Open an excursion on that level's module: commonality, that level's inline data, FA on failing dies"}
+    A_XSECTION: {zh: "換 review 方式（傾斜 SEM、EDX）、在 cluster 做 FIB 切面，並在下一層與 probe 追蹤", en: "Use other review modes (tilted SEM, EDX), cut a FIB cross-section in the cluster, and follow it at the next layer and at probe"}
   decisions:
     D_HOLD: {zh: "受影響 lot hold，等 PIE／PE 做 disposition", en: "Hold the affected lots pending disposition by PIE / PE"}
     D_RELEASE: {zh: "產品照常放行，不需要 hold", en: "Release product as normal; no hold"}
@@ -97,6 +119,16 @@ pools:
     D_NO_CONVERT: {zh: "來源修好之前不要全面轉換到新條件", en: "Do not convert to the new condition until the adder source is fixed"}
     D_SPLIT_CONFIRM: {zh: "先用 split／DOE 確認，再決定是否調整該參數的 target", en: "Confirm with a split / DOE before deciding to re-target that parameter"}
     D_NO_METRO_ACTION: {zh: "不調整量測或製程參數；繼續 FA／缺陷調查", en: "No metrology or process change; continue the FA / defect investigation"}
+    D_SWITCH_MONITOR: {zh: "不要再用原監控站的 count 放行這種失效；換監控站後再判斷", en: "Stop clearing lots for this fail mode on the old monitor's counts; judge on the new monitor step"}
+    D_FIX_SOURCE: {zh: "監控有效：依預期良率回收排定修缺陷來源的優先順序", en: "The monitor works: rank the defect-source fix by its expected yield gain"}
+    D_INCONCLUSIVE: {zh: "這次 split 不能用來決定轉換或放棄新條件：無法下結論，重跑", en: "This split can neither convert nor reject the new condition: inconclusive, rerun it"}
+    D_SPLIT_VALID: {zh: "split 結果有效，可以進入轉換評估", en: "The split result is valid and can go to the conversion review"}
+    D_ADOPT_SPLIT: {zh: "轉換到 B（淨增益明確），邊緣列入追蹤", en: "Convert to B (a clear net gain), with the edge on follow-up"}
+    D_KEEP_POR: {zh: "維持 POR，B 修正後再評估", en: "Keep POR; re-evaluate B after it is fixed"}
+    D_KEEP_FIX_VERIFY: {zh: "維持修正，不要判定修正失敗；用修正後的 lot 驗證", en: "Keep the fix and do not call it failed; verify with lots processed after it"}
+    D_BASELINE_OK: {zh: "基準線正常、不需要新的產線行動；異常事件另行追蹤", en: "The baseline is fine and needs no new line action; the excursion is tracked on its own"}
+    D_RED_ESCALATE: {zh: "紅燈是真的：列為本週最大損失項目並升級處理", en: "The red is real: make it this week's top detractor and escalate"}
+    D_FLAG_TRACK: {zh: "lot 繼續生產但標記這幾片與 cluster 區域，等切面結果與 probe 確認", en: "Let the lot continue with the wafers and the cluster area flagged until the cross-section and probe confirm"}
 
 # formats: the report layout a message is written in (the answer box is pre-filled with these headings)
 formats:
@@ -112,6 +144,12 @@ formats:
   handover:
     name: {zh: "交接摘要", en: "Handover summary"}
     sections: [{zh: "先處理", en: "First"}, {zh: "其他事項", en: "Other items"}, {zh: "已做", en: "Done so far"}, {zh: "需要決定", en: "Decisions needed"}]
+  split_report:
+    name: {zh: "Split 結論報告", en: "Split conclusion report"}
+    sections: [{zh: "目的", en: "Purpose"}, {zh: "實驗檢查", en: "Setup check"}, {zh: "結果", en: "Result"}, {zh: "建議", en: "Recommendation"}]
+  kpi_weekly:
+    name: {zh: "每週 KPI 摘要", en: "Weekly KPI summary"}
+    sections: [{zh: "狀態", en: "Status"}, {zh: "主要原因", en: "Main driver"}, {zh: "行動", en: "Actions"}, {zh: "下週追蹤", en: "Watch next week"}]
 
 domains:
   film: {zh: "Film stack & fit 膜厚擬合", en: "Film stack & fit"}
@@ -123,6 +161,7 @@ domains:
   fab: {zh: "Fab simulator 良率事件", en: "Fab simulator"}
   defect: {zh: "Inline defect 缺陷檢查", en: "Inline defect inspection"}
   request: {zh: "跨部門請求 Cross-role requests", en: "Cross-role requests"}
+  yield: {zh: "良率分析與實驗 Yield & splits", en: "Yield analysis & splits"}
   mix: {zh: "多重問題 Multi-issue", en: "Multi-issue"}
   custom: {zh: "我的案例 My cases", en: "My cases"}
 
@@ -843,3 +882,144 @@ cases:
       en: "YE wants to know whether metrology can explain this bin. Scatter each wafer's inline parameters against the bin loss: the strongest is {best_param}, r = {best_r}. |r| ≥ 0.7 → a likely driver: send the plot and wafer list to YE / PE and confirm with a split / DOE before any re-target; every |r| small → metrology rules itself out: say so clearly and suggest defect review / FA. Both are valuable answers."
     urgency: 2
 
+
+  # ---------------------------------------------------------------- yield analysis, splits and weekly KPIs
+  ye_inline_probe_corr:
+    domain: yield
+    title: {zh: "inline 缺陷 vs probe 失效：監控站看得到嗎？", en: "Inline defects vs probe fails: does the monitor see them?"}
+    brief:
+      zh: "【YE 來訊】{lot} probe 後 {bin}（{bin_txt}）失效 {n_fail} 顆（{fail_pct}%），集中在{zone}區。這個 module 有兩站 inline 檢查：{s1}（{s1_txt}，目前的缺陷監控站）和 {s2}（{s2_txt}，只抽檢）。你把 {wafer} 兩站的缺陷圖疊在 probe 失效圖上。YE 問：inline 看得到這些失效嗎？修好的話能回收多少良率？"
+      en: "[Message from YE] After probe, {lot} has {n_fail} {bin} fails ({bin_txt}, {fail_pct}%), concentrated in the {zone} zone. The module has two inline inspections: {s1} ({s1_txt}, the current defect monitor) and {s2} ({s2_txt}, sampled only). You overlaid both steps' defect maps of {wafer} on its probe fail map. YE asks: does inline see these fails, and how much yield would a fix return?"
+    cause: C_INSP_BLIND
+    cause_options: [C_INSP_BLIND, C_KILLER_SOURCE, C_NUISANCE, C_PARAM_DRIVES, C_RANDOM]
+    action: A_MOVE_MONITOR
+    action_options: [A_MOVE_MONITOR, A_SOURCE_FIX, A_TUNE_RECIPE, A_RECORD]
+    decision: D_SWITCH_MONITOR
+    decision_options: [D_SWITCH_MONITOR, D_FIX_SOURCE, D_RELEASE, D_SCRAP]
+    notify: [PIE_YE, RDA, PE]
+    message_role: PIE_YE
+    message_format: swr
+    model_message:
+      zh: "【問題／目的】{lot} 的 {bin}（{bin_txt}）失效 {n_fail} 顆（{fail_pct}%），集中在{zone}區；要找出 inline 哪一站看得到它們，並估計修好後能回收多少良率。\n【主要觀察】{s1}：capture rate {cap1}%、kill ratio {kr1}%；{s2}：capture rate {cap2}%、kill ratio {kr2}%（缺陷隨機落在失效晶粒的機率 {chance}%）。{verdict}。\n【結論／建議】{ask}。\n【預期效益】以 Y = exp(−D·A·KR) 估計（{best_step}：D = {d_best}/cm²、A = {area} cm²、KR = {kr_best}），去除這些缺陷約可回收 {gain} 個百分點良率（inline 沒抓到的 killer 不在內，所以是下限）。"
+      en: "[Problem / purpose] {lot} has {n_fail} {bin} fails ({bin_txt}, {fail_pct}%), concentrated in the {zone} zone; we need the inline step that sees them and the yield a fix would return.\n[Key observations] {s1}: capture rate {cap1}%, kill ratio {kr1}%; {s2}: capture rate {cap2}%, kill ratio {kr2}% (a defect lands on a fail die by chance {chance}% of the time). {verdict}.\n[Conclusion / recommendation] {ask}.\n[Expected gain] With Y = exp(−D·A·KR) ({best_step}: D = {d_best}/cm², A = {area} cm², KR = {kr_best}), removing these defects returns about {gain} percentage points of yield (killers inline does not catch are not counted, so this is a floor)."
+    keypoints:
+      - {zh: "給出各站的 capture rate", en: "Gives each step's capture rate", any: ["{cap1}", "{cap2}", "capture"]}
+      - {zh: "給出 kill ratio", en: "Gives the kill ratio", any: ["{kr1}", "{kr2}", "kill ratio"]}
+      - {zh: "指出哪一站看得到 killer", en: "Names the step that sees the killers", any: ["{best_step}"]}
+      - {zh: "估計預期良率回收", en: "Estimates the expected yield gain", any: ["{gain}", "exp(", "百分點", "percentage point"]}
+    explanation:
+      zh: "疊圖看的是「inline 缺陷有沒有落在失效晶粒上」。capture rate = 失效晶粒中有 inline 缺陷的比例：{s1} {cap1}%、{s2} {cap2}%；kill ratio = 缺陷落在失效晶粒上的比例，扣掉隨機落上的機率（{chance}%）。{verdict}。監控站的 capture rate < 30% 時，它的 SPC 再正常也證明不了什麼，要把監控移到抓得到 killer 的那一站；capture 高時監控有效，重點是修來源，並用 Y = exp(−D·A·KR) 把缺陷換算成良率（約 {gain} 個百分點），讓 PE／EE 排優先順序。失效方向也是線索：短路常指向相鄰線之間的殘留或架橋，斷路指向空洞或蝕刻不足。"
+      en: "The overlay asks whether inline defects land on failing dies. Capture rate = share of failing dies carrying an inline defect: {s1} {cap1}%, {s2} {cap2}%; kill ratio = share of defects landing on failing dies, corrected for the chance of landing there at random ({chance}%). {verdict}. When the monitor's capture rate is below 30%, a clean SPC on it proves nothing: move the monitor to the step that catches the killers. When capture is high the monitor works and the job is the source: convert defects into yield with Y = exp(−D·A·KR) (about {gain} points) so PE / EE can rank the fix. The fail mode is a lead too: shorts usually point to residue or bridging between neighbouring lines, opens to voids or under-etch."
+    urgency: 2
+
+  split_confounded:
+    domain: yield
+    title: {zh: "這個 split 結果能用嗎？", en: "Can this split result be used?"}
+    brief:
+      zh: "【PE 來訊】{lot} 的 split（{split}）分三組：POR、B-low、B-high 各 8 片。PE 依計畫分組算出的結論：{claim}。PE 想這週就決定。你調出了 run log、同批的其他實驗紀錄和每片的良率。"
+      en: "[Message from PE] The {lot} split ({split}) has three groups: POR, B-low and B-high, 8 wafers each. PE's conclusion from the planned groups: {claim}. PE wants to decide this week. You pulled the run log, the other experiments on the lot and each wafer's yield."
+    cause: C_CONFOUNDED
+    cause_options: [C_CONFOUNDED, C_SPLIT_MISSET, C_SPLIT_VALID, C_SPLIT, C_RANDOM]
+    action: A_RERUN_SPLIT
+    action_options: [A_RERUN_SPLIT, A_REPORT_SPLIT, A_RETARGET, A_RECORD]
+    decision: D_INCONCLUSIVE
+    decision_options: [D_INCONCLUSIVE, D_SPLIT_VALID, D_NO_CONVERT, D_SCRAP]
+    notify: [PE, PIE_YE]
+    message_role: PE
+    message_format: split_report
+    model_message:
+      zh: "【目的】確認 {split} 相對 POR 的良率效果，以及 B-low／B-high 哪個設定較好。\n【實驗檢查】run log：{runlog}；同批其他實驗：{fem_txt}。\n【結果】依計畫分組 B − POR = {delta_all} pp、B-high − B-low = {d_setting} pp；只看 FEM 標準條件晶圓、依實際 recipe：B − POR = {delta_nom} pp。\n【建議】{verdict}。"
+      en: "[Purpose] Confirm the yield effect of {split} vs POR, and which setting (B-low / B-high) is better.\n[Setup check] Run log: {runlog}; other experiments on the lot: {fem_txt}.\n[Result] By planned group B − POR = {delta_all} pp and B-high − B-low = {d_setting} pp; nominal-FEM wafers only, by actual recipe: B − POR = {delta_nom} pp.\n[Recommendation] {verdict}."
+    keypoints:
+      - {zh: "查 run log（實際 recipe）", en: "Checks the run log (the recipe actually run)", any: ["run log", "recipe"]}
+      - {zh: "查同批的其他實驗", en: "Checks the other experiments on the lot", any: ["fem", "其他實驗", "other experiment"]}
+      - {zh: "用乾淨的晶圓重算", en: "Recomputes on clean wafers", any: ["{delta_nom}", "標準條件", "nominal"]}
+      - {zh: "給出明確判斷（有效／無法下結論）", en: "Gives a clear verdict (valid / inconclusive)", any: ["無法下結論", "inconclusive", "有效", "valid"]}
+    explanation:
+      zh: "依計畫分組算出的差異，只有在實驗真的照計畫跑、而且沒有別的東西同時改變時才算數。先查兩件事：(1) run log：每片實際跑的 recipe 是否和計畫一致（{runlog}）；(2) 同批有沒有其他實驗（{fem_txt}）。再把會干擾的晶圓拿掉、依實際 recipe 重算：B − POR = {delta_nom} pp（PE 用計畫分組算的是 {delta_all} pp）。{verdict}。混淆或少一組的 split 不能拿來做轉換決定，也不能拿來否定新條件：要說明無法下結論，重新設計（隨機分配晶圓、避免和其他實驗重疊、run 前確認 recipe）後重跑。"
+      en: "A difference computed from the planned groups only counts if the experiment really ran as planned and nothing else changed at the same time. Check two things first: (1) the run log: did every wafer run the recipe it was planned for ({runlog}); (2) other experiments on the lot ({fem_txt}). Then drop the interfering wafers and recompute by actual recipe: B − POR = {delta_nom} pp (PE's planned-group figure is {delta_all} pp). {verdict}. A confounded split, or one missing a group, can neither convert nor reject the new condition: call it inconclusive and rerun it redesigned (randomised wafers, no overlapping experiment, recipes checked before the run)."
+    urgency: 2
+
+  split_zone_decision:
+    domain: yield
+    title: {zh: "中心變好、邊緣變差：要不要轉換？", en: "Better centre, worse edge: convert or not?"}
+    brief:
+      zh: "【週會】head-to-head split：POR {lot_p}（{n_por} 片）vs 條件 B {lot_b}（{n_b} 片，{split}）。B 的中心區良率明顯比較好，但 PIE 注意到 B 的邊緣晶粒變差。主管要你建議：要不要轉換到 B？"
+      en: "[Weekly meeting] Head-to-head split: POR {lot_p} ({n_por} wafers) vs condition B {lot_b} ({n_b} wafers, {split}). B's centre yield is clearly better, but PIE noticed B's edge dies got worse. Your manager wants a recommendation: convert to B or not?"
+    cause: C_NET_GAIN
+    cause_options: [C_NET_GAIN, C_ZONE_CANCEL, C_SPLIT, C_EDGE_RING]
+    action: A_ADOPT_FOLLOWUP
+    action_options: [A_ADOPT_FOLLOWUP, A_FIX_ZONE_RESPLIT, A_RELEASE_RECIPE, A_RECORD]
+    decision: D_ADOPT_SPLIT
+    decision_options: [D_ADOPT_SPLIT, D_KEEP_POR, D_RETARGET, D_SCRAP]
+    notify: [PE, PIE_YE, MGR_QE]
+    message_role: PE
+    message_format: split_report
+    model_message:
+      zh: "【目的】決定是否把 {split} 轉成 POR（head-to-head：POR {n_por} 片 vs B {n_b} 片）。\n【實驗檢查】兩組同時段、同機台路線；晶粒依半徑分三區：中心 {share_c}%、中間 {share_m}%、邊緣 {share_e}%。\n【結果】B − POR：中心 {d_c} pp、中間 {d_m} pp、邊緣 {d_e} pp；依晶粒數加權的淨效果 {net} ± {net_se} pp。\n【建議】{verdict}。"
+      en: "[Purpose] Decide whether {split} becomes POR (head-to-head: POR {n_por} wafers vs B {n_b} wafers).\n[Setup check] Both groups ran in the same window on the same tool route; dies are split by radius into three zones: centre {share_c}%, middle {share_m}%, edge {share_e}%.\n[Result] B − POR: centre {d_c} pp, middle {d_m} pp, edge {d_e} pp; die-weighted net {net} ± {net_se} pp.\n[Recommendation] {verdict}."
+    keypoints:
+      - {zh: "給出各區（含邊緣）的差異", en: "Gives each zone's difference, edge included", any: ["{d_e}", "邊緣", "edge"]}
+      - {zh: "依晶粒數加權算淨效果", en: "Weights by die count for the net effect", any: ["{net}", "加權", "weighted"]}
+      - {zh: "說明不確定性（± 標準誤）", en: "States the uncertainty (± standard error)", any: ["{net_se}", "±", "標準誤", "standard error"]}
+      - {zh: "給出明確建議", en: "Gives a clear recommendation", any: ["轉換", "convert", "維持 por", "keep por"]}
+    explanation:
+      zh: "整片平均或只看某一區都會誤判。每區的晶粒數不同（中心 {share_c}%、中間 {share_m}%、邊緣 {share_e}%），要把每區的差異乘上晶粒比例再加總：淨效果 {net} ± {net_se} pp，超過約 2 個標準誤才算真的增益。{verdict}。轉換時要把變差的區域（邊緣 {d_e} pp）列為追蹤項目；增益被抵消時，先請 PE 解決邊緣問題再重做 split，比直接轉換或直接放棄都好。預期效益用每片多出的良品數（淨效果 × 每片晶粒數）表達最清楚。"
+      en: "The whole-wafer average or a single zone both mislead. Each zone holds a different number of dies (centre {share_c}%, middle {share_m}%, edge {share_e}%), so weight each zone's difference by its die share and add them up: net {net} ± {net_se} pp, a real gain only beyond about 2 standard errors. {verdict}. When converting, put the zone that got worse (edge {d_e} pp) on follow-up; when the gain is cancelled, have PE fix the edge and re-split, which beats both converting and dropping B outright. The expected gain reads best as extra good dies per wafer (net × dies per wafer)."
+    urgency: 1
+
+  kpi_dly_trend:
+    domain: yield
+    title: {zh: "週 KPI 紅燈：DLY 低於目標", en: "Weekly KPI red: DLY below goal"}
+    brief:
+      zh: "【週會前】{latest} 的 defect-limited yield（DLY）是 {dly_latest}%，目標 {goal}%，KPI 板上是紅燈。{context} 主管要你寫這週的 KPI 摘要：紅燈是什麼造成的、是不是真的、接下來怎麼做。你調出了 12 週的 DLY 趨勢、各金屬層的 opens／shorts 通過率，和這週 probe 的 lot 清單。"
+      en: "[Before the weekly meeting] Defect-limited yield (DLY) for {latest} is {dly_latest}% against a {goal}% goal: red on the KPI board. {context} Your manager wants this week's KPI summary: what drives the red, is it real, and what is next. You pulled 12 weeks of DLY, opens / shorts passing per metal level, and the list of lots probed this week."
+    cause: C_LEVEL_SYSTEMATIC
+    cause_options: [C_LEVEL_SYSTEMATIC, C_PROBE_LAG, C_OUTLIER_WAFERS, C_RANDOM, C_METRO_OFFSET]
+    action: A_ESCALATE_LEVEL
+    action_options: [A_ESCALATE_LEVEL, A_TRACK_LEADING, A_REPORT_BOTH, A_HOLD_INHIBIT]
+    decision: D_RED_ESCALATE
+    decision_options: [D_RED_ESCALATE, D_KEEP_FIX_VERIFY, D_BASELINE_OK, D_SCRAP]
+    notify: [MGR_QE, PIE_YE, PE, RDA]
+    message_role: MGR_QE
+    message_format: kpi_weekly
+    model_message:
+      zh: "【狀態】{latest} DLY {dly_latest}%（目標 {goal}%）：{status_text}。\n【主要原因】{driver}。\n【行動】{actions}。\n【下週追蹤】{watch}。"
+      en: "[Status] {latest} DLY {dly_latest}% (goal {goal}%): {status_text}.\n[Main driver] {driver}.\n[Actions] {actions}.\n[Watch next week] {watch}."
+    keypoints:
+      - {zh: "給出數字與目標", en: "Gives the number and the goal", any: ["{dly_latest}", "{goal}"]}
+      - {zh: "指出主要原因（週、lot 或層別）", en: "Names the main driver (week, lot or level)", any: ["{driver_key}"]}
+      - {zh: "說明紅燈是不是真的", en: "Says whether the red is real", any: ["真的", "real", "已修", "fixed", "達標", "on goal"]}
+      - {zh: "說明接下來追蹤什麼", en: "Says what to watch next", any: ["{lag} 週", "下週", "next week", "週趨勢", "weekly", "in about"]}
+    explanation:
+      zh: "紅燈先問三件事：(1) 是不是少數晶圓造成的？比較含與不含標記晶圓的 DLY（{dly_latest}% vs {dly_ex}%）；排除只能附原因並另外追蹤，不能從資料中刪掉。(2) 是隨機缺陷還是系統性？隨機損失跟著 inline killer 密度走，系統性損失要看各層 opens／shorts。(3) 時間對不對？probe 比製程晚約 {lag} 週，修正的效果要等修正後製造的 lot 到 probe 才看得到，inline 密度是領先指標。這次：{driver}。所以：{actions}。"
+      en: "Ask three things about a red: (1) Is it a few wafers? Compare DLY with and without the flagged wafers ({dly_latest}% vs {dly_ex}%); excluding needs a stated reason and its own tracking, never deletion. (2) Random or systematic? Random loss follows the inline killer density; systematic loss shows in the per-level opens / shorts. (3) Is the timing right? Probe runs about {lag} weeks behind processing, so a fix shows only when post-fix lots reach probe; the inline density is the leading indicator. Here: {driver}. So: {actions}."
+    urgency: 2
+
+  insp_unclassified_defect:
+    domain: defect
+    title: {zh: "SEM review 分不出來的缺陷", en: "A defect SEM review cannot classify"}
+    brief:
+      zh: "【RDA 來訊】{wafer} 在 {layer} 的 optical inspection 看到一群缺陷（{cluster_n} 顆，在{cluster_loc}）。SEM review {n_rev} 顆，大多只看到「{sem_top}」，分不出類別；optical review 看得到色差或鼓起。RDA 問：這是真的缺陷嗎？要怎麼處理？這片已經做完下一層 {next_layer} 的 inspection。"
+      en: "[Message from RDA] The {layer} optical inspection of {wafer} shows a cluster ({cluster_n} defects at the {cluster_loc}). SEM review of {n_rev} of them mostly shows \"{sem_top}\" and cannot classify them; optical review sees a colour change or a blister. RDA asks: is it a real defect, and what now? The wafer has already been through the next layer's inspection ({next_layer})."
+    cause: C_SUBSURFACE
+    cause_options: [C_SUBSURFACE, C_SURFACE_ARTIFACT, C_PARTICLE, C_INCOMING]
+    action: A_XSECTION
+    action_options: [A_XSECTION, A_TUNE_RECIPE, A_HOLD_INHIBIT, A_RECORD]
+    decision: D_FLAG_TRACK
+    decision_options: [D_FLAG_TRACK, D_RELEASE, D_SCRAP, D_HOLD]
+    notify: [RDA, PE, PIE_YE]
+    message_role: RDA
+    message_format: swr
+    model_message:
+      zh: "【問題／目的】{wafer} {layer} 在{cluster_loc}有一群缺陷（{cluster_n} 顆），SEM review 大多只看到「{sem_top}」，需要判斷是不是真缺陷。\n【主要觀察】把本層與下一層（{next_layer}）的缺陷位置疊在一起：cluster 中 {n_repeat} 顆（{repeat_pct}%）在同位置（±{radius} mm）再出現。{verdict}。\n【結論／建議】{ask}。\n【預期效益】{gain_text}。"
+      en: "[Problem / purpose] {wafer} at {layer} has a cluster of {cluster_n} defects at the {cluster_loc}; SEM review mostly shows \"{sem_top}\", so we need to know whether it is real.\n[Key observations] Overlaying this layer's and the next layer's ({next_layer}) defect positions: {n_repeat} of the cluster ({repeat_pct}%) reappear at the same place (±{radius} mm). {verdict}.\n[Conclusion / recommendation] {ask}.\n[Expected gain] {gain_text}."
+    keypoints:
+      - {zh: "用下一層同位置確認", en: "Checks the same place at the next layer", any: ["{repeat_pct}", "下一層", "next layer"]}
+      - {zh: "指出 cluster 的位置", en: "Names where the cluster is", any: ["{cluster_loc}"]}
+      - {zh: "說明 SEM 看不出來的限制", en: "Notes what SEM review could not show", any: ["sem"]}
+      - {zh: "給出具體下一步", en: "Gives a concrete next step", any: ["切面", "cross-section", "fib", "recipe", "threshold"]}
+    explanation:
+      zh: "SEM 俯視只看得到表面：在表面下、被覆蓋或很淺的缺陷，可能只看到粗糙或什麼都沒有。分不出類別時，最有力的證據是「下一層同位置有沒有再出現」：cluster {cluster_n} 顆中 {repeat_pct}% 在下一層 ±{radius} mm 內再出現 → {verdict}。真的缺陷：換 review 方式（傾斜 SEM、EDX）、在 cluster 做 FIB 切面，並追到下一層與 probe；cluster 的位置（{cluster_loc}）也是找來源的線索（邊緣常指向夾持、邊緣去除、斜面；中心指向噴嘴、氣流）。表面假訊號：用 review 結果調 recipe，產品照常放行。"
+      en: "SEM top-down sees only the surface: a defect below it, covered or very shallow may show as roughness or nothing at all. When review cannot classify, the strongest evidence is whether it comes back at the same place at the next layer: {repeat_pct}% of the {cluster_n} cluster defects reappear within ±{radius} mm → {verdict}. A real defect: try other review modes (tilted SEM, EDX), cut a FIB cross-section in the cluster and follow it to the next layer and probe; the location ({cluster_loc}) is a lead to the source (edge: clamp, edge removal, bevel; centre: nozzle, gas flow). A surface artefact: tune the recipe with the review data and release the product as normal."
+    urgency: 2

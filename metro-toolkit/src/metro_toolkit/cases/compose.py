@@ -33,7 +33,9 @@ SIZE_BY_LEVEL = {"basic": ("large",), "intermediate": ("medium", "large"), "adva
 URGENCY_BY_DECISION = {"D_HOLD": 3, "D_ROUTE_REF": 3, "D_NO_CONVERT": 2, "D_GAUGE_NOT_OK": 2, "D_RECIPE_FIX": 2,
                        "D_REMEASURE_RELEASE": 2, "D_RELEASE_WATCH": 2, "D_NO_HOLD_COUNTS": 2, "D_CONFIRM_SOURCE": 2,
                        "D_SPLIT_CONFIRM": 2, "D_RETARGET": 1, "D_RECIPE_NOT_READY": 1, "D_MODEL_NOT_READY": 1,
-                       "D_RECIPE_OK": 1, "D_GAUGE_OK": 1, "D_RELEASE": 1, "D_RELEASE_PROCESS": 1, "D_NO_METRO_ACTION": 1}
+                       "D_RECIPE_OK": 1, "D_GAUGE_OK": 1, "D_RELEASE": 1, "D_RELEASE_PROCESS": 1, "D_NO_METRO_ACTION": 1,
+                       "D_SWITCH_MONITOR": 2, "D_FIX_SOURCE": 2, "D_INCONCLUSIVE": 2, "D_SPLIT_VALID": 1, "D_ADOPT_SPLIT": 1,
+                       "D_KEEP_POR": 1, "D_KEEP_FIX_VERIFY": 1, "D_BASELINE_OK": 1, "D_RED_ESCALATE": 2, "D_FLAG_TRACK": 2}
 URGENCY_TEXT = {3: {"zh": "產品正在受影響，要先止血（hold／隔離）", "en": "product is at risk right now, so contain it first (hold / isolate)"},
                 2: {"zh": "今天要處理，但產品沒有立即風險", "en": "it needs action today, but product is not at immediate risk"},
                 1: {"zh": "可以排程處理，不影響產品", "en": "it can be scheduled; product is not affected"}}
