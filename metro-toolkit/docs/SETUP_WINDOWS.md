@@ -77,8 +77,14 @@ uses the `.venv` you created, starts the dashboard on a free port (8501, or the 
 browser. Close the black window to stop it. The dashboard listens on this PC only (`localhost`), not on the
 office network.
 
-Desktop shortcut: right-click `Metro Toolkit.bat` → **Send to → Desktop (create shortcut)**. Rename or re-icon the
-shortcut as you like; do not move the `.bat` itself out of the `metro-toolkit` folder (move the shortcut instead).
+**Desktop icon** (the 3D **M** on a wafer): double-click **`Create Desktop Shortcut.bat`**. It puts a
+*Metro Toolkit* shortcut with that icon on your Desktop (add `startmenu` as an argument to also add a Start menu
+entry). A `.bat` file cannot carry an icon itself, only a shortcut can, which is why the shortcut is created for
+you. If the icon looks blank or old, restart Explorer (Task Manager → Windows Explorer → Restart) or sign out and in
+once to refresh Windows' icon cache. This script is untested on Windows; if it fails, do it by hand: right-click
+`Metro Toolkit.bat` → **Send to → Desktop (create shortcut)**, then right-click the shortcut → **Properties →
+Change Icon… → Browse** and pick `assets\metro-toolkit.ico`. Move the shortcut around freely, but keep both `.bat`
+files inside the `metro-toolkit` folder.
 
 If the window says it cannot find `.venv\Scripts\python.exe`, the one-time setup (steps 1-3) is not done in
 this folder. If it closes at once with an error, run it from PowerShell once to read the message:
