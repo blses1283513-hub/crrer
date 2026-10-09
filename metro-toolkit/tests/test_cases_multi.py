@@ -275,3 +275,50 @@ def test_case_page_multi_builder_and_templates(tmp_path, monkeypatch):
     # reports page lists the multi-issue report
     at.sidebar.radio(key="nav_page").set_value("My case reports 我的案例報告").run()
     assert not at.exception and [m.value for m in at.metric if m.label.startswith("報告數")] == ["1"]
+
+
+# --------------------------------------------------------------------------- the example template
+def test_template_names_are_cut_at_word_boundaries():
+    assert custom.slugify("Night shift: gate-oxide chamber shift, yield dropping (example)") == "night_shift_gate_oxide_chamber_shift"
+    assert custom.slugify("短中文標題") == "case" and custom.slugify("a" * 60) == "a" * 40
+
+
+def test_example_template_is_valid_and_complete():
+    ex = custom.EXAMPLE
+    clean = custom.validate_template(ex)
+    assert custom.unknown_placeholders(clean) == []  # every {value} exists in its data pattern
+    assert clean["action"] == "U_ACTION" and ex["options"]["U_ACTION"]["zh"] and ex["options"]["U_ACTION"]["en"]
+    t = custom.save_template(ex)
+    for level in cases.LEVELS:
+        c = cases.generate(cases.make_id(t, level, 3))
+        check_case(c)
+        assert "{" not in c.option_text("action", "U_ACTION", "en")  # own answer text is shown as written
+    assert not re.search(r"micron|美光", str(ex), re.I)
+
+
+def test_example_button_fills_the_form_and_saves(tmp_path, monkeypatch):
+    from streamlit.testing.v1 import AppTest
+
+    monkeypatch.setenv("METRO_IMPORT_PATH", str(tmp_path / "imp"))
+    app = Path(__file__).resolve().parents[1] / "src" / "metro_toolkit" / "dashboard" / "app.py"
+    at = AppTest.from_file(str(app), default_timeout=300)
+    at.run()
+    at.sidebar.radio(key="nav_page").set_value("Case study 案例練習").run()
+    assert at.text_input(key="tp___new___title_zh").value == ""  # an empty form first
+    [b for b in at.button if b.key == "tp_example"][0].click().run()
+    k = f"tp___new___v{at.session_state['tp_ver']}"  # the fields are redrawn under new keys
+    assert not at.exception and at.selectbox(key="tp_pick").value == "__new__"
+    assert at.text_input(key=f"{k}_title_zh").value == custom.EXAMPLE["title"]["zh"]
+    assert at.selectbox(key=f"{k}_base").value == "fab_chamber_excursion"
+    assert at.selectbox(key=f"{k}_action").value == "U_ACTION"
+    assert at.text_input(key=f"{k}_action_own_en").value == custom.EXAMPLE["options"]["U_ACTION"]["en"]
+    assert at.multiselect(key=f"{k}_cause_wrong").value == custom.EXAMPLE["cause_options"]
+    assert at.multiselect(key=f"{k}_notify").value == custom.EXAMPLE["notify"]
+    at.text_input(key=f"{k}_title_zh").set_value("我改過的範例").run()  # edit it
+    [b for b in at.button if b.key == f"{k}_save"][0].click().run()
+    assert not at.exception and len(custom.load_templates()) == 1
+    saved = next(iter(custom.load_templates().values()))
+    assert saved["title"]["zh"] == "我改過的範例" and saved["base"] == "fab_chamber_excursion"
+    assert at.selectbox(key="tp_pick").value == next(iter(custom.load_templates()))  # opens the saved template
+    at.selectbox(key="tp_pick").set_value("__new__").run()  # a new template after saving starts blank again
+    assert at.text_input(key=f"tp___new___v{at.session_state['tp_ver']}_title_zh").value == ""

@@ -152,3 +152,6 @@ params:
   case.tpl_delete:
     zh: "**刪除範本**：先勾「確定刪除」再按刪除，範本檔案會從這台電腦移除，無法復原（已存的練習報告不受影響）。"
     en: "**Delete template**: tick \"I am sure\" first, then delete; the template file is removed from this PC and cannot be restored (saved practice reports are kept)."
+  case.tpl_example:
+    zh: "**載入範例範本**：用一個寫好的範例（夜班良率掉、單一 chamber 偏移）填滿整個表單，你可以直接改成自己的情境。範例用模擬資料，也可以原樣存下來練習。再按一次會用範例覆蓋目前「新範本」欄位的內容。"
+    en: "**Load an example template**: fills the whole form with a worked example (a night-shift yield drop from a one-chamber shift) that you can turn into your own situation. It uses simulated data and can be saved and practised as is. Pressing it again replaces what is in the \"new template\" fields."

@@ -1355,12 +1355,23 @@ def case_templates():
         if unknown:
             st.warning(bi("這些 {名稱} 在資料模式裡沒有，會顯示成 —：", "These {names} are not in the data pattern and "
                           "will show as —: ") + ", ".join(unknown))
+    if st.button("📋 載入範例範本 Load an example template", key="tp_example", help=H("case.tpl_example")):
+        st.session_state["tp_load_example"] = True
+        st.rerun()
+    if st.session_state.pop("tp_load_example", False):  # start a new template from the worked example
+        st.session_state["tp_ver"] = st.session_state.get("tp_ver", 0) + 1  # new field keys: the browser forgets old values
+        st.session_state["tp_example_on"] = True
+        st.session_state["tp_pick"] = "__new__"
+        st.info(bi("已載入範例：改成你自己的情境，再按「儲存範本」。範例用的是模擬資料，可以直接存下來練習。",
+                   "Example loaded: change it to your own situation, then press Save template. It uses simulated data, so "
+                   "you can also save it as is and practise it."))
     pick = st.selectbox("範本 Template", ["__new__", *tpls], key="tp_pick", help=H("case.tpl_pick"),
                         format_func=lambda t: "＋ 新範本 New template" if t == "__new__" else bi_plain(tpls[t]["title"]))
     cur = tpls.get(pick, {})
-    k = f"tp_{pick}"
+    init = cur or (custom.EXAMPLE if pick == "__new__" and st.session_state.get("tp_example_on") else {})  # field defaults
+    k = f"tp_{pick}" + (f"_v{st.session_state['tp_ver']}" if pick == "__new__" and st.session_state.get("tp_ver") else "")
     bases = custom.base_types()
-    base = st.selectbox("資料模式 Data pattern", bases, index=bases.index(cur["base"]) if cur else 0, key=f"{k}_base",
+    base = st.selectbox("資料模式 Data pattern", bases, index=bases.index(init["base"]) if init else 0, key=f"{k}_base",
                         format_func=type_title, help=H("case.tpl_base"))
     ph = tpl_placeholders(base)
     st.caption("可引用的數值（範例值）Values you can quote (example): " +
@@ -1377,39 +1388,39 @@ def case_templates():
             en = c2.text_input(f"{label} (English)", value.get("en", ""), key=f"{k}_{key}_en", help=H("case.tpl_text"))
         return {"zh": zh, "en": en}
 
-    tpl = {"base": base, "title": two("標題 Title", "title", value=cur.get("title")),
-           "brief": two("狀況 Brief", "brief", 110, cur.get("brief")), "options": {}}
+    tpl = {"base": base, "title": two("標題 Title", "title", value=init.get("title")),
+           "brief": two("狀況 Brief", "brief", 110, init.get("brief")), "options": {}}
     for q, pool_name, name in (("cause", "causes", "根本原因 Root cause"), ("action", "actions", "第一步 First action"),
                                ("decision", "decisions", "處置 Disposition")):
         pool = lib["pools"][pool_name]
         own = custom.CUSTOM_ID[q]
         ids = [own, *pool]
-        right = st.selectbox(f"正確的{name}", ids, index=ids.index(cur[q]) if cur.get(q) in ids else 1,
+        right = st.selectbox(f"正確的{name}", ids, index=ids.index(init[q]) if init.get(q) in ids else 1,
                              key=f"{k}_{q}", help=H("case.tpl_answer"),
                              format_func=lambda o, pool=pool: "✏️ 我自己寫 Write my own" if o.startswith("U_") else
                              bi_plain(pool[o]))
         if right == own:
-            tpl["options"][own] = two(f"自己的{name}", f"{q}_own", value=(cur.get("options") or {}).get(own))
+            tpl["options"][own] = two(f"自己的{name}", f"{q}_own", value=(init.get("options") or {}).get(own))
         wrong_ids = [o for o in pool if o != right]
         tpl[q] = right
         tpl[f"{q}_options"] = st.multiselect(f"錯誤選項（至少 2 個） Wrong options (2+) · {name}", wrong_ids,
-                                             default=[o for o in cur.get(f"{q}_options", []) if o in wrong_ids],
+                                             default=[o for o in init.get(f"{q}_options", []) if o in wrong_ids],
                                              key=f"{k}_{q}_wrong", format_func=lambda o, pool=pool: bi_plain(pool[o]),
                                              help=H("case.tpl_wrong"))
     roles = list(lib_roles())
     r1, r2, r3, r4 = st.columns([2, 1.3, 1.5, 1])
-    tpl["notify"] = r1.multiselect("要通知誰 Notify", roles, default=cur.get("notify", []), key=f"{k}_notify",
+    tpl["notify"] = r1.multiselect("要通知誰 Notify", roles, default=init.get("notify", []), key=f"{k}_notify",
                                    format_func=lambda r: cases.role_name(r, "zh"), help=H("case.tpl_notify"))
-    tpl["message_role"] = r2.selectbox("訊息寫給 Message to", roles, index=roles.index(cur.get("message_role", "PE")),
+    tpl["message_role"] = r2.selectbox("訊息寫給 Message to", roles, index=roles.index(init.get("message_role", "PE")),
                                        key=f"{k}_role", format_func=lambda r: cases.role_name(r, "zh"), help=H("case.tpl_role"))
     fmts = ["", *lib.get("formats", {})]
-    tpl["message_format"] = r3.selectbox("報告格式 Format", fmts, index=fmts.index(cur.get("message_format") or ""),
+    tpl["message_format"] = r3.selectbox("報告格式 Format", fmts, index=fmts.index(init.get("message_format") or ""),
                                          key=f"{k}_fmt", help=H("case.tpl_format"),
                                          format_func=lambda f: "一般訊息 plain" if not f else bi_plain(lib["formats"][f]["name"]))
-    tpl["urgency"] = r4.selectbox("急迫度 Urgency", [3, 2, 1], index=[3, 2, 1].index(cur.get("urgency", 2)),
+    tpl["urgency"] = r4.selectbox("急迫度 Urgency", [3, 2, 1], index=[3, 2, 1].index(init.get("urgency", 2)),
                                   key=f"{k}_urg", help=H("case.tpl_urgency"))
-    tpl["model_message"] = two("範例訊息 Model message", "model", 120, cur.get("model_message"))
-    kp_text = "\n".join(f"{kp['zh']} | {kp['en']} | {', '.join(kp['any'])}" for kp in cur.get("keypoints", []))
+    tpl["model_message"] = two("範例訊息 Model message", "model", 120, init.get("model_message"))
+    kp_text = "\n".join(f"{kp['zh']} | {kp['en']} | {', '.join(kp['any'])}" for kp in init.get("keypoints", []))
     raw = st.text_area("訊息要點：每行「中文 | English | 關鍵字1, 關鍵字2」 Key points: one per line \"zh | en | word1, word2\"",
                        kp_text, key=f"{k}_kps", height=100, help=H("case.tpl_keypoints"))
     tpl["keypoints"] = []
@@ -1417,13 +1428,15 @@ def case_templates():
         parts = [x.strip() for x in line.split("|")]
         if len(parts) >= 3:
             tpl["keypoints"].append({"zh": parts[0], "en": parts[1], "any": [w.strip() for w in parts[2].split(",") if w.strip()]})
-    tpl["explanation"] = two("為什麼 Explanation", "why", 110, cur.get("explanation"))
+    tpl["explanation"] = two("為什麼 Explanation", "why", 110, init.get("explanation"))
 
     b1, b2, b3 = st.columns(3)
     if b1.button("💾 儲存範本 Save template", type="primary", key=f"{k}_save", help=H("case.tpl_save")):
         try:
             clean = custom.validate_template(tpl)
             t = custom.save_template(clean, pick.removeprefix("my_") if cur else None, replace=bool(cur))
+            st.session_state.pop("tp_example_on", None)
+            st.session_state["tp_ver"] = st.session_state.get("tp_ver", 0) + 1  # the next new template starts blank
             st.session_state["tp_saved"] = (t, custom.unknown_placeholders(clean))
             st.session_state["tp_goto"] = t
             st.rerun()

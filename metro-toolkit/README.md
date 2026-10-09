@@ -165,6 +165,8 @@ reply, lot-report note, handover): the answer box is pre-filled with the heading
   on this PC in `data/cases/custom/` (git-ignored); a new template never overwrites another, delete asks for a
   confirmation tick. Your templates appear as **我的案例 My cases** in the domain list, in 🎲 and in 🎯 weak spots.
   Keep real lot IDs, product and recipe names and people's names out of them.
+  Press **📋 載入範例範本 Load an example template** to start from a worked example (a night-shift yield drop from
+  a one-chamber shift) instead of a blank form: change it to your situation and save, or save it as is and practise.
 * "Handle first" follows urgency: product at risk now (contain it) before act-today items before items that can be
   scheduled.
 

@@ -26,6 +26,51 @@ ROLES = ("RDA", "PE", "EE", "PIE_YE", "MGR_QE")
 _PH = re.compile(r"\{([A-Za-z_][A-Za-z0-9_]*)\}")
 
 
+# A worked example for the editor's "Load an example" button: a real-work story already cleaned of identifiers and
+# written on top of a built-in data pattern. Values in {braces} come from that pattern.
+EXAMPLE = {
+    "base": "fab_chamber_excursion",
+    "title": {"zh": "夜班：閘極氧化層 chamber 偏移、良率掉（範例）",
+              "en": "Night shift: gate-oxide chamber shift, yield dropping (example)"},
+    "brief": {"zh": "【夜班交接】{start_lot} 之後部分 lot 良率下降，最差晶圓 {worst_wafer} 只有 {worst_yield}%。閘極氧化層的 SPC 在 "
+                    "{chamber} 偏離中心線，產線問這台能不能繼續跑。目前還沒有人重測或確認量測。",
+              "en": "[Night-shift handover] Some lots after {start_lot} lost yield; the worst wafer {worst_wafer} is at only "
+                    "{worst_yield}%. Gate-oxide SPC on {chamber} is off the centre line and production asks whether the "
+                    "chamber can keep running. Nobody has re-measured or checked the measurement yet."},
+    "cause": "C_CHAMBER_SHIFT", "cause_options": ["C_METRO_OFFSET", "C_PARTICLE", "C_DRIFT"],
+    "action": "U_ACTION", "action_options": ["A_RECORD", "A_RETARGET"],
+    "options": {"U_ACTION": {"zh": "先在同機台與參考機台重測最差晶圓、確認不是量測問題；確認後 hold 該 chamber 的後續 lot，並請 EE 查 PM 與警報",
+                             "en": "Re-measure the worst wafer on the same and a reference tool to rule out metrology; once confirmed, "
+                                   "hold that chamber's next lots and have EE check PMs and alarms"}},
+    "decision": "D_HOLD", "decision_options": ["D_RELEASE", "D_SCRAP", "D_RETARGET"],
+    "notify": ["EE", "PE", "PIE_YE", "MGR_QE"], "message_role": "PIE_YE", "message_format": "lot_note", "urgency": 3,
+    "model_message": {
+        "zh": "【摘要】{chamber} 自 {start_lot} 起閘極氧化層偏移約 {shift} nm，造成約 {impact} 個百分點的良率變化。\n"
+              "【數據】最差晶圓 {worst_wafer} 良率 {worst_yield}%；其他 chamber 正常；受影響範圍是該 chamber 在這段時間處理的所有晶圓（不只量測到的）。\n"
+              "【判讀】量測確認後屬單一 chamber 製程偏移，不是量測偏差。\n"
+              "【請求】請依電性與良率資料對受影響 lot 做 disposition；我們已 hold 並 inhibit {chamber}，請 EE 查 PM 與警報。",
+        "en": "[Summary] Gate oxide on {chamber} has shifted by about {shift} nm since {start_lot}, changing yield by about {impact} "
+              "percentage points.\n"
+              "[Data] Worst wafer {worst_wafer} at {worst_yield}% yield; the other chambers are normal; the exposure is every wafer "
+              "that chamber processed in the window, not only the measured ones.\n"
+              "[Interpretation] With metrology confirmed this is a single-chamber process shift, not a measurement offset.\n"
+              "[Ask] Please disposition the affected lots with electrical and yield data; {chamber} is held and inhibited, and EE "
+              "is checking PMs and alarms."},
+    "keypoints": [
+        {"zh": "指出 chamber 與開始時間", "en": "Names the chamber and the start", "any": ["{chamber}", "{start_lot}"]},
+        {"zh": "量化良率影響", "en": "Quantifies the yield impact", "any": ["{impact}", "{worst_yield}", "良率", "yield"]},
+        {"zh": "說明受影響範圍（不只量測片）", "en": "Defines the exposure (not only measured wafers)",
+         "any": ["所有晶圓", "all wafers", "every wafer", "genealogy", "範圍"]},
+        {"zh": "請對方做 disposition", "en": "Asks for disposition", "any": ["disposition", "處置"]}],
+    "explanation": {
+        "zh": "良率下降、閘極氧化層 SPC 只在 {chamber} 偏移 → 單一 chamber 製程偏移。抽樣只量部分晶圓，受影響的是該 chamber 在這段時間處理的所有晶圓，"
+              "要用 genealogy 找出來。先排除量測（重測最差晶圓），確認後 hold + inhibit + 通知 EE，產品交 PIE／YE 做 disposition。",
+        "en": "Yield down and the gate-oxide SPC moved on {chamber} only → a single-chamber process shift. Sampling measures only some "
+              "wafers; the exposure is every wafer the chamber processed in the window, found through genealogy. Rule out metrology "
+              "first (re-measure the worst wafer); once confirmed, hold + inhibit + notify EE, and PIE / YE disposition the product."},
+}
+
+
 def templates_dir(folder: Path | None = None) -> Path:
     path = (Path(folder) if folder else cases_dir()) / "custom"
     path.mkdir(parents=True, exist_ok=True)
@@ -33,7 +78,9 @@ def templates_dir(folder: Path | None = None) -> Path:
 
 
 def slugify(text: str) -> str:
-    s = re.sub(r"[^a-z0-9]+", "_", (text or "").lower()).strip("_")[:40]
+    s = re.sub(r"[^a-z0-9]+", "_", (text or "").lower()).strip("_")
+    if len(s) > 40:  # cut at a word boundary, not in the middle of a word
+        s = s[:40].rsplit("_", 1)[0] if "_" in s[:40] else s[:40]
     return s or "case"
 
 
@@ -174,5 +221,5 @@ def generate_custom(case_id: str, case_type: str, level: str, seed: int) -> Case
                 standard_questions(correct, options, labels))
 
 
-__all__ = ["base_types", "delete_template", "generate_custom", "load_templates", "placeholders",
+__all__ = ["EXAMPLE", "base_types", "delete_template", "generate_custom", "load_templates", "placeholders",
            "save_template", "slugify", "template_stamp", "templates_dir", "unknown_placeholders", "validate_template"]
