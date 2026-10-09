@@ -1,0 +1,373 @@
+# Case-specific why-texts (metro_toolkit.cases.why): check_first + mix-up notes per case type. {placeholders} = that type's values.
+cases:
+  # ---------------------------------------------------------------- SPC
+  spc_chamber_shift:
+    check_first: {zh: "把 {param} 的 SPC 依 chamber（再依量測機台）分組重畫：如果只有 {chamber} 從 {start_wafer} 起跳開並一直停在那裡，其他 chamber 都在中心線，就是這個 chamber 的製程，不是量測。", en: "Re-plot the {param} SPC grouped by chamber (and then by metrology tool): if only {chamber} stepped away at {start_wafer} and stayed there while the other chambers sit on the centre line, it is that chamber's process, not the gauge."}
+    notes:
+      C_METRO_OFFSET: {zh: "只有 {chamber} 偏；量測機台的偏差會讓所有 chamber 同時一起偏，而且會隨 lot 在兩台量測機台之間交替。", en: "Only {chamber} moved; a metrology-tool offset would move every chamber at once and alternate lot by lot."}
+      C_DRIFT: {zh: "這是從 {start_wafer} 開始的一次跳動（約 {shift_sigma}σ），之後持平；消耗品磨耗是跨很多 lot 慢慢往同一方向漂。", en: "This is a step at {start_wafer} (about {shift_sigma}σ) that then stays flat; consumable wear creeps in one direction over many lots."}
+      C_RECIPE_ALL: {zh: "recipe 或進料改變會讓所有跑這個 recipe 的 chamber 一起偏；這裡其他 chamber 都正常，只有 {chamber} 偏。", en: "A recipe or incoming-material change would move every chamber running it; here the other chambers are normal and only {chamber} moved."}
+      A_RECORD: {zh: "{chamber} 持續偏移約 {shift} {unit}，每一片經過它的晶圓都受影響；只記錄、繼續監控等於讓更多產品流過一個已經偏掉的 chamber。", en: "A sustained shift of about {shift} {unit} on {chamber} hits every wafer it runs; recording and monitoring only lets more product pass through a shifted chamber."}
+      A_RETARGET: {zh: "調 target 是處理所有 chamber 長期穩定偏離中心的情況；單一 chamber 突然跳開是要修的故障，不是要搬 target。", en: "Re-targeting is for a stable process sitting off centre on all chambers; one chamber that suddenly jumped has a fault to fix, not a target to move."}
+      D_RELEASE: {zh: "{chamber} 從 {start_wafer} 起持續偏移、原因未明；不經 PIE／PE disposition 就照常放行，所有它跑過的晶圓都帶著風險出去。", en: "{chamber} has shifted since {start_wafer} for an unknown reason; releasing as normal without PIE / PE disposition sends every wafer it ran out at risk."}
+      D_SCRAP: {zh: "直接報廢太早：要先由 PIE／PE 把偏移量（{shift} {unit}）和規格 {lsl}–{usl} {unit} 比較，很多晶圓可能仍可用。", en: "Scrapping is premature: PIE / PE must first compare the shift ({shift} {unit}) with the spec {lsl}–{usl} {unit}; many wafers may still be usable."}
+      D_RETARGET: {zh: "搬 target 修不好一個突然偏掉的 chamber，還會把其他正常 chamber 推離中心；受影響的 lot 要先 hold 等 disposition。", en: "Moving the target does not fix a chamber that suddenly shifted and would push the healthy chambers off centre; the affected lots need holding for disposition first."}
+
+  spc_slow_drift:
+    check_first: {zh: "看 {chamber} 的 {param} EWMA（或加趨勢線的 run chart）並對照距上次 PM 的天數：斜率穩定往同一方向、隨 PM 天數（{pm_days} 天，週期約 {pm_cycle} 天）變大，就是消耗品磨耗；若是某一片突然跳開才是 shift。", en: "Look at the EWMA (or a run chart with a trend line) of {param} on {chamber} next to the days since PM: a steady one-way slope that grows with PM age ({pm_days} of about {pm_cycle} days) is consumable wear, while a step at one wafer would be a shift."}
+    notes:
+      C_CHAMBER_SHIFT: {zh: "沒有在某一片突然跳開：EWMA 是隨著 chamber 接近 PM 一路往同一方向移動（累計約 {drift_total} {unit}），這是磨耗，不是突然偏移。", en: "There is no single step: the EWMA moves steadily one way as the chamber ages toward its PM ({drift_total} {unit} in total), which is wear, not a sudden shift."}
+      C_METRO_OFFSET: {zh: "只有 {chamber} 在漂；量測機台偏差會出現在該量測機台量的所有 chamber，而且是依量測機台分開，不會隨 PM 天數變化。", en: "Only {chamber} trends; a gauge offset would show on every chamber that tool measures, split by metrology tool, and would not grow with PM age."}
+      C_RANDOM: {zh: "偶發點不會連續很多 lot 都往同一方向走；持續的趨勢讓 EWMA 超出管制線，是特殊原因。", en: "A chance point does not keep moving the same way lot after lot; a sustained trend that crosses the EWMA limit is a special cause."}
+      A_HOLD_INHIBIT: {zh: "每一點都還在規格 {lsl}–{usl} {unit} 內；提前 PM 就能去除原因，hold 產品再停機太過頭。", en: "Every point is still inside the spec {lsl}–{usl} {unit}; holding product and stopping the chamber is too much when an early PM removes the cause."}
+      A_RETARGET: {zh: "調 target 只會把磨耗藏起來；PM 之後製程會往反方向跳回去，變成另一邊偏離 target。", en: "Re-targeting would only hide the wear; after the PM the process would jump back and sit off target the other way."}
+      A_RECORD: {zh: "只記錄會讓漂移一路走到規格外；chamber 已經 {pm_days} 天沒 PM（週期約 {pm_cycle} 天），應該提前 PM 並提高抽樣。", en: "Only recording lets the drift run on toward the spec; the chamber is {pm_days} days past its PM (cycle about {pm_cycle} days), so pull the PM in and sample more."}
+      D_HOLD: {zh: "沒有任何一點超出規格，產品本身沒問題；風險在接下來的 lot，用提前 PM 和加密抽樣處理即可。", en: "No point is out of spec, so the product is fine; the risk is in the next lots, handled by pulling the PM in and sampling more."}
+      D_SCRAP: {zh: "所有點都在規格 {lsl}–{usl} {unit} 內，沒有任何晶圓需要報廢。", en: "Every point is inside the spec {lsl}–{usl} {unit}; there is nothing to scrap."}
+      D_RETARGET: {zh: "用新 target 去追磨耗，PM 換完消耗品後製程會跳回來，反而偏到另一邊。", en: "Chasing wear with a new target backfires: once the PM replaces the consumable, the process jumps back and lands off target the other way."}
+
+  spc_metro_offset:
+    check_first: {zh: "把 SPC 依量測機台分組重畫：如果只有一台量測機台的線偏，而所有 chamber 一起動，就是量具，不是製程。", en: "Re-plot the SPC grouped by metrology tool: if only one tool's line is off while every chamber moves together, it is the gauge, not the process."}
+    notes:
+      C_CHAMBER_SHIFT: {zh: "{n_chambers} 個 chamber 幾乎同時 OOC；chamber shift 只會動一個 chamber，也不會一個 lot 高、一個 lot 正常地交替。", en: "All {n_chambers} chambers went OOC at almost the same time; a chamber shift moves one chamber and would not alternate high and normal lot by lot."}
+      C_RECIPE_ALL: {zh: "recipe 改變會讓改變之後的每個 lot 都偏；這裡是一個 lot 高、一個 lot 正常交替，跟著哪台量測機台量的走。", en: "A recipe change would move every lot after the change; here lots alternate high and normal, following which metrology tool measured them."}
+      C_DRIFT: {zh: "沒有慢慢爬升：所有 chamber 同時出現 OOC，而且逐 lot 跳來跳去，磨耗不會這樣。", en: "Nothing creeps up: the OOC appeared on every chamber at once and flips lot by lot, which wear cannot do."}
+      A_RETARGET: {zh: "依偏差的讀值調製程，會把健康的製程推偏約 {offset} {unit}；要先修量具。", en: "Adjusting the process on biased readings would push a healthy process off by about {offset} {unit}; fix the gauge first."}
+      A_HOLD_INHIBIT: {zh: "inhibit chamber 等於停掉健康的機台；共同因素是量測機台 {metro}，不是任何一個 chamber。", en: "Inhibiting chambers stops healthy tools; the common factor is the metrology tool {metro}, not any chamber."}
+      A_RECORD: {zh: "只記錄的話，偏掉的量測機台會繼續量產品、繼續觸發 OOC，還可能引發錯誤的製程調整。", en: "Recording alone leaves the offset gauge measuring product, firing more OOC and inviting wrong process adjustments."}
+      D_HOLD: {zh: "產品本身沒問題；hold 等 disposition 只是延誤，在參考機台重測後即可放行。", en: "The product itself is fine; holding for disposition only delays lots that can be released after a re-measure on the reference tool."}
+      D_SCRAP: {zh: "偏的是量具，不是晶圓；報廢等於丟掉好產品。", en: "The gauge is off, not the wafers; scrapping would throw away good product."}
+      D_RETARGET: {zh: "依量測偏差（約 {offset} {unit}）調 target，會讓原本在 target 上的製程真的偏掉。", en: "Re-targeting on a gauge offset (about {offset} {unit}) would push a process that is on target genuinely off it."}
+
+  spc_uniformity_only:
+    check_first: {zh: "在平均值圖旁邊看 {chamber} 的片內 1σ %（NU）管制圖：平均值可以完全不動、NU 卻變大（這裡約 {nu_before}% → {nu_after}%），代表形狀變了。", en: "Plot the within-wafer 1σ % (NU) chart for {chamber} next to the mean chart: the mean can stay flat while NU climbs (here about {nu_before}% → {nu_after}%), which means the shape changed."}
+    notes:
+      C_METRO_OFFSET: {zh: "量測偏差會讓該機台量的每片晶圓平均值一起偏；這裡平均值正常，只有 {chamber} 的片內分布變寬。", en: "A gauge offset shifts the mean of every wafer that tool measures; here the mean is normal and only the within-wafer spread on {chamber} grew."}
+      C_OFF_TARGET: {zh: "平均值在 target 上；偏離 target 會表現在平均值偏移，不是片內分布變寬。", en: "The mean is on target; an off-target process shows as a shifted mean, not a wider within-wafer spread."}
+      C_RANDOM: {zh: "NU 從約 {nu_before}% 升到 {nu_after}%，而且下游邊緣電性也變差；偶發單點不會同時對上下游的訊號。", en: "NU rose from about {nu_before}% to {nu_after}% and the downstream edge electrical results got worse too; a chance point would not line up with a downstream signal."}
+      A_REGROUP: {zh: "依量測機台分組是用來找隨機台交替的平均值偏差；這裡平均值沒問題，問題是單一 chamber 的片內形狀。", en: "Grouping by metrology tool explains a mean offset that alternates by tool; here the mean is fine and the problem is one chamber's within-wafer shape."}
+      A_RETARGET: {zh: "調 target 只會移動平均值，而平均值本來就正常；對中心厚、邊緣薄的形狀沒有幫助。", en: "Moving the target moves the mean, which is already fine; it does nothing for a thick-centre / thin-edge shape."}
+      A_RECORD: {zh: "下游已經看到邊緣電性變差；只記錄會讓更多受影響的晶圓繼續流下去。", en: "Downstream already sees worse edge electrical results; recording alone lets more affected wafers flow on."}
+      D_RELEASE: {zh: "下游已回報這個 chamber 的晶圓邊緣結果變差；受影響的 lot 要先讓 PIE disposition。", en: "Downstream already reports worse edge results for this chamber's wafers; the affected lots need PIE disposition first."}
+      D_RETARGET: {zh: "平均值已在 target 上，調 target 不會讓形狀變好，只會讓平均值也偏掉。", en: "The mean is already on target; re-targeting would not improve the shape and would knock the mean off too."}
+
+  spc_cpk_off_center:
+    check_first: {zh: "比較 Cp 和 Cpk，再看製程平均值和 target：Cp {cp} 對 Cpk {cpk}、平均值 {mean} 對 target {target}，代表變異很小，只是沒有置中。", en: "Compare Cp with Cpk and the process mean with the target: Cp {cp} vs Cpk {cpk} with the mean at {mean} vs target {target} means the spread is small and only the centring is off."}
+    notes:
+      C_CHAMBER_SHIFT: {zh: "整季沒有任何 OOC、也沒有某個 chamber 突然跳開；chamber shift 是突然的跳動，不是一整季穩定的偏移。", en: "There was no OOC and no step on any chamber all quarter; a chamber shift is a sudden jump, not an offset that holds steady for a quarter."}
+      C_SHAPE: {zh: "形狀改變時平均值不動；這裡偏的正是平均值本身（離 target 約 {offset} {unit}）。", en: "A shape change leaves the mean in place; here it is the mean itself that sits about {offset} {unit} from target."}
+      C_METRO_OFFSET: {zh: "量具偏差通常在依量測機台分組時才看得出來（一台偏、其他在 target）；整季所有資料都穩定偏同一邊，是 target 設定本身，不過做一次 matching 確認仍然值得。", en: "A gauge offset usually shows when the data are split by metrology tool (one tool off, the others on target); a whole quarter of data sitting off to one side is the targeting itself, though one matching check is still worth doing."}
+      A_HOLD_INHIBIT: {zh: "整季沒有 OOC，不是 OCAP 事件；停掉一個穩定、受控的製程只增加風險，沒有要修的故障。", en: "No OOC all quarter means no OCAP event; stopping a stable, in-control process adds risk with no fault to fix."}
+      A_PM: {zh: "PM 處理的是會漂的磨耗；這個製程很穩定，只是中心偏離 target 約 {offset} {unit}。", en: "A PM fixes wear that drifts; this process is stable and simply centred about {offset} {unit} away from target."}
+      A_VERIFY: {zh: "沒有單一可疑讀值需要重測；低 Cpk 來自一整季受控的資料。", en: "There is no single suspect reading to re-measure; the low Cpk comes from a whole quarter of in-control data."}
+      D_HOLD: {zh: "每個 lot 都受控、在規格內，Cp {cp} 表示變異很窄；沒有東西需要 disposition，只有置中要修。", en: "Every lot is in control and in spec, and Cp {cp} shows a narrow spread; there is nothing to disposition, only the centring to fix."}
+      D_SCRAP: {zh: "產品都在規格內；低 Cpk 是能力上的風險，不是壞晶圓。", en: "The product is in spec; a low Cpk is a capability risk, not bad wafers."}
+
+  spc_false_alarm:
+    check_first: {zh: "看 OOC 點前後的點和其他 SPC 規則（有重測就看重測值）：只有一點約 {z}σ、前後都穩定、沒有其他規則觸發，多半是機率或量測瞬間異常。", en: "Look at the points just before and after the OOC point, the other SPC rules and the re-measure if there is one: one point at about {z}σ with steady neighbours and no other rule firing is most likely chance or a momentary glitch."}
+    notes:
+      C_CHAMBER_SHIFT: {zh: "shift 會讓之後的點都留在中心線的一邊；這裡 {wafer} 之後的點又回到穩定。", en: "A shift keeps the following points away from the centre; here the points after {wafer} are steady again."}
+      C_DRIFT: {zh: "漂移是一串點往同一方向走；這裡只有一個孤立點，前後都穩定。", en: "Drift is a run of points moving one way; this is one isolated point with steady neighbours."}
+      C_METRO_OFFSET: {zh: "量測機台偏差會讓該機台量的每片、每個 chamber 都偏；這裡只是 {chamber} 上的單一點。", en: "A metrology-tool offset moves every wafer that tool measures, on every chamber; this is a single point on {chamber}."}
+      A_HOLD_INHIBIT: {zh: "單一點、前後穩定，不是持續的特殊原因；停機沒有東西可修，反而增加變異和風險。", en: "One point with steady neighbours is not a sustained special cause; a tool-down has nothing to fix and adds variation and risk."}
+      A_PM: {zh: "沒有趨勢或磨耗的樣子可以支持提前 PM；這只是一個點。", en: "There is no trend or wear pattern to justify an early PM; it is a single point."}
+      D_HOLD: {zh: "單一點、前後穩定，沒有持續的特殊原因可以 hold；重測正常就記錄並放行。", en: "One point with steady neighbours gives no sustained special cause to hold on; if the re-measure is normal, record it and release."}
+      D_SCRAP: {zh: "OOC 是超出管制界限，不一定超出規格；單一片 {value} {unit} 的讀值、前後穩定，沒有證據說這片是壞的。", en: "OOC means outside the control limits, not necessarily the spec; one reading of {value} {unit} with steady neighbours is no evidence that the wafer is bad."}
+
+  # ---------------------------------------------------------------- wafer maps
+  wafer_edge_roll:
+    check_first: {zh: "畫 {wafer} 的徑向分布（或看 Zernike 項）：如果只有最外圈下降、內部持平，再對照 edge ring 的 RF 時數（{rf_hours}，壽命約 {ring_life}）；只在邊緣下降又接近壽命就是 edge ring 磨耗。", en: "Plot {wafer}'s radial profile (or its Zernike terms): if only the outermost ring drops while the inside stays flat, check the edge ring's RF hours ({rf_hours} of about {ring_life}); an edge-only drop near end of life is edge-ring wear."}
+    notes:
+      C_HEATER_TILT: {zh: "傾斜是一側厚、對側薄；這裡是整圈外環都低，內部正常。", en: "A tilt is thick on one side and thin on the opposite side; here the whole outer ring is low all the way round while the inside is normal."}
+      C_SHOWERHEAD: {zh: "碗形是從中心到邊緣逐漸變化，而且是 PM 後馬上出現；這裡內部平坦、只有外環下降，edge ring 已用到 {rf_hours} RF 小時（壽命約 {ring_life}）。", en: "A bowl changes gradually from centre to edge and appears right after a PM; here the inside is flat, only the outer ring dropped, and the ring is at {rf_hours} of about {ring_life} RF hours."}
+      C_SITE_OUTLIER: {zh: "單一壞點不會形成一整圈；外環很多點連續偏低是製程形狀。", en: "One bad site cannot form a full ring; a continuous low outer ring across many sites is a process shape."}
+      A_RECORD: {zh: "NU {nu}%（平常約 {nu_median}%）加上 edge ring 接近壽命，是真的形狀改變；只記錄會讓更多邊緣晶粒有風險的晶圓繼續跑。", en: "NU {nu}% against a usual {nu_median}% with the ring near end of life is a real shape change; recording alone lets more wafers with at-risk edge dies run."}
+      A_RETARGET: {zh: "調 target 會移動整片；它沒辦法只把外環拉回來，反而會讓內部偏離 target。", en: "Re-targeting moves the whole wafer; it cannot lift only the outer ring and would push the inside off target."}
+      D_RELEASE: {zh: "邊緣晶粒可能已經偏掉；lot 往下走之前要先讓 PIE 判斷邊緣晶粒的風險。", en: "The edge dies may be off; PIE needs to judge the edge-die risk before the lots move on."}
+      D_RETARGET: {zh: "外環偏低是硬體磨耗，換 edge ring 才能修；調 target 只會讓內部也偏。", en: "A low outer ring is hardware wear that a new edge ring fixes; re-targeting would only knock the inside off as well."}
+
+  wafer_tilt:
+    check_first: {zh: "看 {wafer} 的等高圖和 Zernike 項：如果 tilt 項最大（一側厚、對側薄），先確認圖的方向（notch／座標）沒設錯，原因就是有方向性的：加熱器分區、氣流、晶圓放置或水平。", en: "Look at {wafer}'s contour map and Zernike terms: if the tilt term dominates (thick on one side, thin on the opposite side) and the map orientation (notch / coordinates) is right, the cause is directional: heater zone, gas flow, placement or levelling."}
+    notes:
+      C_EDGE_RING: {zh: "edge ring 磨耗會讓整圈外環均勻變低；這裡是一側厚、對側薄，是有方向性的分布。", en: "Edge-ring wear lowers the whole outer ring evenly; here one side is thick and the opposite side thin, a directional pattern."}
+      C_SHOWERHEAD: {zh: "碗形是中心對邊緣對稱；這張圖是左右（一側對另一側）不對稱，tilt 項最大。", en: "A bowl is symmetric from centre to edge; this map is asymmetric side to side, with the tilt term dominant."}
+      C_SITE_OUTLIER: {zh: "單一點沒辦法讓半片厚、另半片薄；橫跨整片的梯度是製程形狀。", en: "One site cannot make half the wafer thick and the other half thin; a gradient across the wafer is a process shape."}
+      A_RECORD: {zh: "NU {nu}%（平常約 {nu_median}%）是真的形狀改變；只記錄會讓同一個傾斜繼續出現在後面的 lot。", en: "NU {nu}% against a usual {nu_median}% is a real shape change; recording alone lets the same tilt carry on into the next lots."}
+      A_RETARGET: {zh: "調 target 只會移動平均值，一側厚、一側薄的情況還是一樣。", en: "A re-target moves the mean; one side stays thick and the other thin."}
+      D_RELEASE: {zh: "NU 從約 {nu_median}% 變成 {nu}%，薄的那一側晶粒可能已經偏掉；要先讓 PIE disposition。", en: "NU went from about {nu_median}% to {nu}%, so dies on the thin side may be off; PIE needs to disposition the lots first."}
+      D_RETARGET: {zh: "傾斜來自有方向性的硬體或放置問題；調 target 修不好，只會讓平均值也偏。", en: "The tilt comes from directional hardware or placement; a re-target does not fix it and would only knock the mean off too."}
+
+  wafer_bad_site:
+    check_first: {zh: "看 {wafer} 的點位圖，把最差的點和鄰近點比較：第 {site} 點讀 {site_value} {unit}，鄰近點平均 {neighbour_mean} {unit}；只有單點異常、鄰點正常，指向量測問題，先重測這一點。", en: "Look at {wafer}'s site map and compare the worst site with its neighbours: site {site} reads {site_value} {unit} while its neighbours average {neighbour_mean} {unit}; one site off with normal neighbours points to the measurement, so re-measure that site."}
+    notes:
+      C_EDGE_RING: {zh: "edge ring 磨耗會讓整圈外環的點一起變低；這裡只有一個點偏，旁邊的點都正常。", en: "Edge-ring wear lowers a whole outer ring of sites; here a single site is off and its neighbours are normal."}
+      C_HEATER_TILT: {zh: "傾斜是橫跨整片的平滑梯度；這裡只有第 {site} 點偏，周圍的點都正常。", en: "A tilt is a smooth gradient across the wafer; here only site {site} is off and the sites around it are normal."}
+      C_SHOWERHEAD: {zh: "碗形會讓很多點從中心到邊緣逐漸變化；一個點 {site_value} {unit}、鄰點 {neighbour_mean} {unit}，不是形狀。", en: "A bowl changes many sites gradually from centre to edge; one site at {site_value} {unit} next to neighbours at {neighbour_mean} {unit} is not a shape."}
+      A_EE_HW: {zh: "沒有哪個硬體只會讓單一點偏；派 EE 查 chamber 之前，先重測第 {site} 點確認量測。", en: "No hardware moves a single site; re-measure site {site} to check the measurement before sending EE to the chamber."}
+      A_HOLD_INHIBIT: {zh: "單一點、鄰點正常，不足以停 chamber；先重測確認。", en: "One site with normal neighbours does not justify stopping the chamber; re-measure to confirm first."}
+      A_RECORD: {zh: "片內 1σ % 已經 OOC；只記錄會留下沒解釋的訊號，先重測第 {site} 點確認是量測問題。", en: "The within-wafer 1σ % chart is OOC; recording alone leaves the flag unexplained, so re-measure site {site} to confirm it is the measurement."}
+      D_HOLD: {zh: "NU 跳高（{nu}%，平常約 {nu_median}%）是單一點造成的；重測正常就放行，不需要 hold 等 disposition。", en: "The NU jump ({nu}% vs a usual {nu_median}%) comes from one site; if the re-measure is normal, release, with no hold for disposition."}
+      D_SCRAP: {zh: "只有一個量測點異常、其他點都正常，沒有證據說晶圓壞了。", en: "One measurement site is off and the rest are normal; there is no evidence the wafer is bad."}
+
+  wafer_bowl_after_pm:
+    check_first: {zh: "把 {wafer} 的徑向分布和 PM 前的晶圓比較：PM 後第一批晶圓就出現中心對邊緣的碗形（Zernike bowl 項），指向{pm_part}的安裝。", en: "Compare {wafer}'s radial profile with a pre-PM wafer: a centre-to-edge bowl (Zernike bowl term) on the first wafers after the PM points to the {pm_part} installation."}
+    notes:
+      C_DRIFT: {zh: "漂移是在 PM 週期末段慢慢累積；這個是 PM 後第一天就出現。", en: "Drift builds up slowly toward the end of a PM cycle; this appeared on the first day after the PM."}
+      C_EDGE_RING: {zh: "edge ring 磨耗只讓最外圈在接近壽命時變低；這裡是整個中心到邊緣的分布變成碗形，而且剛做完 PM。", en: "Ring wear lowers only the outermost ring near end of life; here the whole centre-to-edge profile turned into a bowl, right after a PM."}
+      C_HEATER_TILT: {zh: "傾斜是一側厚、對側薄；這個分布是中心對邊緣對稱。", en: "A tilt is thick on one side and thin on the other; this profile is symmetric from centre to edge."}
+      A_RECORD: {zh: "PM 後 NU {nu}%（平常約 {nu_median}%）等於 qual 沒過；只記錄會讓一個裝錯的 chamber 繼續跑產品。", en: "NU {nu}% after the PM against a usual {nu_median}% means the qual has effectively failed; recording alone keeps a mis-installed chamber running product."}
+      A_RETARGET: {zh: "調 target 會移動整片平均值，碗形還是在；要修的是 PM 時的安裝。", en: "Re-targeting moves the whole-wafer mean and the bowl stays; what needs fixing is the PM installation."}
+      D_RELEASE: {zh: "PM 後的 chamber 要 qual 過才放行；NU {nu}%（平常約 {nu_median}%）代表還不能放行，受影響的 lot 要先 hold。", en: "A chamber is released after a PM only once qual passes; NU {nu}% against a usual {nu_median}% says it has not, so the affected lots are held first."}
+      D_RETARGET: {zh: "碗形來自 PM 時重裝的硬體；調 target 修不好，只會讓平均值也偏。", en: "The bowl comes from hardware re-installed at the PM; a re-target does not fix it and would only knock the mean off too."}
+
+  # ---------------------------------------------------------------- film stack / recipe
+  stack_wrong_underlayer:
+    check_first: {zh: "把 inline 值和獨立的參考（TEM／XPS）比較，再看 recipe 固定了哪些值：差 {diff} nm 但 χ² 很小（{chi2}），表示模型裡固定的值錯了；這裡 IL 固定在 {il_recipe} nm，實際約 {il_true} nm。", en: "Compare the inline value with an independent reference (TEM / XPS) and check what the recipe fixes: a {diff} nm gap with a small χ² ({chi2}) means a value fixed in the model is wrong; here the IL is fixed at {il_recipe} nm but is really about {il_true} nm."}
+    notes:
+      C_METRO_OFFSET: {zh: "量測機台偏差在黃金片或和其他機台比對時就看得到；這裡的誤差來自 recipe 固定的 IL（{il_recipe} nm）與實際差了 {d_il} nm，換到任何機台都一樣。", en: "A tool offset would show on a golden wafer and against other tools; here the error comes from the IL fixed at {il_recipe} nm being {d_il} nm off, and it would follow the recipe onto any tool."}
+      C_NOISE_TOOL: {zh: "雜訊會讓重複讀值分散、χ² 變大；這裡 χ² 很小（{chi2}），誤差是固定 {diff} nm 的偏差。", en: "Noise scatters repeated readings and raises χ²; here χ² is small ({chi2}) and the error is a consistent bias of {diff} nm."}
+      C_WRONG_DISP: {zh: "色散模型選錯通常會讓擬合變差（χ² 變大、光譜殘差有形狀）；這裡擬合很好，差異來自固定的 IL 值。", en: "A wrong n,k model usually leaves a poor fit (higher χ², structured spectral residuals); here the fit is excellent and the gap comes from the fixed IL value."}
+      A_HOLD_INHIBIT: {zh: "ALD 可能完全正常；是模型讓讀值偏了，依這些讀值停機等於在追量測誤差。", en: "The ALD may be perfectly fine; the model biases the readings, so stopping the tool on them chases a measurement error."}
+      A_RETARGET: {zh: "依偏差的讀值調 ALD target，會把真實的 HfO₂ 推離 target。", en: "Re-targeting the ALD to biased readings would move the real HfO₂ off target."}
+      A_RECORD: {zh: "已知有 {diff} nm 的偏差，SPC 和 disposition 會一直拿到錯的數字；recipe 必須修。", en: "With a known {diff} nm bias, SPC and disposition keep getting wrong numbers; the recipe must be fixed."}
+      D_HOLD: {zh: "TEM 量到的是 {tem} nm，產品沒有被證明有問題；有問題的是讀值，不是晶圓。", en: "TEM measures {tem} nm; nothing shows the product is bad. The readings are the problem, not the wafers."}
+      D_RELEASE: {zh: "重點不是放不放行，而是讀值偏了 {diff} nm；recipe 修好前，不能再拿這些讀值判斷或調整產品。", en: "The issue is not release but readings that are {diff} nm off; until the recipe is fixed, nobody should judge or adjust product on them."}
+      D_SCRAP: {zh: "TEM 量到 {tem} nm，產品沒有被證明是壞的；是讀值有偏差。", en: "TEM says the film is {tem} nm; the product is not shown to be bad, the reading is biased."}
+
+  stack_float_n_thin:
+    check_first: {zh: "比較 n 浮動和 n 固定時的重複性，並看擬合中厚度與 n 的相關係數：{sd_float} nm 對 {sd_fixed} nm、相關接近 {corr}，表示雜訊來自 recipe 設計，不是機台。", en: "Compare repeatability with n floated and n fixed, and look at the thickness–n correlation in the fit: {sd_float} nm vs {sd_fixed} nm with a correlation near {corr} means the recipe design, not the tool, is the noise source."}
+    notes:
+      C_FIXED_LAYER: {zh: "固定的底層值錯了會造成一致的偏差，不是重複性差；這裡六次重複就分散了 {sd_float} nm。", en: "A wrong fixed underlayer gives a consistent bias, not poor repeatability; here six repeats scatter by {sd_float} nm."}
+      C_NOISE_TOOL: {zh: "機台訊號雜訊在 n 固定時也不會消失；同一台機台、同樣的資料，固定 n 後分散從 {sd_float} nm 降到 {sd_fixed} nm。", en: "Tool signal noise would remain with n fixed; on the same tool and data, fixing n cuts the scatter from {sd_float} nm to {sd_fixed} nm."}
+      C_REPEAT: {zh: "硬體重複性（對焦、光源、stage）不會因為 recipe 改變而變；n 固定後同一台機台重複性就有 {sd_fixed} nm。", en: "Hardware repeatability (focus, lamp, stage) does not depend on the recipe; with n fixed the same tool repeats to {sd_fixed} nm."}
+      A_TOOL_FIX: {zh: "n 固定後機台重複性就有 {sd_fixed} nm；修硬體消除不了厚度和 n 之間的相關。", en: "The tool repeats to {sd_fixed} nm once n is fixed; repairing hardware cannot remove the thickness–n correlation."}
+      A_RETARGET: {zh: "這是量測 recipe 的問題，和製程 target 無關。", en: "This is a metrology-recipe problem; the process target has nothing to do with it."}
+      A_RECORD: {zh: "在 {t} nm 的膜上重複性 {sd_float} nm 的 recipe 不能照原樣發行；要改 recipe。", en: "A recipe with {sd_float} nm repeatability on a {t} nm film cannot be released as it is; the recipe must change."}
+      D_RECIPE_OK: {zh: "n 浮動時重複性 {sd_float} nm，對 {t} nm 的膜太差；recipe 要重新設計後才能驗證。", en: "With n floated the repeatability ({sd_float} nm) is far too poor for a {t} nm film; the recipe must be redesigned before validation."}
+      D_GAUGE_OK: {zh: "機台硬體可能沒問題，但這個 recipe 不行：n 浮動時精度只有 {sd_float} nm。", en: "The tool hardware may be fine, but this recipe is not: with n floated its precision is only {sd_float} nm."}
+
+  # ---------------------------------------------------------------- MSA
+  msa_repeatability:
+    check_first: {zh: "把 %GRR 拆成重複性和再現性：這裡重複性 {repeat}%、再現性 {reprod}%，雜訊在 {tool} 自己身上；平均值對得上只說明準確度，不代表精度。", en: "Split %GRR into repeatability and reproducibility: here repeatability is {repeat}% and reproducibility {reprod}%, so the noise is within {tool} itself; a matching average says nothing about precision."}
+    notes:
+      C_REPRO: {zh: "再現性只有 {reprod}%；問題不在機台之間或操作者之間，而是同一台機台重複量就分散（重複性 {repeat}%）。", en: "Reproducibility is only {reprod}%; the problem is not between tools or operators but the scatter of repeated readings on one tool (repeatability {repeat}%)."}
+      C_OFFSET: {zh: "offset 是準確度（偏差）問題，不會讓 %GRR 變高；平均值對得上參考片，反而說明 offset 不大，重複性卻有 {repeat}%。", en: "An offset is an accuracy (bias) problem and does not raise %GRR; the average matching the reference wafer even shows little offset, while repeatability is {repeat}%."}
+      C_PART_RANGE: {zh: "研究晶圓範圍太窄只會讓 %GRR 高、P/T 仍然好；這裡 P/T 也有 {pt}%，對規格來說量具真的太吵。", en: "Too narrow a part range inflates %GRR but leaves P/T good; here P/T is {pt}% too, so the gauge really is noisy against the spec."}
+      A_MATCH: {zh: "matching 修的是機台之間的差異；這台機台自己重複量就分散（{repeat}%），matching 修不好。", en: "Matching fixes differences between tools; this tool's own repeated readings scatter ({repeat}%), which matching cannot fix."}
+      A_RESELECT: {zh: "重選晶圓適用於 P/T 好、只有 %GRR 高的情況；這裡 P/T = {pt}% 也不合格。", en: "Re-selecting wafers helps when P/T is good and only %GRR is high; here P/T = {pt}% fails too."}
+      A_RECORD: {zh: "%GRR {grr}%、P/T {pt}% 的機台不能直接拿來量產品；要先修硬體再重做 GR&R。", en: "A tool at %GRR {grr}% and P/T {pt}% cannot simply go on measuring product; fix the hardware and redo the GR&R first."}
+      D_GAUGE_OK: {zh: "P/T = {pt}% 表示雜訊相對於規格本身就太大，不只是相對於研究晶圓。", en: "P/T = {pt}% means the noise is large against the spec itself, not only against the study wafers."}
+      D_RECIPE_OK: {zh: "重複性 {repeat}% 來自機台硬體；recipe 簽核不會讓量具變得可用。", en: "Repeatability of {repeat}% comes from the tool hardware; signing off the recipe does not make the gauge usable."}
+
+  msa_reproducibility:
+    check_first: {zh: "把 %GRR 拆成重複性和再現性，並依機台畫黃金片的結果：再現性 {reprod}% 對重複性 {repeat}%，而 {worst_tool} 和其他機台分開，表示機台之間有系統性差異，不是某台很吵。", en: "Split %GRR into repeatability and reproducibility and plot the golden wafer by tool: reproducibility {reprod}% vs repeatability {repeat}% with {worst_tool} apart from the others means the tools disagree systematically, not that one is noisy."}
+    notes:
+      C_REPEAT: {zh: "每台機台自己都重複得很好（重複性 {repeat}%）；誤差在機台之間（再現性 {reprod}%）。", en: "Each tool repeats well on its own (repeatability {repeat}%); the error is between tools (reproducibility {reprod}%)."}
+      C_NOISE_TOOL: {zh: "訊號雜訊變大會表現在重複性變大；這裡重複性只有 {repeat}%，是機台之間不一致。", en: "Higher signal noise would show as larger repeatability; here repeatability is only {repeat}% and the tools disagree with each other."}
+      C_PART_RANGE: {zh: "P/T = {pt}% 是對規格寬度也不合格，不是研究晶圓範圍太窄造成的分母效應。", en: "P/T = {pt}% fails against the spec width too, so it is not a denominator effect of narrow study wafers."}
+      A_TOOL_FIX: {zh: "修一台機台的硬體，消除不了機台之間 calibration 或 recipe 的系統性差異；每台機台本身已經重複得很好。", en: "Fixing one tool's hardware does not remove a systematic calibration or recipe difference between tools; each tool already repeats well."}
+      A_RESELECT: {zh: "P/T 也不合格（{pt}%），重選研究晶圓不會改變結論；要做機台 matching。", en: "P/T fails too ({pt}%), so re-selecting study wafers will not change the verdict; the tools need matching."}
+      A_RECORD: {zh: "機台之間差 {tool_spread} nm，產品讀值會依量到哪一台而不同；只記錄不能解決。", en: "With the tools {tool_spread} nm apart, a product reading depends on which tool measured it; recording alone solves nothing."}
+      D_GAUGE_OK: {zh: "P/T = {pt}% 表示機台之間的差異相對於規格本身就太大；量具不能直接用。", en: "P/T = {pt}% means the tool-to-tool difference is large against the spec itself; the gauge cannot be used as it is."}
+      D_RECIPE_OK: {zh: "差異來自機台之間的 calibration 或 recipe 版本；要先 matching，不能直接發行。", en: "The difference comes from calibration or recipe version between tools; they need matching before any release."}
+
+  msa_narrow_parts:
+    check_first: {zh: "把 P/T 和 %GRR 一起看，並比較研究晶圓的範圍和規格寬度：P/T {pt}% 是好的，晶圓只涵蓋 {part_range} nm、規格寬 {tol} nm，才讓 %GRR（{grr}%）看起來很差。", en: "Compare P/T with %GRR and the study wafers' range with the spec width: P/T {pt}% is good, and wafers spanning only {part_range} nm against a {tol} nm wide spec are what make %GRR ({grr}%) look bad."}
+    notes:
+      C_REPEAT: {zh: "相對於規格，量測雜訊很小（P/T {pt}%）；%GRR 高只是因為研究晶圓只涵蓋 {part_range} nm。", en: "Measurement noise is small against the spec (P/T {pt}%); %GRR is high only because the study wafers span {part_range} nm."}
+      C_REPRO: {zh: "機台之間沒有影響判定的差異：P/T 是 {pt}%；%GRR 高來自晶圓範圍太窄，不是機台之間不一致。", en: "The tools do not disagree in a way that matters: P/T is {pt}%; the high %GRR comes from the narrow wafer set, not from tool-to-tool differences."}
+      C_OFFSET: {zh: "offset 是偏差，根本不會進到 %GRR；這裡 %GRR 高來自晶圓只涵蓋 {part_range} nm。", en: "An offset is a bias and does not enter %GRR at all; the high %GRR here comes from wafers spanning only {part_range} nm."}
+      A_TOOL_FIX: {zh: "量具以 P/T（{pt}%）來看已經合格；修硬體修不好一個太小的分母。", en: "The gauge already passes on P/T ({pt}%); repairing hardware will not fix a denominator that is too small."}
+      A_MATCH: {zh: "機台之間沒有需要修正的差異；問題是研究晶圓範圍只有 {part_range} nm，matching 改變不了。", en: "There is no tool-to-tool difference to correct; the issue is a study-wafer range of only {part_range} nm, which matching cannot change."}
+      A_RECORD: {zh: "照原樣存檔會留下一份誤導的 %GRR 不合格報告；要用涵蓋製程範圍的晶圓重做。", en: "Filing the report as it is keeps a misleading %GRR fail on record; redo the study with wafers that span the process range."}
+      D_GAUGE_NOT_OK: {zh: "P/T {pt}% 表示量具能判斷規格內外；只看 %GRR 判不合格，等於退掉一個好量具。", en: "P/T {pt}% shows the gauge can judge in or out of spec; failing it on %GRR alone would reject a good gauge."}
+      D_RECIPE_NOT_READY: {zh: "recipe 沒有問題：以規格寬度來看精度足夠（P/T {pt}%）；要重做的是研究晶圓的挑選。", en: "Nothing is wrong with the recipe: its precision is fine against the spec width (P/T {pt}%); what needs redoing is the choice of study wafers."}
+
+  msa_matching:
+    check_first: {zh: "看 {tool} 對參考機台的 Bland-Altman 圖：整條帶子離開 0 是 offset（這裡 {offset} nm，規格 ±{spec}），帶子隨厚度傾斜是斜率（這裡 {slope}，允許 1 ± {slope_tol}）；任一個超出都不能放行。", en: "Look at the Bland-Altman plot of {tool} vs the reference tool: a band away from zero is an offset (here {offset} nm against ±{spec}), a band that tilts with thickness is a slope (here {slope} against 1 ± {slope_tol}); either one out of tolerance blocks release."}
+    notes:
+      C_REPEAT: {zh: "matching 比的是兩台機台的平均關係；重複性差只會讓點分散，這裡的差異是一致的{kind}。", en: "Matching compares how two tools' averages relate; poor repeatability would only scatter the points, while the difference here is a consistent {kind}."}
+      C_PART_RANGE: {zh: "研究晶圓範圍影響的是 %GRR，不是 matching；offset（{offset} nm）和斜率（{slope}）是直接和參考機台比出來的。", en: "The part range affects %GRR, not matching; the offset ({offset} nm) and slope ({slope}) are measured directly against the reference tool."}
+      A_RESELECT: {zh: "matching 的晶圓不是問題；offset／斜率是 calibration 的差異，換晶圓再量還是一樣。", en: "The matching wafers are not the problem; the offset / slope is a calibration difference that new wafers would show again."}
+      A_TOOL_FIX: {zh: "修對焦、光源、stage 是處理雜訊；系統性的 offset 或斜率要對參考機台重新 calibration。", en: "Fixing focus, lamp or stage addresses noise; a systematic offset or slope needs recalibration against the reference tool."}
+      A_RECORD: {zh: "明天就要量產品；只記錄等於讓帶著{kind}的機台開始量產品，要先停這個 recipe 並重新 calibration。", en: "Product measuring starts tomorrow; recording alone lets a tool with a {kind} start measuring it, so take it off the recipe and recalibrate first."}
+      D_GAUGE_OK: {zh: "重複性好還不夠：和參考機台之間 offset 或斜率超出規格的機台，每個產品讀值都會偏。", en: "Repeating well is not enough: a tool whose offset or slope against the reference is out of tolerance puts every product reading off."}
+      D_RELEASE: {zh: "明天就在 {tool} 量產品，會讓每個讀值都帶著{kind}；matching 通過前先用參考機台。", en: "Measuring product on {tool} tomorrow would put a {kind} into every reading; use the reference tool until matching passes."}
+
+  study_technique_choice:
+    check_first: {zh: "在這個厚度和規格下，算每個技術的 P/T = 6σ ÷（USL − LSL）：這裡反射儀約 {pt_r}%、SE 約 {pt_s}%；低於 10% 可以用，高於 30% 不行。", en: "Compute P/T = 6σ ÷ (USL − LSL) for each technique at this thickness and spec: here reflectometry gives about {pt_r}% and SE about {pt_s}%; below 10 % is fine, above 30 % is not."}
+    notes:
+      C_NOISE_TOOL: {zh: "這裡的精度由技術本身在 {t0} nm 的物理決定，不是機台故障；一台健康的反射儀 P/T 一樣約 {pt_r}%。", en: "The precision here is set by the technique's physics at {t0} nm, not by a faulty tool; a healthy reflectometer gives the same P/T of about {pt_r}%."}
+      C_SPEC_WRONG: {zh: "±{tol} nm 的規格來自產品需求；問題是量具能不能判斷它，這由 P/T 回答，不是去放寬規格。", en: "The ±{tol} nm spec comes from the product; the question is whether the gauge can judge it, which P/T answers, not whether to widen the spec."}
+      A_RETARGET: {zh: "這不是製程 target 的問題，而是哪一種量測技術的精度足以判斷這個規格。", en: "The process target is not the question; it is which metrology technique is precise enough to judge this spec."}
+      A_TOOL_FIX: {zh: "修硬體改變不了一種技術的訊號在 {t0} nm 對厚度的敏感度；選擇要依 P/T 比較（反射儀約 {pt_r}%、SE 約 {pt_s}%）。", en: "Repairing hardware does not change how strongly a technique's signal responds to thickness at {t0} nm; the choice follows the P/T comparison (reflectometry about {pt_r}%, SE about {pt_s}%)."}
+      D_GAUGE_OK: {zh: "這裡沒有研究晶圓範圍太窄的 GR&R 問題；問題是新規格下的技術選擇，要用 recipe 能不能發行來回答。", en: "There is no GR&R with narrow study wafers here; the question is the technique for a new spec, answered by whether the recipe can be released."}
+
+  # ---------------------------------------------------------------- DOE
+  doe_curvature_missed:
+    check_first: {zh: "比較中心點和角點平均（curvature 檢定）：差 {curv_diff}、p = {curv_p}，表示響應在範圍內是彎的，2 水準設計的直線模型找不到最佳點。", en: "Compare the centre points with the corner average (the curvature test): a difference of {curv_diff} with p = {curv_p} means the response bends inside the range, so a straight-line model from a 2-level design cannot locate the optimum."}
+    notes:
+      C_EDGE: {zh: "要說最佳點在邊界，前提是模型本身配得好；這裡中心點和角點差 {curv_diff}（p = {curv_p}），線性模型在範圍內就已經不對。", en: "Calling the optimum an edge one needs a model that already fits; here the centre points differ from the corners by {curv_diff} (p = {curv_p}), so the linear model is wrong inside the range."}
+      C_NOISE_DOE: {zh: "雜訊太大會讓 curvature 檢定不顯著；這裡非常顯著（p = {curv_p}）。", en: "Too much noise would make the curvature test insignificant; here it is clearly significant (p = {curv_p})."}
+      C_ALIAS: {zh: "這是全因子設計，主效應沒有混淆；配不好的原因是缺少中心點偵測到的平方項。", en: "This is a full factorial, so no main effects are aliased; the misfit is the missing squared terms that the centre points detect."}
+      A_RELEASE_RECIPE: {zh: "線性模型會把最佳點推到角落；curvature 已確認（p = {curv_p}）、預測 R² = {r2_pred}，在那裡的預測會錯。", en: "A linear model pushes the optimum into a corner; with curvature confirmed (p = {curv_p}) and predicted R² = {r2_pred}, it will mispredict there."}
+      A_REPLICATE: {zh: "加重複能讓估計更準，但每個因子還是只有兩個水準；要看到彎曲需要軸點（CCD）。", en: "More replicates sharpen the estimates but still give each factor only two levels; seeing curvature needs axial points (a CCD)."}
+      A_RECORD: {zh: "PE 想直接用這個模型定 recipe；只記錄等於默許一個缺平方項的模型被拿去用。", en: "PE wants to set the recipe straight from this model; recording alone lets a model missing its squared terms be used."}
+      D_RELEASE_PROCESS: {zh: "沒有平方項的模型找不到彎曲的最佳點；在它的角落點跑確認，很可能失敗。", en: "A model with no squared terms cannot locate a curved optimum; confirmation runs at its corner would likely fail."}
+      D_RETARGET: {zh: "還沒有可靠的模型可以選新的 target；先擴成 CCD。", en: "There is no reliable model yet to choose a new target from; augment to a CCD first."}
+
+  doe_edge_optimum:
+    check_first: {zh: "看最佳化建議的點落在實驗範圍的哪裡：{t_best} °C 落在範圍的{edge}邊界，真正的最佳點很可能在範圍外，要先往那個方向延伸範圍再決定。", en: "Check where the optimiser's best point sits in the tested range: at {t_best} °C, on the {edge} edge of the range, the true optimum probably lies outside it, so extend the range that way before deciding."}
+    notes:
+      C_CURVATURE: {zh: "這已經是有軸點的 CCD，彎曲有被建模；問題是最佳點落在範圍邊界。", en: "This is already a CCD with axial points, so curvature is modelled; the problem is that the best point sits on the boundary."}
+      C_NOISE_DOE: {zh: "模型給出明確的最佳點（D = {D}）；問題不是雜訊，而是它落在範圍的{edge}邊界。", en: "The model gives a clear optimum (D = {D}); the issue is not noise but that it sits on the {edge} edge of the range."}
+      C_ALIAS: {zh: "CCD 不是主效應混淆的部分因子設計；最佳點落在邊界和混淆無關。", en: "A CCD is not a fractional design with aliased main effects; an optimum on the boundary has nothing to do with aliasing."}
+      A_RELEASE_RECIPE: {zh: "模型不能外插到範圍外；落在{edge}邊界 {t_best} °C 的 recipe，只是在猜範圍外面是什麼樣子。", en: "The model cannot extrapolate past the range; a recipe at {t_best} °C on the {edge} edge is a guess about what lies beyond it."}
+      A_REPLICATE: {zh: "加重複只降低範圍內的雜訊；看不到{edge}邊界之外的情況。", en: "Replicates reduce noise inside the range; they cannot show what lies beyond the {edge} edge."}
+      A_RECORD: {zh: "PE 想直接發行這個條件；只記錄等於讓一個落在邊界的 recipe 被放行。", en: "PE wants to release this condition directly; recording alone lets a recipe sitting on the edge go out."}
+      D_RELEASE_PROCESS: {zh: "最佳點落在邊界通常代表還能更好；先往改善方向移動範圍做小 DOE，再進確認與 qual。", en: "An optimum on the boundary usually means it can get better; move the range in the improving direction with a small DOE before confirmation and qual."}
+      D_RETARGET: {zh: "範圍外的區域還沒有資料，現在沒有可靠的依據可以選新 target。", en: "There are no data beyond the range yet, so there is no sound basis to pick a new target now."}
+
+  doe_noisy:
+    check_first: {zh: "把殘差 RMSE（{rmse}）和量測 GR&R 及預期的效應大小比較：雜訊和效應一樣大時，幾乎什麼都不會顯著；先找出雜訊來源（換光源後的量測，或製程本身），再來看模型。", en: "Compare the residual RMSE ({rmse}) with the measurement GR&R and the effect sizes you expected: when the noise is as large as the effects, almost nothing can be significant, so find the noise source (metrology after the lamp change, or the process) before reading the model."}
+    notes:
+      C_CURVATURE: {zh: "彎曲會表現為顯著的平方項或中心點差異；這裡幾乎沒有東西顯著，因為雜訊（RMSE {rmse}）蓋過了所有效應。", en: "Curvature would show as a significant squared term or a centre-point difference; here almost nothing is significant because the noise (RMSE {rmse}) swamps every effect."}
+      C_EDGE: {zh: "要找最佳點（不管在不在邊界），前提是效應顯著；這裡幾乎沒有顯著項，模型的最佳點不可信。", en: "Locating an optimum, on the edge or not, needs significant effects; here almost no term is significant, so the model's best point cannot be trusted."}
+      C_ALIAS: {zh: "CCD 不會混淆主效應；沒有重複、RMSE {rmse}，效應是被雜訊淹沒，不是被歸錯因子。", en: "A CCD does not alias main effects; with no replicates and RMSE {rmse}, the effects are lost in noise, not credited to the wrong factor."}
+      A_AUGMENT: {zh: "加軸點或移動範圍只是多跑一些同樣吵的實驗；先降雜訊（換光源後的 GR&R、加重複）。", en: "Adding axial points or moving the range just adds more noisy runs; reduce the noise first (GR&R after the lamp change, replicates)."}
+      A_RELEASE_RECIPE: {zh: "幾乎沒有顯著項、又沒有重複，模型的最佳點可能只是配到雜訊（RMSE {rmse}）；從它發行 recipe 沒有根據。", en: "With almost no significant terms and no replicates, the model's optimum may just be fitted noise (RMSE {rmse}); releasing a recipe from it has no basis."}
+      A_RECORD: {zh: "只記錄不會讓下一次 DOE 變好；要先找出雜訊來源並加重複。", en: "Recording alone does not make the next DOE any better; find the noise source and add replicates first."}
+      D_RELEASE_PROCESS: {zh: "幾乎沒有顯著項，模型的最佳點可能只是雜訊；拿去做確認很可能白跑。", en: "With almost no significant terms, the model's optimum may be noise; confirmation runs on it would likely be wasted."}
+      D_RETARGET: {zh: "幾乎沒有顯著項的模型，無法告訴你 target 該往哪裡移。", en: "A model with almost no significant terms cannot tell you which way to move a target."}
+
+  # ---------------------------------------------------------------- fab / yield
+  fab_chamber_excursion:
+    check_first: {zh: "把閘極氧化層 SPC 和良率都依製程 chamber 分組：如果只有 {chamber} 在 {start_lot} 之後跳開，而且良率損失都在它的晶圓上，就是這個 chamber；再用 genealogy 列出它在這段時間跑過的每一片。", en: "Group the gate-oxide SPC and the yield by process chamber: if only {chamber} stepped after {start_lot} and its wafers carry the yield loss, it is that chamber; then use genealogy to list every wafer it ran in the window."}
+    notes:
+      C_PARTICLE: {zh: "微粒事件時參數 SPC 是乾淨的，失效是缺陷；這裡是 {chamber} 的閘極氧化層 SPC 偏了，晶粒圖以閘極氧化層的參數型失效為主。", en: "A particle event leaves parameter SPC clean and shows defect fails; here the gate-oxide SPC moved on {chamber} and the die maps are dominated by gate-oxide parametric fails."}
+      C_METRO_OFFSET: {zh: "量具偏差不會讓良率掉；這裡良率真的掉了（最差 {worst_wafer} 只有 {worst_yield}%），同時閘極氧化層偏移。", en: "A gauge offset would not cost yield; here yield really fell (worst {worst_wafer} at {worst_yield}%) together with the gate-oxide shift."}
+      C_DRIFT: {zh: "磨耗是接近 PM 週期時慢慢漂；這裡是 {chamber} 從 {start_lot} 開始的跳動。", en: "Wear drifts slowly toward the PM cycle; this is a step on {chamber} starting at {start_lot}."}
+      A_RECORD: {zh: "{worst_wafer} 良率已經只剩 {worst_yield}%；只記錄會讓這個 chamber 繼續跑產品。", en: "Yield on {worst_wafer} is already down to {worst_yield}%; recording alone lets the chamber keep running product."}
+      A_RETARGET: {zh: "為了一個 chamber 的故障去調 target，會讓其他健康的 chamber 偏離 target。", en: "Re-targeting for one chamber's fault would push the healthy chambers off target."}
+      D_RELEASE: {zh: "良率已經掉到 {worst_yield}%，而且 25 片只量 5 片；不經 disposition 放行，會讓沒量到的受影響晶圓流出去。", en: "Yield has fallen to {worst_yield}% and only 5 of 25 wafers are measured; releasing without disposition lets unmeasured affected wafers out."}
+      D_SCRAP: {zh: "不是每片都失效，而且只量了 25 片中的 5 片；要由 PIE／PE 依 genealogy disposition，不是全部報廢。", en: "Not every wafer fails and only 5 of 25 are measured; PIE / PE disposition by genealogy, rather than scrapping everything."}
+      D_RETARGET: {zh: "這是單一 chamber 的偏移，要 hold 和修 chamber；調 target 會影響其他正常的 chamber。", en: "This is a single-chamber shift to hold and fix; re-targeting would affect the healthy chambers too."}
+
+  fab_particle_event:
+    check_first: {zh: "把參數 SPC、inline defect density 和 {worst_wafer} 的失效圖放在一起看：SPC 受控、defect density 上升、邊緣一圈缺陷失效，就是微粒事件；再做 commonality 找共同的沉積機台。", en: "Put the parameter SPC next to the inline defect density and the fail map of {worst_wafer}: SPC in control, defect density up and an edge ring of defect fails point to a particle event; then run commonality to find the shared deposition tool."}
+    notes:
+      C_EDGE_RING: {zh: "edge ring 磨耗會表現為厚度在邊緣下降和參數型失效；這裡參數 SPC 很乾淨，邊緣失效是缺陷，defect density 上升。", en: "Edge-ring wear shows as thickness roll-off and parametric fails; here parameter SPC is clean, the edge fails are defects and the defect density rose."}
+      C_CHAMBER_SHIFT: {zh: "chamber shift 會讓某個參數的 SPC 偏；這裡所有參數 SPC 都受控，只有 defect density 跳高。", en: "A chamber shift moves a parameter's SPC; here every parameter SPC stays in control and only the defect density jumped."}
+      C_METRO_OFFSET: {zh: "量具偏差改變的是讀值不是良率；這裡良率掉到 {worst_yield}%，參數卻完全沒動。", en: "A gauge offset changes readings, not yield; here yield fell to {worst_yield}% with no parameter change at all."}
+      A_RETARGET: {zh: "沒有參數偏離 target，調 target 去除不了微粒。", en: "No parameter is off target, so moving a target cannot remove particles."}
+      A_REGROUP: {zh: "依量測機台分組是用來解釋參數偏差；這裡參數 SPC 沒有異常，訊號是缺陷。", en: "Grouping by metrology tool explains a parameter offset; nothing is off in the parameter SPC here, the signal is defects."}
+      A_RECORD: {zh: "最差晶圓良率只剩 {worst_yield}%，而且來源機台還在跑；只記錄會讓微粒繼續落在後面的 lot。", en: "The worst wafer is at {worst_yield}% and the source tool is still running; recording alone lets particles keep landing on the next lots."}
+      D_RELEASE: {zh: "最差晶圓良率 {worst_yield}%；{start_lot} 前後的 lot 要先 hold，等 RDA review 和 commonality 確認影響範圍。", en: "The worst wafer is at {worst_yield}%; lots around {start_lot} need holding until RDA review and commonality define the exposure."}
+      D_SCRAP: {zh: "還不知道哪些晶圓、多少晶粒受影響；要先 review 和 commonality，再由 PIE／PE disposition。", en: "It is not yet known which wafers and how many dies are hit; review and commonality come first, then PIE / PE disposition."}
+      D_RETARGET: {zh: "參數都在 target 上；微粒問題要找來源，不是改 target。", en: "Every parameter is on target; a particle problem needs its source found, not a new target."}
+
+  fab_metro_offset:
+    check_first: {zh: "把 SPC 和良率放在一起，並依量測機台分組 SPC：好幾個 chamber 一起 OOC、良率卻持平（約 {yield}%），表示變的是讀值不是產品；會有一台量測機台的線偏掉。", en: "Put the SPC next to the yield and group the SPC by metrology tool: several chambers OOC together while yield stays flat (about {yield}%) means the readings moved, not the product; one metrology tool's line will be off."}
+    notes:
+      C_CHAMBER_SHIFT: {zh: "好幾個 chamber 一起 OOC，良率卻沒變；真的 chamber shift 只動一個 chamber，而且會影響它的良率。", en: "Several chambers went OOC together and yield did not change; a real chamber shift moves one chamber and its yield."}
+      C_RECIPE_ALL: {zh: "所有 chamber 的 recipe 真的變了，閘極氧化層會改變並反映在良率；良率一直維持在 {yield}%。", en: "A real recipe change on all chambers would change the gate oxide and show in yield; yield stayed at {yield}%."}
+      C_DRIFT: {zh: "磨耗是單一 chamber 慢慢漂；這裡是好幾個 chamber 從 {start_lot} 起一起偏，良率沒變。", en: "Wear is one chamber creeping slowly; here several chambers moved together from {start_lot} with no change in yield."}
+      A_RETARGET: {zh: "依偏差的讀值調 RTP 溫度，會把健康的閘極氧化層推偏約 {offset}，製造一個真的異常。", en: "Adjusting the RTP temperature on biased readings would push a healthy gate oxide off by about {offset} and create a real excursion."}
+      A_HOLD_INHIBIT: {zh: "inhibit 這些 chamber 等於停掉健康的機台；它們共同的是量測機台 {metro}，不是製程。", en: "Inhibiting the chambers stops healthy tools; what they share is the metrology tool {metro}, not the process."}
+      A_RECORD: {zh: "PE 正準備依這些讀值調 RTP；只記錄擋不住錯誤的製程調整。", en: "PE is about to adjust the RTP on these readings; recording alone does not stop a wrong process change."}
+      D_HOLD: {zh: "產品沒有變（良率約 {yield}%）；在參考機台重測後即可放行，不需要 hold 等 disposition。", en: "The product has not changed (yield about {yield}%); release after re-measuring on the reference tool, with no hold for disposition."}
+      D_SCRAP: {zh: "良率持平在 {yield}%，晶圓是好的；偏的是量具。", en: "Yield is steady at {yield}%, so the wafers are good; it is the gauge that is off."}
+      D_RETARGET: {zh: "依量具偏差調 target，會讓原本正常的閘極氧化層真的偏掉。", en: "Re-targeting on a gauge offset would push a healthy gate oxide genuinely off target."}
+
+  # ---------------------------------------------------------------- inspection / yield engineering
+  insp_nuisance_recipe:
+    check_first: {zh: "先看 review 的分類比例，再看數量：{review_n} 顆 review 中 {nonvisible_share}% 是 non-visible，數量大多是 nuisance；要追的是真缺陷（每片約 {real_per_wafer} 顆），而打到 maxout 的數量只是下限。", en: "Look at the review breakdown before the counts: {nonvisible_share}% of the {review_n} reviewed defects are non-visible, so the count is mostly nuisance; track the real defects (about {real_per_wafer} per wafer) instead, and treat a count at maxout as a floor."}
+    notes:
+      C_PARTICLE: {zh: "微粒事件會讓 review 看到的真缺陷變多；這裡 {nonvisible_share}% 的 review 是 non-visible，暴增的是 nuisance，不是真缺陷。", en: "A particle event raises the real defects seen at review; here {nonvisible_share}% of the review is non-visible, so the jump is nuisance, not real defects."}
+      C_INCOMING: {zh: "前層帶來的缺陷在 review 時應該是真的缺陷；這裡大部分 review 是 non-visible，而且是同一個 POR、沒有 split 的 lot。", en: "Incoming defects would still be real at review; here most of the review is non-visible, on a POR lot with no split."}
+      C_RANDOM: {zh: "數量暴增到這種程度（{count_text}）不是偶發波動；而且 review 有 {nonvisible_share}% 是 non-visible，是 recipe 在數 nuisance。", en: "Counts this far up ({count_text}) are no chance fluctuation, and {nonvisible_share}% of the review is non-visible: the recipe is counting nuisance."}
+      A_FA: {zh: "對 non-visible 的缺陷做 FA 是在追雜訊；先調 recipe，看剩下的真缺陷有多少。", en: "FA on non-visible defects chases noise; tune the recipe first and see what real defects remain."}
+      A_HOLD_INHIBIT: {zh: "沒有任何證據指向機台故障：暴增的是 non-visible 的 nuisance（review 中占 {nonvisible_share}%）。", en: "Nothing points to a tool fault: the jump is non-visible nuisance ({nonvisible_share}% of the review)."}
+      A_RECORD: {zh: "只記錄會留下一個數量大多是 nuisance（non-visible {nonvisible_share}%）、會把真缺陷埋掉的 recipe；你是 recipe owner，要調 recipe。", en: "Recording alone leaves a recipe whose count is mostly nuisance ({nonvisible_share}% non-visible) and can bury real defects; as the recipe owner you need to tune it."}
+      D_HOLD: {zh: "依 nuisance 的數量 hold lot 是在追雜訊；真缺陷約每片 {real_per_wafer} 顆，要用調好的 recipe 重檢再判斷。", en: "Holding a lot on nuisance counts chases noise; the real defects are about {real_per_wafer} per wafer, so re-inspect with the tuned recipe before judging."}
+      D_SCRAP: {zh: "數量大多是 nuisance（non-visible {nonvisible_share}%），沒有證據說晶圓壞了。", en: "Most of the count is nuisance ({nonvisible_share}% non-visible); there is no evidence the wafers are bad."}
+      D_RELEASE: {zh: "不重檢就照常放行，真缺陷有沒有變還是沒有判斷；被 nuisance 淹沒的數量看不出來，要用調好的 recipe 重檢。", en: "Releasing as normal without re-inspection leaves the real defects unjudged; counts swamped by nuisance cannot show whether they changed, so re-inspect with the tuned recipe."}
+
+  insp_split_vs_baseline:
+    check_first: {zh: "把每片本層數量減掉前層數量（adder），在兩站分別比較 split 和 baseline：這裡前層 {prev_ratio}×、adder {adder_ratio}×；比值高的那一站就是多出來缺陷的來源。", en: "Subtract each wafer's previous-layer count from its current count (adders) and compare split vs baseline at both steps: here previous layer {prev_ratio}× and adders {adder_ratio}×; the step with the high ratio is where the extra defects come from."}
+    notes:
+      C_NUISANCE: {zh: "兩個 lot 用同一個檢查 recipe，nuisance 會一樣多；{total_ratio}× 的差異可以用前層（{prev_ratio}×）和 adder（{adder_ratio}×）分到某一站。", en: "Both lots ran the same inspection recipe, so nuisance would inflate them alike; the {total_ratio}× difference can be traced to a step with the previous layer ({prev_ratio}×) and the adders ({adder_ratio}×)."}
+      C_RANDOM: {zh: "{total_ratio}× 的差異可以用前層和 adder 分析歸到某一站（前層 {prev_ratio}×、adder {adder_ratio}×），是系統性來源，不是機率。", en: "A {total_ratio}× difference that the previous-layer / adder split assigns to one step (previous layer {prev_ratio}×, adders {adder_ratio}×) is a systematic source, not chance."}
+      A_TUNE_RECIPE: {zh: "兩個 lot 用同一個檢查 recipe，recipe 敏感度解釋不了 split 和 baseline 的差異；adder 分析才可以。", en: "Both lots ran the same inspection recipe, so its sensitivity cannot explain a split-vs-baseline difference; the adder analysis can."}
+      A_RECORD: {zh: "PE 在全面轉換前要答案；只記錄的話，{total_ratio}× 差異的來源還是不知道。", en: "PE needs an answer before conversion; recording alone leaves the source of the {total_ratio}× difference unknown."}
+      D_RELEASE: {zh: "這裡要決定的是要不要轉換新條件，前提是先知道缺陷來源；「照常放行」兩者都沒回答。", en: "The decision is about converting to the new condition, which needs the defect source first; releasing as normal answers neither."}
+      D_SCRAP: {zh: "數量沒有證明晶圓是壞的；轉換之前要回答的是缺陷從哪裡來。", en: "The counts do not show the wafers are bad; the question before conversion is where the defects come from."}
+
+  fa_request_recess:
+    check_first: {zh: "拉出完整 49 點圖，把 {name} 依半徑對 USL {usl} nm 畫：例行 9 點只到 r = 140 mm，只有 r = 147 mm 的外圈（這裡平均 {edge_mean} nm、最大 {full_max} nm）能告訴你 FA 看到的邊緣問題是不是真的。", en: "Pull the full 49-site map and plot {name} by radius against the USL {usl} nm: the routine 9 sites stop at r = 140 mm, so only the outer ring at r = 147 mm (here averaging {edge_mean} nm, max {full_max} nm) tells you whether the edge problem FA saw is real."}
+    notes:
+      C_METRO_OFFSET: {zh: "量具偏差會讓內圈和外圈所有點一起偏；比較例行點平均（{routine_mean} nm）和外圈平均（{edge_mean} nm），就知道到底有沒有東西偏。", en: "A gauge offset would shift every site, inner and outer alike; compare the routine mean ({routine_mean} nm) with the outer ring ({edge_mean} nm) to see whether anything is off at all."}
+      C_SITE_OUTLIER: {zh: "FA 問的是整個邊緣區域，單一壞點回答不了；要把外圈當一組來判斷（完整圖中有 {n_out} 點超過 USL）。", en: "FA is asking about a whole edge region, which one bad site cannot explain; judge the outer ring as a group (the full map has {n_out} sites above the USL)."}
+      A_RECORD: {zh: "FA 問了一個直接的問題；寫 e-log 回答不了，要附資料（含完整點位圖）回覆。", en: "FA asked a direct question that an e-log entry does not answer; reply with the data, full map included."}
+      A_RETARGET: {zh: "調 target 會移動每一點，修不好（也證明不了）只在邊緣的差異；FA 首先需要知道 {name} 到底有沒有關係。", en: "Re-targeting moves every site, so it cannot fix (or prove) an edge-only difference; FA first needs to know whether {name} is involved at all."}
+      D_RETARGET: {zh: "還沒用完整點位圖回答 FA 之前，沒有依據改 target；而且只在邊緣的差異也不是調 target 能修的。", en: "There is no basis for a new target before FA has the full-map answer, and an edge-only difference is not something a target change fixes."}
+      D_SCRAP: {zh: "報廢要由 PIE／PE 依資料 disposition；完整點位圖就是那份證據，不是跳過它的理由。", en: "Scrap is a PIE / PE disposition made on data; the full map is that evidence, not a reason to skip it."}
+
+  ye_bin_metro_corr:
+    check_first: {zh: "把每片的 inline 參數對 bin 損失畫散布圖、讀相關係數：最強的是 {best_param}，r = {best_r}；|r| ≥ 0.7 才是可能的驅動因子、要用 split 確認，全部 |r| 都小就表示量測可以排除。", en: "Scatter each wafer's inline parameters against the bin loss and read the correlation: the strongest is {best_param} with r = {best_r}; |r| ≥ 0.7 makes it a likely driver to confirm with a split, while all-small |r| rules metrology out."}
+    notes:
+      C_METRO_OFFSET: {zh: "量具偏差改變的是讀值，不是 bin 損失；問題是有沒有任何參數逐片跟著損失變化（最強 r = {best_r}）。", en: "A gauge offset changes readings, not the bin loss; the question is whether any parameter moves with the loss wafer by wafer (strongest r = {best_r})."}
+      C_RANDOM: {zh: "{lots} 的損失逐片變化很大（最差 {worst_loss}%），是要解釋的真訊號，不是單一偶發點；相關係數告訴你量測能不能解釋它。", en: "Loss varying a lot from wafer to wafer across {lots} (worst {worst_loss}%) is a real signal to explain, not one chance point; the correlation tells you whether metrology explains it."}
+      A_RETARGET: {zh: "就算相關很強也不等於因果；調 {best_param} 要先用 split／DOE 確認，相關弱時更是在改一個無關的參數。", en: "Even a strong correlation is not a cause; re-targeting {best_param} needs a split / DOE first, and with a weak r it would change a parameter that does not matter."}
+      A_RECORD: {zh: "YE 問了直接的問題；要附散布圖和明確結論回覆（{best_param} 的 r = {best_r}）。", en: "YE asked a direct question; reply with the scatter plots and a clear conclusion ({best_param}, r = {best_r})."}
+      D_HOLD: {zh: "這是 probe 已經量到的 bin 損失，不是 hold inline lot 的理由；問題是哪個機制在驅動它。", en: "Bin loss already measured at probe is no reason to hold inline lots; the question is which mechanism drives it."}
+      D_RETARGET: {zh: "相關（r = {best_r}）不能證明因果；調 target 前要用 split／DOE 確認，沒有關聯時調了也沒用。", en: "A correlation (r = {best_r}) does not prove a cause; a re-target needs a split / DOE to confirm it first, and with no link it would change nothing."}
+
+  ye_inline_probe_corr:
+    check_first: {zh: "把兩站的缺陷圖疊在 probe 失效圖上比較 capture rate：{s1} {cap1}% 對 {s2} {cap2}%；低於 30% 表示該站看不到 killer，capture 高、kill ratio 也高就要去修來源。", en: "Overlay both steps' defect maps on the probe fail map and compare capture rates: {s1} {cap1}% vs {s2} {cap2}%; below 30 % that monitor is blind to the killers, while high capture with a high kill ratio makes the source the target."}
+    notes:
+      C_NUISANCE: {zh: "nuisance 落在失效晶粒上的比例不會高於機率（{chance}%）；要看的是兩站的 capture rate（{cap1}%、{cap2}%）和 kill ratio，不是檢查 recipe 的敏感度。", en: "Nuisance does not land on failing dies more often than chance ({chance}%); the capture rates ({cap1}% and {cap2}%) and kill ratios decide this, not the inspection recipe's sensitivity."}
+      C_PARAM_DRIVES: {zh: "參數驅動會出現在逐片的參數對損失散布圖；這裡是集中在 {zone} 區的 {bin_txt} 失效，逐顆晶粒和 inline 缺陷疊圖比對。", en: "A parameter driver would show in a wafer-level parameter-vs-loss scatter; here the fails are {bin_txt} clustered in the {zone} zone, matched die by die against inline defects."}
+      C_RANDOM: {zh: "{n_fail} 顆失效（{fail_pct}%）集中在 {zone} 區，不是機率；隨機散布不會集中在一個區域。", en: "{n_fail} fails ({fail_pct}%) clustered in the {zone} zone are not chance; a random scatter would not gather in one zone."}
+      A_TUNE_RECIPE: {zh: "問題是哪一站看得到 killer、或 killer 從哪來；調 recipe 敏感度回答不了，capture rate 才能決定。", en: "The issue is which step sees the killers or where they come from; tuning recipe sensitivity does not answer that, the capture rates do."}
+      A_RECORD: {zh: "YE 問的是修好能拿回多少良率（約 {gain} 個百分點）；只記錄的話，監控站和缺陷來源都維持原樣。", en: "YE asked how much yield a fix returns (about {gain} points); recording alone leaves both the monitor and the source as they are."}
+      D_RELEASE: {zh: "「照常放行」沒有回答 YE：不是要移動監控站，就是要依預期良率增益排序來源修正。", en: "Releasing as normal does not answer YE: either the monitor has to move or the source fix has to be ranked by its yield gain."}
+      D_SCRAP: {zh: "lot 已經到 probe；要決定的是監控站和缺陷來源，不是報廢產品。", en: "The lot has already reached probe; the decision is about the monitor and the defect source, not scrapping product."}
+
+  split_confounded:
+    check_first: {zh: "比較各組之前，先查 run log 和同一 lot 上的其他實驗，再排除干擾晶圓、依每片實際跑的 recipe 重算 B − POR：這裡是 {delta_nom} pp，PE 依計畫分組算的是 {delta_all} pp。", en: "Before comparing groups, check the run log and the other experiments on the lot, then drop the interfering wafers and recompute B − POR by the recipe each wafer actually ran: here {delta_nom} pp against PE's planned-group {delta_all} pp."}
+    notes:
+      C_SPLIT: {zh: "要怪新條件之前，比較本身要乾淨；先查 run log 和其他實驗，再相信依計畫分組算出的 {delta_all} pp。", en: "Blaming the condition needs a clean comparison first; check the run log and the other experiments before trusting the planned-group difference of {delta_all} pp."}
+      C_RANDOM: {zh: "差異是不是機率，要在確認設定之後才能判斷；要檢定的是依實際 recipe 重算的 {delta_nom} pp，不是直接當成雜訊。", en: "Whether the difference is chance can only be judged after the setup is checked; the figure to test is the {delta_nom} pp recomputed by actual recipe, not one to wave away as noise."}
+      A_RETARGET: {zh: "split 結果在設定確認（run log、重疊的實驗）之前，不該拿來改任何設定。", en: "No setting should change on a split result before its setup is checked (run log, overlapping experiments)."}
+      A_RECORD: {zh: "PE 這週就要決定；只記錄沒有回答這個 split 能不能用。", en: "PE wants to decide this week; recording alone does not say whether the split can be used."}
+      D_NO_CONVERT: {zh: "依計畫分組的差異（{delta_all} pp）就否決 B 是跳過檢查；依實際 recipe 重算是 {delta_nom} pp，這個 split 不是有效就是無法下結論。", en: "Rejecting B on the planned-group difference ({delta_all} pp) skips the check: recomputed by actual recipe it is {delta_nom} pp, and the split is either valid or inconclusive."}
+      D_SCRAP: {zh: "這是轉換決策的 split，不是晶圓有缺陷；沒有東西需要報廢。", en: "This split feeds a conversion decision, not a defect disposition; there is nothing to scrap."}
+
+  split_zone_decision:
+    check_first: {zh: "把每個區域的良率差依晶粒占比加權後相加：中心 {share_c}%、中間 {share_m}%、邊緣 {share_e}%，淨值 {net} ± {net_se} pp；超過約 2 個標準誤才是真的增益。", en: "Weight each zone's yield difference by its die share and add them up: centre {share_c}%, middle {share_m}%, edge {share_e}% give a net of {net} ± {net_se} pp, a real gain only beyond about 2 standard errors."}
+    notes:
+      C_EDGE_RING: {zh: "邊緣變差是在同時比較的 split 中跟著條件 B 出現；edge ring 磨耗會讓 POR 和 B 一樣受影響。", en: "The edge loss comes with condition B in a head-to-head split; edge-ring wear would hurt POR and B alike."}
+      C_SPLIT: {zh: "問題不是 B 會不會增加缺陷，而是依晶粒數加權後，中心的增益是否大於邊緣的損失（{d_e} pp）。", en: "The question is not whether B adds defects but whether its centre gain outweighs its edge change ({d_e} pp) once weighted by die count."}
+      A_RELEASE_RECIPE: {zh: "直接發行不追蹤，等於忽略邊緣的變化（{d_e} pp）；而且決定前要先算依晶粒加權的淨值。", en: "Releasing with no follow-up ignores the edge change ({d_e} pp), and the decision needs the die-weighted net first."}
+      A_RECORD: {zh: "主管要一個建議；只記錄沒有回答要不要轉 B。", en: "Your manager wants a recommendation; recording alone does not say whether to convert to B."}
+      D_RETARGET: {zh: "這是要不要轉換條件 B 的決定，依加權淨值（{net} ± {net_se} pp）回答，和調 target 無關。", en: "This is a decision on converting to condition B, answered by the weighted net ({net} ± {net_se} pp); a re-target has nothing to do with it."}
+      D_SCRAP: {zh: "split 晶圓的良率差是轉換決策的依據，不是要報廢的理由。", en: "The yield difference on the split wafers informs a conversion decision; it is not a reason to scrap anything."}
+
+  kpi_dly_trend:
+    check_first: {zh: "先重算排除標記晶圓後的 DLY（{dly_latest}% 對 {dly_ex}%），再看各金屬層的 opens／shorts 和 probe 延遲（{lag} 週）：這三個一起告訴你紅燈是少數晶圓、某一層的系統性損失，還是修好前做的 lot。", en: "Recompute DLY without the flagged wafers ({dly_latest}% vs {dly_ex}%), then check the per-level opens / shorts and the probe lag ({lag} weeks): together they tell you whether the red is a few wafers, a systematic level loss, or lots processed before a fix."}
+    notes:
+      C_METRO_OFFSET: {zh: "DLY 來自 probe 結果，不是 inline 讀值；量測機台的偏差不可能讓它變紅。", en: "DLY comes from probe results, not inline readings, so a metrology-tool offset cannot turn it red."}
+      C_RANDOM: {zh: "要說是雜訊，得先做完三個檢查：排除標記晶圓前後（{dly_latest}% 對 {dly_ex}%）、各層 opens／shorts、probe 延遲（{lag} 週）。", en: "Calling it noise comes only after the three checks: with and without the flagged wafers ({dly_latest}% vs {dly_ex}%), the per-level opens / shorts, and the probe lag ({lag} weeks)."}
+      A_HOLD_INHIBIT: {zh: "週 KPI 摘要沒有指向某一個 chamber；下一步取決於驅動因子（異常晶圓、某一層或 probe 延遲），不是停機。", en: "A weekly KPI summary does not point at one chamber; the next step depends on the driver (excursion wafers, one level or probe lag), not a tool-down."}
+      D_SCRAP: {zh: "這週的 lot 已經在 probe 量完；KPI 的決定是怎麼報告和要不要升級，不是報廢晶圓。", en: "This week's lots are already through probe; the KPI decision is about reporting and escalation, not scrapping wafers."}
+
+  insp_unclassified_defect:
+    check_first: {zh: "把缺陷群和下一層檢查（{next_layer}）疊圖，數 ±{radius} mm 內重複出現的比例：{cluster_n} 顆中有 {repeat_pct}% 再出現；同一位置再出現就是真的缺陷，消失就是表面假訊號。", en: "Overlay the cluster with the next layer's inspection ({next_layer}) and count repeats within ±{radius} mm: {repeat_pct}% of the {cluster_n} defects come back; one that reappears at the same place is real, one that vanishes is a surface artefact."}
+    notes:
+      C_INCOMING: {zh: "incoming 指缺陷在 {layer} 之前就存在；這裡要先回答的是缺陷群到底是不是真的，由它在 {next_layer} 的重複率（{repeat_pct}%）決定。", en: "Incoming means the defects were there before {layer}; the open question here is whether the cluster is real at all, which its repeat rate at {next_layer} ({repeat_pct}%) answers."}
+      C_PARTICLE: {zh: "微粒事件在 review 時會看到微粒，常常是多片的邊緣環狀分布；這裡 SEM 只在一片的缺陷群上看到「{sem_top}」，是不是真的要看重複率（{repeat_pct}%）。", en: "A particle event shows particles at review, often an edge ring across many wafers; here SEM sees only '{sem_top}' in one wafer's cluster, and the repeat rate ({repeat_pct}%) decides whether it is real."}
+      A_HOLD_INHIBIT: {zh: "缺陷還沒分類、也還沒找到機台；停機之前要先做切面或重複率確認。", en: "The defect is not classified and no tool is identified yet; the cross-section or the repeat check comes before stopping a tool."}
+      A_RECORD: {zh: "RDA 問的是真的還假的；下一層的重複率（{repeat_pct}%）可以回答，並導向一個行動（FIB 切面或調 recipe）。", en: "RDA asked whether it is real; the next-layer repeat rate ({repeat_pct}%) answers that and leads to an action (a FIB cross-section or recipe tuning)."}
+      D_HOLD: {zh: "hold 等 disposition 需要已知的風險；這裡 lot 可以標記後繼續走（真缺陷）或照常放行（假訊號），同時用切面和 probe 確認。", en: "Holding for disposition needs a known risk; here the lot can continue flagged (a real defect) or as normal (an artefact) while the cross-section and probe confirm."}
+      D_SCRAP: {zh: "缺陷還沒分類、會不會致命也不知道；在切面和 probe 結果出來前報廢太早。", en: "The defect is not classified and its kill risk is unknown; scrapping before the cross-section and probe is premature."}
