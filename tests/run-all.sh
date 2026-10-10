@@ -8,6 +8,7 @@ step() { echo; echo "===== $1 ====="; shift; "$@" || { echo "✗ 失敗：$*"; s
 
 step "匯入腳本（Python）" python3 -m unittest discover -s seed
 step "通知服務（Python）" python3 -m unittest discover -s notifier
+step "管理看板外掛（Python）" python3 -m unittest discover -s dashboard
 step "安裝腳本 install.sh" bash install/test_install_sh.sh
 if command -v "${PWSH:-pwsh}" >/dev/null 2>&1; then
   step "PowerShell 腳本" "${PWSH:-pwsh}" -NoProfile -File powershell/Test-Scripts.ps1

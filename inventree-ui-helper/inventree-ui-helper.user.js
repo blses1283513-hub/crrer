@@ -953,10 +953,59 @@
   function closePanel() { notify.open = false; if (notify.panel) { notify.panel.remove(); notify.panel = null; } }
   function togglePanel() { notify.open ? closePanel() : openPanel(); }
 
+  // ===================== 7. 介面翻譯修正 =====================
+  // InvenTree 1.5.6 的繁體中文翻譯在儀表板有缺漏或錯譯（已逐條對照官方 zh_Hant 翻譯檔）。
+  // 只替換「整段文字完全相同」的地方，不會改到資料內容。
+  // scope: 'dashboard' 表示只在儀表板與「新增小工具」抽屜內替換（同一段中文在別處有其他意思）。
+  const TEXT_FIXES = [
+    { from: 'Add Dashboard Widgets', to: '新增儀表板小工具' },              // 原始碼寫死英文，無法翻譯
+    { from: 'High Stock', to: '庫存過量' },                                  // 缺翻譯
+    { from: 'Show the number of parts which have excess stock', to: '顯示庫存超過上限的零件數量' },
+    { from: 'Latest parts', to: '最新零件' },
+    { from: 'Toggle dashboard edit mode', to: '切換儀表板編輯模式' },
+    { from: '已訂購零件', to: '已訂閱零件' },                                  // 錯譯（Subscribed Parts）
+    { from: '已訂閲類別', to: '已訂閱類別' },                                  // 異體字
+    { from: '陳舊庫存項目', to: '久未異動庫存' },
+    { from: '顯示陳舊的庫存項目數量', to: '顯示久未異動的庫存項目數量' },
+    { from: '儀表盤', to: '儀表板' },                                          // 用語統一
+    { from: '編輯佈局', to: '編輯版面' },
+    { from: '生產訂單所需的', to: '生產訂單所需零件', scope: 'dashboard' },   // 句子被截斷；別處另有意思
+  ];
+  const DASHBOARD_SCOPE = '.mantine-Drawer-content, .react-grid-layout';
+
+  function fixText(text, inDashboard) {
+    const key = norm(text);
+    const f = TEXT_FIXES.find((x) => x.from === key && (!x.scope || inDashboard));
+    return f ? text.replace(key, f.to) : null;
+  }
+
+  function fixNode(node) {
+    if (node.nodeType !== 3) return;
+    const parent = node.parentElement;
+    if (!parent || parent.closest('.ith-card, #ith-dock, script, style, input, textarea')) return;
+    const fixed = fixText(node.nodeValue, !!parent.closest(DASHBOARD_SCOPE));
+    if (fixed !== null && fixed !== node.nodeValue) node.nodeValue = fixed;
+  }
+
+  function fixTree(root) {
+    if (root.nodeType === 3) return fixNode(root);
+    if (root.nodeType !== 1) return;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) fixNode(n);
+  }
+
+  fixTree(document.body);
+  new MutationObserver((muts) => {
+    muts.forEach((m) => {
+      if (m.type === 'characterData') fixNode(m.target);
+      else m.addedNodes.forEach(fixTree);
+    });
+  }).observe(document.body, { childList: true, subtree: true, characterData: true });
+
   notifyPoll();
   setInterval(() => { if (document.visibilityState !== 'hidden') notifyPoll(); }, CONFIG.notifyPollMs);
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') notifyPoll(); });
 
   // 供自動測試使用的純邏輯函式（不影響一般使用）
-  window.__ith = { evaluateAdjust, companyOf, CONFIG, notifyPoll };
+  window.__ith = { evaluateAdjust, companyOf, CONFIG, notifyPoll, fixText, TEXT_FIXES };
 })();

@@ -31,6 +31,8 @@
 | 🧹 零件整理 | 停用／還原／永久刪除不需要的零件，附多層安全檢查，刪除前自動匯出異動紀錄，且不會被匯入腳本建回來 | `inventree-seed/manage_parts.py`（見「整理不需要的零件」） |
 | 🎛️ 浮動面板 | 右下角平常只有一個小圓點（顯示未讀通知數），滑鼠移上去才展開四個功能按鈕，不會擋住操作 | App 內建操作助手 |
 | 🔔 通知小視窗 | 低庫存、別家公司或管理員把庫存調進／調出你的公司庫位、大量或歸零的異常操作；**只通知與你所屬公司有關的事**；已讀紀錄存在伺服器，換電腦也一致 | 通知服務 `inventree-app/notifier/`（詳見該資料夾的 README） |
+| 📊 管理看板（儀表板小工具） | 在「儀表板 → 新增小工具」多出四個：**各公司庫存總覽**、**跨公司調動與異常**、**今日異動摘要**、**呆滯庫存** | 外掛 `inventree-app/plugins/mgmt_dashboard/` |
+| 🈶 介面翻譯修正 | InvenTree 1.5.6 儀表板的英文殘留與錯譯（如「Add Dashboard Widgets」「High Stock」「已訂購零件」）自動改成正確中文 | App 內建操作助手 |
 | 桌面 App | 桌面圖示一鍵啟動，獨立視窗（無網址列） | `inventree-app/` |
 | 多台電腦共用 | 區網內其他電腦連到主機，看到同一份資料 | `inventree-app/` |
 | 備份與還原 | 一鍵備份成 zip；可還原到新主機 | `backup.ps1`、`restore.ps1` |
@@ -185,13 +187,13 @@ python setup_roles.py audit
 
 3. 它會偵測主機的區網 IP，請依下列確認後按 Enter：
    - 在 PowerShell 輸入 `ipconfig`，確認 IPv4 位址是你**實際上網那張網卡**（Wi-Fi 或乙太網路），不是 VPN、WSL、Hyper-V 的虛擬網卡。不對就手動輸入正確 IP。
-4. 腳本會**列出所有變更並等你輸入 `Y`**。內容包括：備份並修改 `.env`、放置 App 檔案、開防火牆 80 埠、重啟系統、建立桌面捷徑。原本的 `.env` 會備份為 `.env.bak-時間`。
+4. 腳本會**列出所有變更並等你輸入 `Y`**。內容包括：備份並修改 `.env`、放置 App 檔案與管理看板外掛、開防火牆 80 埠、重啟系統、開啟 InvenTree 的「介面整合」、建立桌面捷徑。原本的 `.env` 會備份為 `.env.bak-時間`。
 5. 重啟約 1–5 分鐘，資料不受影響。
 6. 結束時會顯示：其他電腦要用的網址，以及建立捷徑的指令。**把那一行指令存起來**，第四章要用。
 
 **如果出現黃色警告「公用網路」**：到「設定 → 網路和網際網路 → 內容」，把目前網路改成**私人網路**，否則其他電腦會被防火牆擋住。
 
-**驗收**：桌面出現「庫存管理系統」圖示，點兩下會開出獨立視窗，介面為繁體中文，右下角有一個小圓點，滑鼠移上去會展開「🔔 通知」「🔀 快速調貨」「📋 異動紀錄」「💡 操作說明」四個按鈕。
+**驗收**：桌面出現「庫存管理系統」圖示，點兩下會開出獨立視窗，介面為繁體中文，右下角有一個小圓點，滑鼠移上去會展開「🔔 通知」「🔀 快速調貨」「📋 異動紀錄」「💡 操作說明」四個按鈕。在「儀表板」右上角選單選「新增小工具」，抽屜標題是「新增儀表板小工具」，清單中有「各公司庫存總覽」等四個管理看板小工具（加入方式見第五章「管理看板」）。
 
 > 若捷徑建立失敗：不影響系統，改用 <http://localhost> 或照畫面上的提示手動建立捷徑（原因與修正見第八章）。
 
@@ -237,6 +239,28 @@ iwr http://主機IP/app/client-shortcut.ps1 -OutFile $env:TEMP\cs.ps1; powershel
 - **用戶端**：點桌面圖示即可。
 - **停止系統**（極少需要）：在安裝資料夾執行 `docker compose down`，資料不會遺失。再次啟動：`docker compose up -d` 或點桌面圖示。
 - **主機 IP 變了**：其他電腦會連不到。到路由器把 IP **固定給主機**（DHCP 保留）。若 IP 已變，在主機重新執行 `setup-server.ps1`，其他電腦重做第四章。
+
+### 管理看板（儀表板小工具）
+
+每個人可以自己決定儀表板放哪些小工具，設定會跟著帳號走（換電腦一樣）。
+
+1. 左上選單點「儀表板」。
+2. 右上角選單 →「**新增小工具**」，右側會打開「新增儀表板小工具」清單（可在上方輸入文字過濾）。
+3. 點小工具右邊的「＋」加入。建議加入：
+
+| 小工具 | 看什麼 | 適合誰 |
+|---|---|---|
+| 各公司庫存總覽 | A/B/C 公司並排：庫存總量、品項數、**低庫存**（未達最低庫存、尚未缺貨）、**缺貨**數（有數字時顯示紅色） | 主管、管理者 |
+| 跨公司調動與異常 | 最近 24 小時別家公司或管理員把庫存調進／調出**你的公司**、大量（≥100）、歸零；上方小標籤統計次數 | 各公司倉管 |
+| 今日異動摘要 | 今天各公司的入庫、出庫、調入、盤點「筆數／數量」，與今天的操作人及次數 | 主管、對帳 |
+| 呆滯庫存 | 超過 60 天沒有任何異動的庫存，最久的排前面，點料號可進入該筆庫存 | 主管、出清或調撥規劃 |
+
+4. 選單中的「編輯版面」可拖曳、調整大小；完成後按「接受版面配置」。
+5. 小工具每 5 分鐘自動更新，右上角「↻」可立即更新。
+
+**調整天數**（superuser）：管理中心 → 外掛（Plugins）→「管理看板」→ 設定：「呆滯天數」（預設 60）、「異常顯示時間（小時）」（預設 24）。
+
+> 小工具只讀取資料、不修改任何東西；每個人看到的資料與他在 InvenTree 的檢視權限相同。「跨公司調動與異常」來自通知服務，所以**不含自己的操作**，範圍是自己所屬的公司（與 🔔 通知相同）。
 
 ### 整理不需要的零件（停用與刪除）
 
@@ -331,6 +355,7 @@ schtasks /Create /SC DAILY /ST 02:00 /TN "InvenTreeBackup" /TR "powershell -NoPr
 
    腳本會列出變更並等你輸入 `Y`。**它會覆蓋新主機資料庫的全部內容。**
 9. 用**舊主機的帳號密碼**登入，檢查庫存數量、異動紀錄、群組與權限是否與舊主機一致。
+   還原會帶回舊主機的系統設定；若「新增小工具」中沒有管理看板，到 `inventree-app` 資料夾執行一次 `powershell -ExecutionPolicy Bypass -File .\enable-dashboard.ps1 -InstallDir C:\Users\你的帳號\inventree`。
 
 最後：
 
@@ -353,6 +378,9 @@ schtasks /Create /SC DAILY /ST 02:00 /TN "InvenTreeBackup" /TR "powershell -NoPr
 | 登入頁沒有登入框 | 容器可能尚未就緒或瀏覽器快取：`docker compose ps` 確認全部 healthy，再用無痕視窗開 `http://localhost/web/login` |
 | 🔔 鈴鐺是灰色（通知服務尚未啟用） | 在安裝資料夾執行 `docker compose ps`，確認 `inventree-notifier` 在執行；沒有的話重新執行 `setup-server.ps1`。紀錄：`docker compose logs --tail 50 inventree-notifier` |
 | 🔔 一直沒有通知 | 自己的操作不會通知自己，請用**另一個帳號**測試；帳號要加入 `company-X` 群組；通知最多約 30 秒才會出現 |
+| 「新增小工具」裡沒有管理看板 | ① 已執行 `enable-dashboard.ps1`（或新版 `setup-server.ps1`）且最後顯示「完成」② App 按 Ctrl+F5 ③ superuser 到管理中心 →「外掛」確認「管理看板」為啟用、系統設定的「外掛 → 介面整合」為開啟 ④ 仍沒有：再執行一次 `enable-dashboard.ps1`，把畫面訊息交給協助的人 |
+| 小工具顯示紅色「Error Loading Plugin Content」或「Failed to load module」 | 外掛的 JS 沒有複製到 static 資料夾。再執行一次 `enable-dashboard.ps1`（會重新複製），再按 Ctrl+F5 |
+| 「跨公司調動與異常」顯示通知服務沒有回應 | 與「🔔 鈴鐺是灰色」相同，照那一列檢查通知服務 |
 | 想回到官方原始設定 | 安裝資料夾中，把 `.env.bak-時間` 改名回 `.env`，刪除 `docker-compose.override.yml`，執行 `docker compose up -d` |
 
 ## 九、更新已安裝的系統
@@ -474,6 +502,55 @@ python manage_parts.py list --glob "A-P03-S5-*"
 
 `removed_parts.json` 會建立在這個資料夾。要重新匯入 SKU 時，請用這個資料夾的 `seed_skus.py`（把你的 `config.json` 複製進來，或加 `--config 路徑`），它會自動略過已刪除的料號；如果從別的資料夾執行，請加 `--removed C:\Users\Ande\inventree\tools\removed_parts.json`。
 
+### 更新：管理看板＋儀表板翻譯修正（不用重新下載整個專案）
+
+這次更新會動到 `.env` 與 `Caddyfile.app`，所以不是單純換檔案，而是下載 7 個檔案到暫存資料夾後，執行其中的 `enable-dashboard.ps1`。它會**先列出所有變更並等你輸入 `Y`**，備份 `.env`、`Caddyfile.app` 與操作助手後才動手。**資料庫與庫存資料不會被動到。**
+
+**一般 PowerShell 即可（不需要系統管理員）**，整段貼上：
+
+```powershell
+$base  = "https://raw.githubusercontent.com/blses1283513-hub/crrer/claude/sharp-brahmagupta-tnbukb"
+$root  = "C:\Users\Ande\inventree"
+$stage = Join-Path $root ("updates\dashboard-" + (Get-Date -Format yyyyMMdd-HHmmss))
+
+# 要下載的檔案：來源路徑、暫存位置、用來確認內容正確的關鍵字
+$files = @(
+  @{ src = "inventree-app/enable-dashboard.ps1";                              dst = "enable-dashboard.ps1";                         marker = "管理看板與介面翻譯修正" },
+  @{ src = "inventree-app/lib/EnvFile.ps1";                                   dst = "lib\EnvFile.ps1";                              marker = "Set-EnvContent" },
+  @{ src = "inventree-app/lib/DashboardPlugin.ps1";                           dst = "lib\DashboardPlugin.ps1";                      marker = "Get-DashboardActivateScript" },
+  @{ src = "inventree-app/Caddyfile.app";                                     dst = "Caddyfile.app";                                marker = "header /plugins/*" },
+  @{ src = "inventree-app/plugins/mgmt_dashboard/__init__.py";                dst = "plugins\mgmt_dashboard\__init__.py";           marker = "MgmtDashboardPlugin" },
+  @{ src = "inventree-app/plugins/mgmt_dashboard/static/mgmt_dashboard.js";   dst = "plugins\mgmt_dashboard\static\mgmt_dashboard.js"; marker = "renderStagnantStock" },
+  @{ src = "inventree-ui-helper/inventree-ui-helper.user.js";                 dst = "inventree-ui-helper.user.js";                  marker = "TEXT_FIXES" }
+)
+
+# 1. 全部下載到暫存資料夾並檢查（任何一個不對就停止，不會改動系統）
+foreach ($f in $files) {
+  $out = Join-Path $stage $f.dst
+  New-Item -ItemType Directory -Force -Path (Split-Path $out -Parent) | Out-Null
+  Invoke-WebRequest "$base/$($f.src)" -OutFile $out -UseBasicParsing
+  $text = [IO.File]::ReadAllText($out, [Text.Encoding]::UTF8)
+  if ($text.Length -lt 500 -or -not $text.Contains($f.marker)) { throw "下載的 $($f.src) 內容不正確，已停止，系統沒有任何變更。" }
+}
+
+# 2. 執行更新（會列出變更、等你輸入 Y）
+powershell -ExecutionPolicy Bypass -File (Join-Path $stage "enable-dashboard.ps1") -InstallDir $root
+```
+
+畫面會列出變更與「公司清單」（取自通知服務的設定，應與你的公司一致），確認後輸入 `Y`。重新啟動約 1–3 分鐘，最後顯示「完成！」就好了。
+
+**確認成功**：
+
+1. 開 App 按 **Ctrl+F5**。
+2. 「儀表板」→ 右上角選單 →「新增小工具」：抽屜標題是「**新增儀表板小工具**」（原本是英文），清單有「各公司庫存總覽」「跨公司調動與異常」「今日異動摘要」「呆滯庫存」。
+3. 加入後依 [`inventree-acceptance-checklist.md`](inventree-acceptance-checklist.md) 的 K 區驗收。
+
+**其他電腦不需要做任何事**，開 App 按一次 Ctrl+F5 即可。
+
+**如果最後出現黃色「管理看板尚未啟用」**：其他功能不受影響。等 1 分鐘再執行一次第 2 段（`powershell -ExecutionPolicy Bypass -File …enable-dashboard.ps1 …`）；仍失敗就把畫面訊息交給協助的人。
+
+**要還原**：安裝資料夾中，把 `.env.bak-時間`、`Caddyfile.app.bak-時間`、`app\inventree-ui-helper.user.js.bak-時間` 複製回原檔名，執行 `docker compose up -d` 與 `docker compose restart inventree-server inventree-worker inventree-proxy`。
+
 ## 十、附錄
 
 ### 檔案與資料夾位置（主機）
@@ -482,6 +559,7 @@ python manage_parts.py list --glob "A-P03-S5-*"
 |---|---|
 | `C:\Users\你的帳號\inventree\` | 安裝資料夾：`.env`、`docker-compose.yml`、`docker-compose.override.yml`、`Caddyfile.app`、`start-inventree.ps1`、`backup.ps1`、`restore.ps1`、`app\` |
 | `…\inventree\inventree-data\` | **所有資料**（資料庫、上傳檔案）。請勿手動修改或刪除 |
+| `…\inventree\inventree-data\plugins\mgmt_dashboard\` | 管理看板外掛（由 `setup-server.ps1`／`enable-dashboard.ps1` 放置；換主機時重新執行即可，不需備份） |
 | `文件\InvenTree備份\` | 備份 zip |
 
 ### 完全移除（⚠️ 資料會永久消失，請先備份）
@@ -508,5 +586,6 @@ docker compose down
 | 桌面捷徑 | 已修正中文檔名問題；🧪 修正後尚未重新實測 |
 | 代理設定、App 外框、中文操作助手 | ✅ 以真正的 Caddy 與模擬頁面在瀏覽器測試通過；🧪 尚未在真的 InvenTree 畫面實測 |
 | 匯入腳本 `seed_skus.py` | 🧪 尚未對真的 InvenTree 1.5.6 實測 |
+| 管理看板外掛、儀表板翻譯修正 | ✅ 外掛的小工具格式與載入方式已對照 1.5.6 原始碼；小工具計算與畫面以模擬 API 在瀏覽器測試通過；外掛 JS 經真正的 Caddy 提供；`enable-dashboard.ps1` 以替身 docker 端對端測試通過。🧪 尚未在真的 InvenTree 上載入（請照 K 區驗收） |
 | 其他電腦連入（區網） | 🧪 尚未實測（你目前接的是手機熱點，見第八章） |
 | `backup.ps1`、`restore.ps1`、自動備份排程 | 🧪 尚未實測，**請在放入重要資料前先完整演練一次：備份 → 在另一台還原 → 核對資料** |

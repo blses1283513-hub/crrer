@@ -14,6 +14,19 @@
 
 App 內建通知小視窗：低庫存、別家公司或管理員把庫存調進／調出你的公司庫位、大量或歸零的異常操作，**只通知與你所屬公司有關的事**，已讀紀錄存在伺服器。由 `setup-server.ps1` 新增的 `inventree-notifier` 容器提供，規則、限制與疑難排解見 [`notifier/README.md`](notifier/README.md)。
 
+## 管理看板（📊 儀表板小工具）
+
+`plugins/mgmt_dashboard/` 是 InvenTree 1.5.6 外掛，在「儀表板 → 新增小工具」加入：**各公司庫存總覽**、**跨公司調動與異常**、**今日異動摘要**、**呆滯庫存**。`setup-server.ps1` 會一併安裝；已安裝好的主機用 `enable-dashboard.ps1` 加入（不必重新下載整個專案，步驟見安裝指南第九章）。
+
+| 檔案 | 用途 |
+|---|---|
+| `plugins/mgmt_dashboard/__init__.py` | 外掛本體：提供小工具清單與設定（呆滯天數、異常顯示時間） |
+| `plugins/mgmt_dashboard/static/mgmt_dashboard.js` | 小工具畫面：瀏覽器以使用者自己的權限讀取 API，不修改資料 |
+| `lib/DashboardPlugin.ps1` | 安裝工具：`.env` 設定、放置外掛與公司清單、在容器內開啟「介面整合」並複製 JS |
+| `enable-dashboard.ps1` | 給已安裝的主機：列出變更、備份、更新並重新啟動 |
+
+外掛放在 `inventree-data\plugins\mgmt_dashboard\`；`.env` 加上 `INVENTREE_PLUGINS_ENABLED=True` 與 `INVENTREE_PLUGINS_MANDATORY=mgmt-dashboard`（每次啟動自動啟用，無法在網頁停用）。要移除：從 `INVENTREE_PLUGINS_MANDATORY` 拿掉 `mgmt-dashboard`、刪除該資料夾，再 `docker compose up -d`。
+
 ## 架構
 
 ```

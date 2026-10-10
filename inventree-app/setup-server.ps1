@@ -21,7 +21,7 @@ Write-Host "== 庫存管理系統：主機設定 ==" -ForegroundColor Cyan
 foreach ($f in @("docker-compose.yml", ".env")) {
     if (-not (Test-Path (Join-Path $InstallDir $f))) { throw "在 $InstallDir 找不到 $f。請確認 InvenTree 已用 install.ps1 安裝，或用 -InstallDir 指定位置。" }
 }
-foreach ($f in @("Caddyfile.app", "docker-compose.override.yml", "start-inventree.ps1", "backup.ps1", "restore.ps1", "app\index.html", "app\icon.ico", "app\icon.png", "app\client-shortcut.ps1", "lib\EnvFile.ps1", "lib\NotifierConfig.ps1", "notifier\notifier.py", "notifier\config.example.json")) {
+foreach ($f in @("Caddyfile.app", "docker-compose.override.yml", "start-inventree.ps1", "backup.ps1", "restore.ps1", "app\index.html", "app\icon.ico", "app\icon.png", "app\client-shortcut.ps1", "lib\EnvFile.ps1", "lib\NotifierConfig.ps1", "lib\DashboardPlugin.ps1", "notifier\notifier.py", "notifier\config.example.json", "plugins\mgmt_dashboard\__init__.py", "plugins\mgmt_dashboard\static\mgmt_dashboard.js")) {
     if (-not (Test-Path (Join-Path $here $f))) { throw "安裝套件缺少 $f，請重新下載完整的 inventree-app 資料夾。" }
 }
 if (-not (Test-Path $helperSrc)) { throw "找不到中文操作助手 $helperSrc，請下載完整的 repo（需要 inventree-ui-helper 資料夾）。" }
@@ -31,6 +31,7 @@ $seedConfig = @("config.json", "config.example.json") | ForEach-Object { Join-Pa
 if (-not $seedConfig) { throw "找不到公司設定 $seedDir\config.json（需要下載完整的 repo，包含 inventree-seed 資料夾）。" }
 . (Join-Path $here "lib\EnvFile.ps1")
 . (Join-Path $here "lib\NotifierConfig.ps1")
+. (Join-Path $here "lib\DashboardPlugin.ps1")
 
 $ovr = Join-Path $InstallDir "docker-compose.override.yml"
 if ((Test-Path $ovr) -and -not (Select-String -Path $ovr -Pattern '\[inventree-app\]' -Quiet)) {
@@ -53,6 +54,9 @@ $settings = [ordered]@{
     "INVENTREE_TRUSTED_ORIGINS" = "`"http://$ServerIP,http://localhost,http://127.0.0.1`""
     "INVENTREE_LANGUAGE"        = "zh-hant"
 }
+# 管理看板外掛（儀表板小工具）：啟用外掛並設為每次啟動自動啟用
+$envPath = Join-Path $InstallDir ".env"
+(Get-DashboardEnvSettings -Current (Get-EnvValues -Path $envPath)).GetEnumerator() | ForEach-Object { $settings[$_.Key] = $_.Value }
 $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 $ts = Get-Date -Format "yyyyMMdd-HHmmss"
 
@@ -69,6 +73,7 @@ Write-Host "       notifier\（通知服務；新增一個容器 inventree-notif
 Write-Host "       通知服務的公司設定取自 $seedConfig ："
 foreach ($c in @((Get-Content -Raw -Encoding UTF8 -Path $seedConfig | ConvertFrom-Json).companies)) { Write-Host "         $($c.name)　群組 $($c.owner_group)　料號前綴 $($c.code)-" }
 Write-Host "       （若與你實際的公司名稱不同，請先按 N 取消，把你的 config.json 放到 inventree-seed 資料夾後再執行）"
+Write-Host "       管理看板外掛（儀表板小工具）：放到 inventree-data\plugins\$DashboardDirName，並在 InvenTree 開啟「介面整合」"
 if ($isAdmin) { Write-Host "  4. Windows 防火牆：允許 TCP 80 埠連入（私人／網域網路）" }
 else { Write-Host "  4. 防火牆：略過（目前不是系統管理員，完成後會告訴你怎麼補設）" }
 Write-Host "  5. 重新啟動系統容器（約 1–3 分鐘，期間無法使用；資料不受影響）"
@@ -78,7 +83,6 @@ $ok = Read-Host "確定執行？(Y/N)"
 if ($ok -notmatch '^[Yy]') { Write-Host "已取消，未做任何變更。"; exit 0 }
 
 # ---------- 1–2. .env ----------
-$envPath = Join-Path $InstallDir ".env"
 Copy-Item $envPath "$envPath.bak-$ts"
 Set-EnvFile -Path $envPath -Settings $settings
 Write-Host "✓ .env 已更新（原檔備份為 .env.bak-$ts）"
@@ -107,6 +111,10 @@ $dataDir = if ([IO.Path]::IsPathRooted($ext)) { $ext } else { Join-Path $Install
 New-Item -ItemType Directory -Force -Path (Join-Path $dataDir "notifier") | Out-Null
 Write-Host "✓ 通知服務檔案已放置"
 
+# 管理看板外掛：程式與公司清單（與通知服務相同的公司設定）
+$null = Install-DashboardPluginFiles -SourceDir (Join-Path $here "plugins\mgmt_dashboard") -DataDir $dataDir -CompaniesJson (New-DashboardCompaniesJson -ConfigPath $seedConfig)
+Write-Host "✓ 管理看板外掛已放置"
+
 # ---------- 4. 防火牆 ----------
 if ($isAdmin) {
     $ruleName = "InvenTree 庫存管理系統 (TCP 80)"
@@ -127,6 +135,9 @@ Push-Location $InstallDir
 try {
     docker compose up -d
     if ($LASTEXITCODE -ne 0) { throw "容器啟動失敗。可還原：把 .env.bak-$ts 改回 .env、刪除 docker-compose.override.yml，再執行 docker compose up -d。" }
+    # Caddyfile.app 與外掛程式是掛載的檔案，內容改變時 up -d 不會重啟，需明確重新啟動
+    docker compose restart inventree-server inventree-worker inventree-proxy
+    if ($LASTEXITCODE -ne 0) { throw "容器重新啟動失敗，請執行 docker compose ps 查看。" }
 } finally { Pop-Location }
 
 $deadline = (Get-Date).AddMinutes(5)
@@ -147,6 +158,17 @@ if ($notifyUp) { Write-Host "✓ 通知服務已就緒" }
 else {
     Write-Host "⚠ 通知服務尚未就緒（不影響其他功能）。請在 $InstallDir 執行：docker compose logs --tail 50 inventree-notifier" -ForegroundColor Yellow
 }
+
+# 管理看板：在 InvenTree 內開啟介面整合並複製外掛 JS；失敗不影響其他功能，只提示
+$deadline = (Get-Date).AddMinutes(3)
+do {
+    try { Invoke-WebRequest "http://localhost/api/" -UseBasicParsing -TimeoutSec 5 | Out-Null; $apiUp = $true } catch { $apiUp = $false; Start-Sleep -Seconds 3 }
+} until ($apiUp -or (Get-Date) -gt $deadline)
+$dashProblem = Invoke-DashboardActivate -InstallDir $InstallDir
+if ($dashProblem) {
+    Write-Host "⚠ 管理看板尚未啟用（不影響其他功能）：$dashProblem" -ForegroundColor Yellow
+    Write-Host "  稍後可在 inventree-app 資料夾執行：powershell -ExecutionPolicy Bypass -File .\enable-dashboard.ps1 -InstallDir $InstallDir" -ForegroundColor Yellow
+} else { Write-Host "✓ 管理看板已啟用（儀表板 → 新增小工具）" }
 
 # ---------- 6. 桌面捷徑 ----------
 # WScript.Shell 內部以系統「非 Unicode 字碼頁」處理路徑，非中文系統會把中文檔名變成 ?????? 而存檔失敗。

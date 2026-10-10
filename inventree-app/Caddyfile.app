@@ -5,6 +5,7 @@
 #   3. 根路徑 / 自動導向 /app/
 #   4. 允許同源嵌入（X-Frame-Options: SAMEORIGIN），讓 App 外框能載入 InvenTree
 #   5. 新增 /notify/*：轉給通知服務（inventree-notifier）
+#   6. /static/plugins/*（外掛的 JS）加上 Cache-Control: no-cache，外掛更新後不會讀到舊版
 # 由 docker-compose.override.yml 掛載，取代官方 Caddyfile；官方檔案本身不修改。
 
 (log_common) {
@@ -67,6 +68,9 @@ http:// {
 
 	handle_path /static/* {
 		import cors-headers static
+
+		# [App] 外掛的 JS（例如管理看板）更新後要立刻生效：每次都向伺服器確認是否有新版
+		header /plugins/* Cache-Control "no-cache"
 
 		root * /var/www/static
 		file_server

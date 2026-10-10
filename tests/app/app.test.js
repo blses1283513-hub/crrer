@@ -16,7 +16,7 @@ const ROOT = path.join(__dirname, '..', '..');
 const CADDY = process.env.CADDY_BIN;
 const skip = !CADDY && 'CADDY_BIN 未設定，略過 App 端對端測試';
 
-let server; let caddy; let browser; let base; let tmp; let simProc; let sim;
+let server; let caddy; let browser; let base; let tmp; let simProc; let sim; let staticDir;
 
 function freePort() {
   return new Promise((resolve) => {
@@ -42,6 +42,12 @@ before(async () => {
   fs.cpSync(path.join(ROOT, 'inventree-app', 'app'), appDir, { recursive: true });
   fs.copyFileSync(path.join(ROOT, 'inventree-ui-helper', 'inventree-ui-helper.user.js'), path.join(appDir, 'inventree-ui-helper.user.js'));
   fs.mkdirSync(path.join(tmp, 'log'));
+  // 靜態檔：管理看板外掛的 JS 放在 InvenTree 複製後的位置 static/plugins/mgmt-dashboard/
+  staticDir = path.join(tmp, 'static');
+  fs.mkdirSync(path.join(staticDir, 'plugins', 'mgmt-dashboard'), { recursive: true });
+  fs.copyFileSync(path.join(ROOT, 'inventree-app', 'plugins', 'mgmt_dashboard', 'static', 'mgmt_dashboard.js'),
+    path.join(staticDir, 'plugins', 'mgmt-dashboard', 'mgmt_dashboard.js'));
+  fs.writeFileSync(path.join(staticDir, 'other.css'), 'body{}');
 
   // 真正的通知服務＋模擬 InvenTree（供 /notify 轉送測試）
   simProc = spawn(process.env.PYTHON || 'python3', ['-I', path.join(ROOT, 'tests', 'notifier', 'serve_sim.py')], { stdio: ['ignore', 'pipe', 'ignore'] });
@@ -56,6 +62,7 @@ before(async () => {
   // 只改「環境相關」的部分（路徑與埠號），其餘與正式設定完全相同
   const conf = fs.readFileSync(path.join(ROOT, 'inventree-app', 'Caddyfile.app'), 'utf8')
     .replace('root * /var/www/app', `root * ${appDir}`)
+    .replace('root * /var/www/static', `root * ${staticDir}`)
     .replace(/^http:\/\/ \{/m, `http://:${port} {`)
     .replace('/var/log/caddy', path.join(tmp, 'log'))
     .replace(/^:9090 \{/m, `:${health} {`);
@@ -107,6 +114,17 @@ for (const host of ['localhost', '127.0.0.1']) {
     await page.close();
   });
 }
+
+test('外掛 JS：以正確類型提供，且不快取（外掛更新後立即生效）；其他靜態檔不受影響', { skip }, async () => {
+  const js = await fetch(base + '/static/plugins/mgmt-dashboard/mgmt_dashboard.js');
+  assert.equal(js.status, 200);
+  assert.match(js.headers.get('content-type'), /javascript/, '瀏覽器以 import() 載入模組需要 JavaScript 類型');
+  assert.equal(js.headers.get('cache-control'), 'no-cache');
+  assert.match(await js.text(), /export function renderCompanyOverview/);
+  const css = await fetch(base + '/static/other.css');
+  assert.equal(css.status, 200);
+  assert.equal(css.headers.get('cache-control'), null);
+});
 
 test('深層連結與重新整理會回到原頁面；誤嵌套時自動解除', { skip }, async () => {
   const page = await browser.newPage();

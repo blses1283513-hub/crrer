@@ -288,3 +288,29 @@ test('浮動面板：鍵盤也能展開（Tab 聚焦圓點），Esc 收起', asy
   await page.waitForSelector('#ith-dock-stack', { state: 'hidden' });
   noErrors();
 });
+
+test('介面翻譯修正：儀表板抽屜英文與錯譯改成正確中文，範圍外與資料內容不動', async () => {
+  await page.evaluate(() => {
+    const root = document.getElementById('root');
+    root.innerHTML =
+      '<div class="mantine-Drawer-content"><p id="d1">Add Dashboard Widgets</p><p id="d2"> High Stock </p>' +
+      '<p id="d3">已訂購零件</p><p id="d4">生產訂單所需的</p><input id="d5" value="High Stock"></div>' +
+      '<p id="o1">生產訂單所需的</p><p id="o2">儀表盤</p><p id="o3">High Stock items</p>';
+  });
+  await page.waitForFunction(() => document.getElementById('d1').textContent === '新增儀表板小工具');
+  const r = await page.evaluate(() => {
+    const t = (id) => document.getElementById(id).textContent;
+    return { d2: t('d2'), d3: t('d3'), d4: t('d4'), d5: document.getElementById('d5').value, o1: t('o1'), o2: t('o2'), o3: t('o3') };
+  });
+  assert.equal(r.d2.trim(), '庫存過量');
+  assert.equal(r.d3, '已訂閱零件');
+  assert.equal(r.d4, '生產訂單所需零件', '儀表板內才替換');
+  assert.equal(r.o1, '生產訂單所需的', '儀表板外同樣文字另有意思，不替換');
+  assert.equal(r.o2, '儀表板', '全域用語統一');
+  assert.equal(r.o3, 'High Stock items', '只替換整段完全相同的文字');
+  assert.equal(r.d5, 'High Stock', '輸入欄位內容不動');
+  // React 之後改寫同一個文字節點時也要再修正
+  await page.evaluate(() => { document.getElementById('d3').firstChild.nodeValue = '已訂購零件'; });
+  await page.waitForFunction(() => document.getElementById('d3').textContent === '已訂閱零件');
+  noErrors();
+});
