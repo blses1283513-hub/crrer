@@ -20,7 +20,8 @@ function initialState() {
     ],
     parts: [
       { pk: 8, IPN: 'A-P01', name: 'A 產品P01', full_name: 'A 產品P01', is_template: true },
-      { pk: 9, IPN: 'A-P01-S1-XL', name: 'A 產品P01 / 樣式1 / XL', full_name: 'A 產品P01 / 樣式1 / XL', is_template: false },
+      { pk: 9, IPN: 'A-P01-S1-XL', name: 'A 產品P01 / 樣式1 / XL', full_name: 'A 產品P01 / 樣式1 / XL', is_template: false, active: true },
+      { pk: 10, IPN: 'A-P01-S5-XL', name: 'A 產品P01 / 樣式5 / XL（已停用）', full_name: 'A 產品P01 / 樣式5 / XL（已停用）', is_template: false, active: false },
     ],
     stock: [
       { pk: 1, part: 9, location: 2, quantity: 120 },
@@ -107,7 +108,8 @@ function handleApi(req, res, url, body) {
   if (p === '/api/stock/location/') return json(200, page(state.locations, url));
   if (p === '/api/part/') {
     const q = (url.searchParams.get('search') || '').toLowerCase();
-    const rows = state.parts.filter((x) => !q || (x.IPN + ' ' + x.name).toLowerCase().includes(q));
+    const activeOnly = url.searchParams.get('active') === 'true';
+    const rows = state.parts.filter((x) => (!q || (x.IPN + ' ' + x.name).toLowerCase().includes(q)) && (!activeOnly || x.active !== false));
     return json(200, page(rows, url));
   }
   if (p === '/api/stock/') {

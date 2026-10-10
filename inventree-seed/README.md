@@ -17,6 +17,14 @@
    - `python setup_roles.py audit` 唯讀稽核：superuser 人數、沒有群組的帳號、缺少職務群組的帳號。
 3. **先不要**開啟擁有權控制（`STOCK_OWNERSHIP_CONTROL`），等腳本設好擁有者後再開，見下方「執行後」。
 
+## 整理不需要的零件（停用／刪除）
+
+用 `manage_parts.py`，詳細說明與保護機制見 `../inventree-install-guide.md` 的「整理不需要的零件」。重點：
+
+- 先 `retire`（停用，可還原），確定不需要再 `delete`。**刪除零件會連帶永久刪除它的庫存與全部異動紀錄。**
+- `delete` 只有 superuser 做得到，並要求零件已停用、庫存為 0、沒有訂單紀錄；刪除前會匯出零件與異動紀錄。
+- 刪除成功的料號會記錄在 `removed_parts.json`，**`seed_skus.py` 會自動略過這些料號**（`--removed` 可指定其他位置），避免重新匯入時被建回來。如果你把整個資料夾換成新下載的版本，請把舊的 `removed_parts.json` 複製過來。
+
 ## 執行
 
 ```bash

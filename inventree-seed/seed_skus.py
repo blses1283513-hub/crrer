@@ -21,6 +21,7 @@
 
 import argparse
 import csv
+import fnmatch
 import json
 import os
 import sys
@@ -56,8 +57,25 @@ def product_code(i):
     return f"P{i:02d}"
 
 
-def build_plan(cfg):
-    """回傳 (templates, variants)。templates 每個產品一筆，variants 每個 SKU 一筆。"""
+def load_removed(path):
+    """讀取 manage_parts.py 記錄的已刪除料號（可含 * 萬用字元）。檔案不存在就是沒有。"""
+    try:
+        with open(path, encoding="utf-8-sig") as f:
+            data = json.load(f)
+    except FileNotFoundError:
+        return []
+    except (OSError, ValueError) as e:
+        sys.exit(f"無法讀取已刪除零件清單 {path}：{e}")
+    return [r["ipn"] for r in data.get("removed", []) if r.get("ipn")]
+
+
+def is_removed(ipn, removed):
+    return any(fnmatch.fnmatchcase(ipn, pat) for pat in removed)
+
+
+def build_plan(cfg, removed=()):
+    """回傳 (templates, variants)。templates 每個產品一筆，variants 每個 SKU 一筆。
+    removed：已被刪除的料號（可含萬用字元），不會再被建立；產品底下的變體全被排除時，產品範本也一併略過。"""
     names = cfg.get("product_names", {})
     templates, variants = [], []
     for co in cfg["companies"]:
@@ -77,6 +95,10 @@ def build_plan(cfg):
                         "size": size,
                         "minimum_stock": cfg.get("default_minimum_stock", 0),
                     })
+    if removed:
+        variants = [v for v in variants if not is_removed(v["ipn"], removed) and not is_removed(v["template_ipn"], removed)]
+        alive = {v["template_ipn"] for v in variants}
+        templates = [t for t in templates if t["ipn"] in alive]
     ipns = [v["ipn"] for v in variants] + [t["ipn"] for t in templates]
     dup = {x for x in ipns if ipns.count(x) > 1}
     if dup:
@@ -253,13 +275,20 @@ def main():
     ap.add_argument("--config", required=True)
     ap.add_argument("--dry-run", action="store_true", help="只輸出計畫 CSV，不連線")
     ap.add_argument("--plan-csv", default="sku_plan.csv")
+    ap.add_argument("--removed", default=os.path.join(os.path.dirname(os.path.abspath(__file__)), "removed_parts.json"),
+                    help="已刪除零件清單（manage_parts.py delete 會自動記錄），清單中的料號不會再被建立")
     args = ap.parse_args()
 
     cfg = load_config(args.config)
-    templates, variants = build_plan(cfg)
+    removed = load_removed(args.removed)
+    full_templates, full_variants = build_plan(cfg)
+    templates, variants = build_plan(cfg, removed)
     write_plan_csv(variants, args.plan_csv)
     print(f"計畫：{len(cfg['companies'])} 公司，{len(templates)} 產品模板，"
           f"{len(variants)} 個 SKU → 已輸出 {args.plan_csv}")
+    if removed:
+        print(f"已略過 {len(full_variants) - len(variants)} 個 SKU、{len(full_templates) - len(templates)} 個產品"
+              f"（依 {args.removed} 的已刪除清單）")
 
     if args.dry_run:
         return

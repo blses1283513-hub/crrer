@@ -42,10 +42,10 @@ class InvenTreeSim:
         self.locations[pk] = path
         return pk
 
-    def add_part(self, ipn, name=None, category=None, minimum_stock=0, is_template=False):
+    def add_part(self, ipn, name=None, category=None, minimum_stock=0, is_template=False, active=True):
         pk = self.pk()
         self.parts[pk] = {"pk": pk, "IPN": ipn, "name": name or ipn, "full_name": name or ipn, "category": category,
-                          "minimum_stock": minimum_stock, "is_template": is_template}
+                          "minimum_stock": minimum_stock, "is_template": is_template, "active": active}
         return pk
 
     def add_item(self, part, location, quantity):
@@ -167,6 +167,8 @@ class InvenTreeSim:
             for p in self.parts.values():
                 total = self.total_in_stock(p["pk"])
                 if query.get("low_stock") == "true" and not (total < p["minimum_stock"]):
+                    continue
+                if query.get("active") == "true" and not p["active"]:
                     continue
                 rows.append({**p, "total_in_stock": total})
             return 200, page(rows)

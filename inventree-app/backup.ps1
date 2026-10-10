@@ -46,6 +46,8 @@ if (Test-Path $notifyState) {
     Copy-Item $notifyState (Join-Path $stage "notifier-state\state.json")
 }
 if (Test-Path "notifier") { Copy-Item "notifier" (Join-Path $stage "notifier") -Recurse }
+# 零件整理工具資料夾：刪除前匯出的零件與異動紀錄、removed_parts.json
+if (Test-Path "tools") { Copy-Item "tools" (Join-Path $stage "tools") -Recurse }
 
 Write-Host "3/3 壓縮…"
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null

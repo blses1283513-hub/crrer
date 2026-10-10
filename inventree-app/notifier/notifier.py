@@ -316,14 +316,22 @@ class Notifier:
 
     def _process_new(self, auth):
         entries, newest = self._fetch_new_entries(auth)
-        if newest < self.store.state["cursor"]:
-            # 資料庫被還原到較舊的時間點：舊的進度已無意義，重新開始（事件與已讀進度一併清掉，使用者記錄保留）
-            log(f"偵測到資料庫回到較舊的狀態（最新 #{newest} < 進度 #{self.store.state['cursor']}），重新初始化")
-            st = self.store.state
-            st["events"] = []
+        st = self.store.state
+        if newest < st["cursor"]:
+            # 最新一筆異動紀錄的編號比我們記錄的進度還小。可能原因：
+            #   1. 刪除了零件（InvenTree 會連帶刪除該零件的異動紀錄，若那些剛好是最新的紀錄，編號就會變小）
+            #   2. 資料庫被還原到較舊的時間點
+            # 兩種情況都只需要：進度退回、丟掉『已不存在的紀錄』產生的事件、重新記錄庫存位置。
+            # 其餘通知與每個人的已讀狀態都保留（已讀進度不可大於現有最新編號，否則之後重複使用到的編號會被當成已讀）。
+            log(f"異動紀錄的最新編號（#{newest}）比進度（#{st['cursor']}）小，可能是零件被刪除或資料庫還原；調整進度並保留其他資料")
+            st["cursor"] = newest
+            st["events"] = [ev for ev in st["events"] if ev["id"] <= newest]
             for u in st["users"].values():
-                u["read_up_to"], u["read"] = 0, []
-            self._initialize(auth)
+                u["read_up_to"] = min(u["read_up_to"], newest)
+                u["read"] = [n for n in u["read"] if n <= newest]
+            items = self.client.get_all("/api/stock/", {}, auth)
+            st["item_loc"] = {str(i["pk"]): i.get("location") for i in items}
+            self.store.save()
             return
         if not entries:
             return
@@ -452,11 +460,12 @@ class Notifier:
         ts, cache = self._low_cache
         if self.clock() - ts < self.cfg["low_stock_cache_s"]:
             return cache
-        parts = self.client.get_all("/api/part/", {"low_stock": "true"}, auth)
+        # 已停用（不再使用）的零件不需要補貨，不算低庫存
+        parts = self.client.get_all("/api/part/", {"low_stock": "true", "active": "true"}, auth)
         cats = None
         out = []
         for p in parts:
-            if p.get("is_template"):
+            if p.get("is_template") or p.get("active") is False:
                 continue
             ipn = p.get("IPN") or ""
             company = None

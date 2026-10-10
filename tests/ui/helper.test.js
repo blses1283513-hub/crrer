@@ -182,6 +182,15 @@ test('快速調貨：跨公司、需確認、送出正確內容與 CSRF', async 
   noErrors();
 });
 
+test('快速調貨：已停用的零件不會出現在搜尋結果', async () => {
+  await showDock();
+  await page.click('text=🔀 快速調貨');
+  await page.fill('[aria-label="搜尋料號或品名"]', 'A-P01-S');
+  await page.waitForSelector('.ith-qt button:has-text("A-P01-S1-XL")');
+  assert.equal(await page.$('.ith-qt button:has-text("A-P01-S5-XL")'), null, '停用的 SKU 不應可被調貨');
+  noErrors();
+});
+
 test('快速調貨：超量時以現有數量送出；同庫位不可送出', async () => {
   await showDock();
   await page.click('text=🔀 快速調貨');

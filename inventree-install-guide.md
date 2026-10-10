@@ -28,6 +28,7 @@
 | 📋 異動紀錄 | 所有庫存異動的時間、操作人，可篩選、匯出 CSV | App 內建操作助手 |
 | ⚠️ 異常數量警告 | 移除、轉移、盤點、新增時，數量 ≥100、超過現有庫存、或歸零，送出前跳出確認 | App 內建操作助手 |
 | 🔀 快速調貨 | 搜尋料號、依公司分色看各庫位庫存、點選來源與目的即可調貨（可跨公司，會提醒） | App 內建操作助手 |
+| 🧹 零件整理 | 停用／還原／永久刪除不需要的零件，附多層安全檢查，刪除前自動匯出異動紀錄，且不會被匯入腳本建回來 | `inventree-seed/manage_parts.py`（見「整理不需要的零件」） |
 | 🎛️ 浮動面板 | 右下角平常只有一個小圓點（顯示未讀通知數），滑鼠移上去才展開四個功能按鈕，不會擋住操作 | App 內建操作助手 |
 | 🔔 通知小視窗 | 低庫存、別家公司或管理員把庫存調進／調出你的公司庫位、大量或歸零的異常操作；**只通知與你所屬公司有關的事**；已讀紀錄存在伺服器，換電腦也一致 | 通知服務 `inventree-app/notifier/`（詳見該資料夾的 README） |
 | 桌面 App | 桌面圖示一鍵啟動，獨立視窗（無網址列） | `inventree-app/` |
@@ -237,6 +238,49 @@ iwr http://主機IP/app/client-shortcut.ps1 -OutFile $env:TEMP\cs.ps1; powershel
 - **停止系統**（極少需要）：在安裝資料夾執行 `docker compose down`，資料不會遺失。再次啟動：`docker compose up -d` 或點桌面圖示。
 - **主機 IP 變了**：其他電腦會連不到。到路由器把 IP **固定給主機**（DHCP 保留）。若 IP 已變，在主機重新執行 `setup-server.ps1`，其他電腦重做第四章。
 
+### 整理不需要的零件（停用與刪除）
+
+InvenTree 本身有刪除零件的功能，但有兩個陷阱（依 1.5.6 原始碼）：
+
+1. **啟用中的零件不能刪**，必須先「停用」。
+2. **刪除零件會連帶永久刪除它所有的庫存項目與全部異動紀錄（時間、操作人）**，無法復原；刪除範本時，底下的變體不會被刪，而是變成沒有範本的獨立零件。
+
+所以建議**先停用、確定不需要再刪除**：
+
+| | 停用（retire） | 永久刪除（delete） |
+|---|---|---|
+| 零件、庫存、異動紀錄 | 全部保留 | **全部消失** |
+| 之後能還原嗎 | 可以（restore），隨時 | 不行，只能從備份還原 |
+| 快速調貨、低庫存通知 | 不再出現 | 不再出現 |
+| 誰能做 | superuser | superuser（職務群組刻意沒有刪除權限） |
+
+**單一零件（網頁）**：零件頁面 → 編輯 → 取消勾選「啟用」→ 儲存。確定要刪除時，用 superuser 帳號在零件頁面的「⋮」選單選刪除（只有已停用的零件會出現）。
+
+**一次處理多個（建議）**：用 `inventree-seed\manage_parts.py`。需要 superuser 的 API token；一定要用 `--ipn`、`--glob` 或 `--file` 指定範圍，工具**不提供「全部」**。
+
+```powershell
+$env:INVENTREE_URL = "http://localhost"
+$env:INVENTREE_TOKEN = "貼上 superuser 的 token"
+
+python manage_parts.py list    --glob "A-P03-S5-*"      # 先看會選到哪些（唯讀）
+python manage_parts.py retire  --glob "A-P03-S5-*"      # 停用（可還原）
+python manage_parts.py restore --glob "A-P03-S5-*"      # 後悔了：還原
+python manage_parts.py delete  --glob "A-P03-S5-*"      # 永久刪除（見下方保護）
+```
+
+`delete` 的保護（任何一項不符合就**不會刪**，並列出原因）：
+
+- 零件必須已停用（工具自己檢查，不只靠伺服器）
+- 庫存必須是 0
+- 不能有銷售單或採購單明細，也不能有「採購中、生產中、已分配」的數量
+- 範本底下還有不在這次範圍的變體時，不會刪
+- 無法確認訂單狀況時（讀不到），預設停下，必須你確認後加 `--ignore-warnings`
+- 刪除前**自動匯出**零件資料與異動紀錄（CSV）到 `deleted-parts-時間\` 資料夾
+- 要求你輸入要刪除的數量，並再確認「已備份」
+- 刪除成功後記錄到 `removed_parts.json`，**之後執行 `seed_skus.py` 不會把這些料號建回來**
+
+> 刪除前請先執行 `backup.ps1`。可以加 `--dry-run` 只看檢查結果、不刪除。
+
 ## 六、備份
 
 **手動備份**（系統不必停止）：
@@ -362,41 +406,73 @@ docker compose logs --tail 20 inventree-notifier   # 應該看到「通知服務
 
 **其他電腦不需要重新安裝。** 它們開啟 App 時會自動載入新版（按一次 Ctrl+F5 最保險）。
 
-### 只更新操作助手（最快：不用重新下載整個專案、不用重啟系統）
+### 只更新有改變的檔案（不用重新下載整個專案）
 
-如果這次只有**畫面或操作助手**的改變（例如右下角按鈕的樣式），只需要替換一個檔案 `inventree-ui-helper.user.js`。它放在主機的 `C:\Users\Ande\inventree\app\`，由主機提供給所有電腦，所以**只要在主機換一次，全部電腦都會更新**。
+如果這次更新**只動到幾個檔案**，不必下載整個 zip、也不必跑 `setup-server.ps1`：直接從 GitHub 下載那幾個檔案，換到對應的位置即可。**資料不會被動到。** 每次更新我都會告訴你是哪幾個檔案、要不要重啟通知服務。
 
-> 什麼時候不能只換這個檔案？如果更新內容包含通知服務、Docker 設定、`.env`、備份或還原腳本，就要用上面「完整更新」。每次更新我都會告訴你是哪一種。
+| 檔案 | 放在哪裡 | 更新後要做什麼 |
+|---|---|---|
+| `inventree-ui-helper.user.js`（操作助手、浮動面板） | `C:\Users\Ande\inventree\app\` | 每台電腦按一次 Ctrl+F5（只在主機換一次，全部電腦都會更新） |
+| `notifier.py`（通知服務） | `C:\Users\Ande\inventree\notifier\` | `docker compose restart inventree-notifier`（約 5 秒，已讀紀錄保留） |
+| `manage_parts.py`、`seed_skus.py`（零件整理、匯入） | `C:\Users\Ande\inventree\tools\`（新建） | 不用重啟，在這個資料夾執行 |
+| `backup.ps1`（備份腳本） | `C:\Users\Ande\inventree\` | 不用重啟 |
 
-不需要系統管理員，一般 PowerShell 即可：
+> 什麼時候不能只換檔案？更新內容碰到 Docker 設定（`docker-compose.override.yml`）、`Caddyfile.app`、`.env`、`setup-server.ps1`，就要用上面的「完整更新」。
 
-```powershell
-$dst = "C:\Users\Ande\inventree\app\inventree-ui-helper.user.js"
-$url = "https://raw.githubusercontent.com/blses1283513-hub/crrer/claude/sharp-brahmagupta-tnbukb/inventree-ui-helper/inventree-ui-helper.user.js"
-$tmp = Join-Path $env:TEMP "helper-new.js"
-
-# 1. 下載單一檔案
-Invoke-WebRequest $url -OutFile $tmp -UseBasicParsing
-
-# 2. 檢查內容正確才替換（避免下載到錯誤頁面）
-$text = [IO.File]::ReadAllText($tmp, [Text.Encoding]::UTF8)
-if ($text.Length -lt 30000 -or $text -notmatch "ith-dock") { throw "下載的檔案內容不正確，已停止，沒有覆蓋任何檔案。" }
-
-# 3. 先備份舊檔，再替換
-Copy-Item $dst "$dst.bak-$(Get-Date -Format yyyyMMdd-HHmmss)"
-Copy-Item $tmp $dst -Force
-"完成。請在 App 按 Ctrl+F5。"
-```
-
-**如果第 1 步失敗（repo 是私人的，下載會被拒絕）：** 用瀏覽器登入 GitHub，開啟上面 `$url` 的網址，按 Ctrl+S 存成 `inventree-ui-helper.user.js` 到「下載」資料夾，然後把上面的 `Invoke-WebRequest` 那一行換成：
+**一般 PowerShell 即可（不需要系統管理員）**，整段貼上。它會先把所有檔案下載並檢查內容，**全部正確才開始替換**，替換前會備份舊檔：
 
 ```powershell
-Copy-Item "C:\Users\Ande\Downloads\inventree-ui-helper.user.js" $tmp -Force
+$base  = "https://raw.githubusercontent.com/blses1283513-hub/crrer/claude/sharp-brahmagupta-tnbukb"
+$root  = "C:\Users\Ande\inventree"
+$tools = Join-Path $root "tools"
+New-Item -ItemType Directory -Force -Path $tools | Out-Null
+
+# 要更新的檔案：來源路徑、安裝位置、用來確認內容正確的關鍵字
+$files = @(
+  @{ src = "inventree-ui-helper/inventree-ui-helper.user.js"; dst = "$root\app\inventree-ui-helper.user.js"; marker = "active=true" },
+  @{ src = "inventree-app/notifier/notifier.py";              dst = "$root\notifier\notifier.py";             marker = "零件被刪除或資料庫還原" },
+  @{ src = "inventree-seed/manage_parts.py";                  dst = "$tools\manage_parts.py";                  marker = "零件整理" },
+  @{ src = "inventree-seed/seed_skus.py";                     dst = "$tools\seed_skus.py";                     marker = "load_removed" },
+  @{ src = "inventree-app/backup.ps1";                        dst = "$root\backup.ps1";                        marker = "零件整理工具資料夾" }
+)
+$stamp  = Get-Date -Format yyyyMMdd-HHmmss
+$staged = @()
+
+# 1. 全部先下載並檢查（任何一個不對就整個停止，不會替換任何檔案）
+foreach ($f in $files) {
+  $tmp = Join-Path $env:TEMP ("upd-" + [IO.Path]::GetFileName($f.src))
+  Invoke-WebRequest "$base/$($f.src)" -OutFile $tmp -UseBasicParsing
+  $text = [IO.File]::ReadAllText($tmp, [Text.Encoding]::UTF8)
+  if ($text.Length -lt 1000 -or $text -notmatch [regex]::Escape($f.marker)) { throw "下載的 $($f.src) 內容不正確，已停止，沒有替換任何檔案。" }
+  $staged += @{ tmp = $tmp; dst = $f.dst }
+}
+
+# 2. 備份舊檔後替換
+foreach ($s in $staged) {
+  if (Test-Path $s.dst) { Copy-Item $s.dst "$($s.dst).bak-$stamp" }
+  Copy-Item $s.tmp $s.dst -Force
+}
+
+# 3. 通知服務套用新程式（已讀紀錄保留）
+Set-Location $root
+docker compose restart inventree-notifier
+"完成。各台電腦的 App 請按一次 Ctrl+F5。"
 ```
 
-**要還原**：安裝資料夾的 `app\` 內有 `inventree-ui-helper.user.js.bak-時間` 的備份檔，把它複製回 `inventree-ui-helper.user.js` 即可。
+**如果下載被拒絕**（repo 是私人的）：改用上面「完整更新」，或用瀏覽器登入 GitHub 後逐一下載那幾個檔案，放到上表的位置。
 
-換完後，每台電腦按一次 **Ctrl+F5**（App 的外框會自動載入新檔，但瀏覽器可能還記得舊的）。
+**要還原某個檔案**：把同資料夾的 `檔名.bak-時間` 複製回原檔名即可（通知服務要再 `docker compose restart inventree-notifier`）。
+
+**使用零件整理工具**需要 Python：`python --version` 能顯示版本即可。之後都在 `tools` 資料夾執行：
+
+```powershell
+cd C:\Users\Ande\inventree\tools
+$env:INVENTREE_URL = "http://localhost"
+$env:INVENTREE_TOKEN = "貼上 superuser 的 token"
+python manage_parts.py list --glob "A-P03-S5-*"
+```
+
+`removed_parts.json` 會建立在這個資料夾。要重新匯入 SKU 時，請用這個資料夾的 `seed_skus.py`（把你的 `config.json` 複製進來，或加 `--config 路徑`），它會自動略過已刪除的料號；如果從別的資料夾執行，請加 `--removed C:\Users\Ande\inventree\tools\removed_parts.json`。
 
 ## 十、附錄
 

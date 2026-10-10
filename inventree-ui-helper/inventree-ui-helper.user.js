@@ -636,8 +636,9 @@
       results.textContent = '';
       if (q.length < 2) return;
       try {
-        const data = await api(`/api/part/?search=${encodeURIComponent(q)}&limit=30`);
-        const parts = (Array.isArray(data) ? data : data.results || []).filter((p) => !p.is_template);
+        const data = await api(`/api/part/?search=${encodeURIComponent(q)}&active=true&limit=30`);
+        // 只列出能存放庫存、且仍在使用的 SKU（已停用的零件不出現）
+        const parts = (Array.isArray(data) ? data : data.results || []).filter((p) => !p.is_template && p.active !== false);
         if (!parts.length) { results.appendChild(el('span', { text: '找不到符合的產品（只列出可存放庫存的 SKU）。' })); return; }
         parts.slice(0, 20).forEach((p) => results.appendChild(el('button', {
           class: 'ith-plain', text: `${p.IPN || ''} ${p.full_name || p.name}`.trim(), onclick: () => selectPart(p),

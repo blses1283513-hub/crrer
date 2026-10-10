@@ -276,6 +276,14 @@ class LowStockTests(Base):
         self.sim.items[self.itemA]["quantity"] = 40     # 又低於標準 → 重新通知
         self.assertFalse(self.lows("a-wh")[0]["read"])
 
+    def test_retired_parts_do_not_raise_low_stock_alerts(self):
+        self.make_low()
+        self.assertEqual(len(self.lows("a-wh2")), 1)
+        self.sim.parts[self.partA]["active"] = False          # 停用（準備淘汰）的零件不需要補貨
+        self.assertEqual(self.lows("a-wh2"), [])
+        self.sim.parts[self.partA]["active"] = True           # 還原後又會通知
+        self.assertEqual(len(self.lows("a-wh2")), 1)
+
     def test_part_without_company_is_ignored_and_templates_skipped(self):
         stray = self.sim.add_part("ZZ-1", minimum_stock=99)
         tpl = self.sim.add_part("A-P01", minimum_stock=99, is_template=True)
@@ -391,18 +399,47 @@ class RobustnessTests(Base):
         self.sim.remove("a-wh", self.bigA, 150)
         self.assertEqual([e["kind"] for e in self.events("a-wh2")], ["large"])
 
-    def test_database_rolled_back_to_older_state_reinitializes(self):
+    def test_database_rolled_back_to_older_state_drops_vanished_events_and_keeps_going(self):
         self.sim.remove("a-wh", self.bigA, 150)
         self.assertEqual(len(self.events("a-wh2")), 1)
         self.n.mark_read(self.auth("a-wh2"), all_=True)
         # 模擬資料庫被還原到更早的時間點：異動紀錄編號回到比服務記錄的進度更小
         self.sim.tracking = []
         self.sim.items[self.bigA]["quantity"] = 1000
-        self.assertEqual(self.feed("a-wh2")["items"], [], "舊事件已不存在於資料庫，應清掉")
+        self.assertEqual(self.feed("a-wh2")["items"], [], "舊事件對應的紀錄已不存在，應清掉")
         self.assertEqual(self.n.store.state["cursor"], 0)
         self.sim.remove("a-wh", self.bigA, 150)
-        self.assertEqual(len(self.events("a-wh2")), 1, "重新初始化之後的新事件要能通知")
-        self.assertEqual(self.feed("a-wh2")["unread"], 1, "已讀進度也要重設，否則新事件會被當成已讀")
+        self.assertEqual(len(self.events("a-wh2")), 1, "調整之後的新事件要能通知")
+        self.assertEqual(self.feed("a-wh2")["unread"], 1, "已讀進度要同步退回，否則重複使用的編號會被當成已讀")
+
+    def test_deleting_a_part_does_not_wipe_other_notifications_or_read_state(self):
+        """刪除零件會連帶刪掉它的異動紀錄；若那是最新的紀錄，編號會變小，不可被當成資料庫還原而清空一切。"""
+        self.sim.remove("a-wh", self.bigA, 150)          # 事件 1（A 公司）
+        self.sim.remove("b-wh", self.bigB, 150)          # 事件 2（B 公司）：編號最大
+        self.assertEqual(len(self.events("a-wh2")), 1)
+        self.assertEqual(len(self.events("b-wh2")), 1)
+        self.n.mark_read(self.auth("a-wh2"), all_=True)
+        before_events = len(self.n.store.state["events"])
+
+        # 刪除「B-P02」零件：它的庫存與全部異動紀錄一起消失（最新的紀錄不見了）
+        part_b = self.sim.items[self.bigB]["part"]
+        self.sim.tracking = [t for t in self.sim.tracking if t["part"] != part_b]
+        del self.sim.items[self.bigB]
+        self.assertEqual(self.feed("a-wh2")["unread"], 0, "A 公司同事已讀的狀態要保留")
+        self.assertEqual(len(self.n.store.state["events"]), before_events - 1, "只丟掉已不存在的那一筆事件")
+        self.assertEqual(self.events("b-wh2"), [], "已刪除零件的事件隨紀錄消失")
+
+        self.sim.remove("a-wh", self.bigA, 130)          # 刪除之後的新事件仍正常通知
+        self.assertEqual(self.feed("a-wh2")["unread"], 1)
+
+    def test_deleting_a_part_refreshes_item_locations(self):
+        self.sim.remove("a-wh", self.bigA, 150)
+        self.feed("a-wh2")
+        self.sim.tracking = [t for t in self.sim.tracking if t["part"] != self.sim.items[self.bigB]["part"]]
+        del self.sim.items[self.bigB]
+        self.sim.tracking = []                          # 讓最新編號退到比進度小
+        self.feed("a-wh2")
+        self.assertNotIn(str(self.bigB), self.n.store.state["item_loc"])
 
     def test_retention_cap(self):
         self.n.cfg["max_events"] = 5
