@@ -8,6 +8,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const net = require('net');
+const readline = require('readline');
 const { spawn, execFileSync } = require('child_process');
 const mock = require('../ui/mock-inventree');
 
@@ -15,7 +16,7 @@ const ROOT = path.join(__dirname, '..', '..');
 const CADDY = process.env.CADDY_BIN;
 const skip = !CADDY && 'CADDY_BIN 未設定，略過 App 端對端測試';
 
-let server; let caddy; let browser; let base; let tmp;
+let server; let caddy; let browser; let base; let tmp; let simProc; let sim;
 
 function freePort() {
   return new Promise((resolve) => {
@@ -42,6 +43,13 @@ before(async () => {
   fs.copyFileSync(path.join(ROOT, 'inventree-ui-helper', 'inventree-ui-helper.user.js'), path.join(appDir, 'inventree-ui-helper.user.js'));
   fs.mkdirSync(path.join(tmp, 'log'));
 
+  // 真正的通知服務＋模擬 InvenTree（供 /notify 轉送測試）
+  simProc = spawn(process.env.PYTHON || 'python3', ['-I', path.join(ROOT, 'tests', 'notifier', 'serve_sim.py')], { stdio: ['ignore', 'pipe', 'ignore'] });
+  sim = JSON.parse(await new Promise((resolve, reject) => {
+    readline.createInterface({ input: simProc.stdout }).once('line', resolve);
+    simProc.once('exit', () => reject(new Error('通知測試服務未能啟動')));
+  }));
+
   const port = await freePort();
   const health = await freePort();
   base = `http://localhost:${port}`;
@@ -54,8 +62,9 @@ before(async () => {
   assert.notEqual(conf, fs.readFileSync(path.join(ROOT, 'inventree-app', 'Caddyfile.app'), 'utf8'));
   const confPath = path.join(tmp, 'Caddyfile');
   fs.writeFileSync(confPath, conf);
-  execFileSync(CADDY, ['validate', '--config', confPath, '--adapter', 'caddyfile'], { env: { ...process.env, INVENTREE_SERVER: server.url }, stdio: 'pipe' });
-  caddy = spawn(CADDY, ['run', '--config', confPath, '--adapter', 'caddyfile'], { env: { ...process.env, INVENTREE_SERVER: server.url }, stdio: 'ignore' });
+  const env = { ...process.env, INVENTREE_SERVER: server.url, INVENTREE_NOTIFIER: `http://127.0.0.1:${sim.notifier_port}` };
+  execFileSync(CADDY, ['validate', '--config', confPath, '--adapter', 'caddyfile'], { env, stdio: 'pipe' });
+  caddy = spawn(CADDY, ['run', '--config', confPath, '--adapter', 'caddyfile'], { env, stdio: 'ignore' });
   await waitFor(base + '/app/');
   browser = await chromium.launch();
 });
@@ -64,6 +73,7 @@ after(async () => {
   if (skip) return;
   if (browser) await browser.close();
   if (caddy) caddy.kill();
+  if (simProc) simProc.kill();
   if (server) await server.close();
   fs.rmSync(tmp, { recursive: true, force: true });
 });
@@ -91,7 +101,7 @@ for (const host of ['localhost', '127.0.0.1']) {
     }, null, { timeout: 10000 });
     const frame = page.frames().find((f) => f !== page.mainFrame());
     const buttons = await frame.$$eval('.ith-fab', (b) => b.map((x) => x.textContent));
-    assert.deepEqual(buttons.sort(), ['💡 操作說明：開', '📋 異動紀錄', '🔀 快速調貨'].sort());
+    assert.deepEqual(buttons.sort(), ['💡 操作說明：開', '📋 異動紀錄', '🔀 快速調貨', '🔔 通知'].sort());
     assert.match(await page.title(), /庫存管理系統/);
     assert.deepEqual(errors, []);
     await page.close();
@@ -107,4 +117,37 @@ test('深層連結與重新整理會回到原頁面；誤嵌套時自動解除',
   await page.waitForFunction(() => document.getElementById('f').contentWindow.location.pathname === '/web/', null, { timeout: 10000 });
   assert.equal(page.frames().length, 2, '不應出現 App 中再套一層 App');
   await page.close();
+});
+
+test('通知：經由 Caddy 轉送到通知服務，登入才能讀、身分與公司正確', { skip }, async () => {
+  const anon = await fetch(base + '/notify/api/feed');
+  assert.equal(anon.status, 401);
+  const ok = await fetch(base + '/notify/api/feed', { headers: { Cookie: 'sessionid=sess-b-wh' } });
+  assert.equal(ok.status, 200);
+  const body = await ok.json();
+  assert.equal(body.user.name, 'b-wh');
+  assert.deepEqual(body.user.companies, ['B 公司']);
+  assert.equal((await fetch(base + '/notify/api/health')).status, 200);
+});
+
+test('通知：在 App 內收到事件、鈴鐺顯示未讀，並在伺服器記錄已讀', { skip }, async () => {
+  const ctl = (op, ...args) => fetch(`http://127.0.0.1:${sim.ctl_port}/ctl`, { method: 'POST', body: JSON.stringify({ op, args }) });
+  const ctx = await browser.newContext();
+  await ctx.addCookies([{ name: 'sessionid', value: 'sess-a-wh2', url: base }]);
+  const page = await ctx.newPage();
+  await page.goto(base + '/');
+  await page.waitForFunction(() => document.getElementById('f').contentWindow.__ith, null, { timeout: 10000 });
+  const frame = page.frames().find((f) => f !== page.mainFrame());
+  await frame.evaluate(() => window.__ith.notifyPoll());       // 初始化
+  await ctl('remove', 'a-wh', 'bigA', 150);
+  await frame.evaluate(() => window.__ith.notifyPoll());
+  await frame.waitForSelector('.ith-toast');
+  assert.match(await frame.textContent('.ith-toast'), /大量移除/);
+  assert.match(await frame.textContent('[aria-label="通知"]'), /1/);
+  await frame.click('[aria-label="通知"]');
+  await frame.click('.ith-notify-panel button:has-text("全部已讀")');
+  await frame.waitForFunction(() => !/\d/.test(document.querySelector('[aria-label="通知"]').textContent));
+  const after = await (await fetch(base + '/notify/api/feed', { headers: { Cookie: 'sessionid=sess-a-wh2' } })).json();
+  assert.equal(after.unread, 0, '已讀紀錄要存在伺服器，換電腦也一致');
+  await ctx.close();
 });

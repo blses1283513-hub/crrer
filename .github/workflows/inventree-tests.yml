@@ -29,8 +29,19 @@ jobs:
           python-version: '3.12'
       - name: 匯入腳本（seed_skus.py）
         run: python -m unittest discover -s tests/seed -v
+      - name: 通知服務（notifier.py）
+        run: python -m unittest discover -s tests/notifier -v
       - name: 安裝腳本（install.sh）
         run: bash tests/install/test_install_sh.sh
+      - name: Docker Compose 設定檢查（官方 1.5.6 設定 + 我們的覆蓋檔）
+        run: |
+          cp inventree-app/docker-compose.override.yml tests/fixtures/inventree-1.5.6/docker-compose.override.yml
+          mkdir -p tests/fixtures/inventree-1.5.6/notifier
+          docker compose --project-directory tests/fixtures/inventree-1.5.6 config > /tmp/compose.yml
+          grep -q "inventree-notifier:" /tmp/compose.yml
+          grep -q "python:3.12-alpine" /tmp/compose.yml
+          grep -q "Caddyfile.app" /tmp/compose.yml
+          docker compose --project-directory tests/fixtures/inventree-1.5.6 config --services | sort
       - name: PowerShell 語法、BOM、.env 編輯
         shell: pwsh
         run: ./tests/powershell/Test-Scripts.ps1

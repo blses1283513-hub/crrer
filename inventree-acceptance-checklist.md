@@ -88,26 +88,31 @@
 | E4 | 「📋 異動紀錄」依公司、操作人、日期篩選 | 結果正確；匯出 CSV 用 Excel 開啟中文正常 | |
 | E5 | 異動紀錄的時間 | 與實際操作時間相符（台灣時間） | |
 
-## F. 通知
+## F. 通知（🔔 小視窗）
 
-前提：要寄 Email，必須先在主機 `.env` 設定郵件伺服器，然後執行 `docker compose up -d`：
-
-```
-INVENTREE_EMAIL_HOST=smtp.example.com
-INVENTREE_EMAIL_PORT=587
-INVENTREE_EMAIL_USERNAME=寄件帳號
-INVENTREE_EMAIL_PASSWORD=寄件密碼
-INVENTREE_EMAIL_TLS=True
-INVENTREE_EMAIL_SENDER=inventory@example.com
-```
+通知服務的規則見 `inventree-app/notifier/README.md`。**自己的操作不會通知自己，所以要用兩個不同的帳號測試**（一個操作、一個看通知）。需要這幾個帳號：`a-wh`、`a-wh2`（都屬於 company-A）、`b-wh`（company-B）、`c-wh`（company-C）、`admin`（superuser）。
 
 | # | 步驟 | 預期結果 | 結果 |
 |---|---|---|---|
-| F1 | `a-wh` 訂閱 A 公司的零件分類（分類頁的訂閱圖示） | 訂閱成功 | |
-| F2 | 把某 A 公司 SKU 的庫存降到低於最小庫存（預設 10） | `a-wh` 右上角出現低庫存通知 | |
-| F3 | 同 F2 | `a-wh` 收到 Email（需完成上方設定） | |
-| F4 | `b-wh` 沒訂閱 A 公司 | `b-wh` **不會**收到 F2 的通知 | |
-| F5 | 記錄 F2 從操作到通知出現花了多久 | 記下秒數。這決定是否需要額外的即時通知機制 | |
+| F1 | 主機 `docker compose ps` | `inventree-notifier` 為 `Up (healthy)` | |
+| F2 | 用 `b-wh` 登入 App，點 🔔 | 清單頂端顯示「接收範圍：B 公司」；一開始沒有通知 | |
+| F3 | 用 `a-wh` 把 A 公司的某筆庫存（< 100 件）轉移到 B 公司的庫位 | 約 30 秒內，`b-wh` 右上角跳出小視窗「A 公司 的 a-wh 把 … 調進 B 公司」，🔔 出現紅色未讀數 | |
+| F4 | 同 F3，查看 `a-wh2`（A 公司同事） | **沒有**這筆通知（自己公司的人調的） | |
+| F5 | 同 F3，查看 `c-wh` | **沒有**通知（與 C 公司無關） | |
+| F6 | 用 `admin` 把 A 公司的庫存轉移到 B 公司 | `a-wh2` 收到「調出」、`b-wh` 收到「調進」，且標示「無公司歸屬，可能是管理員」 | |
+| F7 | 用 `a-wh` 對 A 公司某筆庫存「移除」150 件（需先確認異常警告視窗） | `a-wh2` 收到「大量移除」小視窗，**不會自動消失**；`a-wh` 自己沒有 | |
+| F8 | 用 `a-wh` 把某筆庫存「盤點」為 0 | `a-wh2` 收到「庫存歸零」 | |
+| F9 | 把 A 公司某 SKU 的庫存降到最小庫存以下 | `a-wh2` 收到「低庫存」；`b-wh` 沒有 | |
+| F10 | `a-wh2` 在 🔔 清單按某筆「已讀」，重新整理頁面 | 該筆維持已讀；未讀數正確 | |
+| F11 | 用**另一台電腦**以 `a-wh2` 登入 | 已讀狀態與 F10 一致 | |
+| F12 | `a-wh2` 按「全部已讀」；之後再發生一筆新事件 | 新事件仍為未讀 | |
+| F13 | 主機執行 `docker compose restart inventree-notifier` 後重新整理 | 已讀狀態還在；重啟前的事件不會重複通知 | |
+| F14 | 低庫存按「已讀」後，再把庫存降得更低 | 再次出現未讀；補貨回標準以上後再降到標準以下，也會再出現 | |
+| F15 | 記錄 F3 從操作到小視窗出現的秒數 | 記下秒數（預期 ≤ 約 35 秒） | |
+| F16 | 備份後解開 zip | 有 `notifier-state\state.json` 與 `notifier\config.json` | |
+| F17 | 關閉 App 一段時間，期間做幾筆應通知的操作，再開啟 | 開啟後顯示一則「您有 N 則未讀通知」的彙總小視窗，清單內有這些事件 | |
+
+**若通知一直沒出現**：在主機執行 `docker compose logs --tail 50 inventree-notifier`，並把內容（不含密碼）交給協助的人。常見原因：通知服務讀取 InvenTree 異動紀錄的格式與我們依原始碼所做的推定不同。
 
 ## G. 備份與還原（放入正式資料前必做）
 

@@ -4,6 +4,7 @@
 #   2. 新增 /app/*：App 外框頁、內建中文操作助手、圖示、用戶端捷徑腳本
 #   3. 根路徑 / 自動導向 /app/
 #   4. 允許同源嵌入（X-Frame-Options: SAMEORIGIN），讓 App 外框能載入 InvenTree
+#   5. 新增 /notify/*：轉給通知服務（inventree-notifier）
 # 由 docker-compose.override.yml 掛載，取代官方 Caddyfile；官方檔案本身不修改。
 
 (log_common) {
@@ -57,6 +58,11 @@ http:// {
 		root * /var/www/app
 		header Cache-Control "no-cache"
 		file_server
+	}
+
+	# [App] 通知服務（依使用者所屬公司提供通知；已讀紀錄存在伺服器）
+	handle /notify/* {
+		reverse_proxy {$INVENTREE_NOTIFIER:"http://inventree-notifier:8090"}
 	}
 
 	handle_path /static/* {

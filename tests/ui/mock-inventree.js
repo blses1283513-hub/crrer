@@ -123,8 +123,20 @@ function handleApi(req, res, url, body) {
   return json(404, { detail: 'not mocked' });
 }
 
-function start(port = 0) {
+// 把 /notify/* 轉給通知服務（模擬 Caddy 的轉送，讓頁面與通知服務同源）
+function proxyNotify(req, res, target) {
+  const t = new URL(target);
+  const up = http.request({ host: t.hostname, port: t.port, path: req.url, method: req.method, headers: req.headers }, (r) => {
+    res.writeHead(r.statusCode, r.headers);
+    r.pipe(res);
+  });
+  up.on('error', () => { res.writeHead(502); res.end('bad gateway'); });
+  req.pipe(up);
+}
+
+function start(port = 0, opts = {}) {
   const server = http.createServer((req, res) => {
+    if (opts.notifierUrl && req.url.startsWith('/notify/')) return proxyNotify(req, res, opts.notifierUrl);
     let body = '';
     req.on('data', (c) => { body += c; });
     req.on('end', () => {

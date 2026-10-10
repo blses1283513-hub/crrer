@@ -49,7 +49,7 @@ Write-Host ""
 Write-Host "將進行以下變更：" -ForegroundColor Yellow
 Write-Host "  1. 暫停 inventree-server / worker / proxy（還原期間無法使用）"
 Write-Host "  2. 以備份覆蓋【新主機資料庫的全部資料】（含目前的帳號、權限、庫存）"
-Write-Host "  3. 還原上傳的檔案（media）到 $dataDir\media"
+Write-Host "  3. 還原上傳的檔案（media）與通知的已讀紀錄（備份中沒有的話，舊的通知紀錄會改名保留，服務重新開始記錄）"
 Write-Host "  4. 重新啟動系統"
 Write-Host "  不會變更：.env、IP 與網址設定、App 檔案。"
 $ok = Read-Host "確定覆蓋新主機的資料？(Y/N)"
@@ -59,6 +59,7 @@ if ($ok -notmatch '^[Yy]') { Remove-Item $stage -Recurse -Force; Write-Host "已
 Write-Host "1/4 暫停服務…"
 docker compose stop inventree-server inventree-worker inventree-proxy
 if ($LASTEXITCODE -ne 0) { throw "無法暫停服務。" }
+cmd /c "docker compose stop inventree-notifier >nul 2>&1"   # 舊版安裝沒有這個服務，找不到時略過
 docker compose up -d inventree-db inventree-cache | Out-Null
 
 Write-Host "2/4 還原資料庫…"
@@ -74,6 +75,18 @@ $media = Join-Path $stage "media"
 if (Test-Path $media) {
     New-Item -ItemType Directory -Force -Path (Join-Path $dataDir "media") | Out-Null
     Copy-Item (Join-Path $media "*") (Join-Path $dataDir "media") -Recurse -Force
+}
+
+Write-Host "通知的已讀紀錄…"
+$notifyDir = Join-Path $dataDir "notifier"
+New-Item -ItemType Directory -Force -Path $notifyDir | Out-Null
+$notifyTarget = Join-Path $notifyDir "state.json"
+$notifyBackup = Join-Path $stage "notifier-state\state.json"
+if (Test-Path $notifyBackup) {
+    Copy-Item $notifyBackup $notifyTarget -Force
+} elseif (Test-Path $notifyTarget) {
+    # 備份沒有通知紀錄：現有的紀錄與還原後的資料庫不一致，改名保留，讓通知服務重新開始（不會產生歷史通知）
+    Move-Item $notifyTarget "$notifyTarget.old-$(Get-Date -Format 'yyyyMMdd-HHmmss')" -Force
 }
 
 Write-Host "4/4 重新啟動系統…"

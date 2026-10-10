@@ -8,3 +8,30 @@ services:
             - ./Caddyfile.app:/etc/caddy/Caddyfile:ro,z
             # App 外框頁、中文操作助手、圖示
             - ./app:/var/www/app:ro,z
+
+    # 通知服務：依使用者所屬公司提供通知，並保存每個人的已讀紀錄（跨電腦一致）。
+    # 只用 Python 標準函式庫，不需要建置映像；不需要任何密碼或 token（以使用者自己的登入身分向 InvenTree 查詢）。
+    inventree-notifier:
+        image: python:3.12-alpine
+        container_name: inventree-notifier
+        restart: unless-stopped
+        command: ["python", "-u", "/app/notifier.py"]
+        expose:
+            - "8090"
+        environment:
+            NOTIFIER_INVENTREE_URL: http://inventree-server:${INVENTREE_WEB_PORT:-8000}
+            NOTIFIER_CONFIG: /app/config.json
+            NOTIFIER_STATE: /data/state.json
+            NOTIFIER_PORT: "8090"
+        volumes:
+            - ./notifier:/app:ro,z
+            - ${INVENTREE_EXT_VOLUME:?You must specify the 'INVENTREE_EXT_VOLUME' variable in the .env file!}/notifier:/data:z
+        depends_on:
+            inventree-server:
+                condition: service_healthy
+        healthcheck:
+            test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8090/notify/api/health', timeout=3).status == 200 else 1)"]
+            interval: 30s
+            timeout: 5s
+            retries: 5
+            start_period: 15s

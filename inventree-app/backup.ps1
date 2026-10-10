@@ -39,6 +39,13 @@ foreach ($f in @(".env", "docker-compose.yml", "docker-compose.override.yml", "C
 if (Test-Path "app") { Copy-Item "app" $stage -Recurse }
 $media = Join-Path $dataDir "media"
 if (Test-Path $media) { Copy-Item $media (Join-Path $stage "media") -Recurse }
+# 通知服務：已讀紀錄與設定
+$notifyState = Join-Path $dataDir "notifier\state.json"
+if (Test-Path $notifyState) {
+    New-Item -ItemType Directory -Force -Path (Join-Path $stage "notifier-state") | Out-Null
+    Copy-Item $notifyState (Join-Path $stage "notifier-state\state.json")
+}
+if (Test-Path "notifier") { Copy-Item "notifier" (Join-Path $stage "notifier") -Recurse }
 
 Write-Host "3/3 壓縮…"
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null

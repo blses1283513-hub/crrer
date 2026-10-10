@@ -1,0 +1,12 @@
+{
+  "_comment": "通知服務設定。setup-server.ps1 會依 inventree-seed\\config.json 的公司設定自動產生 config.json；這個檔案只是格式範例。group 必須是公司群組名稱（庫位擁有者群組）；code 用來從料號前綴（例如 A-P01-S1-XL 的 A）判斷零件屬於哪間公司。",
+  "companies": [
+    {"code": "A", "name": "A 公司", "group": "company-A"},
+    {"code": "B", "name": "B 公司", "group": "company-B"},
+    {"code": "C", "name": "C 公司", "group": "company-C"}
+  ],
+  "large_qty": 100,
+  "superuser_sees_all": true,
+  "retention_days": 60,
+  "max_events": 500
+}

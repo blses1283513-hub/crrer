@@ -30,3 +30,15 @@ function Set-EnvFile {
     $new = Set-EnvContent -Text $text -Settings $Settings
     [IO.File]::WriteAllText($Path, $new, (New-Object System.Text.UTF8Encoding $false))
 }
+
+# Get-EnvValues：讀取 .env 的 KEY=VALUE（略過註解；去掉前後引號），回傳 Hashtable。
+function Get-EnvValues {
+    param([Parameter(Mandatory = $true)][string]$Path)
+    $values = @{}
+    foreach ($line in [IO.File]::ReadAllLines($Path)) {
+        if ($line -match '^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*$') {
+            $values[$Matches[1]] = $Matches[2].Trim('"', "'")
+        }
+    }
+    return $values
+}

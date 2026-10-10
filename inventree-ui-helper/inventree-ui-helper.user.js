@@ -24,6 +24,8 @@
     auditMaxRows: 2000,
     // 單筆數量達到此值即視為「大量」，送出前要求確認
     largeQty: 100,
+    // 通知輪詢間隔（毫秒）
+    notifyPollMs: 30000,
   };
 
   // ===================== 操作說明字典 =====================
@@ -84,6 +86,7 @@
   function el(tag, props, children) {
     const node = document.createElement(tag);
     Object.entries(props || {}).forEach(([k, v]) => {
+      if (v === null || v === undefined || v === false) return;   // 不要把 null 寫成字串 "null"
       if (k === 'style') Object.assign(node.style, v);
       else if (k === 'text') node.textContent = v;
       else if (k.startsWith('on')) node.addEventListener(k.slice(2), v);
@@ -761,6 +764,162 @@
     title: '快速把庫存從一個庫位調到另一個庫位（可跨公司）', text: '🔀 快速調貨', onclick: openQuickTransfer,
   }));
 
+  // ===================== 6. 通知（小視窗與通知清單） =====================
+  // 事件由伺服器端的「通知服務」（/notify/）依使用者所屬公司挑選；已讀紀錄存在伺服器，換電腦也一致。
+  const NOTIFY_API = '/notify/api';
+  const SEV_COLOR = { danger: '#e03131', warn: '#f08c00', info: '#228be6' };
+  const notify = { items: [], unread: 0, user: null, warnings: [], state: 'loading', toasted: new Set(), first: true, open: false, panel: null };
+
+  const badge = el('span', { style: { display: 'none', marginLeft: '6px', background: '#e03131', color: '#fff', borderRadius: '10px', padding: '0 7px', fontSize: '12px' } });
+  const bell = el('button', {
+    class: 'ith-fab', 'aria-label': '通知', style: { bottom: '148px', background: '#495057', color: '#fff' },
+    title: '查看與你的公司有關的通知', onclick: () => togglePanel(),
+  }, [el('span', { text: '🔔 通知' }), badge]);
+  document.body.appendChild(bell);
+  const toastBox = el('div', { style: { position: 'fixed', top: '16px', right: '16px', zIndex: '100005', display: 'flex', flexDirection: 'column', gap: '8px', width: 'min(340px, calc(100vw - 32px))' } });
+  document.body.appendChild(toastBox);
+
+  function paintBell() {
+    bell.style.display = notify.state === 'anon' ? 'none' : '';
+    badge.style.display = notify.unread > 0 ? '' : 'none';
+    badge.textContent = notify.unread > 99 ? '99+' : (notify.unread > 0 ? String(notify.unread) : '');
+    bell.style.background = notify.state === 'ok' ? (notify.unread > 0 ? '#c92a2a' : '#495057') : '#868e96';
+    bell.title = {
+      ok: notify.unread > 0 ? `有 ${notify.unread} 則未讀通知` : '沒有未讀通知',
+      unavailable: '通知服務尚未啟用（請讓管理員重新執行 setup-server.ps1）',
+      error: '暫時無法取得通知，稍後會自動重試',
+      loading: '讀取通知中…',
+    }[notify.state] || '通知';
+  }
+
+  const localTime = (iso) => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleString('sv-SE', { hour12: false }).slice(5, 16); };
+
+  function showToast(item, onOpen) {
+    const color = SEV_COLOR[item.severity] || SEV_COLOR.info;
+    const toast = el('div', {
+      class: 'ith-card ith-toast', role: 'status',
+      style: { position: 'static', borderLeft: `5px solid ${color}`, padding: '10px 12px', cursor: 'pointer' },
+      onclick: () => { toast.remove(); (onOpen || openPanel)(); },
+    }, [
+      el('div', { style: { display: 'flex', justifyContent: 'space-between', gap: '8px' } }, [
+        el('div', { style: { fontWeight: '600' }, text: item.title }),
+        el('button', { class: 'ith-plain', 'aria-label': '關閉', text: '✕', style: { padding: '0 6px' }, onclick: (e) => { e.stopPropagation(); toast.remove(); } }),
+      ]),
+      item.detail ? el('div', { style: { fontSize: '12px', opacity: '.8', marginTop: '2px' }, text: item.detail }) : null,
+    ]);
+    toastBox.appendChild(toast);
+    while (toastBox.children.length > 4) toastBox.firstChild.remove();
+    if (item.severity !== 'danger') setTimeout(() => toast.remove(), 12000);   // 異常（大量／歸零）要自己關閉
+  }
+
+  function toastNew() {
+    const unread = notify.items.filter((i) => !i.read);
+    if (notify.first) {
+      notify.first = false;
+      unread.forEach((i) => notify.toasted.add(i.id));
+      if (unread.length) showToast({ title: `🔔 您有 ${unread.length} 則未讀通知`, detail: '點這裡查看', severity: unread.some((i) => i.severity === 'danger') ? 'danger' : 'info' });
+      return;
+    }
+    const fresh = unread.filter((i) => !notify.toasted.has(i.id));
+    fresh.forEach((i) => notify.toasted.add(i.id));
+    fresh.slice(0, 3).forEach((i) => showToast(i));
+    if (fresh.length > 3) showToast({ title: `🔔 另有 ${fresh.length - 3} 則新通知`, detail: '點這裡查看全部', severity: 'info' });
+  }
+
+  async function notifyPoll() {
+    try {
+      const res = await fetch(`${NOTIFY_API}/feed`, { credentials: 'same-origin', headers: { Accept: 'application/json' } });
+      if (res.status === 401) { notify.state = 'anon'; notify.items = []; notify.unread = 0; }
+      else if (res.status === 404) { notify.state = 'unavailable'; }
+      else if (!res.ok) { notify.state = 'error'; }
+      else {
+        const data = await res.json();
+        notify.state = 'ok';
+        notify.items = data.items || [];
+        notify.unread = data.unread || 0;
+        notify.user = data.user || null;
+        notify.warnings = data.warnings || [];
+        toastNew();
+      }
+    } catch (e) {
+      notify.state = 'error';
+    }
+    paintBell();
+    if (notify.open) renderPanel();
+  }
+
+  async function markRead(body) {
+    try {
+      await fetch(`${NOTIFY_API}/read`, {
+        method: 'POST', credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'inventory-helper' },
+        body: JSON.stringify(body),
+      });
+    } catch (e) { /* 下一次輪詢會同步最新狀態 */ }
+    await notifyPoll();
+  }
+
+  function renderPanel() {
+    if (!notify.panel) return;
+    const p = notify.panel;
+    p.textContent = '';
+    const maxId = Math.max(0, ...notify.items.filter((i) => /^\d+$/.test(i.id)).map((i) => Number(i.id)));
+    p.appendChild(el('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' } }, [
+      el('h3', { style: { margin: '0' }, text: `🔔 通知${notify.unread ? `（未讀 ${notify.unread}）` : ''}` }),
+      el('div', { style: { display: 'flex', gap: '6px' } }, [
+        el('button', { class: 'ith-plain', text: '全部已讀', disabled: notify.unread ? null : 'disabled',
+          onclick: () => { notify.items.forEach((i) => { i.read = true; }); notify.unread = 0; paintBell(); renderPanel(); markRead({ all: true, up_to: maxId }); } }),
+        el('button', { class: 'ith-plain', text: '關閉', onclick: () => closePanel() }),
+      ]),
+    ]));
+    if (notify.user) {
+      const who = notify.user.sees && notify.user.sees.length ? notify.user.sees.join('、') : '（尚未加入任何公司群組）';
+      p.appendChild(el('div', { style: { fontSize: '12px', opacity: '.75', margin: '4px 0 8px' }, text: `${notify.user.name}　接收範圍：${who}` }));
+    }
+    notify.warnings.forEach((w) => p.appendChild(el('div', { class: 'ith-warn', text: w })));
+    if (notify.state !== 'ok') {
+      p.appendChild(el('div', { class: 'ith-warn', text: bell.title }));
+    } else if (!notify.items.length) {
+      p.appendChild(el('div', { style: { padding: '16px 4px', opacity: '.7' }, text: '目前沒有通知。只有與你所屬公司有關的事件才會出現在這裡。' }));
+    }
+    const list = el('div', { style: { overflow: 'auto', flex: '1' } });
+    notify.items.forEach((i) => {
+      const color = SEV_COLOR[i.severity] || SEV_COLOR.info;
+      list.appendChild(el('div', {
+        class: 'ith-notice', 'data-id': i.id,
+        style: { borderLeft: `4px solid ${color}`, padding: '6px 8px', margin: '6px 0', opacity: i.read ? '.6' : '1', background: i.read ? 'transparent' : 'rgba(255,200,0,.10)' },
+      }, [
+        el('div', { style: { fontWeight: i.read ? '400' : '600' }, text: i.title }),
+        i.detail ? el('div', { style: { fontSize: '12px', opacity: '.8' }, text: i.detail }) : null,
+        el('div', { style: { display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px', fontSize: '12px' } }, [
+          ...(i.tags || []).map((t) => el('span', { style: { background: color, color: '#fff', borderRadius: '8px', padding: '0 6px' }, text: t })),
+          el('span', { style: { opacity: '.7' }, text: i.time ? localTime(i.time) : '目前狀態' }),
+          i.read ? null : el('button', { class: 'ith-plain', text: '已讀', style: { marginLeft: 'auto', padding: '0 8px' },
+            onclick: () => { i.read = true; notify.unread = Math.max(0, notify.unread - 1); paintBell(); renderPanel(); markRead({ ids: [i.id] }); } }),
+        ]),
+      ]));
+    });
+    p.appendChild(list);
+  }
+
+  function openPanel() {
+    if (notify.open) return;
+    notify.open = true;
+    notify.panel = el('div', {
+      class: 'ith-card ith-notify-panel', role: 'dialog', 'aria-label': '通知',
+      style: { right: '16px', bottom: '190px', width: 'min(400px, calc(100vw - 32px))', maxHeight: '60vh', padding: '12px 14px', display: 'flex', flexDirection: 'column' },
+    });
+    document.body.appendChild(notify.panel);
+    renderPanel();
+    notifyPoll();
+  }
+  function closePanel() { notify.open = false; if (notify.panel) { notify.panel.remove(); notify.panel = null; } }
+  function togglePanel() { notify.open ? closePanel() : openPanel(); }
+
+  notifyPoll();
+  setInterval(() => { if (document.visibilityState !== 'hidden') notifyPoll(); }, CONFIG.notifyPollMs);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') notifyPoll(); });
+
   // 供自動測試使用的純邏輯函式（不影響一般使用）
-  window.__ith = { evaluateAdjust, companyOf, CONFIG };
+  window.__ith = { evaluateAdjust, companyOf, CONFIG, notifyPoll };
 })();

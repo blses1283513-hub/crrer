@@ -54,5 +54,45 @@ $bytes = [IO.File]::ReadAllBytes($tmp)
 Check (-not ($bytes[0] -eq 0xEF)) ".env：寫回時不加 BOM（Docker Compose 才讀得到第一行）"
 Remove-Item $tmp
 
+# ---- 通知服務設定產生 ----
+. (Join-Path $root "inventree-app/lib/NotifierConfig.ps1")
+$seedCfg = Join-Path $root "inventree-seed/config.example.json"
+$tpl = Join-Path $root "inventree-app/notifier/config.example.json"
+$cfgText = New-NotifierConfigJson -SeedConfigPath $seedCfg -TemplatePath $tpl
+$cfg = $cfgText | ConvertFrom-Json
+Check (@($cfg.companies).Count -eq 3) "通知設定：3 間公司"
+Check (($cfg.companies | ForEach-Object { "$($_.code)|$($_.name)|$($_.group)" }) -join ";" -eq "A|A 公司|company-A;B|B 公司|company-B;C|C 公司|company-C") "通知設定：公司、代碼、群組與匯入設定一致"
+Check ($cfg.large_qty -eq 100) "通知設定：沿用範本的其他欄位"
+
+$tmpDir = Join-Path ([IO.Path]::GetTempPath()) ("notifytest-" + [guid]::NewGuid().ToString("N"))
+New-Item -ItemType Directory -Path $tmpDir | Out-Null
+$existing = Join-Path $tmpDir "config.json"
+Write-Utf8NoBom -Path $existing -Text '{"companies":[{"code":"Z","name":"舊公司","group":"old"}],"large_qty":250,"superuser_sees_all":false}'
+$again = New-NotifierConfigJson -SeedConfigPath $seedCfg -TemplatePath $tpl -ExistingPath $existing | ConvertFrom-Json
+Check ($again.large_qty -eq 250 -and $again.superuser_sees_all -eq $false) "通知設定：重新產生時保留自行調整的欄位"
+Check (@($again.companies).Count -eq 3 -and $again.companies[0].code -eq "A") "通知設定：公司一律依匯入設定更新"
+
+$oneSeed = Join-Path $tmpDir "one.json"
+Write-Utf8NoBom -Path $oneSeed -Text '{"companies":[{"code":"K","name":"K 公司","owner_group":"company-K"}]}'
+$oneText = New-NotifierConfigJson -SeedConfigPath $oneSeed -TemplatePath $tpl
+Check ($oneText -match '"companies":\s*\[') "通知設定：只有一間公司時仍輸出為陣列（PowerShell 5.1 容易變成物件）"
+
+$out = Join-Path $tmpDir "out.json"
+Write-Utf8NoBom -Path $out -Text $cfgText
+$bytes = [IO.File]::ReadAllBytes($out)
+Check ($bytes[0] -ne 0xEF) "通知設定：寫檔不含 BOM"
+Check ([Text.Encoding]::UTF8.GetString($bytes).Contains("A 公司")) "通知設定：中文完整保留"
+$py = @("python3", "python") | Where-Object { Get-Command $_ -ErrorAction SilentlyContinue } | Select-Object -First 1
+if ($py) {
+    & $py -c "import json,sys; d=json.load(open(sys.argv[1],encoding='utf-8-sig')); assert [c['group'] for c in d['companies']]==['company-A','company-B','company-C'], d" $out
+    Check ($LASTEXITCODE -eq 0) "通知設定：Python 可讀取 PowerShell 產生的檔案"
+} else { Write-Host "skip 找不到 Python，略過跨語言讀取檢查" }
+
+$ev = Get-EnvValues -Path (Join-Path $root "tests/fixtures/inventree-1.5.6/.env")
+Check ($ev["INVENTREE_WEB_PORT"] -eq "8000") "Get-EnvValues：讀到埠號"
+Check ($ev["INVENTREE_SITE_URL"] -eq "http://localhost") "Get-EnvValues：去掉引號、忽略註解行"
+Check (-not $ev.ContainsKey("#INVENTREE_ADMIN_USER")) "Get-EnvValues：不把註解行當設定"
+Remove-Item $tmpDir -Recurse -Force
+
 if ($script:failed) { Write-Host "$script:failed 項失敗" -ForegroundColor Red; exit 1 }
 Write-Host "全部通過" -ForegroundColor Green

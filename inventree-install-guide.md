@@ -28,6 +28,7 @@
 | 📋 異動紀錄 | 所有庫存異動的時間、操作人，可篩選、匯出 CSV | App 內建操作助手 |
 | ⚠️ 異常數量警告 | 移除、轉移、盤點、新增時，數量 ≥100、超過現有庫存、或歸零，送出前跳出確認 | App 內建操作助手 |
 | 🔀 快速調貨 | 搜尋料號、依公司分色看各庫位庫存、點選來源與目的即可調貨（可跨公司，會提醒） | App 內建操作助手 |
+| 🔔 通知小視窗 | 低庫存、別家公司或管理員把庫存調進／調出你的公司庫位、大量或歸零的異常操作；**只通知與你所屬公司有關的事**；已讀紀錄存在伺服器，換電腦也一致 | 通知服務 `inventree-app/notifier/`（詳見該資料夾的 README） |
 | 桌面 App | 桌面圖示一鍵啟動，獨立視窗（無網址列） | `inventree-app/` |
 | 多台電腦共用 | 區網內其他電腦連到主機，看到同一份資料 | `inventree-app/` |
 | 備份與還原 | 一鍵備份成 zip；可還原到新主機 | `backup.ps1`、`restore.ps1` |
@@ -305,9 +306,62 @@ schtasks /Create /SC DAILY /ST 02:00 /TN "InvenTreeBackup" /TR "powershell -NoPr
 | PowerShell 說「禁止執行指令碼」 | 照本文用 `powershell -ExecutionPolicy Bypass -File …` 執行 |
 | 密碼含單引號被拒 | 安裝腳本不允許帳號、Email、密碼含 `'`，換一組即可 |
 | 登入頁沒有登入框 | 容器可能尚未就緒或瀏覽器快取：`docker compose ps` 確認全部 healthy，再用無痕視窗開 `http://localhost/web/login` |
+| 🔔 鈴鐺是灰色（通知服務尚未啟用） | 在安裝資料夾執行 `docker compose ps`，確認 `inventree-notifier` 在執行；沒有的話重新執行 `setup-server.ps1`。紀錄：`docker compose logs --tail 50 inventree-notifier` |
+| 🔔 一直沒有通知 | 自己的操作不會通知自己，請用**另一個帳號**測試；帳號要加入 `company-X` 群組；通知最多約 30 秒才會出現 |
 | 想回到官方原始設定 | 安裝資料夾中，把 `.env.bak-時間` 改名回 `.env`，刪除 `docker-compose.override.yml`，執行 `docker compose up -d` |
 
-## 九、附錄
+## 九、更新已安裝的系統
+
+已經依本文安裝好，之後下載了新版專案（例如新增了功能）時，照下面做。**資料庫與庫存資料不會被動到**；`setup-server.ps1` 只會更新 App 檔案、`.env` 的設定與新增的容器，執行前會列出變更並等你輸入 `Y`，`.env` 會先自動備份。
+
+**1. 用瀏覽器下載最新版**（私人 repo 需先登入 GitHub），存到「下載」資料夾：
+
+```
+https://github.com/blses1283513-hub/crrer/archive/refs/heads/claude/sharp-brahmagupta-tnbukb.zip
+```
+
+**2. 以系統管理員身分開 PowerShell**，依序貼上（路徑請依你的實際位置調整）：
+
+```powershell
+# 備份（建議；失敗不影響更新，但請把錯誤訊息留著）
+cd C:\Users\Ande\inventree
+powershell -ExecutionPolicy Bypass -File .\backup.ps1
+
+# 解壓縮到新資料夾（不覆蓋舊檔）
+$zip  = (Get-ChildItem "C:\Users\Ande\Downloads\crrer-claude-sharp-brahmagupta-tnbukb*.zip" | Sort-Object LastWriteTime -Descending | Select-Object -First 1).FullName
+"使用的壓縮檔：$zip"
+$dest = "C:\Users\Ande\Downloads\DEMOO\update-$(Get-Date -Format yyyyMMdd)"
+Expand-Archive -Path $zip -DestinationPath $dest -Force
+
+# 找到新版的 inventree-app，並沿用你原本的公司設定（inventree-seed\config.json，如果有）
+$app  = (Get-ChildItem $dest -Recurse -Filter setup-server.ps1 | Select-Object -First 1).DirectoryName
+$seed = Join-Path (Split-Path $app -Parent) "inventree-seed"
+$old  = Get-ChildItem "C:\Users\Ande\Downloads\DEMOO" -Recurse -Filter config.json -ErrorAction SilentlyContinue |
+        Where-Object { $_.DirectoryName -like "*\inventree-seed" -and $_.FullName -notlike "$dest*" } |
+        Sort-Object LastWriteTime -Descending | Select-Object -First 1
+if ($old) { Copy-Item $old.FullName $seed -Force; "已沿用公司設定：$($old.FullName)" } else { "找不到舊的 config.json，將使用預設的 A/B/C 公司設定" }
+
+# 執行更新
+cd $app
+powershell -ExecutionPolicy Bypass -File .\setup-server.ps1 -InstallDir C:\Users\Ande\inventree
+```
+
+畫面會列出變更與「通知服務的公司設定」，**確認公司名稱與你實際的一致**再輸入 `Y`。若不一致，輸入 `N` 取消，把正確的 `config.json` 放進新資料夾的 `inventree-seed` 再重新執行。
+
+**3. 確認成功**：
+
+```powershell
+cd C:\Users\Ande\inventree
+docker compose ps                                  # 應該有 inventree-notifier，狀態 Up (healthy)
+docker compose logs --tail 20 inventree-notifier   # 應該看到「通知服務啟動」「初始化完成」
+(Invoke-WebRequest http://localhost/notify/api/health -UseBasicParsing).Content   # 應該顯示 {"ok": true}
+```
+
+接著點桌面「庫存管理系統」，按 **Ctrl+F5**，右下角應該出現 🔔 通知、💡、📋、🔀 四個按鈕。再用 [`inventree-acceptance-checklist.md`](inventree-acceptance-checklist.md) 的 F 區驗收通知。
+
+**其他電腦不需要重新安裝。** 它們開啟 App 時會自動載入新版（按一次 Ctrl+F5 最保險）。
+
+## 十、附錄
 
 ### 檔案與資料夾位置（主機）
 

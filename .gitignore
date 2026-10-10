@@ -1,2 +1,4 @@
 tests/node_modules/
 __pycache__/
+tests/fixtures/inventree-1.5.6/docker-compose.override.yml
+tests/fixtures/inventree-1.5.6/notifier/

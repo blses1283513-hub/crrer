@@ -21,11 +21,16 @@ Write-Host "== 庫存管理系統：主機設定 ==" -ForegroundColor Cyan
 foreach ($f in @("docker-compose.yml", ".env")) {
     if (-not (Test-Path (Join-Path $InstallDir $f))) { throw "在 $InstallDir 找不到 $f。請確認 InvenTree 已用 install.ps1 安裝，或用 -InstallDir 指定位置。" }
 }
-foreach ($f in @("Caddyfile.app", "docker-compose.override.yml", "start-inventree.ps1", "backup.ps1", "restore.ps1", "app\index.html", "app\icon.ico", "app\icon.png", "app\client-shortcut.ps1", "lib\EnvFile.ps1")) {
+foreach ($f in @("Caddyfile.app", "docker-compose.override.yml", "start-inventree.ps1", "backup.ps1", "restore.ps1", "app\index.html", "app\icon.ico", "app\icon.png", "app\client-shortcut.ps1", "lib\EnvFile.ps1", "lib\NotifierConfig.ps1", "notifier\notifier.py", "notifier\config.example.json")) {
     if (-not (Test-Path (Join-Path $here $f))) { throw "安裝套件缺少 $f，請重新下載完整的 inventree-app 資料夾。" }
 }
 if (-not (Test-Path $helperSrc)) { throw "找不到中文操作助手 $helperSrc，請下載完整的 repo（需要 inventree-ui-helper 資料夾）。" }
+# 通知服務的公司設定以匯入腳本的設定為準（config.json 優先，沒有就用範例）
+$seedDir = Join-Path $here "..\inventree-seed"
+$seedConfig = @("config.json", "config.example.json") | ForEach-Object { Join-Path $seedDir $_ } | Where-Object { Test-Path $_ } | Select-Object -First 1
+if (-not $seedConfig) { throw "找不到公司設定 $seedDir\config.json（需要下載完整的 repo，包含 inventree-seed 資料夾）。" }
 . (Join-Path $here "lib\EnvFile.ps1")
+. (Join-Path $here "lib\NotifierConfig.ps1")
 
 $ovr = Join-Path $InstallDir "docker-compose.override.yml"
 if ((Test-Path $ovr) -and -not (Select-String -Path $ovr -Pattern '\[inventree-app\]' -Quiet)) {
@@ -60,6 +65,10 @@ $settings.GetEnumerator() | ForEach-Object { Write-Host "       $($_.Key)=$($_.V
 Write-Host "  3. 新增／更新檔案（官方檔案不修改）："
 Write-Host "       Caddyfile.app、docker-compose.override.yml、start-inventree.ps1、backup.ps1、restore.ps1"
 Write-Host "       app\（App 外框、中文操作助手、圖示、用戶端捷徑腳本）"
+Write-Host "       notifier\（通知服務；新增一個容器 inventree-notifier，首次會下載約 50MB 的 python:3.12-alpine 映像）"
+Write-Host "       通知服務的公司設定取自 $seedConfig ："
+foreach ($c in @((Get-Content -Raw -Encoding UTF8 -Path $seedConfig | ConvertFrom-Json).companies)) { Write-Host "         $($c.name)　群組 $($c.owner_group)　料號前綴 $($c.code)-" }
+Write-Host "       （若與你實際的公司名稱不同，請先按 N 取消，把你的 config.json 放到 inventree-seed 資料夾後再執行）"
 if ($isAdmin) { Write-Host "  4. Windows 防火牆：允許 TCP 80 埠連入（私人／網域網路）" }
 else { Write-Host "  4. 防火牆：略過（目前不是系統管理員，完成後會告訴你怎麼補設）" }
 Write-Host "  5. 重新啟動系統容器（約 1–3 分鐘，期間無法使用；資料不受影響）"
@@ -83,6 +92,20 @@ foreach ($f in @("Caddyfile.app", "docker-compose.override.yml", "start-inventre
 Copy-Item (Join-Path $here "app\*") $appDir -Recurse -Force
 Copy-Item $helperSrc $appDir -Force
 Write-Host "✓ App 檔案已放置"
+
+# 通知服務：程式、設定（公司清單依匯入設定產生；保留你自行調整過的其他欄位）、已讀紀錄資料夾
+$notifierDir = Join-Path $InstallDir "notifier"
+New-Item -ItemType Directory -Force -Path $notifierDir | Out-Null
+Copy-Item (Join-Path $here "notifier\notifier.py") $notifierDir -Force
+Copy-Item (Join-Path $here "notifier\config.example.json") $notifierDir -Force
+$notifierConfig = Join-Path $notifierDir "config.json"
+$configJson = New-NotifierConfigJson -SeedConfigPath $seedConfig -TemplatePath (Join-Path $notifierDir "config.example.json") -ExistingPath $notifierConfig
+Write-Utf8NoBom -Path $notifierConfig -Text $configJson
+$ext = (Get-EnvValues -Path $envPath)["INVENTREE_EXT_VOLUME"]
+if (-not $ext) { $ext = "./inventree-data" }
+$dataDir = if ([IO.Path]::IsPathRooted($ext)) { $ext } else { Join-Path $InstallDir ($ext -replace '^\./', '') }
+New-Item -ItemType Directory -Force -Path (Join-Path $dataDir "notifier") | Out-Null
+Write-Host "✓ 通知服務檔案已放置"
 
 # ---------- 4. 防火牆 ----------
 if ($isAdmin) {
@@ -113,6 +136,17 @@ do {
 } until ($up -or (Get-Date) -gt $deadline)
 if (-not $up) { throw "系統 5 分鐘內未就緒。請執行 docker compose ps 與 docker compose logs --tail 50 inventree-server 查看原因。" }
 Write-Host "✓ 系統已就緒"
+
+# 通知服務是新增的容器，啟動需要多一點時間；失敗不影響其他功能，只提示
+$deadline = (Get-Date).AddMinutes(3)
+do {
+    try { $h = Invoke-WebRequest "http://localhost/notify/api/health" -UseBasicParsing -TimeoutSec 5; $notifyUp = ($h.StatusCode -eq 200) } catch { $notifyUp = $false }
+    if (-not $notifyUp) { Start-Sleep -Seconds 3 }
+} until ($notifyUp -or (Get-Date) -gt $deadline)
+if ($notifyUp) { Write-Host "✓ 通知服務已就緒" }
+else {
+    Write-Host "⚠ 通知服務尚未就緒（不影響其他功能）。請在 $InstallDir 執行：docker compose logs --tail 50 inventree-notifier" -ForegroundColor Yellow
+}
 
 # ---------- 6. 桌面捷徑 ----------
 # WScript.Shell 內部以系統「非 Unicode 字碼頁」處理路徑，非中文系統會把中文檔名變成 ?????? 而存檔失敗。
