@@ -26,6 +26,8 @@
 | 💡 滑鼠停留說明 | 停在按鈕上跳出中文操作說明 | App 內建操作助手 |
 | 📦 調貨提醒 | 打開「轉移庫存」跳出提醒視窗，即時顯示來源與目的公司，跨公司會警告 | App 內建操作助手 |
 | 📋 異動紀錄 | 所有庫存異動的時間、操作人，可篩選、匯出 CSV | App 內建操作助手 |
+| ⚠️ 異常數量警告 | 移除、轉移、盤點、新增時，數量 ≥100、超過現有庫存、或歸零，送出前跳出確認 | App 內建操作助手 |
+| 🔀 快速調貨 | 搜尋料號、依公司分色看各庫位庫存、點選來源與目的即可調貨（可跨公司，會提醒） | App 內建操作助手 |
 | 桌面 App | 桌面圖示一鍵啟動，獨立視窗（無網址列） | `inventree-app/` |
 | 多台電腦共用 | 區網內其他電腦連到主機，看到同一份資料 | `inventree-app/` |
 | 備份與還原 | 一鍵備份成 zip；可還原到新主機 | `backup.ps1`、`restore.ps1` |
@@ -171,6 +173,7 @@
 - [ ] 做一次進貨、轉移、出貨後，「📋 異動紀錄」能看到時間與操作人
 - [ ] 各公司帳號權限符合步驟 8 的驗收
 - [ ] 已執行一次 `backup.ps1` 並確認產生 zip（第六章）
+- [ ] 完成 [`inventree-acceptance-checklist.md`](inventree-acceptance-checklist.md) 真實環境驗收清單
 
 ## 四、其他電腦（用戶端）
 
@@ -285,6 +288,12 @@ docker compose down
 ```
 
 再刪除安裝資料夾，即移除全部資料。
+
+### 自動測試
+
+每次推送到 GitHub，`.github/workflows/inventree-tests.yml` 會自動執行 `tests/` 內的測試。測試涵蓋：匯入腳本、安裝腳本、PowerShell 語法與 `.env` 編輯、中文操作助手、App 端對端。本機可用 `bash tests/run-all.sh` 執行。
+
+真實 InvenTree 畫面上的行為，請用 [`inventree-acceptance-checklist.md`](inventree-acceptance-checklist.md) 逐項驗收。
 
 ### 驗證狀況
 

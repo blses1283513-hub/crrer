@@ -1,0 +1,75 @@
+# 庫存管理系統的自動測試：每次推送或開 PR，只要動到相關資料夾就執行。
+name: 庫存管理系統測試
+
+on:
+  push:
+    paths:
+      - 'inventree-*/**'
+      - 'tests/**'
+      - '.github/workflows/inventree-tests.yml'
+  pull_request:
+    paths:
+      - 'inventree-*/**'
+      - 'tests/**'
+      - '.github/workflows/inventree-tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scripts:
+    name: 匯入腳本、安裝腳本、PowerShell
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: 匯入腳本（seed_skus.py）
+        run: python -m unittest discover -s tests/seed -v
+      - name: 安裝腳本（install.sh）
+        run: bash tests/install/test_install_sh.sh
+      - name: PowerShell 語法、BOM、.env 編輯
+        shell: pwsh
+        run: ./tests/powershell/Test-Scripts.ps1
+
+  powershell-windows:
+    name: PowerShell（Windows PowerShell 5.1）
+    runs-on: windows-2022
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: 以 Windows PowerShell 5.1 執行檢查
+        shell: powershell
+        run: .\tests\powershell\Test-Scripts.ps1
+
+  browser:
+    name: 中文操作助手與 App（瀏覽器）
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: tests
+    env:
+      CADDY_VERSION: '2.10.2'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: tests/package-lock.json
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: 下載 Caddy
+        run: |
+          curl -fsSL -o caddy.tgz "https://github.com/caddyserver/caddy/releases/download/v${CADDY_VERSION}/caddy_${CADDY_VERSION}_linux_amd64.tar.gz"
+          tar xzf caddy.tgz caddy
+          echo "CADDY_BIN=$PWD/caddy" >> "$GITHUB_ENV"
+          ./caddy version
+      - name: 中文操作助手
+        run: npm run test:ui
+      - name: App 端對端（正式 Caddyfile.app）
+        run: npm run test:app

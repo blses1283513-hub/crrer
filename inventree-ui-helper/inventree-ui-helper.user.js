@@ -22,6 +22,8 @@
     companies: ['A 公司', 'B 公司', 'C 公司'],
     hoverDelayMs: 500,
     auditMaxRows: 2000,
+    // 單筆數量達到此值即視為「大量」，送出前要求確認
+    largeQty: 100,
   };
 
   // ===================== 操作說明字典 =====================
@@ -418,4 +420,347 @@
     class: 'ith-fab', style: { bottom: '60px', background: '#495057', color: '#fff' },
     title: '查詢所有庫存異動：時間、操作人、數量、庫位', text: '📋 異動紀錄', onclick: openAudit,
   }));
+
+  // ===================== 4. 異常數量警告 =====================
+  // InvenTree 1.5.6 伺服器端不會擋「超過現有庫存」：移除會默默扣到 0、轉移會整批搬走。
+  // 因此在送出前檢查：大量（≥ CONFIG.largeQty）、超量、歸零，跳出確認視窗。
+
+  const ADJUST_KINDS = [
+    { kind: 'transfer', re: /transfer|轉移|移動|調撥|調貨/i },
+    { kind: 'remove', re: /remove|移除|減少|扣除/i },
+    { kind: 'count', re: /count|盤點|清點|計數/i },
+    { kind: 'add', re: /\badd\b|新增庫存|增加|添加/i },
+  ];
+  const SUBMIT_RE = /^(submit|送出|提交|確定|確認|儲存|保存|save)$/i;
+
+  // 純邏輯：依操作種類、輸入數量、現有數量回傳警告清單（供測試直接呼叫）
+  function evaluateAdjust(kind, value, existing, largeQty) {
+    const warnings = [];
+    const v = Number(value);
+    const has = existing !== null && existing !== undefined && !isNaN(Number(existing));
+    const ex = has ? Number(existing) : null;
+    if (isNaN(v)) return warnings;
+    if (v >= largeQty) warnings.push({ type: 'large', text: `大量異動：${v} 件（≥ ${largeQty}）` });
+    if (kind === 'transfer' || kind === 'remove') {
+      if (has && v > ex) {
+        warnings.push({ type: 'over', text: `超量：輸入 ${v}，現有只有 ${ex}。系統不會報錯，會${kind === 'remove' ? '直接扣到 0' : '把整批 ' + ex + ' 件全部轉走'}` });
+      } else if (has && v === ex && v > 0) {
+        warnings.push({ type: 'zero', text: `歸零：${kind === 'remove' ? '移除後' : '轉出後'}原庫位此批庫存將變成 0` });
+      }
+    }
+    if (kind === 'count' && v === 0) warnings.push({ type: 'zero', text: '歸零：盤點數量為 0，庫存將被清空' });
+    return warnings;
+  }
+
+  // 共用確認視窗：回傳 Promise<boolean>
+  function askConfirm(title, lines) {
+    return new Promise((resolve) => {
+      const finish = (ok) => { mask.remove(); resolve(ok); };
+      const mask = el('div', {
+        class: 'ith-mask', style: { position: 'fixed', inset: '0', background: 'rgba(0,0,0,.45)', zIndex: '100004' },
+      });
+      const card = el('div', {
+        class: 'ith-card', role: 'alertdialog', 'aria-label': '異常操作確認',
+        style: { top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 'min(420px, calc(100vw - 32px))', padding: '16px 18px' },
+      }, [
+        el('h3', { text: '⚠️ ' + title }),
+        el('div', {}, lines.map((t) => el('div', { class: 'ith-warn', text: t }))),
+        el('div', { text: '確定要繼續這個操作嗎？', style: { margin: '8px 0' } }),
+        el('div', { style: { display: 'flex', justifyContent: 'flex-end', gap: '8px' } }, [
+          el('button', { class: 'ith-plain', text: '取消，回去修改', onclick: () => finish(false) }),
+          el('button', { class: 'ith-primary', style: { background: '#e8590c' }, text: '確認繼續', onclick: () => finish(true) }),
+        ]),
+      ]);
+      mask.appendChild(card);
+      document.body.appendChild(mask);
+      card.querySelector('.ith-plain').focus();
+    });
+  }
+
+  function adjustKindOf(dialog) {
+    const title = dialogTitle(dialog);
+    const hit = ADJUST_KINDS.find((k) => k.re.test(title));
+    return hit ? hit.kind : null;
+  }
+
+  // 從列中找現有數量：優先讀庫存項目連結（/stock/item/<pk>）向 API 查；否則取列中唯一的純數字欄位
+  async function existingQtyOf(row) {
+    const link = row.querySelector('a[href*="/stock/item/"]');
+    const m = link && link.getAttribute('href').match(/\/stock\/item\/(\d+)/);
+    if (m) {
+      try { const item = await api(`/api/stock/${m[1]}/`); if (item && item.quantity !== undefined) return Number(item.quantity); } catch (e) { /* 改用畫面判斷 */ }
+    }
+    const nums = Array.from(row.querySelectorAll('td'))
+      .filter((td) => !td.querySelector('input, select, textarea'))
+      .map((td) => norm(td.textContent).replace(/,/g, ''))
+      .filter((t) => /^\d+(\.\d+)?$/.test(t));
+    return nums.length === 1 ? Number(nums[0]) : null;
+  }
+
+  async function collectWarnings(dialog, kind) {
+    const lines = [];
+    const rows = Array.from(dialog.querySelectorAll('tbody tr')).filter((r) => r.querySelector('input'));
+    const targets = rows.length ? rows : [dialog];
+    for (const row of targets) {
+      const input = row.querySelector('input[type="number"], input[inputmode="decimal"], input[inputmode="numeric"]') ||
+        Array.from(row.querySelectorAll('input')).find((i) => /^\s*\d+(\.\d+)?\s*$/.test(i.value));
+      if (!input || input.value === '') continue;
+      const existing = row === dialog ? null : await existingQtyOf(row);
+      const label = row === dialog ? '' : (norm(row.querySelector('td') && row.querySelector('td').textContent) || '').slice(0, 30);
+      evaluateAdjust(kind, input.value, existing, CONFIG.largeQty)
+        .forEach((w) => lines.push((label ? `【${label}】` : '') + w.text));
+    }
+    return lines;
+  }
+
+  // 攔截 InvenTree 庫存操作視窗的「送出」：有異常先確認，確認後再放行
+  document.addEventListener('click', async (e) => {
+    const btn = e.target.closest && e.target.closest('button');
+    if (!btn || btn.closest('.ith-card')) return;
+    const dialog = btn.closest('[role="dialog"], .mantine-Modal-content');
+    if (!dialog) return;
+    const isSubmit = btn.type === 'submit' || SUBMIT_RE.test(norm(btn.textContent));
+    if (!isSubmit) return;
+    if (btn.__ithApproved) { btn.__ithApproved = false; return; }
+    const kind = adjustKindOf(dialog.closest('[role="dialog"]') || dialog);
+    if (!kind) return;
+
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    const lines = await collectWarnings(dialog, kind);
+    if (lines.length && !(await askConfirm('偵測到異常數量', lines))) return;
+    btn.__ithApproved = true;
+    btn.click();
+  }, true);
+
+  // 在數量欄位按 Enter 也會送出：改為觸發「送出」按鈕，讓它同樣經過上面的檢查
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' || e.isComposing || !e.target.closest || e.target.tagName !== 'INPUT') return;
+    const dialog = e.target.closest('[role="dialog"], .mantine-Modal-content');
+    if (!dialog || dialog.closest('.ith-card') || !adjustKindOf(dialog.closest('[role="dialog"]') || dialog)) return;
+    const btn = Array.from(dialog.querySelectorAll('button'))
+      .find((b) => b.type === 'submit' || SUBMIT_RE.test(norm(b.textContent)));
+    if (!btn) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    btn.click();
+  }, true);
+
+  // ===================== 5. 快速調貨 =====================
+  const COMPANY_COLORS = ['#228be6', '#40c057', '#fab005', '#be4bdb', '#fd7e14'];
+  const companyOf = (path) => CONFIG.companies.find((c) => (path || '').startsWith(c)) || '其他';
+  const colorOf = (company) => {
+    const i = CONFIG.companies.indexOf(company);
+    return i >= 0 ? COMPANY_COLORS[i % COMPANY_COLORS.length] : '#868e96';
+  };
+
+  function csrfToken() {
+    const m = document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/);
+    return m ? decodeURIComponent(m[1]) : '';
+  }
+
+  async function apiPost(path, body) {
+    const res = await fetch(path, {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRFToken': csrfToken() },
+      body: JSON.stringify(body),
+    });
+    const text = await res.text();
+    let data = null;
+    try { data = text ? JSON.parse(text) : null; } catch (e) { data = text; }
+    if (!res.ok) {
+      const detail = data && typeof data === 'object' ? JSON.stringify(data) : String(data || '');
+      throw new Error(res.status === 403 ? '沒有權限執行此操作（只有該公司的使用者能修改自家庫存）。' : `操作失敗（${res.status}）：${detail.slice(0, 300)}`);
+    }
+    return data;
+  }
+
+  function openQuickTransfer() {
+    if (document.querySelector('.ith-qt')) return;
+    const state = { part: null, items: [], source: null, locations: [] };
+
+    const search = el('input', { placeholder: '輸入料號或品名，例如 A-P03-S2', style: { width: '100%' }, 'aria-label': '搜尋料號或品名' });
+    const results = el('div', { style: { display: 'flex', flexWrap: 'wrap', gap: '6px', margin: '6px 0' } });
+    const stockBox = el('div', { style: { display: 'flex', flexWrap: 'wrap', gap: '10px', margin: '8px 0' } });
+    const dest = el('select', { 'aria-label': '目的庫位', style: { minWidth: '220px' } });
+    const qty = el('input', { type: 'number', min: '1', step: '1', 'aria-label': '數量', style: { width: '100px' } });
+    const allBtn = el('button', { class: 'ith-plain', text: '全部', title: '填入來源庫存的全部數量' });
+    const notes = el('input', { placeholder: '備註／原因（例：補貨給 B 公司門市）', 'aria-label': '備註', style: { flex: '1', minWidth: '200px' } });
+    const summary = el('div', { class: 'ith-ok', text: '① 搜尋並選擇產品。' });
+    const sendBtn = el('button', { class: 'ith-primary', text: '確認調貨', disabled: 'disabled' });
+    const msg = el('div', { style: { fontSize: '13px', minHeight: '18px' } });
+
+    let timer = null;
+    search.addEventListener('input', () => {
+      clearTimeout(timer);
+      timer = setTimeout(doSearch, 300);
+    });
+
+    async function doSearch() {
+      const q = search.value.trim();
+      results.textContent = '';
+      if (q.length < 2) return;
+      try {
+        const data = await api(`/api/part/?search=${encodeURIComponent(q)}&limit=30`);
+        const parts = (Array.isArray(data) ? data : data.results || []).filter((p) => !p.is_template);
+        if (!parts.length) { results.appendChild(el('span', { text: '找不到符合的產品（只列出可存放庫存的 SKU）。' })); return; }
+        parts.slice(0, 20).forEach((p) => results.appendChild(el('button', {
+          class: 'ith-plain', text: `${p.IPN || ''} ${p.full_name || p.name}`.trim(), onclick: () => selectPart(p),
+        })));
+      } catch (e) { msg.textContent = '⚠️ ' + e.message; }
+    }
+
+    async function loadLocations() {
+      const out = [];
+      await fetchAll('/api/stock/location/', (rows) => { rows.forEach((l) => out.push(l)); });
+      state.locations = out.filter((l) => !l.structural)
+        .map((l) => ({ pk: l.pk, path: l.pathstring || l.name }))
+        .sort((a, b) => a.path.localeCompare(b.path, 'zh-Hant'));
+      dest.textContent = '';
+      dest.appendChild(el('option', { value: '', text: '② 選擇目的庫位' }));
+      const groups = {};
+      state.locations.forEach((l) => {
+        const c = companyOf(l.path);
+        if (!groups[c]) { groups[c] = el('optgroup', { label: c }); dest.appendChild(groups[c]); }
+        groups[c].appendChild(el('option', { value: String(l.pk), text: l.path }));
+      });
+    }
+
+    async function selectPart(p) {
+      state.part = p;
+      state.source = null;
+      results.textContent = '';
+      search.value = `${p.IPN || ''} ${p.full_name || p.name}`.trim();
+      await loadStock();
+    }
+
+    async function loadStock() {
+      stockBox.textContent = '讀取庫存中…';
+      try {
+        const data = await api(`/api/stock/?part=${state.part.pk}&in_stock=true&location_detail=true&limit=200`);
+        state.items = (Array.isArray(data) ? data : data.results || [])
+          .map((s) => ({ pk: s.pk, qty: Number(s.quantity), path: (s.location_detail && s.location_detail.pathstring) || '（未指定庫位）', location: s.location }))
+          .filter((s) => s.qty > 0);
+      } catch (e) { stockBox.textContent = '⚠️ ' + e.message; return; }
+      renderStock();
+      update();
+    }
+
+    function renderStock() {
+      stockBox.textContent = '';
+      const byCompany = {};
+      CONFIG.companies.forEach((c) => { byCompany[c] = []; });
+      state.items.forEach((s) => { const c = companyOf(s.path); (byCompany[c] = byCompany[c] || []).push(s); });
+      Object.keys(byCompany).forEach((c) => {
+        const items = byCompany[c];
+        const total = items.reduce((n, s) => n + s.qty, 0);
+        const card = el('div', {
+          class: 'ith-qt-company',
+          style: { border: `2px solid ${colorOf(c)}`, borderRadius: '8px', padding: '8px 10px', minWidth: '180px', flex: '1' },
+        }, [
+          el('div', { style: { fontWeight: '600', color: colorOf(c) }, text: `${c}　共 ${total} 件` }),
+        ]);
+        if (!items.length) card.appendChild(el('div', { style: { fontSize: '12px', opacity: '.7' }, text: '無庫存' }));
+        items.forEach((s) => {
+          const id = `ith-src-${s.pk}`;
+          const radio = el('input', { type: 'radio', name: 'ith-src', id, value: String(s.pk) });
+          if (state.source && state.source.pk === s.pk) radio.checked = true;
+          radio.addEventListener('change', () => { state.source = s; update(); });
+          card.appendChild(el('label', { for: id, style: { display: 'block', cursor: 'pointer', fontSize: '13px' } },
+            [radio, ` ${s.path}：${s.qty} 件`]));
+        });
+        stockBox.appendChild(card);
+      });
+    }
+
+    function currentWarnings() {
+      const s = state.source;
+      const v = Number(qty.value);
+      const d = state.locations.find((l) => String(l.pk) === dest.value);
+      const lines = evaluateAdjust('transfer', v, s ? s.qty : null, CONFIG.largeQty).map((w) => w.text);
+      if (s && d && companyOf(s.path) !== companyOf(d.path)) {
+        lines.unshift(`跨公司調貨：${companyOf(s.path)} → ${companyOf(d.path)}（進出貨統計不會計入，若需計入請改用銷售單＋採購單）`);
+      }
+      return { s, d, v, lines };
+    }
+
+    function update() {
+      const { s, d, v, lines } = currentWarnings();
+      let problem = '';
+      if (!state.part) problem = '① 搜尋並選擇產品。';
+      else if (!state.items.length) problem = '此產品目前沒有庫存可調。';
+      else if (!s) problem = '② 點選要調出的來源庫位。';
+      else if (!d) problem = '③ 選擇目的庫位。';
+      else if (d.pk === s.location) problem = '來源與目的庫位相同。';
+      else if (!(v > 0)) problem = '④ 輸入大於 0 的數量。';
+
+      if (problem) {
+        summary.className = 'ith-ok';
+        summary.textContent = problem;
+        sendBtn.setAttribute('disabled', 'disabled');
+        return;
+      }
+      summary.className = lines.length ? 'ith-warn' : 'ith-ok';
+      summary.textContent = `${s.path} → ${d.path}，${v} 件` + (lines.length ? '｜' + lines.join('｜') : '｜✅ 無異常');
+      sendBtn.removeAttribute('disabled');
+    }
+
+    [dest, qty, notes].forEach((n) => n.addEventListener('input', update));
+    dest.addEventListener('change', update);
+    allBtn.addEventListener('click', () => { if (state.source) { qty.value = String(state.source.qty); update(); } });
+
+    sendBtn.addEventListener('click', async () => {
+      const { s, d, v, lines } = currentWarnings();
+      if (!s || !d || !(v > 0)) return;
+      if (lines.length && !(await askConfirm('調貨前請確認', lines))) return;
+      // 超量時以現有數量送出（與 InvenTree 實際行為一致，且紀錄正確）
+      const sendQty = Math.min(v, s.qty);
+      sendBtn.setAttribute('disabled', 'disabled');
+      msg.textContent = '調貨中…';
+      try {
+        await apiPost('/api/stock/transfer/', {
+          items: [{ pk: s.pk, quantity: sendQty }],
+          location: d.pk,
+          notes: notes.value.trim() || `快速調貨：${s.path} → ${d.path}`,
+        });
+        msg.textContent = `✅ 已調貨 ${sendQty} 件：${s.path} → ${d.path}（已記錄時間與操作人）`;
+        state.source = null;
+        qty.value = '';
+        await loadStock();
+      } catch (e) {
+        msg.textContent = '⚠️ ' + e.message;
+        update();
+      }
+    });
+
+    const card = el('div', {
+      class: 'ith-card ith-qt', role: 'dialog', 'aria-label': '快速調貨',
+      style: { top: '6vh', left: '50%', transform: 'translateX(-50%)', width: 'min(760px, calc(100vw - 32px))', maxHeight: '88vh', overflow: 'auto', padding: '16px' },
+    }, [
+      el('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } }, [
+        el('h3', { text: '🔀 快速調貨' }),
+        el('button', { class: 'ith-plain', text: '關閉', onclick: () => card.remove() }),
+      ]),
+      search, results,
+      el('div', { style: { fontSize: '13px', opacity: '.8' }, text: '目前庫存（點選來源庫位）：' }),
+      stockBox,
+      el('div', { style: { display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' } }, [
+        '目的', dest, '數量', qty, allBtn,
+      ]),
+      el('div', { style: { display: 'flex', gap: '6px', margin: '6px 0' } }, [notes]),
+      summary,
+      el('div', { style: { display: 'flex', justifyContent: 'flex-end', gap: '8px', alignItems: 'center' } }, [msg, sendBtn]),
+    ]);
+    document.body.appendChild(card);
+    search.focus();
+    loadLocations().catch((e) => { msg.textContent = '⚠️ ' + e.message; });
+  }
+
+  document.body.appendChild(el('button', {
+    class: 'ith-fab', style: { bottom: '104px', background: '#e8590c', color: '#fff' },
+    title: '快速把庫存從一個庫位調到另一個庫位（可跨公司）', text: '🔀 快速調貨', onclick: openQuickTransfer,
+  }));
+
+  // 供自動測試使用的純邏輯函式（不影響一般使用）
+  window.__ith = { evaluateAdjust, companyOf, CONFIG };
 })();

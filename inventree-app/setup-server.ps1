@@ -21,10 +21,11 @@ Write-Host "== 庫存管理系統：主機設定 ==" -ForegroundColor Cyan
 foreach ($f in @("docker-compose.yml", ".env")) {
     if (-not (Test-Path (Join-Path $InstallDir $f))) { throw "在 $InstallDir 找不到 $f。請確認 InvenTree 已用 install.ps1 安裝，或用 -InstallDir 指定位置。" }
 }
-foreach ($f in @("Caddyfile.app", "docker-compose.override.yml", "start-inventree.ps1", "backup.ps1", "restore.ps1", "app\index.html", "app\icon.ico", "app\icon.png", "app\client-shortcut.ps1")) {
+foreach ($f in @("Caddyfile.app", "docker-compose.override.yml", "start-inventree.ps1", "backup.ps1", "restore.ps1", "app\index.html", "app\icon.ico", "app\icon.png", "app\client-shortcut.ps1", "lib\EnvFile.ps1")) {
     if (-not (Test-Path (Join-Path $here $f))) { throw "安裝套件缺少 $f，請重新下載完整的 inventree-app 資料夾。" }
 }
 if (-not (Test-Path $helperSrc)) { throw "找不到中文操作助手 $helperSrc，請下載完整的 repo（需要 inventree-ui-helper 資料夾）。" }
+. (Join-Path $here "lib\EnvFile.ps1")
 
 $ovr = Join-Path $InstallDir "docker-compose.override.yml"
 if ((Test-Path $ovr) -and -not (Select-String -Path $ovr -Pattern '\[inventree-app\]' -Quiet)) {
@@ -70,18 +71,7 @@ if ($ok -notmatch '^[Yy]') { Write-Host "已取消，未做任何變更。"; exi
 # ---------- 1–2. .env ----------
 $envPath = Join-Path $InstallDir ".env"
 Copy-Item $envPath "$envPath.bak-$ts"
-$text = [IO.File]::ReadAllText($envPath)
-foreach ($kv in $settings.GetEnumerator()) {
-    $line = "$($kv.Key)=$($kv.Value)"
-    $re = [regex]("(?m)^" + [regex]::Escape($kv.Key) + "=.*$")
-    if ($re.IsMatch($text)) {
-        $evaluator = [System.Text.RegularExpressions.MatchEvaluator] { param($m) $line }.GetNewClosure()
-        $text = $re.Replace($text, $evaluator, 1)
-    } else {
-        $text = $text.TrimEnd() + "`n$line`n"
-    }
-}
-[IO.File]::WriteAllText($envPath, $text, $utf8)
+Set-EnvFile -Path $envPath -Settings $settings
 Write-Host "✓ .env 已更新（原檔備份為 .env.bak-$ts）"
 
 # ---------- 3. 檔案 ----------

@@ -1,0 +1,12 @@
+{
+  "name": "inventree-system-tests",
+  "private": true,
+  "description": "庫存管理系統（InvenTree 客製）的自動測試",
+  "scripts": {
+    "test:ui": "node --test --test-concurrency=1 ui/*.test.js",
+    "test:app": "node --test --test-concurrency=1 app/*.test.js"
+  },
+  "devDependencies": {
+    "playwright": "1.56.1"
+  }
+}

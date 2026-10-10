@@ -151,14 +151,23 @@ def seed(api, cfg, templates, variants):
     def tally(created):
         stats["created" if created else "existing"] += 1
 
-    # 擁有者：群組需事先在管理後台建立
+    # 擁有者：群組需事先在管理後台建立。先全部檢查完，任何一個缺少就在寫入前停止。
     owners = api.list("owner")
-    company_loc, company_cat = {}, {}
+    owner_of = {}
+    missing = []
     for co in cfg["companies"]:
         owner = find_one(owners, name=co["owner_group"], label="group") or \
             find_one(owners, name=co["owner_group"])
-        if not owner:
-            sys.exit(f"找不到擁有者群組「{co['owner_group']}」，請先在管理後台建立群組。")
+        if owner:
+            owner_of[co["code"]] = owner
+        else:
+            missing.append(co["owner_group"])
+    if missing:
+        sys.exit(f"找不到擁有者群組：{'、'.join(missing)}。請先在管理後台建立群組，未寫入任何資料。")
+
+    company_loc, company_cat = {}, {}
+    for co in cfg["companies"]:
+        owner = owner_of[co["code"]]
 
         top, c = get_or_create(
             api, "location",
