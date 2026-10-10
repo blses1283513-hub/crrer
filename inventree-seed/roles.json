@@ -1,0 +1,65 @@
+{
+  "_comment": "職務分級設定。每個職務是一個 InvenTree 群組，列出各『角色』(ruleset) 允許的動作：view 檢視、add 新增、change 修改、delete 刪除。沒列出的角色一律全部關閉。使用者的實際權限是『所屬所有群組的聯集』；修改自家公司庫存需要同時屬於『公司群組』（庫位擁有權）與一個『職務群組』。",
+
+  "company_group_permissions": {
+    "part": ["view"],
+    "part_category": ["view"],
+    "stock": ["view"],
+    "stock_location": ["view"]
+  },
+
+  "tiers": [
+    {
+      "group": "role-manager",
+      "label": "公司主管",
+      "permissions": {
+        "part": ["view"],
+        "part_category": ["view"],
+        "stock": ["view", "add", "change"],
+        "stock_location": ["view"],
+        "purchase_order": ["view", "add", "change"],
+        "sales_order": ["view", "add", "change"],
+        "return_order": ["view", "add", "change"]
+      }
+    },
+    {
+      "group": "role-warehouse",
+      "label": "倉管",
+      "permissions": {
+        "part": ["view"],
+        "part_category": ["view"],
+        "stock": ["view", "add", "change"],
+        "stock_location": ["view"],
+        "purchase_order": ["view", "add", "change"],
+        "sales_order": ["view"],
+        "return_order": ["view"]
+      }
+    },
+    {
+      "group": "role-sales",
+      "label": "業務",
+      "permissions": {
+        "part": ["view"],
+        "part_category": ["view"],
+        "stock": ["view"],
+        "stock_location": ["view"],
+        "purchase_order": ["view"],
+        "sales_order": ["view", "add", "change"],
+        "return_order": ["view", "add", "change"]
+      }
+    },
+    {
+      "group": "role-viewer",
+      "label": "唯讀（會計、稽核）",
+      "permissions": {
+        "part": ["view"],
+        "part_category": ["view"],
+        "stock": ["view"],
+        "stock_location": ["view"],
+        "purchase_order": ["view"],
+        "sales_order": ["view"],
+        "return_order": ["view"]
+      }
+    }
+  ]
+}

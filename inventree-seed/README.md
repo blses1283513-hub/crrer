@@ -2,12 +2,20 @@
 
 對應設計文件 `../inventree-dynamic-stock-design.md` 的**步驟 4**。
 
-## 事前準備（在 InvenTree 管理後台手動完成）
+## 事前準備
 
-1. 建立三個使用者群組：`company-A`、`company-B`、`company-C`，並把各公司的使用者加入。
-2. 給這三個群組「庫存項目」與「庫位」的**檢視＋修改**權限（擁有權控制不會取代角色權限）。
-3. 建立一個**管理員帳號的 API token**，供腳本使用。
-4. **先不要**開啟擁有權控制（`STOCK_OWNERSHIP_CONTROL`），等腳本設好擁有者後再開，見下方「執行後」。
+1. 建立一個**管理員帳號的 API token**，供腳本使用。
+2. 用 `setup_roles.py` 建立公司群組與職務群組、設定權限（**必須在匯入前做**，匯入腳本會把公司頂層庫位的擁有者設為 `company-A/B/C`）：
+
+   ```powershell
+   python setup_roles.py show      # 先預覽權限矩陣（不連線）
+   python setup_roles.py apply     # 建立群組並設定權限（會列出變更並等你確認）
+   ```
+
+   - 權限矩陣在 `roles.json`，可自行調整。所有職務預設**沒有刪除權限**、也沒有「管理」角色。
+   - `python setup_roles.py add-user 帳號 --groups company-A,role-warehouse` 可建立使用者並加入群組（不需要郵件伺服器）。
+   - `python setup_roles.py audit` 唯讀稽核：superuser 人數、沒有群組的帳號、缺少職務群組的帳號。
+3. **先不要**開啟擁有權控制（`STOCK_OWNERSHIP_CONTROL`），等腳本設好擁有者後再開，見下方「執行後」。
 
 ## 執行
 

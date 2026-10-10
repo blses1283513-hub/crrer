@@ -75,36 +75,73 @@
 
 **驗收**：在安裝資料夾執行 `docker compose ps`，五個容器（db、cache、server、worker、proxy）都是 `Up … (healthy)`。瀏覽器開 <http://localhost> 看得到登入頁。
 
-### 步驟 4：登入並建立三個公司群組
+### 步驟 4：建立 API token（先做，下一步的腳本要用）
 
 1. 用步驟 3 的管理員帳密登入 <http://localhost>。
-2. 建立三個使用者群組，名稱要**完全一致**：`company-A`、`company-B`、`company-C`。
-   - 位置：🧪 管理中心（Admin Center）→ 使用者（Users）→ 群組（Groups）。
-   - 若管理中心打不開（出現 INVE-E17），改用 <http://localhost/admin/> 的「Groups」。
-3. 設定各群組的權限（roles）。建議起點（可日後調整）：
-
-   | 項目 | 檢視 | 新增 | 修改 | 刪除 |
-   |---|---|---|---|---|
-   | 零件、零件分類 | ✔ | | | |
-   | 庫存、庫位 | ✔ | ✔ | ✔ | |
-   | 採購單、銷售單 | ✔ | ✔ | ✔ | |
-
-   「刪除」一律不開，庫存數量錯誤請用「盤點」修正。
-4. 建立各公司的使用者帳號，加入對應群組。一般人員**不要**給管理員權限。
-
-**驗收**：三個群組存在；各自有至少一個使用者。
-
-### 步驟 5：建立管理員 API token
-
-1. 登入後進入你的使用者設定（右上角使用者選單 → 帳號設定），🧪 找「存取權杖（Access Tokens）」，建立一個，**立刻複製**。
-2. token 等同密碼，不要分享、不要貼到聊天或文件。
+2. 進入你的使用者設定（右上角使用者選單 → 帳號設定），🧪 找「存取權杖（Access Tokens）」，建立一個，**立刻複製**。
+3. token 等同密碼，不要分享、不要貼到聊天或文件。
 
 **驗收**：手上有一串 token。
+
+### 步驟 5：建立職務分級（群組與權限）
+
+權限分兩個維度，使用者要**同時**屬於兩邊才能修改自家公司庫存：
+
+| 維度 | 群組 | 決定什麼 |
+|---|---|---|
+| 公司 | `company-A`、`company-B`、`company-C` | 能修改**哪家公司**的庫存（庫位擁有權）；本身只給檢視 |
+| 職務 | `role-manager` 公司主管、`role-warehouse` 倉管、`role-sales` 業務、`role-viewer` 唯讀 | 能做**什麼動作**（見下表） |
+
+| 職務 | 庫存 | 採購單（進貨） | 銷售單（出貨） | 其他 |
+|---|---|---|---|---|
+| 公司主管 | 檢視、新增、修改 | 檢視、新增、修改 | 檢視、新增、修改 | 零件、庫位唯讀 |
+| 倉管 | 檢視、新增、修改 | 檢視、新增、修改 | 檢視 | 零件、庫位唯讀 |
+| 業務 | 檢視 | 檢視 | 檢視、新增、修改 | 零件、庫位唯讀 |
+| 唯讀 | 檢視 | 檢視 | 檢視 | 全部唯讀 |
+
+**所有職務都沒有刪除權限**（庫存錯誤請用「盤點」修正），也都沒有「管理」角色（帳號與權限由 superuser 統一管理）。完整矩陣見 `inventree-seed/roles.json`，可自行調整。
+
+執行（先用 `show` 預覽，不連線）：
+
+```powershell
+cd C:\inventree-setup\...\inventree-seed
+copy config.example.json config.json
+python setup_roles.py show
+```
+
+確認後正式建立（會先列出變更並等你輸入 `Y`）：
+
+```powershell
+$env:INVENTREE_URL = "http://localhost"
+$env:INVENTREE_TOKEN = "貼上步驟 4 的 token"
+python setup_roles.py apply
+```
+
+建立使用者並加入群組（**不需要郵件伺服器**，密碼由你設定，輸入時不顯示）：
+
+```powershell
+python setup_roles.py add-user a-wh --groups company-A,role-warehouse --email a-wh@example.com
+python setup_roles.py add-user b-sales --groups company-B,role-sales
+```
+
+一個人要有一個公司群組＋一個職務群組。只有公司群組、沒有職務群組的人只能檢視。
+
+稽核（唯讀，建議每月做一次）：
+
+```powershell
+python setup_roles.py audit
+```
+
+會列出：superuser 是否超過 2 人、沒有任何群組的帳號、只有公司群組沒有職務群組的帳號、每個人的群組。
+
+> 🧪 `add-user` 依 InvenTree 原始碼設計，尚未在真機實測：建立使用者時系統會嘗試寄信（尚未設定郵件伺服器，可能只在記錄中出現錯誤，不影響帳號建立）。若 `add-user` 失敗，改用管理中心或 <http://localhost/admin/> 手動建立，並把錯誤訊息交給協助的人。
+
+**驗收**：`python setup_roles.py audit` 沒有警告；各公司至少有一個倉管帳號。
 
 ### 步驟 6：匯入公司與 450 個 SKU
 
 1. 安裝 Python 3（<https://www.python.org/downloads/>，安裝時勾選 **Add python.exe to PATH**）。驗證：`python --version`。
-2. 切到 `inventree-seed`，複製設定檔：
+2. 切到 `inventree-seed`，複製設定檔（步驟 5 已複製過的話，這一步略過，直接進入下一項）：
 
    ```powershell
    cd C:\inventree-setup\...\inventree-seed
@@ -124,7 +161,7 @@
 
    ```powershell
    $env:INVENTREE_URL = "http://localhost"
-   $env:INVENTREE_TOKEN = "貼上步驟 5 的 token"
+   $env:INVENTREE_TOKEN = "貼上步驟 4 的 token"
    python seed_skus.py --config config.json
    ```
 
