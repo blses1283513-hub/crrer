@@ -28,6 +28,7 @@
 | 📋 異動紀錄 | 所有庫存異動的時間、操作人，可篩選、匯出 CSV | App 內建操作助手 |
 | ⚠️ 異常數量警告 | 移除、轉移、盤點、新增時，數量 ≥100、超過現有庫存、或歸零，送出前跳出確認 | App 內建操作助手 |
 | 🔀 快速調貨 | 搜尋料號、依公司分色看各庫位庫存、點選來源與目的即可調貨（可跨公司，會提醒） | App 內建操作助手 |
+| 🎛️ 浮動面板 | 右下角平常只有一個小圓點（顯示未讀通知數），滑鼠移上去才展開四個功能按鈕，不會擋住操作 | App 內建操作助手 |
 | 🔔 通知小視窗 | 低庫存、別家公司或管理員把庫存調進／調出你的公司庫位、大量或歸零的異常操作；**只通知與你所屬公司有關的事**；已讀紀錄存在伺服器，換電腦也一致 | 通知服務 `inventree-app/notifier/`（詳見該資料夾的 README） |
 | 桌面 App | 桌面圖示一鍵啟動，獨立視窗（無網址列） | `inventree-app/` |
 | 多台電腦共用 | 區網內其他電腦連到主機，看到同一份資料 | `inventree-app/` |
@@ -189,7 +190,7 @@ python setup_roles.py audit
 
 **如果出現黃色警告「公用網路」**：到「設定 → 網路和網際網路 → 內容」，把目前網路改成**私人網路**，否則其他電腦會被防火牆擋住。
 
-**驗收**：桌面出現「庫存管理系統」圖示，點兩下會開出獨立視窗，介面為繁體中文，右下角有「💡 操作說明」與「📋 異動紀錄」兩個按鈕。
+**驗收**：桌面出現「庫存管理系統」圖示，點兩下會開出獨立視窗，介面為繁體中文，右下角有一個小圓點，滑鼠移上去會展開「🔔 通知」「🔀 快速調貨」「📋 異動紀錄」「💡 操作說明」四個按鈕。
 
 > 若捷徑建立失敗：不影響系統，改用 <http://localhost> 或照畫面上的提示手動建立捷徑（原因與修正見第八章）。
 
@@ -357,9 +358,45 @@ docker compose logs --tail 20 inventree-notifier   # 應該看到「通知服務
 (Invoke-WebRequest http://localhost/notify/api/health -UseBasicParsing).Content   # 應該顯示 {"ok": true}
 ```
 
-接著點桌面「庫存管理系統」，按 **Ctrl+F5**，右下角應該出現 🔔 通知、💡、📋、🔀 四個按鈕。再用 [`inventree-acceptance-checklist.md`](inventree-acceptance-checklist.md) 的 F 區驗收通知。
+接著點桌面「庫存管理系統」，按 **Ctrl+F5**，右下角應該出現一個小圓點（有未讀通知時顯示數字），滑鼠移上去會展開 🔔 通知、🔀、📋、💡 四個按鈕。再用 [`inventree-acceptance-checklist.md`](inventree-acceptance-checklist.md) 的 F 區驗收通知。
 
 **其他電腦不需要重新安裝。** 它們開啟 App 時會自動載入新版（按一次 Ctrl+F5 最保險）。
+
+### 只更新操作助手（最快：不用重新下載整個專案、不用重啟系統）
+
+如果這次只有**畫面或操作助手**的改變（例如右下角按鈕的樣式），只需要替換一個檔案 `inventree-ui-helper.user.js`。它放在主機的 `C:\Users\Ande\inventree\app\`，由主機提供給所有電腦，所以**只要在主機換一次，全部電腦都會更新**。
+
+> 什麼時候不能只換這個檔案？如果更新內容包含通知服務、Docker 設定、`.env`、備份或還原腳本，就要用上面「完整更新」。每次更新我都會告訴你是哪一種。
+
+不需要系統管理員，一般 PowerShell 即可：
+
+```powershell
+$dst = "C:\Users\Ande\inventree\app\inventree-ui-helper.user.js"
+$url = "https://raw.githubusercontent.com/blses1283513-hub/crrer/claude/sharp-brahmagupta-tnbukb/inventree-ui-helper/inventree-ui-helper.user.js"
+$tmp = Join-Path $env:TEMP "helper-new.js"
+
+# 1. 下載單一檔案
+Invoke-WebRequest $url -OutFile $tmp -UseBasicParsing
+
+# 2. 檢查內容正確才替換（避免下載到錯誤頁面）
+$text = [IO.File]::ReadAllText($tmp, [Text.Encoding]::UTF8)
+if ($text.Length -lt 30000 -or $text -notmatch "ith-dock") { throw "下載的檔案內容不正確，已停止，沒有覆蓋任何檔案。" }
+
+# 3. 先備份舊檔，再替換
+Copy-Item $dst "$dst.bak-$(Get-Date -Format yyyyMMdd-HHmmss)"
+Copy-Item $tmp $dst -Force
+"完成。請在 App 按 Ctrl+F5。"
+```
+
+**如果第 1 步失敗（repo 是私人的，下載會被拒絕）：** 用瀏覽器登入 GitHub，開啟上面 `$url` 的網址，按 Ctrl+S 存成 `inventree-ui-helper.user.js` 到「下載」資料夾，然後把上面的 `Invoke-WebRequest` 那一行換成：
+
+```powershell
+Copy-Item "C:\Users\Ande\Downloads\inventree-ui-helper.user.js" $tmp -Force
+```
+
+**要還原**：安裝資料夾的 `app\` 內有 `inventree-ui-helper.user.js.bak-時間` 的備份檔，把它複製回 `inventree-ui-helper.user.js` 即可。
+
+換完後，每台電腦按一次 **Ctrl+F5**（App 的外框會自動載入新檔，但瀏覽器可能還記得舊的）。
 
 ## 十、附錄
 

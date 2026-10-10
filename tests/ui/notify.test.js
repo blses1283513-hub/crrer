@@ -50,6 +50,7 @@ async function open(user) {
   return page;
 }
 
+const showDock = () => page.hover('#ith-signal');
 const poll = () => page.evaluate(() => window.__ith.notifyPoll());
 const badge = async () => (await page.textContent('[aria-label="通知"]')).replace('🔔 通知', '').trim();
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -67,12 +68,6 @@ afterEach(async () => {
   sim.kill();
 });
 
-test('沒有登入時不顯示鈴鐺', async () => {
-  await open(null);
-  await page.waitForFunction(() => document.querySelector('[aria-label="通知"]').style.display === 'none');
-  assert.deepEqual(errors, []);
-});
-
 test('收到與自己公司有關的事件：鈴鐺紅色數字、小視窗跳出、清單內容正確', async () => {
   await open('b-wh');
   await poll();                                  // 初始化（第一次輪詢之前的事件不通知）
@@ -82,6 +77,7 @@ test('收到與自己公司有關的事件：鈴鐺紅色數字、小視窗跳�
   assert.match(await page.textContent('.ith-toast'), /調進 B 公司/);
   assert.equal(await badge(), '1');
 
+  await showDock();
   await page.click('[aria-label="通知"]');
   await page.waitForSelector('.ith-notify-panel');
   const panel = await page.textContent('.ith-notify-panel');
@@ -98,6 +94,7 @@ test('只收到與自己公司有關的通知（C 公司什麼都不會看到）
   await ctl('remove', 'a-wh', 'bigA', 150);
   await poll();
   assert.equal(await badge(), '');
+  await showDock();
   await page.click('[aria-label="通知"]');
   assert.match(await page.textContent('.ith-notify-panel'), /目前沒有通知/);
   assert.equal(await page.$('.ith-toast'), null);
@@ -123,6 +120,7 @@ test('標示已讀：單筆與全部；重新整理與換電腦（另一個瀏�
   await ctl('add', 'a-wh', 'bigA', 300);
   await poll();
   assert.equal(await badge(), '2');
+  await showDock();
   await page.click('[aria-label="通知"]');
   await page.waitForSelector('.ith-notice');
   await page.click('.ith-notice button:has-text("已讀")');
@@ -170,6 +168,7 @@ test('低庫存：只有該公司看到；已讀後消失，變得更低會再�
   await poll();
   await ctl('remove', 'a-wh', 'itemA', 40);            // 80 → 40（< 最低 50）
   await poll();
+  await showDock();
   await page.click('[aria-label="通知"]');
   await page.waitForSelector('.ith-notice');
   const text = await page.textContent('.ith-notify-panel');
@@ -202,9 +201,45 @@ test('資料庫內容不會被當成 HTML 執行', async () => {
   await poll();
   await ctl('remove', 'a-wh', 'bigA', 150, '<img src=x onerror="window.__xss=1">');
   await poll();
+  await showDock();
   await page.click('[aria-label="通知"]');
   await page.waitForSelector('.ith-notice');
   assert.equal(await page.$('.ith-notify-panel img'), null);
   assert.equal(await page.evaluate(() => window.__xss), undefined);
   assert.match(await page.textContent('.ith-notify-panel'), /<img src=x/);
+});
+
+test('小圓點只顯示未讀數；沒有未讀時安靜；點圓點直接開啟通知清單', async () => {
+  await open('a-wh2');
+  await poll();
+  assert.equal((await page.textContent('#ith-signal')).trim(), '🔔');
+  assert.equal(await page.evaluate(() => document.getElementById('ith-signal').classList.contains('has-unread')), false);
+
+  await ctl('remove', 'a-wh', 'bigA', 150);
+  await ctl('add', 'a-wh', 'bigA', 300);
+  await poll();
+  assert.equal((await page.textContent('#ith-signal')).trim(), '2', '圓點上顯示未讀通知數');
+  assert.equal(await page.evaluate(() => document.getElementById('ith-signal').classList.contains('has-unread')), true);
+  assert.equal(await page.isVisible('#ith-dock-stack'), false, '收起時不顯示按鈕，只顯示數字');
+
+  await page.click('#ith-signal');                     // 滑鼠點圓點：直接看通知
+  await page.waitForSelector('.ith-notify-panel');
+  assert.match(await page.textContent('.ith-notify-panel'), /大量移除/);
+  await page.click('.ith-notify-panel button:has-text("全部已讀")');
+  await page.waitForFunction(() => document.getElementById('ith-signal').textContent.trim() === '🔔');
+  assert.deepEqual(errors, []);
+});
+
+test('登入頁（沒登入）時整個浮動面板都不顯示', async () => {
+  await open(null);
+  await page.waitForFunction(() => document.getElementById('ith-dock').style.display === 'none');
+  assert.deepEqual(errors, []);
+});
+
+test('超過 99 則顯示 99+', async () => {
+  await open('a-wh2');
+  await poll();
+  for (let i = 0; i < 101; i++) await ctl('add', 'a-wh', 'bigA', 120);
+  await poll();
+  assert.equal((await page.textContent('#ith-signal')).trim(), '99+');
 });

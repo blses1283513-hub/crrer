@@ -104,7 +104,13 @@
   .ith-tip{position:fixed;z-index:100002;max-width:300px;padding:8px 10px;border-radius:6px;
     background:#1f2937;color:#fff;font:13px/1.5 system-ui,"Microsoft JhengHei",sans-serif;
     box-shadow:0 4px 14px rgba(0,0,0,.25);pointer-events:none}
-  .ith-fab{position:fixed;right:16px;z-index:100001;border:none;border-radius:20px;padding:8px 14px;
+  #ith-dock{position:fixed;right:16px;bottom:16px;z-index:100001;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+  #ith-dock-stack{display:none;flex-direction:column-reverse;align-items:flex-end;gap:6px}
+  #ith-signal{width:40px;height:40px;border-radius:50%;border:none;cursor:pointer;color:#fff;background:#868e96;opacity:.55;
+    font:600 14px system-ui,"Microsoft JhengHei",sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.25);transition:opacity .15s;padding:0}
+  #ith-signal.has-unread{background:#c92a2a;opacity:1}
+  #ith-dock:hover #ith-signal,#ith-signal:focus-visible{opacity:1}
+  .ith-fab{position:static;border:none;border-radius:20px;padding:8px 14px;white-space:nowrap;
     font:13px system-ui,"Microsoft JhengHei",sans-serif;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.2)}
   .ith-card{position:fixed;z-index:100003;background:#fff;color:#111;border-radius:10px;
     box-shadow:0 8px 30px rgba(0,0,0,.3);font:14px/1.6 system-ui,"Microsoft JhengHei",sans-serif}
@@ -126,6 +132,32 @@
     .ith-card input,.ith-card select{background:#1a1b1e;color:#e9ecef;border-color:#495057}
   }`;
   document.head.appendChild(el('style', { text: css }));
+
+  // ===================== 浮動面板：平常只顯示一個小圓點（未讀通知數），滑鼠移上去才展開功能按鈕 =====================
+  const dock = el('div', { id: 'ith-dock' });
+  const dockStack = el('div', { id: 'ith-dock-stack' });
+  const signal = el('button', { id: 'ith-signal', 'aria-label': '庫存助手', 'aria-expanded': 'false', title: '庫存助手：滑鼠移到這裡顯示功能', text: '🔔' });
+  dock.appendChild(dockStack);
+  dock.appendChild(signal);
+  document.body.appendChild(dock);
+
+  let dockTimer = null;
+  let dockPinned = false;   // 觸控裝置沒有「滑鼠移上去」，改為點一下展開
+  const hoverless = () => !!(window.matchMedia && window.matchMedia('(hover: none)').matches);
+  function setDock(open) {
+    dockStack.style.display = open ? 'flex' : 'none';
+    signal.setAttribute('aria-expanded', String(open));
+  }
+  const collapseSoon = () => { clearTimeout(dockTimer); dockTimer = setTimeout(() => setDock(false), 350); };
+  dock.addEventListener('mouseenter', () => { clearTimeout(dockTimer); setDock(true); });
+  dock.addEventListener('mouseleave', () => { if (!dockPinned) collapseSoon(); });
+  dock.addEventListener('focusin', () => { clearTimeout(dockTimer); setDock(true); });
+  dock.addEventListener('focusout', (e) => { if (!dockPinned && !dock.contains(e.relatedTarget)) collapseSoon(); });
+  signal.addEventListener('click', () => {
+    if (hoverless()) { dockPinned = !dockPinned; setDock(dockPinned); } else { togglePanel(); }   // 滑鼠：點圓點直接看通知
+  });
+  document.addEventListener('pointerdown', (e) => { if (dockPinned && !dock.contains(e.target)) { dockPinned = false; setDock(false); } }, true);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { dockPinned = false; setDock(false); } });
 
   // ===================== 1. 滑鼠停留說明 =====================
   let hintsOn = store.get('ith-hints-on', true);
@@ -177,7 +209,7 @@
   document.addEventListener('mousedown', hideTip, true);
 
   const hintBtn = el('button', {
-    class: 'ith-fab', style: { bottom: '16px' },
+    class: 'ith-fab',
     title: '開關滑鼠停留時的中文操作說明',
     onclick: () => { hintsOn = !hintsOn; store.set('ith-hints-on', hintsOn); paintHintBtn(); hideTip(); },
   });
@@ -187,7 +219,7 @@
     hintBtn.style.color = '#fff';
   }
   paintHintBtn();
-  document.body.appendChild(hintBtn);
+  dockStack.appendChild(hintBtn);
 
   // ===================== 2. 調貨（轉移庫存）提醒 =====================
   const TRANSFER_TITLE = /transfer|轉移|移動庫存|調撥|調貨/i;
@@ -419,8 +451,8 @@
     run();
   }
 
-  document.body.appendChild(el('button', {
-    class: 'ith-fab', style: { bottom: '60px', background: '#495057', color: '#fff' },
+  dockStack.appendChild(el('button', {
+    class: 'ith-fab', style: { background: '#495057', color: '#fff' },
     title: '查詢所有庫存異動：時間、操作人、數量、庫位', text: '📋 異動紀錄', onclick: openAudit,
   }));
 
@@ -759,8 +791,8 @@
     loadLocations().catch((e) => { msg.textContent = '⚠️ ' + e.message; });
   }
 
-  document.body.appendChild(el('button', {
-    class: 'ith-fab', style: { bottom: '104px', background: '#e8590c', color: '#fff' },
+  dockStack.appendChild(el('button', {
+    class: 'ith-fab', style: { background: '#e8590c', color: '#fff' },
     title: '快速把庫存從一個庫位調到另一個庫位（可跨公司）', text: '🔀 快速調貨', onclick: openQuickTransfer,
   }));
 
@@ -772,15 +804,18 @@
 
   const badge = el('span', { style: { display: 'none', marginLeft: '6px', background: '#e03131', color: '#fff', borderRadius: '10px', padding: '0 7px', fontSize: '12px' } });
   const bell = el('button', {
-    class: 'ith-fab', 'aria-label': '通知', style: { bottom: '148px', background: '#495057', color: '#fff' },
+    class: 'ith-fab', 'aria-label': '通知', style: { background: '#495057', color: '#fff' },
     title: '查看與你的公司有關的通知', onclick: () => togglePanel(),
   }, [el('span', { text: '🔔 通知' }), badge]);
-  document.body.appendChild(bell);
+  dockStack.appendChild(bell);
   const toastBox = el('div', { style: { position: 'fixed', top: '16px', right: '16px', zIndex: '100005', display: 'flex', flexDirection: 'column', gap: '8px', width: 'min(340px, calc(100vw - 32px))' } });
   document.body.appendChild(toastBox);
 
   function paintBell() {
-    bell.style.display = notify.state === 'anon' ? 'none' : '';
+    dock.style.display = notify.state === 'anon' ? 'none' : '';   // 還沒登入（登入頁）時整個面板不顯示
+    signal.textContent = notify.unread > 0 ? (notify.unread > 99 ? '99+' : String(notify.unread)) : '🔔';
+    signal.classList.toggle('has-unread', notify.unread > 0);
+    signal.style.fontSize = notify.unread > 99 ? '12px' : '';
     badge.style.display = notify.unread > 0 ? '' : 'none';
     badge.textContent = notify.unread > 99 ? '99+' : (notify.unread > 0 ? String(notify.unread) : '');
     bell.style.background = notify.state === 'ok' ? (notify.unread > 0 ? '#c92a2a' : '#495057') : '#868e96';
@@ -790,6 +825,7 @@
       error: '暫時無法取得通知，稍後會自動重試',
       loading: '讀取通知中…',
     }[notify.state] || '通知';
+    signal.title = `${bell.title}（滑鼠移到這裡顯示功能，點一下查看通知）`;
   }
 
   const localTime = (iso) => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleString('sv-SE', { hour12: false }).slice(5, 16); };
@@ -907,7 +943,7 @@
     notify.open = true;
     notify.panel = el('div', {
       class: 'ith-card ith-notify-panel', role: 'dialog', 'aria-label': '通知',
-      style: { right: '16px', bottom: '190px', width: 'min(400px, calc(100vw - 32px))', maxHeight: '60vh', padding: '12px 14px', display: 'flex', flexDirection: 'column' },
+      style: { right: '16px', bottom: '64px', width: 'min(400px, calc(100vw - 32px))', maxHeight: '60vh', padding: '12px 14px', display: 'flex', flexDirection: 'column' },
     });
     document.body.appendChild(notify.panel);
     renderPanel();

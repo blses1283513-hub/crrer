@@ -143,7 +143,8 @@ test('通知：在 App 內收到事件、鈴鐺顯示未讀，並在伺服器記
   await frame.evaluate(() => window.__ith.notifyPoll());
   await frame.waitForSelector('.ith-toast');
   assert.match(await frame.textContent('.ith-toast'), /大量移除/);
-  assert.match(await frame.textContent('[aria-label="通知"]'), /1/);
+  assert.equal((await frame.textContent('#ith-signal')).trim(), '1', '圓點顯示未讀數');
+  await frame.hover('#ith-signal');
   await frame.click('[aria-label="通知"]');
   await frame.click('.ith-notify-panel button:has-text("全部已讀")');
   await frame.waitForFunction(() => !/\d/.test(document.querySelector('[aria-label="通知"]').textContent));

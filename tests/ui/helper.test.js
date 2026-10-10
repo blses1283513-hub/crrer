@@ -34,6 +34,8 @@ beforeEach(async () => {
   await page.addScriptTag({ path: HELPER });
 });
 
+// 平常只有一個小圓點；滑鼠移上去才展開功能按鈕（與真實使用者的操作一致）
+const showDock = () => page.hover('#ith-signal');
 const posts = async () => (await fetch(server.url + '/__posts')).json();
 const noErrors = () => assert.deepEqual(errors, [], '頁面不應有 JavaScript 錯誤');
 
@@ -75,6 +77,7 @@ test('滑鼠停留說明：顯示、不誤判、可關閉', async () => {
   await page.hover('text=Random');
   await page.waitForTimeout(700);
   assert.equal(await page.$('.ith-tip'), null, '沒有對應說明的按鈕不應顯示');
+  await showDock();
   await page.click('text=💡 操作說明：開');
   await page.hover('#nav-stock');
   await page.waitForTimeout(700);
@@ -146,6 +149,7 @@ test('異常警告：在數量欄按 Enter 也會檢查', async () => {
 });
 
 test('快速調貨：跨公司、需確認、送出正確內容與 CSRF', async () => {
+  await showDock();
   await page.click('text=🔀 快速調貨');
   await page.fill('[aria-label="搜尋料號或品名"]', 'A-P01-S1');
   await page.click('.ith-qt button:has-text("A-P01-S1-XL")');
@@ -179,6 +183,7 @@ test('快速調貨：跨公司、需確認、送出正確內容與 CSRF', async 
 });
 
 test('快速調貨：超量時以現有數量送出；同庫位不可送出', async () => {
+  await showDock();
   await page.click('text=🔀 快速調貨');
   await page.fill('[aria-label="搜尋料號或品名"]', 'A-P01-S1');
   await page.click('.ith-qt button:has-text("A-P01-S1-XL")');
@@ -202,6 +207,7 @@ test('快速調貨：超量時以現有數量送出；同庫位不可送出', as
 
 test('快速調貨：沒有權限時顯示清楚的中文訊息', async () => {
   await page.context().clearCookies();
+  await showDock();
   await page.click('text=🔀 快速調貨');
   await page.fill('[aria-label="搜尋料號或品名"]', 'A-P01-S1');
   await page.click('.ith-qt button:has-text("A-P01-S1-XL")');
@@ -222,6 +228,7 @@ test('異動紀錄：顯示調貨紀錄、資料庫內容不被當成 HTML 執�
     await fetch('/api/stock/transfer/', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
       body: JSON.stringify({ items: [{ pk: 1, quantity: 2 }], location: 4, notes: '<img src=x onerror="window.__xss=1">' }) });
   });
+  await showDock();
   await page.click('text=📋 異動紀錄');
   await page.waitForFunction(() => /共 \d+ 筆/.test(document.querySelector('.ith-audit').textContent));
   const rows = await page.$$eval('.ith-audit tbody tr', (t) => t.map((r) => r.textContent));
@@ -234,5 +241,41 @@ test('異動紀錄：顯示調貨紀錄、資料庫內容不被當成 HTML 執�
 test('重複載入不會產生兩組按鈕', async () => {
   await page.addScriptTag({ path: HELPER });
   assert.equal((await page.$$('text=🔀 快速調貨')).length, 1);
+  noErrors();
+});
+
+test('浮動面板：平常只有小圓點，滑鼠移上去展開四個按鈕，移開後收起', async () => {
+  assert.equal(await page.isVisible('#ith-signal'), true);
+  assert.equal(await page.isVisible('#ith-dock-stack'), false, '平常不顯示四個按鈕');
+  for (const t of ['💡', '📋', '🔀', '通知']) assert.equal(await page.locator(`#ith-dock-stack >> text=${t}`).first().isVisible(), false, t);
+  assert.equal((await page.textContent('#ith-signal')).trim(), '🔔', '沒有未讀時只是一個安靜的小圓點');
+  assert.ok(Number(await page.evaluate(() => getComputedStyle(document.getElementById('ith-signal')).opacity)) < 1, '沒有未讀時淡化，不干擾操作');
+
+  await page.hover('#ith-signal');
+  await page.waitForSelector('#ith-dock-stack', { state: 'visible' });
+  const labels = await page.$$eval('#ith-dock-stack .ith-fab', (b) => b.map((x) => x.textContent));
+  assert.equal(labels.length, 4);
+  await page.hover('#ith-dock-stack >> text=📋 異動紀錄');          // 從圓點移到按鈕，不會中途收起
+  assert.equal(await page.isVisible('#ith-dock-stack'), true);
+
+  await page.mouse.move(5, 5);
+  await page.waitForSelector('#ith-dock-stack', { state: 'hidden', timeout: 3000 });
+  noErrors();
+});
+
+test('浮動面板：圓點與按鈕不會擋住頁面其他位置的操作', async () => {
+  const box = await page.locator('#ith-signal').boundingBox();
+  assert.ok(box.width <= 44 && box.height <= 44, '收起時只佔一個小圓點的面積');
+  const covered = await page.evaluate(() => { const e = document.elementFromPoint(window.innerWidth / 2, window.innerHeight - 20); return e && e.closest('#ith-dock') !== null; });
+  assert.equal(covered, false);
+  noErrors();
+});
+
+test('浮動面板：鍵盤也能展開（Tab 聚焦圓點），Esc 收起', async () => {
+  await page.focus('#ith-signal');
+  await page.waitForSelector('#ith-dock-stack', { state: 'visible' });
+  assert.equal(await page.getAttribute('#ith-signal', 'aria-expanded'), 'true');
+  await page.keyboard.press('Escape');
+  await page.waitForSelector('#ith-dock-stack', { state: 'hidden' });
   noErrors();
 });
