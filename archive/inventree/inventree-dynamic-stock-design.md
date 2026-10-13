@@ -1,3 +1,5 @@
+> **存檔說明**：這是早期 InvenTree 方案的文件，已於 2026-10 從這個 repo 移除對應的程式（`inventree-app`、`inventree-install`、`inventree-seed`、`inventree-ui-helper`）。內容保留供參考，文中的路徑與指令指向已移除的檔案，請用 `git show 87b831b:<路徑>` 取回舊版。目前方案見 [`../../nila-erpnext-plan.md`](../../nila-erpnext-plan.md)。
+
 # 以 InvenTree 為基礎的動態庫存掌握系統：設計流程
 
 > 狀態：草案 v0.3（已查證 v0.1 的兩個待確認點，見 §4）

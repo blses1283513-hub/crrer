@@ -1,3 +1,5 @@
+> **存檔說明**：這是早期 InvenTree 方案的文件，已於 2026-10 從這個 repo 移除對應的程式（`inventree-app`、`inventree-install`、`inventree-seed`、`inventree-ui-helper`）。內容保留供參考，文中的路徑與指令指向已移除的檔案，請用 `git show 87b831b:<路徑>` 取回舊版。目前方案見 [`../../nila-erpnext-plan.md`](../../nila-erpnext-plan.md)。
+
 # 庫存管理系統：真實環境驗收清單
 
 自動測試（`tests/`）已在模擬環境驗證所有自製功能。但有些事**只能在真的 InvenTree 畫面上確認**，例如按鈕文字、視窗結構、權限、Email。本清單就是用來逐項確認這些。

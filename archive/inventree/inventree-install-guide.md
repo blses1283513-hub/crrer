@@ -1,3 +1,5 @@
+> **存檔說明**：這是早期 InvenTree 方案的文件，已於 2026-10 從這個 repo 移除對應的程式（`inventree-app`、`inventree-install`、`inventree-seed`、`inventree-ui-helper`）。內容保留供參考，文中的路徑與指令指向已移除的檔案，請用 `git show 87b831b:<路徑>` 取回舊版。目前方案見 [`../../nila-erpnext-plan.md`](../../nila-erpnext-plan.md)。
+
 # 庫存管理系統：完整安裝流程
 
 從一台全新的 Windows 電腦開始，到擁有全部功能，並可日後**把主機換成另一台電腦**。
