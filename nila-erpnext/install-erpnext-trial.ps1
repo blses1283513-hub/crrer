@@ -1,6 +1,6 @@
 ﻿# 妮菈穿戴甲：ERPNext 16 試用版一鍵安裝（Windows PowerShell）
 # 安裝 ERPNext、完成初次設定（公司、台灣、新台幣、繁體中文），並匯入範例款式、期初庫存與「−2 → 補 12」的訂單情境。
-# 只供試用；資料放在 Docker 的資料卷中，與原本的 InvenTree 完全分開（埠號 8080，不影響 InvenTree 的 80 埠）。
+# 只供試用；資料放在 Docker 的資料卷中，與原本的 InvenTree 完全分開（預設埠號 8080，可用 -Port 改成其他埠；不影響 InvenTree 的 80 埠）。
 #
 # 用法（在 nila-erpnext 資料夾中）：
 #   powershell -ExecutionPolicy Bypass -File .\install-erpnext-trial.ps1
@@ -28,7 +28,16 @@ $envPath = Join-Path $InstallDir ".env"
 $resume = Test-Path $envPath
 $portBusy = $false
 try { $portBusy = [bool](Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue) } catch { }
-if ($portBusy -and -not $resume) { throw "埠 $Port 已被其他程式使用。請改用其他埠，例如：-Port 8081" }
+if ($portBusy -and -not $resume) {
+    # 找出占用埠的程式，方便判斷（例如先前安裝的 InvenTree 可能用了 8080）
+    $owner = ""
+    try {
+        $pid0 = (Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction Stop | Select-Object -First 1).OwningProcess
+        $owner = (Get-Process -Id $pid0 -ErrorAction SilentlyContinue).ProcessName
+    } catch { }
+    $who = if ($owner) { "（占用的程式：$owner）" } else { "" }
+    throw "埠 $Port 已被其他程式使用$who。請改用其他埠重新執行，例如：powershell -ExecutionPolicy Bypass -File .\install-erpnext-trial.ps1 -Port 8081"
+}
 
 # 映像約 7 GB（下載約 1.4 GB），加上資料庫，建議至少 15 GB 可用空間
 $sysDrive = if ($env:SystemDrive) { $env:SystemDrive.TrimEnd(":") } else { (Get-Location).Drive.Name }
