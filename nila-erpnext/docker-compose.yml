@@ -1,0 +1,180 @@
+# 妮菈穿戴甲：ERPNext 16 試用版（只供試用，不是正式環境）
+#
+# 以官方 frappe/frappe_docker 的 pwd.yml（MIT 授權）為基礎，修改處標記「[Nila]」：
+#   1. 固定版本 frappe/erpnext:v16.50.0（與官方 pwd.yml 相同，但不隨官方更新而變動）
+#   2. 管理員密碼與資料庫密碼改由 .env 提供（官方預設都是 admin）
+#   3. 對外埠由 .env 的 HTTP_PORT 決定（預設 8080，不影響原本 InvenTree 使用的 80 埠）
+#   4. 改用 restart: unless-stopped，電腦重開、Docker 啟動後自動恢復
+#   5. 固定專案名稱 nila-erpnext-trial，資料卷與 InvenTree 分開
+name: nila-erpnext-trial
+
+x-erpnext-image: &erpnext-image frappe/erpnext:v16.50.0
+
+x-bench-volumes: &bench-volumes
+  - sites:/home/frappe/frappe-bench/sites
+  - logs:/home/frappe/frappe-bench/logs
+
+x-redis-env: &redis-env
+  FRAPPE_REDIS_CACHE: redis://redis-cache:6379
+  FRAPPE_REDIS_QUEUE: redis://redis-queue:6379
+
+services:
+  backend:
+    image: *erpnext-image
+    restart: unless-stopped
+    volumes: *bench-volumes
+    environment:
+      DB_HOST: db
+      DB_PORT: "3306"
+    depends_on:
+      configurator:
+        condition: service_completed_successfully
+
+  configurator:
+    image: *erpnext-image
+    restart: "no"
+    entrypoint: ["bash", "-c"]
+    command:
+      - >
+        ls -1 apps > sites/apps.txt;
+        bench set-config -g db_host $$DB_HOST;
+        bench set-config -gp db_port $$DB_PORT;
+        bench set-config -g redis_cache "redis://$$REDIS_CACHE";
+        bench set-config -g redis_queue "redis://$$REDIS_QUEUE";
+        bench set-config -g redis_socketio "redis://$$REDIS_QUEUE";
+        bench set-config -gp socketio_port $$SOCKETIO_PORT;
+    environment:
+      DB_HOST: db
+      DB_PORT: "3306"
+      REDIS_CACHE: redis-cache:6379
+      REDIS_QUEUE: redis-queue:6379
+      SOCKETIO_PORT: "9000"
+    volumes: *bench-volumes
+
+  # 第一次啟動時建立網站 frontend（已存在就略過）
+  create-site:
+    image: *erpnext-image
+    restart: "no"
+    volumes: *bench-volumes
+    entrypoint: ["bash", "-c"]
+    # [Nila] 密碼由環境變數提供；以 "$$VAR" 引用，特殊字元不會被 bash 再解析
+    command:
+      - >
+        wait-for-it -t 120 db:3306;
+        wait-for-it -t 120 redis-cache:6379;
+        wait-for-it -t 120 redis-queue:6379;
+        export start=`date +%s`;
+        until [[ -n `grep -hs ^ sites/common_site_config.json | jq -r ".db_host // empty"` ]] &&
+          [[ -n `grep -hs ^ sites/common_site_config.json | jq -r ".redis_cache // empty"` ]] &&
+          [[ -n `grep -hs ^ sites/common_site_config.json | jq -r ".redis_queue // empty"` ]];
+        do
+          echo "Waiting for sites/common_site_config.json to be created";
+          sleep 5;
+          if (( `date +%s`-start > 120 )); then
+            echo "could not find sites/common_site_config.json with required keys";
+            exit 1;
+          fi;
+        done;
+        echo "sites/common_site_config.json found";
+        if [ -d "sites/frontend" ]; then
+          echo "Site frontend already exists, skipping creation";
+        else
+          bench new-site --mariadb-user-host-login-scope='%' --admin-password="$$ADMIN_PASSWORD" --db-root-username=root --db-root-password="$$DB_ROOT_PASSWORD" --install-app erpnext --set-default frontend;
+        fi;
+    environment:
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?請在 .env 設定 ADMIN_PASSWORD}
+      DB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?請在 .env 設定 DB_ROOT_PASSWORD}
+
+  db:
+    image: mariadb:11.8
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      start_period: 5s
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --skip-character-set-client-handshake
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?請在 .env 設定 DB_ROOT_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?請在 .env 設定 DB_ROOT_PASSWORD}
+    volumes:
+      - db-data:/var/lib/mysql
+
+  frontend:
+    image: *erpnext-image
+    restart: unless-stopped
+    depends_on:
+      - websocket
+      - backend
+    command: ["nginx-entrypoint.sh"]
+    environment:
+      BACKEND: backend:8000
+      FRAPPE_SITE_NAME_HEADER: frontend
+      SOCKETIO: websocket:9000
+      UPSTREAM_REAL_IP_ADDRESS: 127.0.0.1
+      UPSTREAM_REAL_IP_HEADER: X-Forwarded-For
+      UPSTREAM_REAL_IP_RECURSIVE: "off"
+      PROXY_READ_TIMEOUT: 120
+      CLIENT_MAX_BODY_SIZE: 50m
+    volumes: *bench-volumes
+    ports:
+      - "${HTTP_PORT:-8080}:8080"
+
+  queue-long:
+    image: *erpnext-image
+    restart: unless-stopped
+    command: ["bench", "worker", "--queue", "long,default,short"]
+    volumes: *bench-volumes
+    environment: *redis-env
+    depends_on:
+      configurator:
+        condition: service_completed_successfully
+
+  queue-short:
+    image: *erpnext-image
+    restart: unless-stopped
+    command: ["bench", "worker", "--queue", "short,default"]
+    volumes: *bench-volumes
+    environment: *redis-env
+    depends_on:
+      configurator:
+        condition: service_completed_successfully
+
+  redis-queue:
+    image: redis:6.2-alpine
+    restart: unless-stopped
+    volumes:
+      - redis-queue-data:/data
+
+  redis-cache:
+    image: redis:6.2-alpine
+    restart: unless-stopped
+
+  scheduler:
+    image: *erpnext-image
+    restart: unless-stopped
+    command: ["bench", "schedule"]
+    volumes: *bench-volumes
+    depends_on:
+      configurator:
+        condition: service_completed_successfully
+
+  websocket:
+    image: *erpnext-image
+    restart: unless-stopped
+    command: ["node", "/home/frappe/frappe-bench/apps/frappe/socketio.js"]
+    environment: *redis-env
+    volumes: *bench-volumes
+    depends_on:
+      configurator:
+        condition: service_completed_successfully
+
+volumes:
+  db-data:
+  redis-queue-data:
+  sites:
+  logs:
