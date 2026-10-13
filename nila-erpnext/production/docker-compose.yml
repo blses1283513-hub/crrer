@@ -1,0 +1,180 @@
+# 妮菈穿戴甲：ERPNext 16 正式版
+#
+# 以官方 frappe/frappe_docker 的正式版設定（MIT 授權）為基礎：compose.yaml ＋ overrides/compose.mariadb.yaml
+# ＋ overrides/compose.redis.yaml ＋ overrides/compose.noproxy.yaml，合併成一個檔案。修改處標記「[Nila]」：
+#   1. 映像檔改為本機建置的 nila-erpnext（官方 ERPNext 16 ＋ nila_app），見 Dockerfile
+#   2. 固定網站名稱（SITE_NAME），用 localhost 或區網 IP 連線都會到同一個網站
+#   3. 新增一次性服務 create-site：第一次啟動時建立網站、安裝 ERPNext 與 nila_app，並依 nila-config.json 完成基本設定
+#   4. 新增一次性服務 restore（只在還原時執行）：密碼由 .env 經環境變數傳入，不出現在指令中
+#   5. 資料庫與管理員密碼必填（官方預設 123）
+#   6. 固定專案名稱 nila-erpnext，資料卷與試用版、InvenTree 都分開
+name: nila-erpnext
+
+x-nila-image: &nila_image
+  # [Nila] 本機建置；install-nila.ps1 / update-nila.ps1 會先執行 docker compose build
+  image: nila-erpnext:${NILA_VERSION:?請在 .env 設定 NILA_VERSION}
+  pull_policy: never
+  restart: unless-stopped
+  platform: linux/amd64
+
+x-depends-on-configurator: &depends_on_configurator
+  depends_on:
+    configurator:
+      condition: service_completed_successfully
+
+x-backend-defaults: &backend_defaults
+  <<: [*depends_on_configurator, *nila_image]
+  volumes:
+    - sites:/home/frappe/frappe-bench/sites
+
+services:
+  # [Nila] 建置設定只放在 configurator（每次啟動都會先執行它）；其他服務共用同一個映像檔
+  configurator:
+    <<: *backend_defaults
+    build:
+      context: ..
+      dockerfile: production/Dockerfile
+      args:
+        ERPNEXT_IMAGE: frappe/erpnext:v16.50.0
+    entrypoint: ["bash", "-c"]
+    command:
+      - >
+        ls -1 apps > sites/apps.txt;
+        bench set-config -g db_host $$DB_HOST;
+        bench set-config -gp db_port $$DB_PORT;
+        bench set-config -g redis_cache "redis://$$REDIS_CACHE";
+        bench set-config -g redis_queue "redis://$$REDIS_QUEUE";
+        bench set-config -g redis_socketio "redis://$$REDIS_QUEUE";
+        bench set-config -gp socketio_port $$SOCKETIO_PORT;
+        bench set-config -g chromium_path /usr/lib/chromium/chromium-headless-shell;
+    environment:
+      DB_HOST: db
+      DB_PORT: "3306"
+      REDIS_CACHE: redis-cache:6379
+      REDIS_QUEUE: redis-queue:6379
+      SOCKETIO_PORT: 9000
+    depends_on:
+      db:
+        condition: service_healthy
+      redis-cache:
+        condition: service_started
+      redis-queue:
+        condition: service_started
+    restart: on-failure
+
+  # [Nila] 第一次啟動時建立網站；之後每次啟動只確認 nila_app 已安裝、基本設定存在（可重複執行）
+  create-site:
+    <<: *backend_defaults
+    restart: "no"
+    entrypoint: ["bash", "-c"]
+    command:
+      - >
+        set -e;
+        cd /home/frappe/frappe-bench;
+        if [ ! -d "sites/$$SITE_NAME" ]; then
+          if [ -z "$$ADMIN_PASSWORD" ]; then echo "ADMIN_PASSWORD 未設定，無法建立網站"; exit 1; fi;
+          bench new-site "$$SITE_NAME" --mariadb-user-host-login-scope='%' --admin-password="$$ADMIN_PASSWORD" --db-root-username=root --db-root-password="$$DB_PASSWORD" --install-app erpnext --set-default;
+        fi;
+        if [ -s /home/frappe/nila-config.json ]; then cp /home/frappe/nila-config.json sites/nila-config.json; fi;
+        bench --site "$$SITE_NAME" list-apps | grep -q '^nila_app' || bench --site "$$SITE_NAME" install-app nila_app;
+        if [ -f sites/nila-config.json ]; then bench --site "$$SITE_NAME" execute nila_app.setup.install.setup_site; fi;
+        echo "NILA_SITE_READY";
+    # [Nila] 安裝資料夾中的 nila-config.json（公司、分公司、甲型）唯讀掛入，啟動時複製到網站資料夾
+    volumes:
+      - sites:/home/frappe/frappe-bench/sites
+      - ./nila-config.json:/home/frappe/nila-config.json:ro
+    environment:
+      SITE_NAME: ${SITE_NAME:-nila}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      DB_PASSWORD: ${DB_PASSWORD:?請在 .env 設定 DB_PASSWORD}
+
+  backend:
+    <<: *backend_defaults
+    environment:
+      GUNICORN_THREADS: ${GUNICORN_THREADS:-4}
+      GUNICORN_WORKERS: ${GUNICORN_WORKERS:-2}
+      GUNICORN_TIMEOUT: ${GUNICORN_TIMEOUT:-120}
+
+  frontend:
+    <<: *nila_image
+    command: ["nginx-entrypoint.sh"]
+    environment:
+      BACKEND: backend:8000
+      SOCKETIO: websocket:9000
+      NGINX_LISTEN_PORT: 8080
+      # [Nila] 固定網站名稱：用 localhost、127.0.0.1 或區網 IP 連線都會到同一個網站
+      FRAPPE_SITE_NAME_HEADER: ${SITE_NAME:-nila}
+      UPSTREAM_REAL_IP_ADDRESS: 127.0.0.1
+      UPSTREAM_REAL_IP_HEADER: X-Forwarded-For
+      UPSTREAM_REAL_IP_RECURSIVE: "off"
+      PROXY_READ_TIMEOUT: 120
+      CLIENT_MAX_BODY_SIZE: 50m
+    volumes:
+      - sites:/home/frappe/frappe-bench/sites
+    depends_on:
+      - backend
+      - websocket
+    ports:
+      - "${HTTP_PORT:-8090}:8080"
+
+  websocket:
+    <<: [*depends_on_configurator, *nila_image]
+    command: ["node", "/home/frappe/frappe-bench/apps/frappe/socketio.js"]
+    volumes:
+      - sites:/home/frappe/frappe-bench/sites
+
+  queue-short:
+    <<: *backend_defaults
+    command: bench worker --queue short,default
+
+  queue-long:
+    <<: *backend_defaults
+    command: bench worker --queue long,default,short
+
+  scheduler:
+    <<: *backend_defaults
+    command: bench schedule
+
+  # [Nila] 只在還原時由 restore-nila.ps1 以 docker compose run 執行；參數為備份檔名（皆在 sites/restore/ 下）
+  restore:
+    <<: *backend_defaults
+    restart: "no"
+    profiles: ["tools"]
+    entrypoint: ["bash", "/home/frappe/frappe-bench/apps/nila_app/nila_app/setup/restore.sh"]
+    environment:
+      SITE_NAME: ${SITE_NAME:-nila}
+      DB_PASSWORD: ${DB_PASSWORD:?請在 .env 設定 DB_PASSWORD}
+
+  db:
+    image: mariadb:11.8
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      start_period: 5s
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --skip-character-set-client-handshake
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:?請在 .env 設定 DB_PASSWORD}
+      MARIADB_AUTO_UPGRADE: 1
+    volumes:
+      - db-data:/var/lib/mysql
+
+  redis-cache:
+    image: redis:8.6-alpine
+    restart: unless-stopped
+
+  redis-queue:
+    image: redis:8.6-alpine
+    restart: unless-stopped
+    volumes:
+      - redis-queue-data:/data
+
+volumes:
+  sites:
+  db-data:
+  redis-queue-data:

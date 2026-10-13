@@ -1,0 +1,12 @@
+{
+  "company_name": "妮菈穿戴甲",
+  "company_abbr": "NL",
+  "hq": "總公司",
+  "branches": ["分公司A", "分公司B", "分公司C", "分公司D"],
+  "shapes": [
+    {"name": "長梯", "abbr": "LT"},
+    {"name": "短梯", "abbr": "ST"},
+    {"name": "長橢圓", "abbr": "LO"}
+  ],
+  "sizes": ["XS", "S", "M", "L"]
+}

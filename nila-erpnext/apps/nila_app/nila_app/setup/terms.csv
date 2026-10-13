@@ -1,0 +1,15 @@
+﻿英文原文,繁體中文
+Item,商品
+Item Name,商品名稱
+Item Code,料號
+Item Group,商品類別
+Item Variant,規格
+Variant Of,所屬款式
+Has Variants,有多種規格
+Projected Qty,預計庫存
+Stock Projected Qty,預計庫存
+Actual Qty,實際庫存
+Reserved Qty,訂單預留
+Ordered Qty,已叫貨未入庫
+Reorder Level,補貨水位
+Goods In Transit,在途

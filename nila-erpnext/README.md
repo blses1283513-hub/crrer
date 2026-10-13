@@ -1,4 +1,9 @@
-﻿# 妮菈穿戴甲：ERPNext 16 試用版
+﻿# 妮菈穿戴甲：ERPNext 16
+
+- **正式版** → [`production/`](production/README.md)：給客戶使用，含妮菈客製功能（`apps/nila_app/`）、安裝、更新、備份、還原。
+- **試用版** → 本頁以下：只供評估，不能裝客製功能。
+
+## 試用版
 
 方案見 [`../nila-erpnext-plan.md`](../nila-erpnext-plan.md)。這個資料夾是「步驟 3：試用」用的檔案，**只供試用，不是正式環境**。
 

@@ -1,0 +1,83 @@
+# 妮菈 ERPNext 16 正式版：在真正的 ERPNext 上端對端測試
+# 用與使用者相同的腳本：install-nila.ps1（兩次：放設定檔、安裝）→ backup-nila.ps1 → restore-nila.ps1 → update-nila.ps1
+name: 妮菈 ERPNext 正式版（端對端）
+
+on:
+  push:
+    paths:
+      - 'nila-erpnext/apps/**'
+      - 'nila-erpnext/production/**'
+      - 'tests/erpnext/**'
+      - '.github/workflows/nila-erpnext-production.yml'
+  pull_request:
+    paths:
+      - 'nila-erpnext/apps/**'
+      - 'nila-erpnext/production/**'
+      - 'tests/erpnext/**'
+      - '.github/workflows/nila-erpnext-production.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  INSTALL: ${{ github.workspace }}/../nila-install
+  ADMIN_PW: 'Prod $pw"2026x'
+
+jobs:
+  e2e:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - name: 騰出磁碟空間（ERPNext 映像約 7 GB）
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
+      - name: 單元測試
+        run: python3 -m unittest discover -s tests/erpnext -v
+      - name: 安裝第一次（只放置設定檔）
+        shell: pwsh
+        run: |
+          ./tests/erpnext/Invoke-WithAnswers.ps1 -Script ./nila-erpnext/production/install-nila.ps1 -InstallDir $env:INSTALL
+          if (-not (Test-Path "$env:INSTALL/production/nila-config.json")) { throw '沒有放置設定檔' }
+      - name: 安裝第二次（建置、建立網站、基本設定）
+        shell: pwsh
+        run: |
+          $env:NILA_ANSWERS = "$env:ADMIN_PW`n$env:ADMIN_PW`nY"
+          ./tests/erpnext/Invoke-WithAnswers.ps1 -Script ./nila-erpnext/production/install-nila.ps1 -InstallDir $env:INSTALL
+          if ((Get-Content "$env:INSTALL/production/.env" -Raw) -notmatch "ADMIN_PASSWORD=''") { throw '.env 中仍有管理員密碼' }
+      - name: 檢查安裝結果
+        run: python3 tests/erpnext/check_production.py --password "$ADMIN_PW" --expect-version 0.1.0 --phase install
+      - name: 備份（含第二個地方）
+        shell: pwsh
+        run: |
+          ./tests/erpnext/Invoke-WithAnswers.ps1 -Script "$env:INSTALL/production/backup-nila.ps1" -OutDir "$env:RUNNER_TEMP/b1" -CopyTo "$env:RUNNER_TEMP/b2"
+          if (@(Get-ChildItem "$env:RUNNER_TEMP/b1/*/*-database.sql.gz").Count -ne 1) { throw '沒有資料庫備份' }
+          if (@(Get-ChildItem "$env:RUNNER_TEMP/b2/*/*-database.sql.gz").Count -ne 1) { throw '第二個地方沒有備份' }
+      - name: 備份後修改資料
+        run: python3 tests/erpnext/check_production.py --password "$ADMIN_PW" --phase mutate
+      - name: 還原
+        shell: pwsh
+        run: |
+          $env:NILA_ANSWERS = 'YES'
+          $b = (Get-ChildItem "$env:RUNNER_TEMP/b1" -Directory | Select-Object -First 1).FullName
+          ./tests/erpnext/Invoke-WithAnswers.ps1 -Script "$env:INSTALL/production/restore-nila.ps1" -BackupDir $b
+      - name: 檢查還原結果
+        run: python3 tests/erpnext/check_production.py --password "$ADMIN_PW" --phase restored
+      - name: 更新到新版本（模擬 0.1.0 → 0.9.9）
+        shell: pwsh
+        run: |
+          $dl = "$env:RUNNER_TEMP/download/nila-erpnext"
+          New-Item -ItemType Directory -Force -Path $dl | Out-Null
+          Copy-Item ./nila-erpnext/apps, ./nila-erpnext/production $dl -Recurse
+          $init = "$dl/apps/nila_app/nila_app/__init__.py"
+          (Get-Content $init -Raw) -replace '__version__ = ".*"', '__version__ = "0.9.9"' | Set-Content $init -NoNewline
+          $env:NILA_ANSWERS = 'Y'
+          ./tests/erpnext/Invoke-WithAnswers.ps1 -Script "$dl/production/update-nila.ps1" -InstallDir $env:INSTALL
+      - name: 檢查更新結果
+        run: python3 tests/erpnext/check_production.py --password "$ADMIN_PW" --expect-version 0.9.9 --phase restored
+      - name: 失敗時的紀錄
+        if: failure()
+        working-directory: ${{ env.INSTALL }}/production
+        run: docker compose ps -a; docker compose logs --tail 80 backend create-site frontend
