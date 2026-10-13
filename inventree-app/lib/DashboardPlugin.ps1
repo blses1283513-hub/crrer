@@ -111,6 +111,9 @@ function Invoke-DashboardActivate {
     # 由 --command 讀取標準輸入整段執行（參數不含空白與雙引號，Windows PowerShell 5.1 傳遞時不會被拆開）
     $runStdin = "--command=exec(__import__('sys').stdin.read())"
     $problem = '尚未執行'
+    # Windows PowerShell 5.1 在 ErrorActionPreference=Stop 時，會把原生程式（docker）寫到 stderr 的訊息
+    # （例如無害的警告 INVE-W3: Could not detect git information.）當成錯誤而中止；這裡改為只收集輸出、由結果判斷成敗
+    $ErrorActionPreference = 'Continue'
     Push-Location $InstallDir
     try {
         for ($i = 1; $i -le $Retries; $i++) {

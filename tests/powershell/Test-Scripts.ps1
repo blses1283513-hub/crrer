@@ -178,6 +178,12 @@ Check ((Test-Path (Join-Path $instPlugin "static/mgmt_dashboard.js")) -and [IO.F
 $seq = ($global:dockerCalls | ForEach-Object { ($_.args | Select-Object -First 3) -join " " }) -join " | "
 Check ($seq -eq "compose up -d | compose restart inventree-server | compose exec -T") "enable-dashboard：啟動 → 重新啟動 → 容器內啟用（實際 $seq）"
 Check (($global:dockerCalls[1].args -join " ") -eq "compose restart inventree-server inventree-worker inventree-proxy") "enable-dashboard：重新啟動伺服器、背景工作與代理（套用外掛與 Caddyfile）"
+# docker 在 stderr 輸出警告（如 INVE-W3）時，不能因為呼叫端設了 ErrorActionPreference=Stop 而中止
+function docker { Write-Error "INVE-W3: Could not detect git information." -ErrorAction Continue; "MGMT_OK" }
+$prevEap = $ErrorActionPreference; $ErrorActionPreference = "Stop"
+$warnRes = "未執行"; try { $warnRes = Invoke-DashboardActivate -InstallDir $fakeInstall -Retries 1 } catch { $warnRes = "例外：$($_.Exception.Message)" }
+$ErrorActionPreference = $prevEap
+Check ($null -eq $warnRes) "看板啟用：docker 輸出 stderr 警告時仍能完成（實際 $warnRes）"
 Remove-Item function:docker, function:Invoke-WebRequest, function:Start-Sleep
 Remove-Item $dashTmp -Recurse -Force
 
