@@ -104,7 +104,17 @@ def check_install(c, expect_version, p0_only=False):
     except urllib.error.HTTPError:
         asset = False
     check("共用畫面檔（/assets/nila_app）可以下載", asset)
-    for method in ["nila_app.matrix.get_matrix", "nila_app.replenish.get_suggestions"]:
+    # P5 門市銷售與會員
+    check("頁面：門市銷售、消費報表、條碼", {"nila-store-sale", "nila-sales-report", "nila-barcode"} <= pages, sorted(pages))
+    roles = {r["name"] for r in c.get_list("Role", '["name"]', '[["name","like","妮菈%"]]')}
+    check("5 個層級的角色", roles == {"妮菈管理員", "妮菈營運主管", "妮菈總公司作業", "妮菈門市店長", "妮菈門市店員"}, roles)
+    check("自訂欄位：會員手機、銷售管道、結帳代碼、收銀人員",
+          {"Customer-nila_phone", "Sales Invoice-nila_channel", "Sales Invoice-nila_client_id", "Sales Invoice-nila_cashier"} <= cf)
+    check("會員群組、門市散客、官網散客", c.exists("Customer Group", "會員") and c.exists("Customer", "門市散客") and c.exists("Customer", "官網散客"))
+    profiles = {x["name"] for x in c.get_list("POS Profile", '["name"]')}
+    check("每個門市的收銀設定", {"門市-總公司", "門市-分公司A", "門市-分公司B", "門市-分公司C", "門市-分公司D"} <= profiles, sorted(profiles))
+    for method in ["nila_app.matrix.get_matrix", "nila_app.replenish.get_suggestions", "nila_app.retail.sale_context",
+                   "nila_app.salesreport.get_options"]:
         status, _body = c.call(f"/api/method/{method}")
         check(f"API 可用：{method}", status == 200, status)
 

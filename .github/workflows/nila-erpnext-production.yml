@@ -24,7 +24,7 @@ permissions:
 env:
   INSTALL: ${{ github.workspace }}/../nila-install
   ADMIN_PW: 'Prod $pw"2026x'
-  VERSION: '0.5.0'
+  VERSION: '0.6.0'
   P0_COMMIT: ab1df1e3a0a81f1d48bad5084c424040a4c6e699
 
 jobs:
@@ -66,6 +66,12 @@ jobs:
           docker compose cp "$GITHUB_WORKSPACE/tests/erpnext/live_stock.py" backend:/tmp/live_stock.py
           docker compose exec -T backend bash -c "cd sites && ../env/bin/python -W ignore /tmp/live_stock.py nila"
           docker compose exec -T backend bash -c "cd sites && ../env/bin/python -W ignore /tmp/live_stock.py nila 170"
+      - name: 門市銷售與會員整合測試（含一年 20,000 筆銷售的速度測試）
+        working-directory: ${{ env.INSTALL }}/production
+        run: |
+          docker compose cp "$GITHUB_WORKSPACE/tests/erpnext/live_retail.py" backend:/tmp/live_retail.py
+          docker compose exec -T backend bash -c "cd sites && ../env/bin/python -W ignore /tmp/live_retail.py nila"
+          docker compose exec -T backend bash -c "cd sites && ../env/bin/python -W ignore /tmp/live_retail.py nila 20000"
       - name: 備份（含第二個地方）
         shell: pwsh
         run: |
@@ -138,6 +144,8 @@ jobs:
           docker compose exec -T backend bash -c "cd sites && ../env/bin/python -W ignore /tmp/live_products.py nila"
           docker compose cp "$GITHUB_WORKSPACE/tests/erpnext/live_stock.py" backend:/tmp/live_stock.py
           docker compose exec -T backend bash -c "cd sites && ../env/bin/python -W ignore /tmp/live_stock.py nila"
+          docker compose cp "$GITHUB_WORKSPACE/tests/erpnext/live_retail.py" backend:/tmp/live_retail.py
+          docker compose exec -T backend bash -c "cd sites && ../env/bin/python -W ignore /tmp/live_retail.py nila"
       - name: 失敗時的紀錄
         if: failure()
         working-directory: ${{ env.INSTALL }}/production

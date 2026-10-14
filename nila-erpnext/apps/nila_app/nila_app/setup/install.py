@@ -56,6 +56,20 @@ CUSTOM_FIELDS = {
         {"fieldname": "nila_sales_order", "label": "相關訂單", "fieldtype": "Link", "options": "Sales Order",
          "insert_after": "nila_destination", "read_only": 1, "no_copy": 1, "depends_on": "eval:doc.nila_sales_order"},
     ],
+    "Customer": [
+        {"fieldname": "nila_phone", "label": "手機", "fieldtype": "Data", "insert_after": "customer_name", "unique": 1,
+         "in_list_view": 1, "in_standard_filter": 1, "in_global_search": 1, "bold": 1,
+         "description": "會員以手機號碼識別，不能重複（自動統一成 09xxxxxxxx）"},
+    ],
+    "Sales Invoice": [
+        {"fieldname": "nila_channel", "label": "銷售管道", "fieldtype": "Select", "options": "\n門市\n官網",
+         "insert_after": "customer", "read_only": 1, "in_standard_filter": 1, "in_list_view": 1,
+         "description": "只有「門市」計入會員消費與抽獎（官網訂單不算）"},
+        {"fieldname": "nila_client_id", "label": "結帳代碼", "fieldtype": "Data", "insert_after": "nila_channel",
+         "unique": 1, "hidden": 1, "read_only": 1, "no_copy": 1, "description": "同一筆結帳重送時不會重複建立"},
+        {"fieldname": "nila_cashier", "label": "收銀人員", "fieldtype": "Link", "options": "User",
+         "insert_after": "nila_client_id", "read_only": 1, "no_copy": 1, "in_standard_filter": 1},
+    ],
     "Material Request Item": [
         {"fieldname": "nila_suggested_qty", "label": "建議補貨數", "fieldtype": "Float", "insert_after": "qty",
          "read_only": 1, "no_copy": 1, "in_list_view": 1, "columns": 1},
@@ -68,6 +82,8 @@ DEFAULT_REASONS = {
     "調撥調整": ["門市保留展示", "門市自己的客人要用", "其他"],
 }
 DEFAULT_SUPPLIER = "預設廠商"
+MEMBER_GROUP = "會員"
+DEFAULT_CUSTOMERS = ["門市散客", "官網散客"]  # 不是會員的門市客人；SHOPLINE 官網訂單（P7）
 # 預設會把款式的這些欄位複製到所有規格；補貨設定每個規格不同，不能複製
 NOT_COPIED_TO_VARIANTS = ["reorder_levels"]
 # 安裝精靈建立的英文預設倉庫：沒有庫存異動就停用，避免選錯
@@ -148,6 +164,7 @@ def ensure_basics():
     _ensure_item_settings()
     _ensure_stock_settings()
     _ensure_reasons()
+    _ensure_roles()
     if not frappe.db.exists("Supplier", DEFAULT_SUPPLIER):
         frappe.get_doc({"doctype": "Supplier", "supplier_name": DEFAULT_SUPPLIER,
                         "supplier_group": frappe.db.get_value("Supplier Group", {"is_group": 1}, "name")}).insert()
@@ -180,6 +197,7 @@ def ensure_company_data(cfg):
     if frappe.db.get_value("Company", company, "default_in_transit_warehouse") != transit:
         frappe.db.set_value("Company", company, "default_in_transit_warehouse", transit)
     _ensure_default_warehouse(company, f"{cfg['hq']} - {abbr}", abbr)
+    _ensure_retail(company, [f"{n} - {abbr}" for n in [cfg["hq"], *cfg["branches"]]])
 
 
 def _ensure_item_settings():
@@ -211,6 +229,32 @@ def _ensure_reasons():
         if not frappe.db.exists("Nila Reason", {"kind": kind}):
             for r in reasons:
                 frappe.get_doc({"doctype": "Nila Reason", "kind": kind, "reason": r}).insert()
+
+
+def _ensure_roles():
+    """5 個層級的角色（權限內容見 retailrules.CAPS；帳號與門市在「帳號管理」設定）。"""
+    from nila_app.retailrules import LEVELS
+
+    for role in LEVELS:
+        if not frappe.db.exists("Role", role):
+            frappe.get_doc({"doctype": "Role", "role_name": role, "desk_access": 1}).insert(ignore_permissions=True)
+
+
+def _ensure_retail(company, stores):
+    """會員客戶群組、門市散客與官網散客、每個門市的收銀設定（付款方式：現金）。"""
+    if not frappe.db.exists("Customer Group", MEMBER_GROUP):
+        frappe.get_doc({"doctype": "Customer Group", "customer_group_name": MEMBER_GROUP,
+                        "parent_customer_group": "All Customer Groups"}).insert(ignore_permissions=True)
+    for name in DEFAULT_CUSTOMERS:
+        if not frappe.db.exists("Customer", name):
+            frappe.get_doc({"doctype": "Customer", "customer_name": name, "customer_type": "Individual",
+                            "customer_group": "Individual" if frappe.db.exists("Customer Group", "Individual")
+                            else "All Customer Groups"}).insert(ignore_permissions=True)
+    from nila_app.retail import pos_profile
+
+    for store in stores:
+        if frappe.db.exists("Warehouse", store):
+            pos_profile(store)
 
 
 def _ensure_default_warehouse(company, hq, abbr):

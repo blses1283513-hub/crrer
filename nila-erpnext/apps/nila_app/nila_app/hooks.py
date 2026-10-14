@@ -23,6 +23,8 @@ doc_events = {
         "on_update_after_submit": "nila_app.dispatch.sales_order_changed",
         "on_cancel": "nila_app.dispatch.sales_order_cancelled",
     },
+    # 會員：手機統一格式、不能重複
+    "Customer": {"validate": "nila_app.retail.customer_validate"},
     # 停產的商品不能補貨
     "Material Request": {"validate": "nila_app.replenish.material_request_validate"},
 }

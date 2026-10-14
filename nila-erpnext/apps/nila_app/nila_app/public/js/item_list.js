@@ -5,6 +5,7 @@
 	settings.onload = function (listview) {
 		if (onload) onload.call(this, listview);
 		listview.page.add_inner_button(__("庫存表"), () => frappe.set_route("nila-stock-matrix"));
+		listview.page.add_inner_button(__("條碼"), () => frappe.set_route("nila-barcode"));
 		if (frappe.model.can_create("Item")) {
 			listview.page.add_inner_button(__("新增款式"), () => frappe.set_route("nila-new-style"));
 			listview.page.add_inner_button(__("匯入／匯出"), () => frappe.set_route("nila-item-import"));
