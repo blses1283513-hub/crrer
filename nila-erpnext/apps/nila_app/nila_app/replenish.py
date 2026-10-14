@@ -189,9 +189,9 @@ def daily():
     if not need and not moves:
         return
     subject = _("今天有 {0} 個規格建議補貨（共 {1} 件），{2} 筆建議調撥").format(len(need), sum(r["suggest"] for r in need), len(moves))
-    users = {u for u in frappe.get_all("Has Role", filters={"role": ["in", ["System Manager", "Stock Manager", "Purchase Manager"]],
-                                                              "parenttype": "User"}, pluck="parent")
-             if u not in ("Guest",)}
+    # Administrator 不會有角色紀錄，但它是（可能唯一的）最高權限使用者，一定要通知
+    users = {"Administrator"} | set(frappe.get_all("Has Role", filters={
+        "role": ["in", ["System Manager", "Stock Manager", "Purchase Manager"]], "parenttype": "User"}, pluck="parent"))
     enabled = set(frappe.get_all("User", filters={"name": ["in", list(users) or [""]], "enabled": 1}, pluck="name"))
     for u in sorted(enabled):
         frappe.get_doc({"doctype": "Notification Log", "subject": subject, "for_user": u, "type": "Alert",

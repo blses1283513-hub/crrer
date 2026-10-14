@@ -202,7 +202,11 @@ def _ensure_stock_settings():
 
 
 def _ensure_reasons():
-    """原因選項的預設值：某一類完全沒有選項時才建立（之後使用者刪改不會被加回來）。"""
+    """原因選項的預設值：某一類完全沒有選項時才建立（之後使用者刪改不會被加回來）。
+    更新時 update-nila.ps1 會先執行基本設定、再 migrate 建立新的資料表；這時還沒有這個 DocType 就先略過，
+    migrate 結束後的 after_migrate 會再執行一次。"""
+    if not frappe.db.exists("DocType", "Nila Reason"):
+        return
     for kind, reasons in DEFAULT_REASONS.items():
         if not frappe.db.exists("Nila Reason", {"kind": kind}):
             for r in reasons:
