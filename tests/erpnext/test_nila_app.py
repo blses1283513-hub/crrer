@@ -120,14 +120,39 @@ class TestAppFiles(unittest.TestCase):
             self.assertTrue((APP / js).exists(), js)
 
     def test_pages(self):
-        for name in ["nila-new-style", "nila-item-import"]:
+        for name in ["nila-new-style", "nila-item-import", "nila-stock-matrix", "nila-replenish"]:
             folder = APP / "nila" / "page" / name.replace("-", "_")
             meta = json.loads((folder / f"{folder.name}.json").read_text(encoding="utf-8"))
             self.assertEqual((meta["name"], meta["page_name"], meta["module"], meta["standard"]), (name, name, "Nila", "Yes"))
             js = (folder / f"{folder.name}.js").read_text(encoding="utf-8")
             self.assertIn(f'frappe.pages["{name}"]', js)
             for method in re.findall(r'"(nila_app\.[\w.]+)"', js):
-                self.assertTrue(method.startswith(("nila_app.products.", "nila_app.importer.")), method)
+                self.assertTrue(method.startswith(("nila_app.products.", "nila_app.importer.", "nila_app.matrix.",
+                                                   "nila_app.replenish.")), method)
+
+    def test_whitelisted_js_calls_exist(self):
+        """畫面（頁面、表單、共用 JS）呼叫的伺服器方法都存在且允許呼叫（@frappe.whitelist）。"""
+        import ast
+
+        calls = set()
+        for js in APP.rglob("*.js"):
+            calls |= set(re.findall(r'"(nila_app\.[\w.]+)"', js.read_text(encoding="utf-8")))
+        self.assertTrue(calls)
+        for dotted in calls:
+            module, func = dotted.rsplit(".", 1)
+            tree = ast.parse((APP.parent / (module.replace(".", "/") + ".py")).read_text(encoding="utf-8"))
+            fn = next((n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef) and n.name == func), None)
+            self.assertIsNotNone(fn, dotted)
+            self.assertTrue(any("whitelist" in ast.unparse(d) for d in fn.decorator_list), f"{dotted} 沒有 @frappe.whitelist")
+
+    def test_doctypes(self):
+        for folder in ["nila_reason", "nila_reason_log"]:
+            d = APP / "nila" / "doctype" / folder
+            meta = json.loads((d / f"{folder}.json").read_text(encoding="utf-8"))
+            self.assertEqual((meta["module"], meta["doctype"]), ("Nila", "DocType"))
+            self.assertEqual(meta["field_order"], [f["fieldname"] for f in meta["fields"]])
+            cls = meta["name"].replace(" ", "")
+            self.assertIn(f"class {cls}(Document)", (d / f"{folder}.py").read_text(encoding="utf-8"))
 
     def test_compose_references_existing_files(self):
         compose = (ROOT / "production" / "docker-compose.yml").read_text(encoding="utf-8")

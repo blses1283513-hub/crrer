@@ -11,8 +11,8 @@ import frappe
 from frappe import _
 
 from nila_app import products as p
+from nila_app import stock
 from nila_app.catalog import next_style_code
-from nila_app.setup.config import TRANSIT, load_config
 from nila_app.sheet import export_rows, headers, parse_csv, plan_import
 
 STATE_KEY = "nila_import_state"
@@ -30,16 +30,7 @@ def _check_role():
 
 def _context():
     """甲型 {名稱: 縮寫}、尺寸、各公司倉庫 {欄名: 倉庫}（依設定檔的順序）。"""
-    shapes = {v.attribute_value: v.abbr for v in frappe.get_all(
-        "Item Attribute Value", filters={"parent": p.SHAPE_ATTR}, fields=["attribute_value", "abbr"], order_by="idx")}
-    sizes = p._attribute_values(p.SIZE_ATTR)
-    whs = frappe.get_all("Warehouse", filters={"is_group": 0, "disabled": 0, "warehouse_type": ["!=", "Transit"]},
-                         fields=["name", "warehouse_name"], order_by="creation")
-    by_name = {w.warehouse_name: w.name for w in whs if w.warehouse_name != TRANSIT}
-    cfg = load_config(frappe.local.sites_path) or {}
-    order = [n for n in [cfg.get("hq"), *cfg.get("branches", [])] if n in by_name]
-    order += [n for n in by_name if n not in order]
-    return shapes, sizes, {n: by_name[n] for n in order}
+    return stock.shapes(), stock.sizes(), {w["label"]: w["name"] for w in stock.warehouses(include_transit=False)}
 
 
 def _existing():

@@ -1,0 +1,17 @@
+/* 妮菈共用樣式：庫存狀態顏色（庫存表、補貨、訂單面板共用） */
+.nila-grid { border-collapse: collapse; font-variant-numeric: tabular-nums; margin-bottom: 0; }
+.nila-grid th, .nila-grid td { border: 1px solid var(--border-color); padding: 2px 6px; text-align: center; white-space: nowrap; }
+.nila-grid th { background: var(--subtle-fg); font-weight: 600; }
+.nila-grid td.nila-label { text-align: left; font-weight: 600; background: var(--subtle-fg); }
+.nila-grid tr.nila-total td { font-weight: 700; border-top: 2px solid var(--gray-500); }
+.nila-grid tr.nila-suggest td { color: var(--blue-600); }
+.nila-grid td.nila-blank { background: var(--gray-100); }
+.nila-grid td[data-item] { cursor: pointer; }
+.nila-grid td[data-item]:hover { outline: 2px solid var(--blue-400); }
+.nila-neg { background: #c62828 !important; color: #fff !important; font-weight: 700; }
+.nila-out { background: #ffcdd2 !important; color: #b71c1c !important; }
+.nila-low { background: #fff3c4 !important; color: #7a5b00 !important; }
+.nila-ok { }
+.nila-legend span { display: inline-block; padding: 0 8px; margin-right: 6px; border: 1px solid var(--border-color); border-radius: 4px; }
+.nila-style { margin-bottom: 18px; overflow-x: auto; }
+.nila-style h5 { margin: 0 0 4px; }

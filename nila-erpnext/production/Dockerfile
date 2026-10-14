@@ -21,7 +21,9 @@ RUN set -e; \
     printf '{"url":"file:///home/frappe/frappe-bench/apps/nila_app","dir_info":{"editable":true}}' > "$DI/direct_url.json"; \
     printf 'nila_app.pth,,\nnila_app-%s.dist-info/METADATA,,\nnila_app-%s.dist-info/RECORD,,\n' "$VER" "$VER" > "$DI/RECORD"; \
     env/bin/python -c "import nila_app.hooks, nila_app.setup.config, importlib.metadata as m; print('nila_app', m.version('nila_app'))"; \
-    env/bin/python -m compileall -q apps/nila_app
+    env/bin/python -m compileall -q apps/nila_app; \
+    ln -sfn /home/frappe/frappe-bench/apps/nila_app/nila_app/public assets/nila_app
+# 最後一行：nila_app 的共用畫面檔（/assets/nila_app/...）。assets 在映像檔內（不在 sites 資料卷），每次更新都會換成新版
 
 LABEL org.opencontainers.image.title="nila-erpnext" \
       org.opencontainers.image.description="ERPNext 16 + nila_app（妮菈穿戴甲）"

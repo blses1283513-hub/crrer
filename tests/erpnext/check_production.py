@@ -88,6 +88,25 @@ def check_install(c, expect_version, p0_only=False):
     check("頁面：新增款式、商品匯入匯出", {"nila-new-style", "nila-item-import"} <= pages, sorted(pages))
     status, body = c.call("/api/method/nila_app.products.get_style_options")
     check("新增款式 API 可用", status == 200 and body.get("message", {}).get("sizes") == ["XS", "S", "M", "L"], status)
+    # P2 庫存表、P3 全公司補貨、P4 訂單調度
+    check("允許負庫存", st.get("allow_negative_stock") == 1)
+    check("頁面：庫存表、補貨建議", {"nila-stock-matrix", "nila-replenish"} <= pages, sorted(pages))
+    cf = {f["name"] for f in c.get_list("Custom Field", '["name"]', '[["fieldname","like","nila_%"]]')}
+    check("自訂欄位：訂單出貨狀態、調撥單調入倉、補貨單建議數",
+          {"Sales Order-nila_dispatch_status", "Stock Entry-nila_destination", "Stock Entry-nila_sales_order",
+           "Material Request Item-nila_suggested_qty"} <= cf, sorted(cf))
+    kinds = {r["kind"] for r in c.get_list("Nila Reason", '["kind"]')}
+    check("原因選項：補貨調整、負庫存、調撥調整", kinds == {"補貨調整", "負庫存", "調撥調整"}, kinds)
+    check("預設廠商", c.exists("Supplier", "預設廠商"))
+    try:
+        with c.op.open(c.base + "/assets/nila_app/js/nila.js", timeout=60) as r:
+            asset = r.status == 200 and b"nila.style_block" in r.read()
+    except urllib.error.HTTPError:
+        asset = False
+    check("共用畫面檔（/assets/nila_app）可以下載", asset)
+    for method in ["nila_app.matrix.get_matrix", "nila_app.replenish.get_suggestions"]:
+        status, _body = c.call(f"/api/method/{method}")
+        check(f"API 可用：{method}", status == 200, status)
 
 
 def make_group(c, name):

@@ -1,0 +1,153 @@
+{
+ "doctype": "DocType",
+ "module": "Nila",
+ "custom": 0,
+ "istable": 0,
+ "editable_grid": 0,
+ "engine": "InnoDB",
+ "creation": "2026-10-14 00:00:00.000000",
+ "modified": "2026-10-14 00:00:00.000000",
+ "modified_by": "Administrator",
+ "owner": "Administrator",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "links": [],
+ "actions": [],
+ "row_format": "Dynamic",
+ "name": "Nila Reason Log",
+ "autoname": "LOG-.#####",
+ "title_field": "item_code",
+ "description": "補貨數、調撥數改得和建議不同時，以及標註負庫存原因時的紀錄（不能修改）",
+ "fields": [
+  {
+   "fieldname": "kind",
+   "label": "用途",
+   "fieldtype": "Select",
+   "options": "補貨調整\n負庫存\n調撥調整",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "item_code",
+   "label": "商品",
+   "fieldtype": "Link",
+   "options": "Item",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "warehouse",
+   "label": "倉庫",
+   "fieldtype": "Link",
+   "options": "Warehouse",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break",
+   "read_only": 1
+  },
+  {
+   "fieldname": "before_qty",
+   "label": "建議數量",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "after_qty",
+   "label": "實際數量",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_1",
+   "fieldtype": "Section Break",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reason",
+   "label": "原因",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "note",
+   "label": "備註",
+   "fieldtype": "Small Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reference_doctype",
+   "label": "相關單據類型",
+   "fieldtype": "Link",
+   "options": "DocType",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reference_name",
+   "label": "相關單據",
+   "fieldtype": "Dynamic Link",
+   "options": "reference_doctype",
+   "read_only": 1
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1
+  },
+  {
+   "role": "Stock Manager",
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1
+  },
+  {
+   "role": "Stock User",
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1
+  },
+  {
+   "role": "Purchase Manager",
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1
+  },
+  {
+   "role": "Sales Manager",
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1
+  }
+ ],
+ "in_create": 1,
+ "track_changes": 0,
+ "field_order": [
+  "kind",
+  "item_code",
+  "warehouse",
+  "column_break_1",
+  "before_qty",
+  "after_qty",
+  "section_break_1",
+  "reason",
+  "note",
+  "reference_doctype",
+  "reference_name"
+ ]
+}

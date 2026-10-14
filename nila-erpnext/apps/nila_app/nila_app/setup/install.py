@@ -12,6 +12,7 @@ import frappe
 from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 
 from nila_app.catalog import STATUSES
+from nila_app.stockrules import DISPATCH_STATUSES
 from nila_app.setup.config import TRANSIT, ConfigError, check_shape_changes, load_config, read_terms
 
 ITEM_GROUP = "穿戴甲"
@@ -41,8 +42,32 @@ CUSTOM_FIELDS = {
         {"fieldname": "nila_store_price", "label": "實體售價", "fieldtype": "Currency", "insert_after": "nila_web_price",
          "read_only_depends_on": _ON_STYLE, "non_negative": 1, "in_list_view": 1,
          "description": "在款式修改成本與售價，所有規格會自動套用"},
-    ]
+    ],
+    "Sales Order": [
+        {"fieldname": "nila_dispatch_status", "label": "出貨狀態", "fieldtype": "Select",
+         "options": "\n" + "\n".join(DISPATCH_STATUSES), "insert_after": "status", "read_only": 1,
+         "allow_on_submit": 1, "no_copy": 1, "in_list_view": 1, "in_standard_filter": 1,
+         "description": "依先後分配庫存後自動計算；入庫、調撥、出貨、取消後會自動更新"},
+    ],
+    "Stock Entry": [
+        {"fieldname": "nila_destination", "label": "調入倉庫", "fieldtype": "Link", "options": "Warehouse",
+         "insert_after": "add_to_transit", "read_only": 1, "no_copy": 1, "depends_on": "eval:doc.nila_destination",
+         "in_standard_filter": 1, "description": "在途調撥單的最終目的地，「到貨入庫」時轉入這個倉庫"},
+        {"fieldname": "nila_sales_order", "label": "相關訂單", "fieldtype": "Link", "options": "Sales Order",
+         "insert_after": "nila_destination", "read_only": 1, "no_copy": 1, "depends_on": "eval:doc.nila_sales_order"},
+    ],
+    "Material Request Item": [
+        {"fieldname": "nila_suggested_qty", "label": "建議補貨數", "fieldtype": "Float", "insert_after": "qty",
+         "read_only": 1, "no_copy": 1, "in_list_view": 1, "columns": 1},
+    ],
 }
+# 原因選項的預設值（可在「原因選項」自行新增或停用）
+DEFAULT_REASONS = {
+    "補貨調整": ["預計熱賣", "銷售趨緩", "廠商最低叫貨量", "季節或活動", "其他"],
+    "負庫存": ["訂單超賣", "門市先賣未入帳", "盤點差異", "其他"],
+    "調撥調整": ["門市保留展示", "門市自己的客人要用", "其他"],
+}
+DEFAULT_SUPPLIER = "預設廠商"
 # 預設會把款式的這些欄位複製到所有規格；補貨設定每個規格不同，不能複製
 NOT_COPIED_TO_VARIANTS = ["reorder_levels"]
 # 安裝精靈建立的英文預設倉庫：沒有庫存異動就停用，避免選錯
@@ -121,6 +146,11 @@ def ensure_basics():
                             "selling": 1, "enabled": 1}).insert()
     create_custom_fields(CUSTOM_FIELDS, update=True)
     _ensure_item_settings()
+    _ensure_stock_settings()
+    _ensure_reasons()
+    if not frappe.db.exists("Supplier", DEFAULT_SUPPLIER):
+        frappe.get_doc({"doctype": "Supplier", "supplier_name": DEFAULT_SUPPLIER,
+                        "supplier_group": frappe.db.get_value("Supplier Group", {"is_group": 1}, "name")}).insert()
     _ensure_attribute(SIZE_ATTR, [(s, s) for s in (_config() or {}).get("sizes", ["XS", "S", "M", "L"])])
     _ensure_terms()
 
@@ -162,6 +192,21 @@ def _ensure_item_settings():
     frappe.db.delete("Variant Field", {"parent": "Item Variant Settings", "field_name": ["in", NOT_COPIED_TO_VARIANTS]})
     if frappe.db.get_single_value("Stock Settings", "auto_insert_price_list_rate_if_missing"):
         frappe.db.set_single_value("Stock Settings", "auto_insert_price_list_rate_if_missing", 0)
+
+
+def _ensure_stock_settings():
+    """庫存可以變成負數（需求 Q1：先出貨、門市先賣，之後再入庫）。"""
+    if not frappe.db.get_single_value("Stock Settings", "allow_negative_stock"):
+        frappe.db.set_single_value("Stock Settings", "allow_negative_stock", 1)
+        log("✓ 允許負庫存")
+
+
+def _ensure_reasons():
+    """原因選項的預設值：某一類完全沒有選項時才建立（之後使用者刪改不會被加回來）。"""
+    for kind, reasons in DEFAULT_REASONS.items():
+        if not frappe.db.exists("Nila Reason", {"kind": kind}):
+            for r in reasons:
+                frappe.get_doc({"doctype": "Nila Reason", "kind": kind, "reason": r}).insert()
 
 
 def _ensure_default_warehouse(company, hq, abbr):
