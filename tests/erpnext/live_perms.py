@@ -107,6 +107,11 @@ def run():
     check("不能修改內建 Administrator", err and "Administrator" in err, err)
 
     # ---------- 各層級能做與不能做 ----------
+    # 先建一個款式，庫存表才有內容（乾淨的網站還沒有任何商品）
+    opts = products.get_style_options()
+    style = products.create_style({"name": "權限測試款", "cost": 123, "web_price": 390, "store_price": 350,
+                                   "cells": [{"shape": opts["shapes"][0], "size": opts["sizes"][0]}], "targets": {}})
+    item = style["variants"][0]
     check("店員：門市銷售只有自己的門市", [s["value"] for s in as_user(u_staff, retail.sale_context)["stores"]] == [a])
     m = as_user(u_staff, matrix.build, {})[0]
     labels = {r["label"] for blk in m for r in blk["rows"]}
@@ -142,10 +147,6 @@ def run():
           and as_user(u_hq, frappe.get_doc("Report", "Stock Projected Qty").is_permitted))
 
     # 成本欄位
-    opts = products.get_style_options()
-    style = products.create_style({"name": "權限測試款", "cost": 123, "web_price": 390, "store_price": 350,
-                                   "cells": [{"shape": opts["shapes"][0], "size": opts["sizes"][0]}], "targets": {}})
-    item = style["variants"][0]
     from frappe.client import get as client_get
     seen = as_user(u_hq, client_get, "Item", item)
     check("總公司作業讀商品：看不到成本", not seen.get("nila_cost") and not seen.get("valuation_rate"), (seen.get("nila_cost"), seen.get("valuation_rate")))
