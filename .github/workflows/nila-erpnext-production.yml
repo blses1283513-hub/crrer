@@ -110,7 +110,14 @@ jobs:
           $tmp = 'Reset-Test-2026!q'
           $env:NILA_ANSWERS = "$tmp`n$tmp"
           ./tests/erpnext/Invoke-WithAnswers.ps1 -Script "$env:INSTALL/production/reset-admin-password.ps1"
-          $login = { param($pw) (Invoke-WebRequest http://localhost:8090/api/method/login -Method Post -ContentType 'application/json' -Body (@{ usr = 'Administrator'; pwd = $pw } | ConvertTo-Json) -SkipHttpErrorCheck).StatusCode }
+          $login = { param($pw)
+            # 剛重新啟動時偶爾會回 5xx：最多等 60 秒；200（成功）或 401（密碼錯）才是答案
+            for ($i = 0; $i -lt 20; $i++) {
+              $c = (Invoke-WebRequest http://localhost:8090/api/method/login -Method Post -ContentType 'application/json' -Body (@{ usr = 'Administrator'; pwd = $pw } | ConvertTo-Json) -SkipHttpErrorCheck).StatusCode
+              if ($c -lt 500) { return $c }
+              Start-Sleep -Seconds 3
+            }
+            return $c }
           if ((& $login $tmp) -ne 200) { throw '新密碼不能登入' }
           if ((& $login $env:ADMIN_PW) -eq 200) { throw '舊密碼還能登入' }
           $env:NILA_ANSWERS = "$env:ADMIN_PW`n$env:ADMIN_PW"
@@ -179,9 +186,11 @@ jobs:
         shell: pwsh
         run: |
           foreach ($f in 'check-nila.ps1', 'drill-nila.ps1', 'reset-admin-password.ps1') { if (-not (Test-Path "$env:INSTALL/production/$f")) { throw "更新後缺少 $f" } }
-          & "$env:INSTALL/production/check-nila.ps1"
-          # 還沒有備份紀錄，所以會有 1 個問題；確認腳本本身可以執行完畢
-          if ($LASTEXITCODE -gt 1) { throw '健康檢查無法執行' }
+          $out = & "$env:INSTALL/production/check-nila.ps1" 6>&1 | Out-String
+          $code = $LASTEXITCODE
+          $global:LASTEXITCODE = 0
+          # 還沒有備份紀錄，所以只會有這 1 個問題；其他項目都要正常
+          if ($code -gt 1 -or $out -notmatch '網頁正常' -or $out -notmatch '9 個服務都在執行' -or $out -notmatch '有 1 個問題') { throw "健康檢查結果不對：$out" }
       - name: 商品功能整合測試
         working-directory: ${{ env.INSTALL }}/production
         run: |

@@ -83,6 +83,8 @@ if (-not $failures.Count) {
             if (-not $ready) {
                 Say "…" "啟動所有服務（docker compose up -d）"
                 Invoke-Quiet { docker compose up -d } | Out-Null
+                # up -d 會重新執行啟動設定（create-site）；等它做完，避免剛恢復時登入出錯
+                Wait-NilaOneShot -Service "create-site" -Minutes 15 | Out-Null
                 $ready = Wait-NilaReady -Port $port -Minutes 8
             }
             if (-not $ready) {
