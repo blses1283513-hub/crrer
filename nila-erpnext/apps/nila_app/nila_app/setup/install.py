@@ -11,23 +11,42 @@ import os
 import frappe
 from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 
+from nila_app.catalog import STATUSES
 from nila_app.setup.config import TRANSIT, ConfigError, check_shape_changes, load_config, read_terms
 
 ITEM_GROUP = "穿戴甲"
 UOM = "件"
 PRICE_LISTS = ["官網售價", "實體售價"]
-STATUSES = ["上架", "停售", "停產"]
 SHAPE_ATTR = "甲型"
 SIZE_ATTR = "尺寸"
 
+_ON_STYLE = "eval:doc.variant_of"  # 規格（變體）上唯讀，只能在款式修改
 CUSTOM_FIELDS = {
     "Item": [
         {"fieldname": "nila_status", "label": "商品狀態", "fieldtype": "Select", "options": "\n".join(STATUSES),
-         "default": "上架", "insert_after": "item_name", "in_list_view": 1, "in_standard_filter": 1},
-        {"fieldname": "nila_reorder_target", "label": "補貨目標", "fieldtype": "Int", "insert_after": "nila_status",
+         "default": "上架", "insert_after": "item_name", "in_list_view": 1, "in_standard_filter": 1,
+         "read_only_depends_on": _ON_STYLE,
+         "description": "停售、停產：不能接新訂單，門市仍可賣；停產：不再補貨。在款式修改，所有規格一起變更"},
+        {"fieldname": "nila_shape", "label": "甲型", "fieldtype": "Data", "insert_after": "nila_status",
+         "read_only": 1, "depends_on": "eval:doc.variant_of", "in_list_view": 1, "in_standard_filter": 1},
+        {"fieldname": "nila_size", "label": "尺寸", "fieldtype": "Data", "insert_after": "nila_shape",
+         "read_only": 1, "depends_on": "eval:doc.variant_of", "in_list_view": 1, "in_standard_filter": 1},
+        {"fieldname": "nila_reorder_target", "label": "補貨目標", "fieldtype": "Int", "insert_after": "nila_size",
+         "depends_on": "eval:!doc.has_variants", "non_negative": 1,
          "description": "全公司合計的補貨目標；依款式與甲型設定"},
+        {"fieldname": "nila_cost", "label": "成本", "fieldtype": "Currency", "insert_after": "nila_reorder_target",
+         "read_only_depends_on": _ON_STYLE, "non_negative": 1},
+        {"fieldname": "nila_web_price", "label": "官網售價", "fieldtype": "Currency", "insert_after": "nila_cost",
+         "read_only_depends_on": _ON_STYLE, "non_negative": 1},
+        {"fieldname": "nila_store_price", "label": "實體售價", "fieldtype": "Currency", "insert_after": "nila_web_price",
+         "read_only_depends_on": _ON_STYLE, "non_negative": 1, "in_list_view": 1,
+         "description": "在款式修改成本與售價，所有規格會自動套用"},
     ]
 }
+# 預設會把款式的這些欄位複製到所有規格；補貨設定每個規格不同，不能複製
+NOT_COPIED_TO_VARIANTS = ["reorder_levels"]
+# 安裝精靈建立的英文預設倉庫：沒有庫存異動就停用，避免選錯
+DEFAULT_WAREHOUSES = ["Stores", "Finished Goods", "Work In Progress", "Goods In Transit"]
 
 
 def log(msg):
@@ -101,6 +120,7 @@ def ensure_basics():
             frappe.get_doc({"doctype": "Price List", "price_list_name": pl, "currency": currency,
                             "selling": 1, "enabled": 1}).insert()
     create_custom_fields(CUSTOM_FIELDS, update=True)
+    _ensure_item_settings()
     _ensure_attribute(SIZE_ATTR, [(s, s) for s in (_config() or {}).get("sizes", ["XS", "S", "M", "L"])])
     _ensure_terms()
 
@@ -129,6 +149,39 @@ def ensure_company_data(cfg):
                         "parent_warehouse": parent, "warehouse_type": "Transit"}).insert()
     if frappe.db.get_value("Company", company, "default_in_transit_warehouse") != transit:
         frappe.db.set_value("Company", company, "default_in_transit_warehouse", transit)
+    _ensure_default_warehouse(company, f"{cfg['hq']} - {abbr}", abbr)
+
+
+def _ensure_item_settings():
+    """商品清單顯示「款式」欄；款式的補貨設定不複製到規格；不自動從交易新增售價（售價只由款式同步）。"""
+    from frappe.custom.doctype.property_setter.property_setter import make_property_setter
+
+    if frappe.db.get_value("Property Setter", {"doc_type": "Item", "field_name": "variant_of",
+                                                   "property": "in_list_view"}, "value") != "1":
+        make_property_setter("Item", "variant_of", "in_list_view", 1, "Check", validate_fields_for_doctype=False)
+    frappe.db.delete("Variant Field", {"parent": "Item Variant Settings", "field_name": ["in", NOT_COPIED_TO_VARIANTS]})
+    if frappe.db.get_single_value("Stock Settings", "auto_insert_price_list_rate_if_missing"):
+        frappe.db.set_single_value("Stock Settings", "auto_insert_price_list_rate_if_missing", 0)
+
+
+def _ensure_default_warehouse(company, hq, abbr):
+    """預設倉庫改為總公司；停用沒有庫存異動的英文預設倉庫。"""
+    if frappe.db.get_single_value("Stock Settings", "default_warehouse") != hq:
+        frappe.db.set_single_value("Stock Settings", "default_warehouse", hq)
+    group = frappe.get_doc("Item Group", ITEM_GROUP)
+    row = next((d for d in group.item_group_defaults if d.company == company), None)
+    if not row or row.default_warehouse != hq:
+        if not row:
+            row = group.append("item_group_defaults", {"company": company})
+        row.default_warehouse = hq
+        group.save()
+    for name in DEFAULT_WAREHOUSES:
+        wh = f"{name} - {abbr}"
+        if (frappe.db.get_value("Warehouse", wh, "disabled") == 0
+                and not frappe.db.exists("Stock Ledger Entry", {"warehouse": wh})
+                and not frappe.db.exists("Company", {"default_in_transit_warehouse": wh})):
+            frappe.db.set_value("Warehouse", wh, "disabled", 1)
+            log(f"✓ 停用預設倉庫：{wh}")
 
 
 def _ensure_attribute(name, values):

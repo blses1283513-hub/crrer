@@ -6,6 +6,7 @@
 import importlib.util
 import json
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -104,6 +105,29 @@ class TestAppFiles(unittest.TestCase):
         self.assertIn("nila_app.setup.install.after_install", hooks)
         self.assertRegex((APP / "__init__.py").read_text(encoding="utf-8"), r'__version__ = "\d+\.\d+\.\d+"')
         self.assertEqual((APP / "modules.txt").read_text(encoding="utf-8").split(), ["Nila"])
+
+    def test_hook_targets_exist(self):
+        """hooks.py 指到的函式與 JS 檔都存在（打錯字時 ERPNext 只會在使用時才出錯）。"""
+        import ast
+
+        hooks = (APP / "hooks.py").read_text(encoding="utf-8")
+        for dotted in set(re.findall(r'"(nila_app\.[\w.]+)"', hooks)):
+            module, func = dotted.rsplit(".", 1)
+            src = (APP.parent / (module.replace(".", "/") + ".py")).read_text(encoding="utf-8")
+            names = {n.name for n in ast.walk(ast.parse(src)) if isinstance(n, ast.FunctionDef)}
+            self.assertIn(func, names, dotted)
+        for js in re.findall(r'"(public/js/[\w.]+)"', hooks):
+            self.assertTrue((APP / js).exists(), js)
+
+    def test_pages(self):
+        for name in ["nila-new-style", "nila-item-import"]:
+            folder = APP / "nila" / "page" / name.replace("-", "_")
+            meta = json.loads((folder / f"{folder.name}.json").read_text(encoding="utf-8"))
+            self.assertEqual((meta["name"], meta["page_name"], meta["module"], meta["standard"]), (name, name, "Nila", "Yes"))
+            js = (folder / f"{folder.name}.js").read_text(encoding="utf-8")
+            self.assertIn(f'frappe.pages["{name}"]', js)
+            for method in re.findall(r'"(nila_app\.[\w.]+)"', js):
+                self.assertTrue(method.startswith(("nila_app.products.", "nila_app.importer.")), method)
 
     def test_compose_references_existing_files(self):
         compose = (ROOT / "production" / "docker-compose.yml").read_text(encoding="utf-8")

@@ -66,6 +66,9 @@ try {
 
     Write-Host "5/5 重新啟動…"
     Restart-NilaAll
+    # 清掉快取中舊版的功能設定（hooks），新功能才會生效
+    docker compose exec -T backend bench --site $site clear-cache | Out-Host
+    if ($LASTEXITCODE -ne 0) { throw "清除快取失敗，請再執行一次 update-nila.ps1。" }
     if (-not (Wait-NilaReady -Port $port)) { throw "更新後系統沒有回應。請執行 docker compose ps 與 docker compose logs --tail 50 backend 查看。" }
 } finally { Pop-Location }
 

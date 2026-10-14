@@ -1,5 +1,6 @@
 # 妮菈 ERPNext 16 正式版：在真正的 ERPNext 上端對端測試
-# 用與使用者相同的腳本：install-nila.ps1（兩次：放設定檔、安裝）→ backup-nila.ps1 → restore-nila.ps1 → update-nila.ps1
+# 用與使用者相同的腳本：install-nila.ps1（兩次：放設定檔、安裝）→ 商品功能整合測試 → backup-nila.ps1 → restore-nila.ps1 → update-nila.ps1
+# upgrade：先裝 0.1.0（P0），再用 update-nila.ps1 更新到目前版本，確認舊客戶可以直接升級
 name: 妮菈 ERPNext 正式版（端對端）
 
 on:
@@ -23,6 +24,8 @@ permissions:
 env:
   INSTALL: ${{ github.workspace }}/../nila-install
   ADMIN_PW: 'Prod $pw"2026x'
+  VERSION: '0.2.0'
+  P0_COMMIT: ab1df1e3a0a81f1d48bad5084c424040a4c6e699
 
 jobs:
   e2e:
@@ -48,7 +51,15 @@ jobs:
           ./tests/erpnext/Invoke-WithAnswers.ps1 -Script ./nila-erpnext/production/install-nila.ps1 -InstallDir $env:INSTALL
           if ((Get-Content "$env:INSTALL/production/.env" -Raw) -notmatch "ADMIN_PASSWORD=''") { throw '.env 中仍有管理員密碼' }
       - name: 檢查安裝結果
-        run: python3 tests/erpnext/check_production.py --password "$ADMIN_PW" --expect-version 0.1.0 --phase install
+        run: python3 tests/erpnext/check_production.py --password "$ADMIN_PW" --expect-version "$VERSION" --phase install
+      - name: 商品功能整合測試（新增款式、同步、停售停產、匯入匯出）
+        working-directory: ${{ env.INSTALL }}/production
+        run: |
+          docker compose cp "$GITHUB_WORKSPACE/tests/erpnext/live_products.py" backend:/tmp/live_products.py
+          docker compose cp "$GITHUB_WORKSPACE/tests/erpnext/live_import.py" backend:/tmp/live_import.py
+          docker compose cp "$GITHUB_WORKSPACE/nila-erpnext/seed/sample-skus.csv" backend:/tmp/sample-skus.csv
+          docker compose exec -T backend bash -c "cd sites && ../env/bin/python -W ignore /tmp/live_products.py nila"
+          docker compose exec -T backend bash -c "cd sites && ../env/bin/python -W ignore /tmp/live_import.py nila /tmp/sample-skus.csv"
       - name: 備份（含第二個地方）
         shell: pwsh
         run: |
@@ -77,6 +88,48 @@ jobs:
           ./tests/erpnext/Invoke-WithAnswers.ps1 -Script "$dl/production/update-nila.ps1" -InstallDir $env:INSTALL
       - name: 檢查更新結果
         run: python3 tests/erpnext/check_production.py --password "$ADMIN_PW" --expect-version 0.9.9 --phase restored
+      - name: 失敗時的紀錄
+        if: failure()
+        working-directory: ${{ env.INSTALL }}/production
+        run: docker compose ps -a; docker compose logs --tail 80 backend create-site frontend
+
+  upgrade:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - name: 取得 0.1.0（P0）的程式
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.P0_COMMIT }}
+          path: old
+      - name: 騰出磁碟空間（ERPNext 映像約 7 GB）
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
+      - name: 安裝 0.1.0
+        shell: pwsh
+        run: |
+          ./tests/erpnext/Invoke-WithAnswers.ps1 -Script ./old/nila-erpnext/production/install-nila.ps1 -InstallDir $env:INSTALL
+          $env:NILA_ANSWERS = "$env:ADMIN_PW`n$env:ADMIN_PW`nY"
+          ./tests/erpnext/Invoke-WithAnswers.ps1 -Script ./old/nila-erpnext/production/install-nila.ps1 -InstallDir $env:INSTALL
+      - name: 檢查 0.1.0
+        run: python3 tests/erpnext/check_production.py --password "$ADMIN_PW" --expect-version 0.1.0 --phase install --p0-only
+      - name: 用 update-nila.ps1 更新到目前版本
+        shell: pwsh
+        run: |
+          $dl = "$env:RUNNER_TEMP/download/nila-erpnext"
+          New-Item -ItemType Directory -Force -Path $dl | Out-Null
+          Copy-Item ./nila-erpnext/apps, ./nila-erpnext/production $dl -Recurse
+          $env:NILA_ANSWERS = 'Y'
+          ./tests/erpnext/Invoke-WithAnswers.ps1 -Script "$dl/production/update-nila.ps1" -InstallDir $env:INSTALL
+      - name: 檢查更新結果（資料保留、新功能生效）
+        run: python3 tests/erpnext/check_production.py --password "$ADMIN_PW" --expect-version "$VERSION" --phase restored
+      - name: 商品功能整合測試
+        working-directory: ${{ env.INSTALL }}/production
+        run: |
+          docker compose cp "$GITHUB_WORKSPACE/tests/erpnext/live_products.py" backend:/tmp/live_products.py
+          docker compose exec -T backend bash -c "cd sites && ../env/bin/python -W ignore /tmp/live_products.py nila"
       - name: 失敗時的紀錄
         if: failure()
         working-directory: ${{ env.INSTALL }}/production
