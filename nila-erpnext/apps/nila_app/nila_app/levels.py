@@ -36,6 +36,9 @@ CAPS = {
     "cost_view": TOP,                          # 看成本與進價
     "lottery": TOP,                            # 抽獎活動
     "accounts": {ADMIN},                       # 帳號管理
+    # SHOPLINE 官網訂單
+    "shopline": TOP,                           # 官網訂單紀錄、處理待處理訂單
+    "shopline_settings": {ADMIN},              # 連線設定（API 金鑰）、立即同步
 }
 
 # 每個層級帶的 ERPNext 標準角色（讓 ERPNext 原本的畫面能用；成本另外用欄位權限擋）

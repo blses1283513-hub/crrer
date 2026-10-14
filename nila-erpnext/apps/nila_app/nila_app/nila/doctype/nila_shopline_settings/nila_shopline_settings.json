@@ -1,0 +1,118 @@
+{
+ "doctype": "DocType",
+ "module": "Nila",
+ "custom": 0,
+ "engine": "InnoDB",
+ "creation": "2026-10-14 00:00:00.000000",
+ "modified": "2026-10-14 00:00:00.000000",
+ "modified_by": "Administrator",
+ "owner": "Administrator",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "links": [],
+ "actions": [],
+ "row_format": "Dynamic",
+ "name": "Nila SHOPLINE Settings",
+ "issingle": 1,
+ "track_changes": 1,
+ "description": "SHOPLINE 官網訂單同步設定。請在「SHOPLINE 官網訂單」頁面設定（金鑰不會顯示）",
+ "fields": [
+  {
+   "fieldname": "enabled",
+   "label": "啟用自動同步",
+   "fieldtype": "Check",
+   "default": "0"
+  },
+  {
+   "fieldname": "handle",
+   "label": "商店代號（handle）",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "token",
+   "label": "API 金鑰",
+   "fieldtype": "Password",
+   "length": 4000
+  },
+  {
+   "fieldname": "interval",
+   "label": "每幾分鐘同步一次",
+   "fieldtype": "Int",
+   "default": "5",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "exclude_pos",
+   "label": "不匯入 SHOPLINE 門市 POS 訂單",
+   "fieldtype": "Check",
+   "default": "1"
+  },
+  {
+   "fieldname": "import_since",
+   "label": "從這個時間之後的訂單開始匯入",
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "section_status",
+   "fieldtype": "Section Break",
+   "label": "同步狀態"
+  },
+  {
+   "fieldname": "merchant_name",
+   "label": "連線的商店",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "synced_until",
+   "label": "已同步到（UTC）",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_run",
+   "label": "上次同步",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_ok",
+   "label": "上次成功",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_result",
+   "label": "上次結果",
+   "fieldtype": "Small Text",
+   "read_only": 1
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1
+  },
+  {
+   "role": "妮菈管理員",
+   "read": 1,
+   "write": 1
+  }
+ ],
+ "field_order": [
+  "enabled",
+  "handle",
+  "token",
+  "interval",
+  "exclude_pos",
+  "import_since",
+  "section_status",
+  "merchant_name",
+  "synced_until",
+  "last_run",
+  "last_ok",
+  "last_result"
+ ]
+}

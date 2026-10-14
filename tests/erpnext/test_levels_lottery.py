@@ -14,15 +14,17 @@ class TestLevels(unittest.TestCase):
     def test_matrix_matches_agreed_table(self):
         """和確認過的分工表一致。"""
         expect = {
-            L.ADMIN: {"accounts", "cost_view", "item_manage", "replenish_manage", "lottery", "store_return"},
-            L.MANAGER: {"cost_view", "item_manage", "replenish_manage", "lottery", "member_merge", "sales_report"},
+            L.ADMIN: {"accounts", "cost_view", "item_manage", "replenish_manage", "lottery", "store_return", "shopline",
+                      "shopline_settings"},
+            L.MANAGER: {"cost_view", "item_manage", "replenish_manage", "lottery", "member_merge", "sales_report", "shopline"},
             L.HQ_STAFF: {"dispatch", "transfer_create", "transfer_receive", "replenish_view", "stock_view", "store_sale"},
             L.STORE_LEAD: {"store_sale", "store_return", "price_override", "sales_report", "transfer_receive", "stock_view"},
             L.STORE_STAFF: {"store_sale", "member", "stock_view"},
         }
         deny = {
-            L.MANAGER: {"accounts"},
-            L.HQ_STAFF: {"cost_view", "item_manage", "replenish_manage", "accounts", "lottery", "sales_report", "store_return"},
+            L.MANAGER: {"accounts", "shopline_settings"},
+            L.HQ_STAFF: {"cost_view", "item_manage", "replenish_manage", "accounts", "lottery", "sales_report", "store_return",
+                         "shopline", "shopline_settings"},
             L.STORE_LEAD: {"cost_view", "item_manage", "replenish_view", "dispatch", "transfer_create", "member_merge", "accounts"},
             L.STORE_STAFF: {"store_return", "price_override", "sales_report", "cost_view", "replenish_view", "transfer_receive",
                             "barcode", "accounts"},

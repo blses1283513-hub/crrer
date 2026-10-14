@@ -1,0 +1,176 @@
+{
+ "doctype": "DocType",
+ "module": "Nila",
+ "custom": 0,
+ "engine": "InnoDB",
+ "creation": "2026-10-14 00:00:00.000000",
+ "modified": "2026-10-14 00:00:00.000000",
+ "modified_by": "Administrator",
+ "owner": "Administrator",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "links": [],
+ "actions": [],
+ "row_format": "Dynamic",
+ "name": "Nila SHOPLINE Order",
+ "autoname": "field:shopline_id",
+ "title_field": "order_number",
+ "in_create": 1,
+ "track_changes": 0,
+ "search_fields": "order_number,customer_name,sales_order",
+ "description": "從 SHOPLINE 匯入的官網訂單紀錄（自動產生；待處理的請到「SHOPLINE 官網訂單」頁面處理）",
+ "fields": [
+  {
+   "fieldname": "order_number",
+   "label": "官網訂單編號",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "bold": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "state",
+   "label": "處理結果",
+   "fieldtype": "Select",
+   "options": "已建立訂單\n已取消訂單\n待處理\n略過\n已人工處理",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "sales_order",
+   "label": "銷售訂單",
+   "fieldtype": "Link",
+   "options": "Sales Order",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "message",
+   "label": "說明",
+   "fieldtype": "Small Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break",
+   "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "label": "官網狀態",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "payment_status",
+   "label": "付款狀態",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "customer_name",
+   "label": "顧客",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "total",
+   "label": "官網訂單金額",
+   "fieldtype": "Currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_1",
+   "fieldtype": "Section Break",
+   "read_only": 1
+  },
+  {
+   "fieldname": "shopline_id",
+   "label": "SHOPLINE 訂單 ID",
+   "fieldtype": "Data",
+   "unique": 1,
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "shopline_created",
+   "label": "官網建立時間",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "shopline_updated",
+   "label": "官網更新時間",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "handled_by",
+   "label": "人工處理人員",
+   "fieldtype": "Link",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "items_json",
+   "label": "商品",
+   "fieldtype": "Code",
+   "options": "JSON",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fingerprint",
+   "label": "內容指紋",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "read_only": 1
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1
+  },
+  {
+   "role": "妮菈管理員",
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1
+  },
+  {
+   "role": "妮菈營運主管",
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1
+  }
+ ],
+ "field_order": [
+  "order_number",
+  "state",
+  "sales_order",
+  "message",
+  "column_break_1",
+  "status",
+  "payment_status",
+  "customer_name",
+  "total",
+  "section_break_1",
+  "shopline_id",
+  "shopline_created",
+  "shopline_updated",
+  "handled_by",
+  "items_json",
+  "fingerprint"
+ ]
+}

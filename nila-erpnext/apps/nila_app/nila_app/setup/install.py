@@ -49,6 +49,14 @@ CUSTOM_FIELDS = {
          "options": "\n" + "\n".join(DISPATCH_STATUSES), "insert_after": "status", "read_only": 1,
          "allow_on_submit": 1, "no_copy": 1, "in_list_view": 1, "in_standard_filter": 1,
          "description": "依先後分配庫存後自動計算；入庫、調撥、出貨、取消後會自動更新"},
+        {"fieldname": "nila_channel", "label": "銷售管道", "fieldtype": "Select", "options": "\n門市\n官網",
+         "insert_after": "nila_dispatch_status", "read_only": 1, "in_standard_filter": 1, "no_copy": 1,
+         "description": "「官網」是從 SHOPLINE 自動匯入的訂單"},
+        {"fieldname": "nila_shopline_number", "label": "官網訂單編號", "fieldtype": "Data", "insert_after": "nila_channel",
+         "read_only": 1, "no_copy": 1, "in_standard_filter": 1, "in_global_search": 1,
+         "depends_on": "eval:doc.nila_shopline_number"},
+        {"fieldname": "nila_shopline_id", "label": "SHOPLINE 訂單 ID", "fieldtype": "Data", "insert_after": "nila_shopline_number",
+         "read_only": 1, "no_copy": 1, "hidden": 1, "unique": 1, "description": "同一筆官網訂單不會重複建立"},
     ],
     "Stock Entry": [
         {"fieldname": "nila_destination", "label": "調入倉庫", "fieldtype": "Link", "options": "Warehouse",
@@ -292,7 +300,8 @@ WORKSPACE_CARDS = [  # (卡片, [(類型, 目標, 名稱)])
                  ("DocType", "Sales Order", "銷售訂單"), ("DocType", "Stock Reconciliation", "盤點")]),
     ("商品與會員", [("Page", "nila-new-style", "新增款式"), ("Page", "nila-item-import", "商品匯入匯出"),
                  ("DocType", "Customer", "會員與客戶")]),
-    ("管理", [("DocType", "Nila Lottery", "抽獎活動"), ("Page", "nila-accounts", "帳號管理")]),
+    ("管理", [("DocType", "Nila Lottery", "抽獎活動"), ("Page", "nila-shopline", "SHOPLINE 官網訂單"),
+            ("Page", "nila-accounts", "帳號管理")]),
 ]
 
 

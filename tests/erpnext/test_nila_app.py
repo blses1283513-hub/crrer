@@ -121,7 +121,7 @@ class TestAppFiles(unittest.TestCase):
 
     def test_pages(self):
         for name in ["nila-new-style", "nila-item-import", "nila-stock-matrix", "nila-replenish", "nila-store-sale",
-                     "nila-sales-report", "nila-barcode", "nila-accounts"]:
+                     "nila-sales-report", "nila-barcode", "nila-accounts", "nila-shopline"]:
             folder = APP / "nila" / "page" / name.replace("-", "_")
             meta = json.loads((folder / f"{folder.name}.json").read_text(encoding="utf-8"))
             self.assertEqual((meta["name"], meta["page_name"], meta["module"], meta["standard"]), (name, name, "Nila", "Yes"))
@@ -130,7 +130,7 @@ class TestAppFiles(unittest.TestCase):
             for method in re.findall(r'"(nila_app\.[\w.]+)"', js):
                 self.assertTrue(method.startswith(("nila_app.products.", "nila_app.importer.", "nila_app.matrix.",
                                                    "nila_app.replenish.", "nila_app.retail.", "nila_app.salesreport.",
-                                                   "nila_app.accounts.", "nila_app.stock.")), method)
+                                                   "nila_app.accounts.", "nila_app.stock.", "nila_app.shopline.")), method)
 
     def test_page_roles_match_capabilities(self):
         """每個頁面的角色＝能力表（levels.CAPS）＋System Manager：例如店員能開門市銷售，但不能開消費報表。"""
@@ -141,7 +141,7 @@ class TestAppFiles(unittest.TestCase):
         spec.loader.exec_module(lv)
         pages = {"nila_store_sale": "store_sale", "nila_sales_report": "sales_report", "nila_barcode": "barcode",
                  "nila_stock_matrix": "stock_view", "nila_replenish": "replenish_view", "nila_new_style": "item_manage",
-                 "nila_item_import": "item_manage", "nila_accounts": "accounts"}
+                 "nila_item_import": "item_manage", "nila_accounts": "accounts", "nila_shopline": "shopline"}
         found = {d.name for d in (APP / "nila" / "page").iterdir() if d.is_dir() and d.name.startswith("nila_")}
         self.assertEqual(found, set(pages), "新頁面要加到這張表")
         for page, cap in pages.items():
@@ -151,7 +151,7 @@ class TestAppFiles(unittest.TestCase):
 
     def test_doctypes(self):
         for folder in ["nila_reason", "nila_reason_log", "nila_lottery", "nila_lottery_rule", "nila_lottery_store",
-                       "nila_lottery_snapshot", "nila_lottery_entry"]:
+                       "nila_lottery_snapshot", "nila_lottery_entry", "nila_shopline_settings", "nila_shopline_order"]:
             d = APP / "nila" / "doctype" / folder
             meta = json.loads((d / f"{folder}.json").read_text(encoding="utf-8"))
             self.assertEqual((meta["module"], meta["doctype"]), ("Nila", "DocType"))

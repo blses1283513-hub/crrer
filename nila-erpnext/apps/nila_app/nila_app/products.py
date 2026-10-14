@@ -103,6 +103,8 @@ def item_price_validate(doc, method=None):
 # ---------- 狀態 ----------
 
 def sales_order_validate(doc, method=None):
+    if doc.flags.get("nila_shopline"):
+        return  # SHOPLINE 官網已經賣出的訂單照樣建立（請在官網下架停售的商品）
     codes = list({d.item_code for d in doc.items if d.item_code})
     if not codes:
         return

@@ -34,7 +34,8 @@ for _dt in ["Delivery Note", "Stock Entry", "Purchase Receipt", "Stock Reconcili
     doc_events[_dt] = {"on_submit": "nila_app.dispatch.stock_changed", "on_cancel": "nila_app.dispatch.stock_changed"}
 
 # 每天早上：重算訂單出貨狀態、補貨與調撥建議，有需要時通知管理者
-scheduler_events = {"daily": ["nila_app.replenish.daily"]}
+# 每分鐘檢查：SHOPLINE 同步已啟用、且到了設定的間隔才會查詢官網訂單（預設關閉）
+scheduler_events = {"daily": ["nila_app.replenish.daily"], "cron": {"* * * * *": ["nila_app.shopline.scheduled"]}}
 
 # 商品頁面與清單的按鈕（新增款式、加入甲型／尺寸）
 doctype_js = {
