@@ -10,8 +10,8 @@
 import frappe
 from frappe import _
 
+from nila_app import perms
 from nila_app import retailrules as R
-from nila_app import stock
 from nila_app.stockrules import num
 
 MEMBER_GROUP = "會員"
@@ -22,47 +22,9 @@ STORE_PRICE_LIST = "實體售價"
 PAYMENT = "Cash"
 
 
-# ---------- 權限 ----------
+# ---------- 權限（共用 perms.py） ----------
 
-def can(cap, user=None):
-    user = user or frappe.session.user
-    return R.can(cap, frappe.get_roles(user), user)
-
-
-def require(cap):
-    if not can(cap):
-        frappe.throw(_("沒有權限執行這個動作"), frappe.PermissionError)
-
-
-class elevated:
-    """權限已由本模組的能力表檢查過，建立單據時改用系統權限（門市人員沒有會計科目、價格表等權限），
-    並在單據的「收銀人員」記錄實際操作的人。"""
-
-    def __enter__(self):
-        self.user = frappe.session.user
-        if self.user != "Administrator":
-            frappe.set_user("Administrator")
-        return self.user
-
-    def __exit__(self, *exc):
-        if frappe.session.user != self.user:
-            frappe.set_user(self.user)
-
-
-def allowed_stores(user=None):
-    """可以操作的門市倉庫 [{"name", "label"}]：門市層級只有自己的門市，其他層級是全部（不含在途倉）。"""
-    user = user or frappe.session.user
-    whs = stock.warehouses(include_transit=False)
-    if not R.store_scoped(frappe.get_roles(user), user):
-        return whs
-    mine = set(frappe.get_all("User Permission", filters={"user": user, "allow": "Warehouse"}, pluck="for_value"))
-    return [w for w in whs if w["name"] in mine]
-
-
-def check_store(store):
-    if store not in {w["name"] for w in allowed_stores()}:
-        frappe.throw(_("不能操作這個門市：{0}").format(store), frappe.PermissionError)
-    return store
+can, require, allowed_stores, check_store, elevated = perms.can, perms.require, perms.allowed_stores, perms.check_store, perms.elevated
 
 
 def pos_profile(store):

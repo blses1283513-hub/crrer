@@ -20,12 +20,10 @@ STOCK_ROWS_PER_ENTRY = 100  # ERPNext 超過 100 列會改在背景另外過帳�
 # 全部成功才寫入＝整個匯入是一筆交易。ERPNext 預設一筆交易最多 20 萬次寫入，
 # 第一次匯入全部商品（約 5,000 個規格＋各公司期初庫存）會超過，所以匯入工作中放寬
 MAX_WRITES = 5_000_000
-ALLOWED_ROLES = {"System Manager", "Item Manager", "Stock Manager"}
-
-
 def _check_role():
-    if frappe.session.user != "Administrator" and not ALLOWED_ROLES & set(frappe.get_roles()):
-        frappe.throw(_("沒有權限匯入或匯出商品"), frappe.PermissionError)
+    from nila_app import perms
+
+    perms.require("item_manage")
 
 
 def _context():

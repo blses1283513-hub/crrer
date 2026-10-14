@@ -51,3 +51,9 @@ from nila_app import __version__ as _v  # noqa: E402
 
 app_include_js = [f"/assets/nila_app/js/nila.js?v={_v}"]
 app_include_css = [f"/assets/nila_app/css/nila.css?v={_v}"]
+
+# ERPNext 16 首頁（應用程式）：加上「妮菈」，各層級從這裡進入自己有權限的功能
+add_to_apps_screen = [{
+    "name": "nila_app", "logo": "/assets/nila_app/images/nila.svg", "title": "妮菈",
+    "route": "/app/妮菈", "has_permission": "nila_app.perms.has_app_permission",
+}]

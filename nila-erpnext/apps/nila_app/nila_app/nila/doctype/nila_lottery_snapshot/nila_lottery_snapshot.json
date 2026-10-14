@@ -1,0 +1,111 @@
+{
+ "doctype": "DocType",
+ "module": "Nila",
+ "custom": 0,
+ "engine": "InnoDB",
+ "creation": "2026-10-14 00:00:00.000000",
+ "modified": "2026-10-14 00:00:00.000000",
+ "modified_by": "Administrator",
+ "owner": "Administrator",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "links": [],
+ "actions": [],
+ "row_format": "Dynamic",
+ "editable_grid": 1,
+ "name": "Nila Lottery Snapshot",
+ "fields": [
+  {
+   "fieldname": "lottery",
+   "label": "抽獎活動",
+   "fieldtype": "Link",
+   "options": "Nila Lottery",
+   "read_only": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "generated_on",
+   "label": "產生時間",
+   "fieldtype": "Datetime",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "member_count",
+   "label": "符合人數",
+   "fieldtype": "Int",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "entry_total",
+   "label": "名額合計",
+   "fieldtype": "Int",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "section_rule",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "rules_text",
+   "label": "當時的條件",
+   "fieldtype": "Small Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "entries",
+   "label": "名單",
+   "fieldtype": "Table",
+   "options": "Nila Lottery Entry",
+   "read_only": 1
+  }
+ ],
+ "field_order": [
+  "lottery",
+  "generated_on",
+  "column_break_1",
+  "member_count",
+  "entry_total",
+  "section_rule",
+  "rules_text",
+  "entries"
+ ],
+ "autoname": "LIST-.#####",
+ "title_field": "lottery",
+ "in_create": 1,
+ "description": "產生當下的抽獎名單快照（不能修改）",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1
+  },
+  {
+   "role": "妮菈管理員",
+   "read": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1
+  },
+  {
+   "role": "妮菈營運主管",
+   "read": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1
+  }
+ ]
+}

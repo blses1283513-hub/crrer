@@ -11,7 +11,7 @@
 import frappe
 from frappe import _
 
-from nila_app import stock
+from nila_app import perms, stock
 from nila_app.catalog import NO_REPLENISH_STATUSES
 from nila_app.stockrules import group_transfers, num, replenish_qty
 
@@ -67,7 +67,7 @@ def suggestions(q=None, shape=None):
 
 @frappe.whitelist()
 def get_suggestions(filters=None):
-    stock.check_roles(stock.VIEW_ROLES)
+    perms.require("replenish_view")
     f = frappe.parse_json(filters or {}) or {}
     rows, moves = suggestions(f.get("q"), f.get("shape"))
     return {"rows": rows, "transfers": moves,
@@ -75,13 +75,13 @@ def get_suggestions(filters=None):
                         "negative": sum(1 for r in rows if r["actual"] < 0 or r["projected"] < 0),
                         "transfers": len(moves)},
             "reasons": {k: stock.reasons(k) for k in stock.REASON_KINDS},
-            "can_manage": frappe.session.user == "Administrator" or bool(stock.MANAGE_ROLES & set(frappe.get_roles()))}
+            "can_order": perms.can("replenish_manage"), "can_transfer": perms.can("transfer_create")}
 
 
 @frappe.whitelist()
 def create_material_request(rows):
     """依勾選的列建立並送出補貨單（待叫貨）。rows：[{item, qty, suggest, reason, note}]。回傳補貨單號。"""
-    stock.check_roles(stock.MANAGE_ROLES)
+    perms.require("replenish_manage")
     rows = [r for r in frappe.parse_json(rows) if num(r.get("qty")) > 0]
     if not rows:
         frappe.throw(_("沒有要叫貨的數量"))
@@ -109,7 +109,7 @@ def create_material_request(rows):
 def create_transfers(rows):
     """依勾選的調撥建議建立在途調撥單（同一組調出、調入倉合併成一張）。全部成功才寫入。
     rows：[{item, from, to, qty, suggest, reason, note, orders}]。回傳調撥單號清單。"""
-    stock.check_roles(stock.MANAGE_ROLES)
+    perms.require("transfer_create")
     rows = [r for r in frappe.parse_json(rows) if num(r.get("qty")) > 0]
     if not rows:
         frappe.throw(_("沒有要調撥的數量"))
@@ -140,14 +140,14 @@ def create_transfers(rows):
 
 @frappe.whitelist()
 def set_negative_reason(item, reason, note=None):
-    stock.check_roles(stock.VIEW_ROLES)
+    perms.require("replenish_view")
     stock.log_reason("負庫存", item, None, None, reason, note)
 
 
 @frappe.whitelist()
 def mark_ordered(material_request, supplier=None):
     """補貨單「已叫貨」：建立並送出採購單（廠商預設為「預設廠商」，單價＝成本）。回傳採購單號。"""
-    stock.check_roles(stock.MANAGE_ROLES)
+    perms.require("replenish_manage")
     from erpnext.stock.doctype.material_request.material_request import make_purchase_order
 
     from nila_app.setup.install import DEFAULT_SUPPLIER

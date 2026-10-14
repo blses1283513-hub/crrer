@@ -64,8 +64,8 @@ class NilaReplenish {
 				? `${e(x.negative_reason || "")} <a class="nila-neg-reason small" data-item="${e(x.item)}">${x.negative_reason ? __("修改") : __("標註")}</a>` : "" },
 		];
 		const pick = rows.filter((x) => x.suggest > 0 && x.can_order);
-		this.$buy.html(`<h5>${__("建議叫貨")}</h5>${nila.edit_table(pick, cols, r.reasons["補貨調整"], { qty_label: __("叫貨數"), disabled: !r.can_manage })}
-			${r.can_manage ? `<button class="btn btn-primary btn-sm nila-make-mr">${__("建立補貨單（待叫貨）")}</button>` : ""}
+		this.$buy.html(`<h5>${__("建議叫貨")}</h5>${nila.edit_table(pick, cols, r.reasons["補貨調整"], { qty_label: __("叫貨數"), disabled: !r.can_order })}
+			${r.can_order ? `<button class="btn btn-primary btn-sm nila-make-mr">${__("建立補貨單（待叫貨）")}</button>` : ""}
 			${rows.length > pick.length ? `<h6 class="mt-3">${__("負庫存（不需叫貨）")}</h6>
 				<table class="table table-sm table-bordered" style="width:auto"><tbody>${rows.filter((x) => !pick.includes(x))
 					.map((x) => `<tr>${cols.map((c) => `<td>${c.html(x)}</td>`).join("")}</tr>`).join("")}</tbody></table>` : ""}`);
@@ -91,8 +91,8 @@ class NilaReplenish {
 		}
 		this.$move.html(`<h5>${__("建議調撥")}</h5>
 			<p class="text-muted small">${__("出貨倉的庫存不夠出訂單、其他公司有剩時，先調撥（例如門市調回總公司），不夠的部分才算進叫貨。建立後調出倉的貨立即轉到在途，調入倉「到貨入庫」後才增加。")}</p>
-			${nila.edit_table(r.transfers, nila.transfer_cols(), r.reasons["調撥調整"], { qty_label: __("調撥數"), disabled: !r.can_manage })}
-			${r.can_manage ? `<button class="btn btn-primary btn-sm nila-make-move">${__("建立調撥單")}</button>` : ""}`);
+			${nila.edit_table(r.transfers, nila.transfer_cols(), r.reasons["調撥調整"], { qty_label: __("調撥數"), disabled: !r.can_transfer })}
+			${r.can_transfer ? `<button class="btn btn-primary btn-sm nila-make-move">${__("建立調撥單")}</button>` : ""}`);
 		const $t = this.$move.find("table.nila-edit");
 		nila.bind_edit_table($t);
 		this.$move.find(".nila-make-move").on("click", () => {

@@ -4,16 +4,22 @@
  "docstatus": 0,
  "doctype": "Page",
  "idx": 0,
- "modified": "2026-10-13 00:00:00.000000",
+ "modified": "2026-10-14 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Nila",
  "name": "nila-new-style",
  "owner": "Administrator",
  "page_name": "nila-new-style",
  "roles": [
-  {"role": "System Manager"},
-  {"role": "Item Manager"},
-  {"role": "Stock Manager"}
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "妮菈營運主管"
+  },
+  {
+   "role": "妮菈管理員"
+  }
  ],
  "script": null,
  "standard": "Yes",

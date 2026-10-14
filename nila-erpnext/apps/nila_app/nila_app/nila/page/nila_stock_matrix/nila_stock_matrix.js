@@ -9,10 +9,22 @@ frappe.pages["nila-stock-matrix"].on_page_show = function (wrapper) {
 };
 
 class NilaStockMatrix {
+	async history(item, wh) {
+		const rows = await frappe.xcall("nila_app.stock.history", { item, warehouse: wh || null });
+		const e = frappe.utils.escape_html;
+		const d = new frappe.ui.Dialog({ title: __("{0} 異動明細", [item]), size: "large", fields: [{ fieldtype: "HTML", fieldname: "t" }] });
+		d.fields_dict.t.$wrapper.html(`<table class="table table-sm table-bordered"><thead><tr><th>${__("日期")}</th><th>${__("倉庫")}</th>
+			<th>${__("單據")}</th><th class="text-right">${__("數量")}</th><th class="text-right">${__("異動後")}</th></tr></thead><tbody>
+			${rows.map((r) => `<tr><td>${e(r.posting_date)} ${e(r.posting_time)}</td><td>${e(r.warehouse)}</td><td>${e(r.voucher_type)} ${e(r.voucher_no)}</td>
+			<td class="text-right ${r.actual_qty < 0 ? "text-danger" : ""}">${r.actual_qty}</td><td class="text-right">${r.qty_after_transaction}</td></tr>`).join("")
+			|| `<tr><td colspan="5" class="text-muted">${__("沒有異動")}</td></tr>`}</tbody></table>`);
+		d.show();
+	}
+
 	constructor(page) {
 		this.page = page;
 		this.page_length = 20;
-		frappe.xcall("nila_app.matrix.get_options").then((o) => this.make(o));
+		frappe.xcall("nila_app.matrix.get_options").then((o) => { this.opts = o; this.make(o); });
 	}
 
 	make(o) {
@@ -33,7 +45,7 @@ class NilaStockMatrix {
 		p.add_inner_button(__("匯出 Excel"), () => {
 			window.open(`/api/method/nila_app.matrix.export_matrix?filters=${encodeURIComponent(JSON.stringify(this.values()))}`);
 		});
-		p.add_inner_button(__("補貨建議"), () => frappe.set_route("nila-replenish"));
+		if (o.caps.replenish_view) p.add_inner_button(__("補貨建議"), () => frappe.set_route("nila-replenish"));
 		this.$summary = $(`<div class="mb-2"></div>`).appendTo(p.body);
 		$(nila.legend()).appendTo(p.body);
 		this.$list = $(`<div class="nila-matrix"></div>`).appendTo(p.body);
@@ -68,6 +80,8 @@ class NilaStockMatrix {
 	}
 
 	drill({ item, wh }) {
+		// 能看成本的層級開 ERPNext 原本的報表；其他層級看只有數量的異動明細
+		if (!this.opts.caps.cost_view) return this.history(item, wh);
 		if (this.values().mode === "projected") {
 			frappe.set_route("query-report", "Stock Projected Qty", { item_code: item, warehouse: wh || undefined });
 			return;

@@ -1,0 +1,33 @@
+{
+ "doctype": "DocType",
+ "module": "Nila",
+ "custom": 0,
+ "engine": "InnoDB",
+ "creation": "2026-10-14 00:00:00.000000",
+ "modified": "2026-10-14 00:00:00.000000",
+ "modified_by": "Administrator",
+ "owner": "Administrator",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "links": [],
+ "actions": [],
+ "row_format": "Dynamic",
+ "editable_grid": 1,
+ "name": "Nila Lottery Store",
+ "fields": [
+  {
+   "fieldname": "warehouse",
+   "label": "門市",
+   "fieldtype": "Link",
+   "options": "Warehouse",
+   "reqd": 1,
+   "in_list_view": 1
+  }
+ ],
+ "field_order": [
+  "warehouse"
+ ],
+ "istable": 1,
+ "permissions": []
+}

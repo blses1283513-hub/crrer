@@ -1,0 +1,145 @@
+{
+ "doctype": "DocType",
+ "module": "Nila",
+ "custom": 0,
+ "engine": "InnoDB",
+ "creation": "2026-10-14 00:00:00.000000",
+ "modified": "2026-10-14 00:00:00.000000",
+ "modified_by": "Administrator",
+ "owner": "Administrator",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "links": [],
+ "actions": [],
+ "row_format": "Dynamic",
+ "editable_grid": 1,
+ "name": "Nila Lottery",
+ "fields": [
+  {
+   "fieldname": "title",
+   "label": "活動名稱",
+   "fieldtype": "Data",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "from_date",
+   "label": "消費期間（開始）",
+   "fieldtype": "Date",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "to_date",
+   "label": "消費期間（結束）",
+   "fieldtype": "Date",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "stores",
+   "label": "適用門市（不選＝全部門市）",
+   "fieldtype": "Table MultiSelect",
+   "options": "Nila Lottery Store"
+  },
+  {
+   "fieldname": "notes",
+   "label": "備註",
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "section_rules",
+   "label": "資格條件（全部都要符合；官網訂單不算，消費已扣退款）",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "rules",
+   "label": "條件",
+   "fieldtype": "Table",
+   "options": "Nila Lottery Rule"
+  },
+  {
+   "fieldname": "section_entries",
+   "label": "名額",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "entry_mode",
+   "label": "名額計算",
+   "fieldtype": "Select",
+   "options": "每人 1 個名額\n每滿 X 元 1 個名額\n每 N 次消費 1 個名額",
+   "default": "每人 1 個名額",
+   "reqd": 1
+  },
+  {
+   "fieldname": "entry_unit",
+   "label": "X 元／N 次",
+   "fieldtype": "Float",
+   "depends_on": "eval:doc.entry_mode!='每人 1 個名額'",
+   "mandatory_depends_on": "eval:doc.entry_mode!='每人 1 個名額'"
+  },
+  {
+   "fieldname": "entry_cap",
+   "label": "每人最多幾個名額（0＝不限）",
+   "fieldtype": "Int",
+   "default": "0",
+   "depends_on": "eval:doc.entry_mode!='每人 1 個名額'"
+  }
+ ],
+ "field_order": [
+  "title",
+  "from_date",
+  "to_date",
+  "column_break_1",
+  "stores",
+  "notes",
+  "section_rules",
+  "rules",
+  "section_entries",
+  "entry_mode",
+  "entry_unit",
+  "entry_cap"
+ ],
+ "autoname": "LOT-.#####",
+ "title_field": "title",
+ "show_title_field_in_link": 1,
+ "search_fields": "title",
+ "description": "會員抽獎活動：設定資格條件後「預覽」，確認後「產生名單」（名單會存成快照，不會因日後退貨而變動）",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1
+  },
+  {
+   "role": "妮菈管理員",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1
+  },
+  {
+   "role": "妮菈營運主管",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1
+  }
+ ]
+}

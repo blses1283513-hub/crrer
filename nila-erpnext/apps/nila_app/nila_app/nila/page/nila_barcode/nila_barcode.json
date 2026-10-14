@@ -4,7 +4,7 @@
  "docstatus": 0,
  "doctype": "Page",
  "idx": 0,
- "modified": "2026-10-14 00:00:00.000000",
+ "modified": "2026-10-14 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Nila",
  "name": "nila-barcode",
@@ -15,10 +15,10 @@
    "role": "System Manager"
   },
   {
-   "role": "妮菈管理員"
+   "role": "妮菈營運主管"
   },
   {
-   "role": "妮菈營運主管"
+   "role": "妮菈管理員"
   },
   {
    "role": "妮菈總公司作業"

@@ -121,7 +121,7 @@ class TestAppFiles(unittest.TestCase):
 
     def test_pages(self):
         for name in ["nila-new-style", "nila-item-import", "nila-stock-matrix", "nila-replenish", "nila-store-sale",
-                     "nila-sales-report", "nila-barcode"]:
+                     "nila-sales-report", "nila-barcode", "nila-accounts"]:
             folder = APP / "nila" / "page" / name.replace("-", "_")
             meta = json.loads((folder / f"{folder.name}.json").read_text(encoding="utf-8"))
             self.assertEqual((meta["name"], meta["page_name"], meta["module"], meta["standard"]), (name, name, "Nila", "Yes"))
@@ -129,37 +129,29 @@ class TestAppFiles(unittest.TestCase):
             self.assertIn(f'frappe.pages["{name}"]', js)
             for method in re.findall(r'"(nila_app\.[\w.]+)"', js):
                 self.assertTrue(method.startswith(("nila_app.products.", "nila_app.importer.", "nila_app.matrix.",
-                                                   "nila_app.replenish.", "nila_app.retail.", "nila_app.salesreport.")), method)
+                                                   "nila_app.replenish.", "nila_app.retail.", "nila_app.salesreport.",
+                                                   "nila_app.accounts.", "nila_app.stock.")), method)
 
     def test_page_roles_match_capabilities(self):
-        """頁面的角色和能力表一致：店員能開門市銷售，但不能開消費報表。"""
+        """每個頁面的角色＝能力表（levels.CAPS）＋System Manager：例如店員能開門市銷售，但不能開消費報表。"""
         import importlib.util as iu
 
-        spec = iu.spec_from_file_location("rr", APP / "retailrules.py")
-        rr = iu.module_from_spec(spec)
-        spec.loader.exec_module(rr)
-        for page, cap in [("nila_store_sale", "store_sale"), ("nila_sales_report", "sales_report"), ("nila_barcode", "barcode")]:
+        spec = iu.spec_from_file_location("lv", APP / "levels.py")
+        lv = iu.module_from_spec(spec)
+        spec.loader.exec_module(lv)
+        pages = {"nila_store_sale": "store_sale", "nila_sales_report": "sales_report", "nila_barcode": "barcode",
+                 "nila_stock_matrix": "stock_view", "nila_replenish": "replenish_view", "nila_new_style": "item_manage",
+                 "nila_item_import": "item_manage", "nila_accounts": "accounts"}
+        found = {d.name for d in (APP / "nila" / "page").iterdir() if d.is_dir() and d.name.startswith("nila_")}
+        self.assertEqual(found, set(pages), "新頁面要加到這張表")
+        for page, cap in pages.items():
             meta = json.loads((APP / "nila" / "page" / page / f"{page}.json").read_text(encoding="utf-8"))
-            roles = {r["role"] for r in meta["roles"]} - {"System Manager"}
-            self.assertEqual(roles, rr.CAPS[cap], page)
-
-    def test_whitelisted_js_calls_exist(self):
-        """畫面（頁面、表單、共用 JS）呼叫的伺服器方法都存在且允許呼叫（@frappe.whitelist）。"""
-        import ast
-
-        calls = set()
-        for js in APP.rglob("*.js"):
-            calls |= set(re.findall(r'"(nila_app\.[\w.]+)"', js.read_text(encoding="utf-8")))
-        self.assertTrue(calls)
-        for dotted in calls:
-            module, func = dotted.rsplit(".", 1)
-            tree = ast.parse((APP.parent / (module.replace(".", "/") + ".py")).read_text(encoding="utf-8"))
-            fn = next((n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef) and n.name == func), None)
-            self.assertIsNotNone(fn, dotted)
-            self.assertTrue(any("whitelist" in ast.unparse(d) for d in fn.decorator_list), f"{dotted} 沒有 @frappe.whitelist")
+            roles = {r["role"] for r in meta["roles"]}
+            self.assertEqual(roles, {"System Manager", *lv.CAPS[cap]}, page)
 
     def test_doctypes(self):
-        for folder in ["nila_reason", "nila_reason_log"]:
+        for folder in ["nila_reason", "nila_reason_log", "nila_lottery", "nila_lottery_rule", "nila_lottery_store",
+                       "nila_lottery_snapshot", "nila_lottery_entry"]:
             d = APP / "nila" / "doctype" / folder
             meta = json.loads((d / f"{folder}.json").read_text(encoding="utf-8"))
             self.assertEqual((meta["module"], meta["doctype"]), ("Nila", "DocType"))

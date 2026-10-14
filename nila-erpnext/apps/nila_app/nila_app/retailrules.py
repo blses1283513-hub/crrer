@@ -1,39 +1,12 @@
-"""門市與會員規則：手機號碼、購物車、退貨與退款上限、5 個層級的權限。純邏輯，不需要 ERPNext，可單獨測試。"""
+"""門市與會員規則：手機號碼、購物車、退貨與退款上限。純邏輯，不需要 ERPNext，可單獨測試。"""
 
 import re
 
-# ---------- 5 個層級（P6 的帳號管理也用這裡） ----------
+# ---------- 5 個層級：權限表在 levels.py（這裡保留舊名稱，方便既有程式使用） ----------
 
-ADMIN, MANAGER, HQ_STAFF, STORE_LEAD, STORE_STAFF = "妮菈管理員", "妮菈營運主管", "妮菈總公司作業", "妮菈門市店長", "妮菈門市店員"
-LEVELS = [ADMIN, MANAGER, HQ_STAFF, STORE_LEAD, STORE_STAFF]
-STORE_LEVELS = {STORE_LEAD, STORE_STAFF}  # 只能看、只能操作自己的門市
-
-ALL = set(LEVELS)
-CAPS = {
-    "store_sale": ALL,                               # 門市銷售
-    "store_return": {ADMIN, MANAGER, STORE_LEAD},     # 退貨、退款
-    "price_override": {ADMIN, MANAGER, STORE_LEAD},   # 單筆改價、打折
-    "member": ALL,                                    # 會員查詢、新增
-    "member_merge": {ADMIN, MANAGER},                 # 合併會員
-    "sales_report": {ADMIN, MANAGER, STORE_LEAD},     # 消費報表
-    "barcode": {ADMIN, MANAGER, HQ_STAFF, STORE_LEAD},
-}
-
-
-def can(cap, roles, user=None):
-    """roles：使用者的角色。Administrator 與 System Manager（系統最高權限）一律可以。"""
-    roles = set(roles or ())
-    if user == "Administrator" or "System Manager" in roles:
-        return True
-    return bool(CAPS[cap] & roles)
-
-
-def store_scoped(roles, user=None):
-    """只有門市層級（店長、店員）、又沒有更高層級的帳號，才限定在自己的門市。"""
-    roles = set(roles or ())
-    if user == "Administrator" or "System Manager" in roles or roles & {ADMIN, MANAGER, HQ_STAFF}:
-        return False
-    return bool(roles & STORE_LEVELS)
+from nila_app.levels import (  # noqa: E402,F401
+    ADMIN, CAPS, HQ_STAFF, LEVELS, MANAGER, STORE_LEAD, STORE_LEVELS, STORE_STAFF, has_cap as can, store_scoped,
+)
 
 
 # ---------- 會員手機 ----------

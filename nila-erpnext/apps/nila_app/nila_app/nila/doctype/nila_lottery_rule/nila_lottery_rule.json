@@ -1,0 +1,44 @@
+{
+ "doctype": "DocType",
+ "module": "Nila",
+ "custom": 0,
+ "engine": "InnoDB",
+ "creation": "2026-10-14 00:00:00.000000",
+ "modified": "2026-10-14 00:00:00.000000",
+ "modified_by": "Administrator",
+ "owner": "Administrator",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "links": [],
+ "actions": [],
+ "row_format": "Dynamic",
+ "editable_grid": 1,
+ "name": "Nila Lottery Rule",
+ "fields": [
+  {
+   "fieldname": "rule_type",
+   "label": "條件",
+   "fieldtype": "Select",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 4,
+   "options": "累計消費金額\n消費次數\n單筆最高金額\n買過指定款式\n買過指定甲型"
+  },
+  {
+   "fieldname": "value",
+   "label": "至少／包含",
+   "fieldtype": "Data",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 6,
+   "description": "金額或次數填數字；款式填款式編號、甲型填名稱，多個用逗號分隔（買過其中一個即可）"
+  }
+ ],
+ "field_order": [
+  "rule_type",
+  "value"
+ ],
+ "istable": 1,
+ "permissions": []
+}

@@ -6,7 +6,7 @@
 import frappe
 from frappe import _
 
-from nila_app import stock
+from nila_app import perms, stock
 from nila_app.stockrules import NEGATIVE, OUT, LOW, cell_state, num, replenish_qty, total_state
 
 MODES = {"actual": "actual_qty", "projected": "projected_qty"}
@@ -31,6 +31,10 @@ def build(filters):
     f = _clean_filters(filters)
     field = MODES[f["mode"]]
     whs = stock.warehouses()
+    # 門市層級只看自己的門市，也不顯示全公司合計與建議補貨（會透露其他門市的數字）
+    own = {w["name"] for w in perms.allowed_stores()} if perms.scoped() else None
+    if own is not None:
+        whs = [w for w in whs if w["name"] in own]
     shapes, sizes = list(stock.shapes()), stock.sizes()
     styles = {s.name: s for s in frappe.get_all("Item", filters={"has_variants": 1, "disabled": 0},
                                                  fields=["name", "item_name", "nila_status"], order_by="name")}
@@ -50,7 +54,7 @@ def build(filters):
               if (not f["shape"] or v.nila_shape == f["shape"]) and (not f["size"] or v.nila_size == f["size"])]
         if not vs:
             continue
-        block = _block(s, vs, whs, shapes, sizes, bins, field, f["warehouse"])
+        block = _block(s, vs, whs, shapes, sizes, bins, field, f["warehouse"], own is None)
         if f["only_need"] and not block["need"]:
             continue
         if f["state"] and f["state"] not in block["states"]:
@@ -59,7 +63,7 @@ def build(filters):
     return out, whs
 
 
-def _block(s, vs, whs, shapes, sizes, bins, field, only_wh):
+def _block(s, vs, whs, shapes, sizes, bins, field, only_wh, company_rows=True):
     by_cell = {(v.nila_shape, v.nila_size): v for v in vs}
     cols = [{"shape": sh, "sizes": [{"size": sz, "item": by_cell[(sh, sz)].name if (sh, sz) in by_cell else None}
                                     for sz in sizes]}
@@ -82,6 +86,10 @@ def _block(s, vs, whs, shapes, sizes, bins, field, only_wh):
                      "sum": sum(c["q"] for c in cells.values())})
     total_cells = {v.name: {"q": totals[v.name], "s": total_state(totals[v.name], v.nila_reorder_target)} for v in vs}
     total_sum = sum(totals.values())
+    if not company_rows:
+        states = {c["s"] for r in rows for c in r["cells"].values()}
+        return {"code": s.name, "name": s.item_name, "status": s.nila_status, "columns": cols, "rows": rows,
+                "need": 0, "states": sorted(states & {NEGATIVE})}
     rows.append({"label": _("全公司合計"), "warehouse": "", "kind": "total", "cells": total_cells, "sum": total_sum,
                  "sum_state": cell_state(total_sum) if total_sum <= 0 else None})
     need = {v.name: replenish_qty(v.nila_reorder_target, projected[v.name], v.nila_status) for v in vs}
@@ -95,7 +103,7 @@ def _block(s, vs, whs, shapes, sizes, bins, field, only_wh):
 
 @frappe.whitelist()
 def get_matrix(filters=None, start=0, page_length=20):
-    stock.check_roles(stock.VIEW_ROLES)
+    perms.require("stock_view")
     blocks, whs = build(filters)
     start, page_length = frappe.utils.cint(start), frappe.utils.cint(page_length) or 20
     return {"styles": blocks[start:start + page_length], "total": len(blocks),
@@ -105,15 +113,17 @@ def get_matrix(filters=None, start=0, page_length=20):
 
 @frappe.whitelist()
 def get_options():
-    stock.check_roles(stock.VIEW_ROLES)
+    perms.require("stock_view")
+    whs = stock.warehouses() if not perms.scoped() else perms.allowed_stores()
     return {"shapes": list(stock.shapes()), "sizes": stock.sizes(),
-            "warehouses": [{"value": w["name"], "label": w["label"]} for w in stock.warehouses()]}
+            "warehouses": [{"value": w["name"], "label": w["label"]} for w in whs],
+            "caps": perms.caps("replenish_view", "cost_view"), "scoped": perms.scoped()}
 
 
 @frappe.whitelist()
 def export_matrix(filters=None):
     """匯出 Excel：每款每列（各公司、合計、建議補貨），欄＝全部甲型 × 尺寸。"""
-    stock.check_roles(stock.VIEW_ROLES)
+    perms.require("stock_view")
     blocks, _whs = build(filters)
     shapes, sizes = list(stock.shapes()), stock.sizes()
     head = [_("款式編號"), _("款式名稱"), _("商品狀態"), _("公司")] + [f"{sh} {sz}" for sh in shapes for sz in sizes] + [_("小計")]

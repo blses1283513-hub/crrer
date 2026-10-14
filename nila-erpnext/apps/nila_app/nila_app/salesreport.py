@@ -22,7 +22,8 @@ def _dates(f):
 
 def consumption(from_date, to_date, stores=None, customers=None, by="customer"):
     """門市銷售的消費統計（含退貨、退款）。by：customer（會員）或 store（門市）。
-    回傳 {鍵: {orders（消費次數，不含退貨單）, gross（銷售金額）, refund（退款金額）, net（淨額）, last_date}}。"""
+    回傳 {鍵: {orders（消費次數）, gross（銷售金額）, refund（退款金額）, net（淨額）, last_date}}。
+    消費次數：不含退貨單；整筆都退掉的銷售也不算一次（部分退款仍算）。"""
     key = {"customer": "s.customer", "store": "s.set_warehouse"}[by]
     cond, args = [], {"from": from_date, "to": to_date, "channel": retail.STORE_CHANNEL}
     if stores is not None:
@@ -34,11 +35,14 @@ def consumption(from_date, to_date, stores=None, customers=None, by="customer"):
     where = (" and " + " and ".join(cond)) if cond else ""
     rows = frappe.db.sql(f"""
         select {key} k,
-               sum(case when s.is_return = 0 then 1 else 0 end) orders,
+               sum(case when s.is_return = 0 and s.grand_total + coalesce(r.ret, 0) > 0 then 1 else 0 end) orders,
                sum(case when s.is_return = 0 then s.grand_total else 0 end) gross,
                sum(case when s.is_return = 1 then -s.grand_total else 0 end) refund,
                sum(s.grand_total) net, max(s.posting_date) last_date
         from `tabSales Invoice` s
+        left join (select return_against, sum(grand_total) ret from `tabSales Invoice`
+                   where docstatus = 1 and is_return = 1 and ifnull(return_against, '') != '' group by return_against) r
+               on r.return_against = s.name and s.is_return = 0
         where s.docstatus = 1 and s.nila_channel = %(channel)s and s.posting_date between %(from)s and %(to)s {where}
         group by {key}""", args, as_dict=True)
     return {r.k: {"orders": int(r.orders or 0), "gross": num(r.gross), "refund": num(r.refund), "net": num(r.net),

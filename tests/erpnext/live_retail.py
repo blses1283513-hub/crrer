@@ -257,6 +257,13 @@ def run_scale(n_invoices, n_members=5000):
     timed("報表：依門市（一年）", lambda: salesreport.get_report({"group": "store", "from_date": year_from, "to_date": today}), 3)
     timed("報表：明細（一個月）", lambda: salesreport.get_report({"group": "detail", "from_date": frappe.utils.add_days(today, -30),
                                                             "to_date": today}), 3)
+    lot = frappe.get_doc({"doctype": "Nila Lottery", "title": "速度測試抽獎", "from_date": year_from, "to_date": today,
+                          "rules": [{"rule_type": "累計消費金額", "value": "1000"}, {"rule_type": "單筆最高金額", "value": "700"}],
+                          "entry_mode": "每滿 X 元 1 個名額", "entry_unit": 1000, "entry_cap": 10}).insert()
+    from nila_app import lottery
+    r = timed("抽獎預覽（一年、5,000 位會員）", lambda: lottery.preview(lot.name), 5)
+    check("大量：抽獎有符合的會員", r["count"] > 0, r["count"])
+    timed("產生抽獎名單快照", lambda: lottery.generate(lot.name), 10)
     timed("報表：用手機找一位會員（一年）", lambda: salesreport.get_report({"member": "0900001234", "from_date": year_from,
                                                                   "to_date": today}), 2)
 

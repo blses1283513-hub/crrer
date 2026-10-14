@@ -8,6 +8,7 @@
 import frappe
 from frappe import _
 
+from nila_app import perms
 from nila_app.catalog import (
     NO_ORDER_STATUSES,
     NO_REPLENISH_STATUSES,
@@ -126,7 +127,7 @@ def _attribute_values(attr):
 @frappe.whitelist()
 def get_style_options():
     """新增款式頁面需要的選項：甲型、尺寸、建議的款式編號。"""
-    frappe.has_permission("Item", ptype="create", throw=True)
+    perms.require("item_manage")
     return {"shapes": _attribute_values(SHAPE_ATTR), "sizes": _attribute_values(SIZE_ATTR),
             "next_code": suggest_code()}
 
@@ -138,7 +139,7 @@ def suggest_code():
 @frappe.whitelist()
 def create_style(data):
     """建立款式與勾選的規格。全部成功才寫入；任何一筆失敗就全部取消。回傳 {code, variants}。"""
-    frappe.has_permission("Item", ptype="create", throw=True)
+    perms.require("item_manage")
     data = frappe.parse_json(data)
     try:
         style = clean_style(data, _attribute_values(SHAPE_ATTR), _attribute_values(SIZE_ATTR))
@@ -174,7 +175,7 @@ def create_style(data):
 @frappe.whitelist()
 def add_variants(style, cells, targets=None):
     """在既有款式加入新的甲型 × 尺寸。已存在的組合會略過。回傳新增的規格料號。"""
-    frappe.has_permission("Item", ptype="create", throw=True)
+    perms.require("item_manage")
     if not frappe.db.get_value("Item", style, "has_variants"):
         frappe.throw(_("{0} 不是款式").format(style))
     s = frappe.db.get_value("Item", style, ["item_name", *STYLE_FIELDS], as_dict=True)

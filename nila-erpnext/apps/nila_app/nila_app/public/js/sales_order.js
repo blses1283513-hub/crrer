@@ -61,7 +61,7 @@ const nila_so = {
 			<div style="overflow-x:auto"><table class="nila-grid table-sm"><thead><tr><th>#</th><th>${__("規格")}</th><th>${__("出貨倉")}</th><th>${__("數量")}</th>
 			${whs.map((w) => `<th>${e(w.label)}</th>`).join("")}<th>${__("分配")}</th></tr></thead><tbody>${rows}</tbody></table></div>
 			${r.moving.length ? `<div class="small mt-1">${__("在途調撥單：")}${r.moving.map((m) => frappe.utils.get_form_link("Stock Entry", m.name, true)).join("、")}</div>` : ""}`);
-		if (frm.doc.docstatus === 1 && r.transfers.length && r.can_manage) {
+		if (frm.doc.docstatus === 1 && r.transfers.length && r.can_transfer) {
 			frm.remove_custom_button(__("建立調撥單"), __("調度"));
 			frm.add_custom_button(__("建立調撥單"), () => nila_so.transfer_dialog(frm, r), __("調度"));
 		}

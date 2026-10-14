@@ -12,15 +12,7 @@ from nila_app import products as p
 from nila_app.setup.config import TRANSIT, load_config
 from nila_app.stockrules import allocate, num
 
-VIEW_ROLES = {"System Manager", "Stock Manager", "Stock User", "Item Manager", "Sales Manager", "Sales User",
-              "Purchase Manager", "Purchase User"}
-MANAGE_ROLES = {"System Manager", "Stock Manager", "Purchase Manager"}
 REASON_KINDS = ["補貨調整", "負庫存", "調撥調整"]
-
-
-def check_roles(roles):
-    if frappe.session.user != "Administrator" and not roles & set(frappe.get_roles()):
-        frappe.throw(_("沒有權限"), frappe.PermissionError)
 
 
 # ---------- 基本資料 ----------
@@ -168,15 +160,24 @@ def create_transfer(from_wh, to_wh, items, sales_order=None, remarks=None):
 
 @frappe.whitelist()
 def receive_transfer(name):
-    """在途調撥單到貨：建立並送出入庫單，把在途數量全部轉入調入倉。回傳入庫單號。"""
-    check_roles(VIEW_ROLES)
-    from erpnext.stock.doctype.stock_entry.stock_entry import make_stock_in_entry
+    """在途調撥單到貨：建立並送出入庫單，把在途數量全部轉入調入倉。回傳入庫單號。
+    門市店長只能收寄到自己門市的貨。"""
+    from nila_app import perms
 
+    perms.require("transfer_receive")
     out = frappe.get_doc("Stock Entry", name)
     if out.docstatus != 1 or not out.add_to_transit or not out.nila_destination:
         frappe.throw(_("{0} 不是在途中的調撥單").format(name))
     if (out.per_transferred or 0) >= 100:
         frappe.throw(_("{0} 已經全部入庫").format(name))
+    perms.check_store(out.nila_destination)
+    with perms.elevated():
+        return _receive(name, out)
+
+
+def _receive(name, out):
+    from erpnext.stock.doctype.stock_entry.stock_entry import make_stock_in_entry
+
     doc = make_stock_in_entry(name)
     for d in doc.items:
         d.t_warehouse = out.nila_destination
@@ -187,12 +188,35 @@ def receive_transfer(name):
     return doc.name
 
 
+@frappe.whitelist()
+def history(item, warehouse=None, limit=100):
+    """庫存異動明細（只有數量，不含成本）：庫存表點數字時使用。門市層級只看得到自己的門市。"""
+    from nila_app import perms
+
+    perms.require("stock_history")
+    allowed = [w["name"] for w in (perms.allowed_stores() if perms.scoped() else warehouses())]
+    if warehouse:
+        if warehouse not in allowed:
+            frappe.throw(_("不能查看這個倉庫：{0}").format(warehouse), frappe.PermissionError)
+        allowed = [warehouse]
+    labels = {w["name"]: w["label"] for w in warehouses()}
+    rows = frappe.get_all("Stock Ledger Entry", filters={"item_code": item, "warehouse": ["in", allowed or [""]], "is_cancelled": 0},
+                          fields=["posting_date", "posting_time", "warehouse", "voucher_type", "voucher_no", "actual_qty",
+                                  "qty_after_transaction"], order_by="posting_date desc, posting_time desc, creation desc",
+                          limit=frappe.utils.cint(limit) or 100)
+    return [dict(r, posting_date=str(r.posting_date), posting_time=str(r.posting_time)[:5], warehouse=labels.get(r.warehouse, r.warehouse),
+                 actual_qty=num(r.actual_qty), qty_after_transaction=num(r.qty_after_transaction),
+                 voucher_type=_(r.voucher_type)) for r in rows]
+
+
 # ---------- 調整原因 ----------
 
 @frappe.whitelist()
 def reasons(kind):
     """某一類可選的原因（「原因選項」可自行新增、停用）。"""
-    check_roles(VIEW_ROLES)
+    from nila_app import perms
+
+    perms.require("replenish_view", "dispatch", "transfer_create")
     return frappe.get_all("Nila Reason", filters={"kind": kind, "disabled": 0}, pluck="reason", order_by="idx, creation")
 
 

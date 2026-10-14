@@ -10,7 +10,7 @@
 import frappe
 from frappe import _
 
-from nila_app import stock
+from nila_app import perms, stock
 from nila_app.stockrules import DELIVERED, num, order_status
 
 
@@ -120,7 +120,7 @@ def stock_changed(doc, method=None):
 def order_panel(doc):
     """訂單畫面：每一行在各倉庫的庫存、分配結果（現貨、在途、調撥、已叫貨、還缺），以及調撥建議。
     尚未送出的訂單排在所有已送出訂單之後計算。"""
-    stock.check_roles(stock.VIEW_ROLES)
+    perms.require("dispatch")
     doc = frappe._dict(frappe.parse_json(doc))
     items = [frappe._dict(d) for d in (doc.get("items") or []) if d.get("item_code")]
     submitted = doc.get("docstatus") == 1 and doc.get("name") and not doc.get("__islocal")
@@ -156,4 +156,4 @@ def order_panel(doc):
     return {"warehouses": [{"name": w["name"], "label": w["label"], "transit": w["transit"]} for w in whs],
             "lines": out, "status": order_status(results) if results else "", "transfers": moves, "moving": moving,
             "reasons": stock.reasons("調撥調整"),
-            "can_manage": frappe.session.user == "Administrator" or bool(stock.MANAGE_ROLES & set(frappe.get_roles()))}
+            "can_transfer": perms.can("transfer_create")}

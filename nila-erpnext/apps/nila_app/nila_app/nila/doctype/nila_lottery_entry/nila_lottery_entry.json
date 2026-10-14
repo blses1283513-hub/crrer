@@ -1,0 +1,86 @@
+{
+ "doctype": "DocType",
+ "module": "Nila",
+ "custom": 0,
+ "engine": "InnoDB",
+ "creation": "2026-10-14 00:00:00.000000",
+ "modified": "2026-10-14 00:00:00.000000",
+ "modified_by": "Administrator",
+ "owner": "Administrator",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "links": [],
+ "actions": [],
+ "row_format": "Dynamic",
+ "editable_grid": 1,
+ "name": "Nila Lottery Entry",
+ "fields": [
+  {
+   "fieldname": "customer",
+   "label": "會員",
+   "fieldtype": "Link",
+   "options": "Customer",
+   "in_list_view": 1,
+   "read_only": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "customer_name",
+   "label": "姓名",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "read_only": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "phone",
+   "label": "手機",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "read_only": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "orders",
+   "label": "消費次數",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "read_only": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "net",
+   "label": "消費淨額",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "read_only": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "max_single",
+   "label": "單筆最高",
+   "fieldtype": "Currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "entries",
+   "label": "名額",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "read_only": 1,
+   "columns": 1
+  }
+ ],
+ "field_order": [
+  "customer",
+  "customer_name",
+  "phone",
+  "orders",
+  "net",
+  "max_single",
+  "entries"
+ ],
+ "istable": 1,
+ "permissions": []
+}

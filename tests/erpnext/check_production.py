@@ -113,8 +113,16 @@ def check_install(c, expect_version, p0_only=False):
     check("會員群組、門市散客、官網散客", c.exists("Customer Group", "會員") and c.exists("Customer", "門市散客") and c.exists("Customer", "官網散客"))
     profiles = {x["name"] for x in c.get_list("POS Profile", '["name"]')}
     check("每個門市的收銀設定", {"門市-總公司", "門市-分公司A", "門市-分公司B", "門市-分公司C", "門市-分公司D"} <= profiles, sorted(profiles))
+    # P6 帳號、權限、抽獎
+    check("頁面：帳號管理", "nila-accounts" in pages)
+    check("可以用帳號登入（不需信箱）", c.get_doc("System Settings", "System Settings").get("allow_login_using_user_name") == 1)
+    check("「妮菈」首頁", c.exists("Workspace", "妮菈"))
+    check("抽獎活動資料表", c.call("/api/resource/Nila%20Lottery?limit_page_length=1")[0] == 200)
+    cost = c.call("/api/method/frappe.client.get_value?doctype=Property%20Setter&fieldname=value&filters="
+                  + urllib.parse.quote('{"doc_type":"Item","field_name":"valuation_rate","property":"permlevel"}'))[1]
+    check("成本欄位只有可看成本的層級看得到", (cost.get("message") or {}).get("value") == "5", cost)
     for method in ["nila_app.matrix.get_matrix", "nila_app.replenish.get_suggestions", "nila_app.retail.sale_context",
-                   "nila_app.salesreport.get_options"]:
+                   "nila_app.salesreport.get_options", "nila_app.accounts.list_accounts"]:
         status, _body = c.call(f"/api/method/{method}")
         check(f"API 可用：{method}", status == 200, status)
 

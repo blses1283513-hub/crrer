@@ -21,6 +21,7 @@ PRICE_LISTS = ["官網售價", "實體售價"]
 SHAPE_ATTR = "甲型"
 SIZE_ATTR = "尺寸"
 
+COST_PERMLEVEL = 5  # 成本欄位的權限層級（ERPNext 原本沒用到 5，不會和既有設定衝突）
 _ON_STYLE = "eval:doc.variant_of"  # 規格（變體）上唯讀，只能在款式修改
 CUSTOM_FIELDS = {
     "Item": [
@@ -36,7 +37,7 @@ CUSTOM_FIELDS = {
          "depends_on": "eval:!doc.has_variants", "non_negative": 1,
          "description": "全公司合計的補貨目標；依款式與甲型設定"},
         {"fieldname": "nila_cost", "label": "成本", "fieldtype": "Currency", "insert_after": "nila_reorder_target",
-         "read_only_depends_on": _ON_STYLE, "non_negative": 1},
+         "read_only_depends_on": _ON_STYLE, "non_negative": 1, "permlevel": COST_PERMLEVEL},
         {"fieldname": "nila_web_price", "label": "官網售價", "fieldtype": "Currency", "insert_after": "nila_cost",
          "read_only_depends_on": _ON_STYLE, "non_negative": 1},
         {"fieldname": "nila_store_price", "label": "實體售價", "fieldtype": "Currency", "insert_after": "nila_web_price",
@@ -165,6 +166,10 @@ def ensure_basics():
     _ensure_stock_settings()
     _ensure_reasons()
     _ensure_roles()
+    _ensure_level_permissions()
+    _ensure_workspace()
+    if not frappe.db.get_single_value("System Settings", "allow_login_using_user_name"):
+        frappe.db.set_single_value("System Settings", "allow_login_using_user_name", 1)  # 用帳號登入，不需要信箱
     if not frappe.db.exists("Supplier", DEFAULT_SUPPLIER):
         frappe.get_doc({"doctype": "Supplier", "supplier_name": DEFAULT_SUPPLIER,
                         "supplier_group": frappe.db.get_value("Supplier Group", {"is_group": 1}, "name")}).insert()
@@ -238,6 +243,77 @@ def _ensure_roles():
     for role in LEVELS:
         if not frappe.db.exists("Role", role):
             frappe.get_doc({"doctype": "Role", "role_name": role, "desk_access": 1}).insert(ignore_permissions=True)
+
+
+def _ensure_perm(doctype, role, permlevel, ptypes):
+    """確保某角色在某單據有這些權限（可重複執行）。第一次會先把 ERPNext 原本的權限複製成自訂權限，原本的權限不變。"""
+    from frappe.permissions import add_permission, setup_custom_perms, update_permission_property
+
+    setup_custom_perms(doctype)
+    if not frappe.db.exists("Custom DocPerm", {"parent": doctype, "role": role, "permlevel": permlevel, "if_owner": 0}):
+        add_permission(doctype, role, permlevel)
+    for ptype in ptypes:
+        update_permission_property(doctype, role, permlevel, ptype, 1, validate=False)
+
+
+def _ensure_level_permissions():
+    """5 個層級在 ERPNext 原本畫面的權限：額外的單據權限、成本欄位只有可看成本的角色看得到、含金額的庫存報表限制角色。"""
+    from frappe.custom.doctype.property_setter.property_setter import make_property_setter
+
+    from nila_app import levels as L
+
+    for doctype, role, ptypes in L.EXTRA_PERMS:
+        _ensure_perm(doctype, role, 0, ptypes)
+    for parent, fields in L.COST_FIELDS.items():
+        for doctype, field in fields:
+            if field.startswith("nila_"):
+                continue  # 自訂欄位直接在 CUSTOM_FIELDS 設定
+            if frappe.get_meta(doctype).get_field(field) and str(frappe.db.get_value(
+                    "Property Setter", {"doc_type": doctype, "field_name": field, "property": "permlevel"}, "value")) != str(COST_PERMLEVEL):
+                make_property_setter(doctype, field, "permlevel", COST_PERMLEVEL, "Int", validate_fields_for_doctype=False)
+        for role in L.COST_ROLES:
+            _ensure_perm(parent, role, COST_PERMLEVEL, ["read"])
+    # 庫存報表大多顯示金額：只有可看成本的角色能開（數量請用「庫存表」）。已經自訂過的報表不動
+    allowed = {"Stock Manager", "System Manager", "Accounts Manager", L.ADMIN, L.MANAGER}
+    for report in frappe.get_all("Report", filters={"module": "Stock", "disabled": 0}, pluck="name"):
+        if report in L.OPEN_STOCK_REPORTS or frappe.db.exists("Custom Role", {"report": report}):
+            continue
+        roles = {r.role for r in frappe.get_all("Has Role", filters={"parent": report, "parenttype": "Report"}, fields=["role"])}
+        keep = sorted((roles - {"Stock User", "Sales User", "Purchase User", "Accounts User"}) | allowed)
+        frappe.get_doc({"doctype": "Custom Role", "report": report, "ref_doctype": frappe.db.get_value("Report", report, "ref_doctype"),
+                        "roles": [{"role": r} for r in keep]}).insert(ignore_permissions=True)
+    frappe.clear_cache()
+
+
+WORKSPACE = "妮菈"
+WORKSPACE_CARDS = [  # (卡片, [(類型, 目標, 名稱)])
+    ("門市", [("Page", "nila-store-sale", "門市銷售"), ("Page", "nila-sales-report", "消費報表"), ("Page", "nila-barcode", "條碼")]),
+    ("庫存與訂單", [("Page", "nila-stock-matrix", "庫存表"), ("Page", "nila-replenish", "補貨建議"),
+                 ("DocType", "Sales Order", "銷售訂單"), ("DocType", "Stock Reconciliation", "盤點")]),
+    ("商品與會員", [("Page", "nila-new-style", "新增款式"), ("Page", "nila-item-import", "商品匯入匯出"),
+                 ("DocType", "Customer", "會員與客戶")]),
+    ("管理", [("DocType", "Nila Lottery", "抽獎活動"), ("Page", "nila-accounts", "帳號管理")]),
+]
+
+
+def _ensure_workspace():
+    """「妮菈」首頁：各層級只會看到自己有權限的功能。每次升級依最新清單更新。"""
+    import json
+
+    links, content = [], []
+    for card, items in WORKSPACE_CARDS:
+        items = [(kind, target, label) for kind, target, label in items if frappe.db.exists(kind, target)]  # 更新前還沒建立的先略過
+        if not items:
+            continue
+        links.append({"type": "Card Break", "label": card, "link_count": len(items)})
+        links += [{"type": "Link", "label": label, "link_type": kind, "link_to": target} for kind, target, label in items]
+        content.append({"id": frappe.generate_hash(length=10), "type": "card", "data": {"card_name": card, "col": 4}})
+    doc = frappe.get_doc("Workspace", WORKSPACE) if frappe.db.exists("Workspace", WORKSPACE) else frappe.new_doc("Workspace")
+    doc.update({"label": WORKSPACE, "title": WORKSPACE, "module": "Nila", "public": 1, "icon": "sell", "sequence_id": 0.5,
+                "content": json.dumps(content, ensure_ascii=False)})
+    doc.set("links", links)
+    doc.flags.ignore_permissions = True
+    doc.save() if not doc.is_new() else doc.insert()
 
 
 def _ensure_retail(company, stores):
