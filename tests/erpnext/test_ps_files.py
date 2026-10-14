@@ -25,6 +25,14 @@ class TestPowerShellFiles(unittest.TestCase):
             text = re.sub(r"<#.*?#>|#[^\n]*", "", f.read_text(encoding="utf-8-sig"), flags=re.S)
             self.assertEqual(text.count("{") - text.count("}"), 0, f"{f.name} 大括號不成對")
 
+    def test_every_production_script_is_installed(self):
+        """安裝、更新會複製到客戶電腦的檔案清單包含每一個正式版腳本（漏掉的話客戶的電腦上就沒有這個腳本）。"""
+        common = (ROOT / "production" / "lib" / "NilaCommon.ps1").read_text(encoding="utf-8-sig")
+        listed = set(re.findall(r'"([\w.-]+)"', re.search(r"NilaProductionFiles = @\((.*?)\)", common, re.S).group(1)))
+        scripts = {f.name for f in (ROOT / "production").glob("*.ps1")}
+        self.assertEqual(scripts - listed, set())
+        self.assertLessEqual({"docker-compose.yml", "Dockerfile"}, listed)
+
 
 if __name__ == "__main__":
     unittest.main()

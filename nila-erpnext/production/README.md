@@ -3,8 +3,8 @@
 官方 ERPNext 16 ＋ 妮菈客製功能（`nila_app`），裝在客戶的電腦上，客戶是最高權限的使用者（`Administrator`）。
 只供**同一個區網**使用（`http://電腦IP:8090`），不對外開放；之後若要讓門市或手機從外面連進來，再加對外通道即可，不需要重裝。
 
-> 開發進度：**P0–P7 已完成**——安裝、更新、備份、還原；商品；庫存表、全公司補貨、訂單調度；門市銷售與會員；帳號、權限與抽獎；SHOPLINE 官網訂單同步（預設關閉）。
-> 最後的 P8（搬到客戶電腦、自動啟動、每日備份演練、正式資料匯入與驗收）完成後就是 1.0.0。更新都用 `update-nila.ps1`，資料不受影響。
+> **1.0.0（正式上線版）**：安裝、更新、備份（含雲端資料夾）、還原與還原演練、健康檢查與開機自動啟動；商品；庫存表、全公司補貨、訂單調度；門市銷售與會員（含會員名單匯入）；帳號、權限與抽獎；SHOPLINE 官網訂單同步（預設關閉）。
+> 使用手冊：[`../user-manual.md`](../user-manual.md)；驗收清單：[`../acceptance-checklist.md`](../acceptance-checklist.md)；Windows 實機驗證步驟：[`../windows-verification.md`](../windows-verification.md)。之後的更新都用 `update-nila.ps1`，資料不受影響。
 
 ## 需要什麼
 
@@ -48,20 +48,61 @@ New-NetFirewallRule -DisplayName "妮菈 ERPNext (TCP 8090)" -Direction Inbound 
 
 其他電腦用瀏覽器開 `http://主機IP:8090`（主機 IP 用 `ipconfig` 查）。主機的網路要設為「私人網路」，IP 建議在路由器固定。
 
-## 備份（非常重要：主機沒有 UPS）
+## 上線設定（只做一次）
+
+主機沒有 UPS，要做到：停電後電腦自己開機、系統自己恢復，每天自動備份到雲端資料夾。以下指令都在 `C:\Users\你的帳號\nila-erpnext\production` 執行。
+
+1. **雲端資料夾**：在主機安裝客戶雲端硬碟的電腦版（例如 Google Drive 電腦版，會出現 `G:\我的雲端硬碟`；OneDrive 則是 `C:\Users\你的帳號\OneDrive`），建立資料夾 `妮菈備份`，並設定為「同步／一律保留在這部裝置上」。
+2. **每天自動備份到雲端資料夾**（每天 23:30；以系統管理員身分執行 PowerShell）：
+
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File .\backup-nila.ps1 -CopyTo "G:\我的雲端硬碟\妮菈備份" -RegisterDaily
+   powershell -ExecutionPolicy Bypass -File .\backup-nila.ps1 -CopyTo "G:\我的雲端硬碟\妮菈備份"     # 立刻先備份一次
+   ```
+
+   > 備份含資料庫與網站設定（加密金鑰），等同全部資料：雲端帳號請開啟兩步驟驗證，不要分享這個資料夾。
+3. **登入 Windows 後自動檢查並啟動系統**（以系統管理員身分執行 PowerShell）：
+
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File .\check-nila.ps1 -RegisterStartup
+   ```
+4. **Docker Desktop**：設定 → General → 勾選「Start Docker Desktop when you sign in to your computer」。
+5. **停電後自動開機**：開機時進入 BIOS／UEFI（多半是按 Del 或 F2），把「AC Power Recovery／Restore on AC Power Loss」設為 **Power On**（各廠牌名稱不同，可請電腦行協助）。
+6. **自動登入 Windows**（Docker Desktop 要登入後才會啟動）：按 Win＋R 輸入 `netplwiz`，取消勾選「必須輸入使用者名稱和密碼，才能使用這台電腦」並輸入密碼。若看不到這個選項，先到「設定 → 帳戶 → 登入選項」關閉「只允許 Windows Hello 登入」。主機請放在只有員工能接觸的地方，並設定螢幕鎖定。
+7. **關閉睡眠**：設定 → 系統 → 電源 → 接上電源時「永不」睡眠。
+8. 最後執行一次 `check-nila.ps1`，應該全部 ✓（第一次還原演練見下方）。
+
+停電復電後的順序：電腦自動開機 → 自動登入 → Docker Desktop 啟動 → 系統的服務自動啟動 → 1 分鐘後 `NilaStart` 再檢查一次，網頁沒有回應就自動重新啟動。資料庫會自動完成斷電後的復原（實測：寫入中途強制斷電，已完成的資料全部保留）。
+
+## 健康檢查
 
 ```powershell
-cd C:\Users\你的帳號\nila-erpnext\production
-powershell -ExecutionPolicy Bypass -File .\backup-nila.ps1 -CopyTo "D:\妮菈備份"
+powershell -ExecutionPolicy Bypass -File .\check-nila.ps1         # 只檢查，不改任何東西
+powershell -ExecutionPolicy Bypass -File .\check-nila.ps1 -Fix    # 網頁沒有回應時自動啟動或重新啟動
 ```
 
-- 每份備份放在 `文件\妮菈備份\日期時間\`（資料庫、上傳檔案、網站設定），保留最近 30 份。
-- `-CopyTo` 指定**第二個地方**（隨身碟、NAS、或 Google Drive／OneDrive 的同步資料夾）。電腦壞掉時，只有放在別處的備份救得回來。
-- **每天自動備份**（每天 23:30，電腦與 Docker 要開著）：
+檢查：Docker、9 個服務、網頁、上次備份（超過 36 小時沒有備份或備份失敗會標 ✗）、雲端資料夾有沒有這份備份、上次還原演練、磁碟空間、自動排程。自動執行的結果記在安裝資料夾的 `check-nila.log`。
 
-  ```powershell
-  powershell -ExecutionPolicy Bypass -File .\backup-nila.ps1 -CopyTo "D:\妮菈備份" -RegisterDaily
-  ```
+## 備份
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\backup-nila.ps1 -CopyTo "G:\我的雲端硬碟\妮菈備份"
+```
+
+- 每份備份放在 `文件\妮菈備份\日期時間\`（資料庫、上傳檔案、網站設定），保留最近 30 份；`-CopyTo` 的第二個地方也保留 30 份。
+- 系統不必停止，備份時可以照常使用。
+- 每次備份的結果（成功或失敗）記在安裝資料夾的 `last-backup.json`，健康檢查會讀它。
+
+## 還原演練（每個月一次）
+
+確認備份**真的還原得回來**，正式資料完全不受影響、系統可以照常使用：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\drill-nila.ps1                                                   # 最近一次的備份
+powershell -ExecutionPolicy Bypass -File .\drill-nila.ps1 -BackupDir "G:\我的雲端硬碟\妮菈備份\20261013_233000"   # 雲端裡的那一份
+```
+
+會把備份還原到一個臨時網站，檢查備份檔完整、資料庫能還原、加密金鑰正確，列出款式、規格、會員、銷售、庫存的數量和目前系統對照，最後刪除臨時網站（約 2–10 分鐘）。
 
 ## 還原
 
@@ -73,7 +114,19 @@ powershell -ExecutionPolicy Bypass -File .\restore-nila.ps1 -BackupDir "C:\Users
 
 輸入 `YES` 確認。完成後請用**備份當時**的帳號密碼登入（帳號密碼存在資料庫中，會一起還原）。
 
-**換電腦**：在新電腦依「安裝」完成安裝（`nila-config.json` 用舊電腦備份資料夾中的那份），再用上面的指令還原舊電腦的備份。
+**換電腦**：在新電腦依「安裝」與「上線設定」完成安裝（`nila-config.json` 用舊電腦備份資料夾中的那份），再用上面的指令還原舊電腦的備份。
+
+## 忘記密碼
+
+- **一般帳號**：管理員到「妮菈 → 帳號管理」，在該帳號按「重設密碼」。
+- **最高管理員（Administrator）**：在主機上執行（只有能操作這台電腦的人能用）：
+
+  ```powershell
+  powershell -ExecutionPolicy Bypass -File .\reset-admin-password.ps1
+  ```
+
+  輸入新密碼兩次（至少 10 個字，畫面不會顯示）。也會解除輸錯太多次的暫時鎖定。
+- 用「1 管理員」層級帳號的人忘記密碼，也可以用 `-User 帳號@nila.local` 指定那個帳號。
 
 ## 更新到新版本
 
@@ -178,7 +231,9 @@ powershell -ExecutionPolicy Bypass -File .\update-nila.ps1
    - 只退款：商品不退回（例如瑕疵讓客人留著），視同處理 1 件。
    - 部分退款只扣退款金額（Q9）。
 
-**會員**：手機號碼自動統一成 09xxxxxxxx（`+886 912-345-678` 也可以），不能重複。同一個人有兩筆會員資料時，營運主管以上可以合併（消費紀錄移到保留的那一筆）。
+**會員匯入**（營運主管以上；「妮菈 → 會員匯入」）：上線時匯入原有的會員名單。下載範本，填「姓名、手機」兩欄（Excel 或 CSV 都可以），上傳後先預覽：有錯誤會列出列號且不匯入；手機已經是會員的略過、不改原本資料。實測 5,000 位會員約 35 秒。
+
+**會員**：手機號碼自動統一成 09xxxxxxxx（`+886 912-345-678` 也可以），不能重複。同一個人有兩筆會員資料時，營運主管以上打開要併掉的那一筆，按「合併到另一位會員」（消費紀錄移到保留的那一筆）。
 
 **消費報表**（店長以上；店長只看自己的門市）：依會員、依門市或明細，顯示消費次數、銷售金額、退款金額與淨額，可匯出 Excel。**只計門市銷售，官網訂單不算**（Q7）；抽獎（P6）用同一個計算。
 
@@ -276,13 +331,16 @@ powershell -ExecutionPolicy Bypass -File .\update-nila.ps1
 | 暫停／再開 | `docker compose stop`／`docker compose start` |
 | 電腦重開機後 | Docker Desktop 啟動後系統會自動啟動（建議在 Docker Desktop 設定「登入時自動啟動」） |
 | 看錯誤紀錄 | `docker compose logs --tail 50 backend` |
-| 出現 502 錯誤 | `docker compose restart`（前端與後端一起重新啟動） |
+| 出現 502 錯誤或打不開 | `powershell -ExecutionPolicy Bypass -File .\check-nila.ps1 -Fix` |
+| 系統是否正常 | `powershell -ExecutionPolicy Bypass -File .\check-nila.ps1` |
+| 每個月 | `drill-nila.ps1`（還原演練） |
 
 ## 檔案說明
 
 | 檔案 | 用途 |
 |---|---|
 | `install-nila.ps1`、`update-nila.ps1`、`backup-nila.ps1`、`restore-nila.ps1` | 安裝、更新、備份、還原 |
+| `check-nila.ps1`、`drill-nila.ps1`、`reset-admin-password.ps1` | 健康檢查與開機自動啟動、還原演練、最高管理員忘記密碼 |
 | `docker-compose.yml` | 以官方 frappe_docker 正式版設定（`compose.yaml`＋mariadb、redis、noproxy override，MIT）為基礎 |
 | `Dockerfile` | 官方 `frappe/erpnext:v16.50.0`＋`nila_app`（在你的電腦上建置，不需要映像檔倉庫） |
 | `nila-config.example.json` | 公司、分公司、甲型、尺寸的設定範本 |
@@ -304,5 +362,7 @@ powershell -ExecutionPolicy Bypass -File .\update-nila.ps1
 | 一年 20,000 筆門市銷售、5,000 位會員：全部會員的消費統計 0.08 秒、報表 0.1 秒內、抽獎預覽 0.3 秒、產生 4,000 人名單 3 秒 | ✅ 自動測試（`live_retail.py nila 20000`） |
 | 帳號與權限：帳號管理（新增、改層級與門市、停用、重設密碼、不能鎖住自己）、5 個層級在妮菈頁面與 ERPNext 原本畫面的能做與不能做、門市範圍、成本欄位與含金額報表、店長只能收自己門市的貨；抽獎（多條件、名額上限、門市、整筆退貨不算、官網不算、快照不變、匯出） | ✅ 在真正的 ERPNext 16 上自動測試（`tests/erpnext/live_perms.py`，52 項），畫面另以瀏覽器實測（含店員登入） |
 | SHOPLINE 官網訂單：金鑰加密保存且畫面只顯示最後 4 碼、測試連線、只有管理員能設定、預設關閉、依更新時間查詢（UTC、每頁 50 筆、分頁）、超過每秒限制自動重試、建立銷售訂單（合併 SKU、折扣後單價、贈品）、對不到料號待處理、POS／暫存／建立前取消略過、退換貨待處理、不重複建立、取消與退款自動取消未出貨訂單、已出貨後退款待處理、人工處理、重新處理、建立後被修改、單筆出錯不影響其他、金鑰失效通知、排程間隔 | ✅ 以模擬的 SHOPLINE（依官方 API 文件的格式）在真正的 ERPNext 16 上自動測試（`tests/erpnext/live_shopline.py`，58 項），畫面與背景排程另以瀏覽器與實際排程實測。**尚未連真正的 SHOPLINE**：等取得金鑰後一起用真實訂單驗證 |
+| 停電：寫入資料途中強制結束全部程式（含資料庫），再開機 | ✅ 本機實測：資料庫自動復原，已完成的 4,877 筆寫入全部保留、資料表檢查無誤；開機檢查自動把系統叫起來 |
+| 健康檢查、還原演練（從雲端資料夾的備份）、最高管理員忘記密碼、會員匯入（錯誤列號、Big5 CSV、略過已有會員、權限、5,000 位 34 秒） | ✅ 在真正的 ERPNext 16 上自動測試（`tests/erpnext/live_golive.py`，GitHub Actions 另外實際執行 `check-nila.ps1`、`drill-nila.ps1`、`reset-admin-password.ps1`） |
 | 在 Windows 的 Docker Desktop 上執行 | 🧪 尚未在 Windows 實測（腳本相容 Windows PowerShell 5.1，但自動測試是在 Linux 的 PowerShell 7 上跑） |
 | 每天自動備份的排程登記（`-RegisterDaily`） | 🧪 尚未在 Windows 實測 |

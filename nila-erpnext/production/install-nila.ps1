@@ -96,7 +96,7 @@ if (-not $sameDir) {
     New-Item -ItemType Directory -Force -Path $appsDest | Out-Null
     Copy-Item (Join-Path $src "apps/nila_app") $appsDest -Recurse -Force
 }
-foreach ($f in @("docker-compose.yml", "Dockerfile", "nila-config.example.json", "install-nila.ps1", "update-nila.ps1", "backup-nila.ps1", "restore-nila.ps1")) {
+foreach ($f in $script:NilaProductionFiles) {
     $from = Join-Path $src "production/$f"
     if ((Test-Path $from) -and ((Resolve-Path $from).Path -ne (Join-Path (Resolve-Path $prodDir).Path $f))) { Copy-Item $from $prodDir -Force }
 }
@@ -140,6 +140,10 @@ Write-Host "完成！" -ForegroundColor Green
 Write-Host "  本機：http://localhost:$Port"
 Write-Host "  同一個區網的其他電腦：http://${ip}:$Port（需先開放防火牆，見 README）"
 Write-Host "  帳號：Administrator　密碼：你剛才設定的密碼"
-Write-Host "  備份：powershell -ExecutionPolicy Bypass -File `"$prodDir\backup-nila.ps1`""
+Write-Host ""
+Write-Host "接下來（只要做一次，見 README「上線設定」）：" -ForegroundColor Cyan
+Write-Host "  1. 每天自動備份（含雲端資料夾）：powershell -ExecutionPolicy Bypass -File `"$prodDir\backup-nila.ps1`" -CopyTo `"雲端資料夾\妮菈備份`" -RegisterDaily"
+Write-Host "  2. 登入後自動啟動（以系統管理員身分執行）：powershell -ExecutionPolicy Bypass -File `"$prodDir\check-nila.ps1`" -RegisterStartup"
+Write-Host "  3. 隨時檢查系統：powershell -ExecutionPolicy Bypass -File `"$prodDir\check-nila.ps1`"" 
 Write-Host "  ⚠ .env 內有資料庫密碼，請勿分享；它不在備份中，但還原時不需要。"
 try { Start-Process "http://localhost:$Port" } catch { }

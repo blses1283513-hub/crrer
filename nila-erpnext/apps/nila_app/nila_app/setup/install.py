@@ -299,7 +299,7 @@ WORKSPACE_CARDS = [  # (卡片, [(類型, 目標, 名稱)])
     ("庫存與訂單", [("Page", "nila-stock-matrix", "庫存表"), ("Page", "nila-replenish", "補貨建議"),
                  ("DocType", "Sales Order", "銷售訂單"), ("DocType", "Stock Reconciliation", "盤點")]),
     ("商品與會員", [("Page", "nila-new-style", "新增款式"), ("Page", "nila-item-import", "商品匯入匯出"),
-                 ("DocType", "Customer", "會員與客戶")]),
+                 ("DocType", "Customer", "會員與客戶"), ("Page", "nila-member-import", "會員匯入")]),
     ("管理", [("DocType", "Nila Lottery", "抽獎活動"), ("Page", "nila-shopline", "SHOPLINE 官網訂單"),
             ("Page", "nila-accounts", "帳號管理")]),
 ]

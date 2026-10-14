@@ -127,7 +127,9 @@ def check_install(c, expect_version, p0_only=False):
           {"Sales Order-nila_channel", "Sales Order-nila_shopline_number", "Sales Order-nila_shopline_id"} <= cf)
     status, body = c.call("/api/method/nila_app.shopline.get_settings")
     check("SHOPLINE 同步預設關閉（更新不會自動開啟）", status == 200 and not body.get("message", {}).get("enabled"), status)
-    for method in ["nila_app.matrix.get_matrix", "nila_app.replenish.get_suggestions", "nila_app.retail.sale_context",
+    # P8 上線
+    check("頁面：會員匯入", "nila-member-import" in pages)
+    for method in ["nila_app.memberimport.import_status", "nila_app.matrix.get_matrix", "nila_app.replenish.get_suggestions", "nila_app.retail.sale_context",
                    "nila_app.salesreport.get_options", "nila_app.accounts.list_accounts", "nila_app.shopline.list_orders"]:
         status, _body = c.call(f"/api/method/{method}")
         check(f"API 可用：{method}", status == 200, status)

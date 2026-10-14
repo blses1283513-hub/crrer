@@ -100,3 +100,67 @@ def plan_return(sold, mode, requests):
     if not out:
         raise RetailError("沒有要退的項目")
     return out
+
+
+# ---------- 會員名單匯入 ----------
+
+MEMBER_COLUMNS = ["姓名", "手機"]
+PHONE_ALIASES = {"手機", "手機號碼", "電話", "行動電話"}
+
+
+def _cell(v):
+    if v is None:
+        return ""
+    if isinstance(v, float) and v.is_integer():
+        v = int(v)
+    return str(v).strip()
+
+
+def plan_members(table, existing):
+    """會員名單（第一列是標題：姓名、手機）→ 匯入計畫。
+
+    existing：系統裡已有的會員 {手機: 姓名}。
+    - 手機統一格式；Excel 把 0912345678 存成數字 912345678 時自動補 0。
+    - 檔案內手機重複、姓名空白、手機格式錯誤 → 錯誤（有錯誤時全部不匯入）。
+    - 系統裡已經有這支手機 → 略過（不改原本的會員資料），姓名不同時提醒。
+    回傳 {"new": [{row, name, phone}], "skipped": [...], "errors": [...], "warnings": [...]}。
+    """
+    out = {"new": [], "skipped": [], "errors": [], "warnings": []}
+    rows = [list(r or []) for r in (table or [])]
+    head_at = next((i for i, r in enumerate(rows[:10]) if "姓名" in [_cell(c) for c in r]
+                    and PHONE_ALIASES & {_cell(c) for c in r}), None)
+    if head_at is None:
+        out["errors"].append("找不到標題列：第一列要有「姓名」與「手機」兩個欄位（請用範本）")
+        return out
+    head = [_cell(c) for c in rows[head_at]]
+    ci_name = head.index("姓名")
+    ci_phone = next(i for i, c in enumerate(head) if c in PHONE_ALIASES)
+    seen = {}
+    for n, r in enumerate(rows[head_at + 1:], start=head_at + 2):
+        name = _cell(r[ci_name]) if ci_name < len(r) else ""
+        raw = _cell(r[ci_phone]) if ci_phone < len(r) else ""
+        if not name and not raw:
+            continue
+        if not name:
+            out["errors"].append(f"第 {n} 列：姓名空白")
+            continue
+        if re.fullmatch(r"9\d{8}", raw):
+            raw = "0" + raw
+        try:
+            phone = normalize_phone(raw)
+        except RetailError as e:
+            out["errors"].append(f"第 {n} 列（{name}）：{e}")
+            continue
+        if phone in seen:
+            out["errors"].append(f"第 {n} 列（{name}）：手機 {phone} 和第 {seen[phone]} 列重複")
+            continue
+        seen[phone] = n
+        if phone in existing:
+            out["skipped"].append({"row": n, "name": name, "phone": phone, "current": existing[phone]})
+            if existing[phone] != name:
+                out["warnings"].append(f"第 {n} 列：手機 {phone} 已經是會員「{existing[phone]}」，不會改成「{name}」")
+        else:
+            out["new"].append({"row": n, "name": name, "phone": phone})
+    if len(out["errors"]) > 200:
+        out["errors"] = out["errors"][:200] + [f"…還有 {len(out['errors']) - 200} 個錯誤"]
+    return out

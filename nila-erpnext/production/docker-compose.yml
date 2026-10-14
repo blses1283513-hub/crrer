@@ -5,7 +5,7 @@
 #   1. 映像檔改為本機建置的 nila-erpnext（官方 ERPNext 16 ＋ nila_app），見 Dockerfile
 #   2. 固定網站名稱（SITE_NAME），用 localhost 或區網 IP 連線都會到同一個網站
 #   3. 新增一次性服務 create-site：第一次啟動時建立網站、安裝 ERPNext 與 nila_app，並依 nila-config.json 完成基本設定
-#   4. 新增一次性服務 restore（只在還原時執行）：密碼由 .env 經環境變數傳入，不出現在指令中
+#   4. 新增一次性服務 restore（只在還原時執行）與 drill（還原演練，還原到臨時網站後刪除）：密碼由 .env 經環境變數傳入，不出現在指令中
 #   5. 資料庫與管理員密碼必填（官方預設 123）
 #   6. 固定專案名稱 nila-erpnext，資料卷與試用版、InvenTree 都分開
 name: nila-erpnext
@@ -63,6 +63,7 @@ services:
     restart: on-failure
 
   # [Nila] 第一次啟動時建立網站；之後每次啟動只確認 nila_app 已安裝、基本設定存在（可重複執行）
+  #        先等資料庫可以連線（docker compose restart 會同時重新啟動全部服務，資料庫可能還沒好）
   create-site:
     <<: *backend_defaults
     restart: "no"
@@ -71,6 +72,7 @@ services:
       - >
         set -e;
         cd /home/frappe/frappe-bench;
+        for i in $$(seq 1 90); do (echo > /dev/tcp/db/3306) >/dev/null 2>&1 && break; sleep 2; done;
         if [ ! -d "sites/$$SITE_NAME" ]; then
           if [ -z "$$ADMIN_PASSWORD" ]; then echo "ADMIN_PASSWORD 未設定，無法建立網站"; exit 1; fi;
           bench new-site "$$SITE_NAME" --mariadb-user-host-login-scope='%' --admin-password="$$ADMIN_PASSWORD" --db-root-username=root --db-root-password="$$DB_PASSWORD" --install-app erpnext --set-default;
@@ -143,6 +145,15 @@ services:
     entrypoint: ["bash", "/home/frappe/frappe-bench/apps/nila_app/nila_app/setup/restore.sh"]
     environment:
       SITE_NAME: ${SITE_NAME:-nila}
+      DB_PASSWORD: ${DB_PASSWORD:?請在 .env 設定 DB_PASSWORD}
+
+  # [Nila] 只在還原演練時由 drill-nila.ps1 執行：把備份還原到臨時網站 nila-drill，檢查後刪除，正式網站不受影響
+  drill:
+    <<: *backend_defaults
+    restart: "no"
+    profiles: ["tools"]
+    entrypoint: ["bash", "/home/frappe/frappe-bench/apps/nila_app/nila_app/setup/drill.sh"]
+    environment:
       DB_PASSWORD: ${DB_PASSWORD:?請在 .env 設定 DB_PASSWORD}
 
   db:

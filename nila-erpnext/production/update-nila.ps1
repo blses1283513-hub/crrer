@@ -40,7 +40,7 @@ $appsDest = Join-Path $InstallDir "apps"
 if (Test-Path (Join-Path $appsDest "nila_app")) { Remove-Item (Join-Path $appsDest "nila_app") -Recurse -Force }
 New-Item -ItemType Directory -Force -Path $appsDest | Out-Null
 Copy-Item (Join-Path $src "apps/nila_app") $appsDest -Recurse -Force
-foreach ($f in @("docker-compose.yml", "Dockerfile", "nila-config.example.json", "install-nila.ps1", "update-nila.ps1", "backup-nila.ps1", "restore-nila.ps1")) {
+foreach ($f in $script:NilaProductionFiles) {
     Copy-Item (Join-Path $src "production/$f") $prodDir -Force
 }
 Copy-Item (Join-Path $src "production/lib/*") (Join-Path $prodDir "lib") -Force

@@ -4,6 +4,10 @@
 
 $script:Utf8NoBom = New-Object System.Text.UTF8Encoding $false
 
+# 安裝與更新時複製到安裝資料夾的檔案（新增腳本時加在這裡）
+$script:NilaProductionFiles = @("docker-compose.yml", "Dockerfile", "nila-config.example.json", "install-nila.ps1", "update-nila.ps1",
+    "backup-nila.ps1", "restore-nila.ps1", "check-nila.ps1", "drill-nila.ps1", "reset-admin-password.ps1")
+
 function Get-NilaEnv {
     param([Parameter(Mandatory = $true)][string]$Path)
     $values = @{}
@@ -78,4 +82,19 @@ function Get-NilaLanIp {
         if ($ip) { return $ip }
     } catch { }
     return "電腦IP"
+}
+
+function Save-NilaJson {
+    param([Parameter(Mandatory = $true)][string]$Path, [Parameter(Mandatory = $true)]$Value)
+    [IO.File]::WriteAllText($Path, ($Value | ConvertTo-Json -Depth 5), $script:Utf8NoBom)
+}
+
+# 安裝資料夾所在磁碟的剩餘空間（GB）；Windows 與 Linux 都可以
+function Get-NilaFreeGB {
+    param([Parameter(Mandatory = $true)][string]$Path)
+    $full = (Resolve-Path $Path).Path
+    $drive = [IO.DriveInfo]::GetDrives() | Where-Object { $_.IsReady -and $full.StartsWith($_.RootDirectory.FullName, [StringComparison]::OrdinalIgnoreCase) } |
+        Sort-Object { $_.RootDirectory.FullName.Length } -Descending | Select-Object -First 1
+    if (-not $drive) { return $null }
+    return [math]::Round($drive.AvailableFreeSpace / 1GB, 1)
 }

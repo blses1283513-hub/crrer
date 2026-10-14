@@ -82,5 +82,29 @@ class TestReturns(unittest.TestCase):
             R.plan_return(self.SOLD, "x", [])
 
 
+class TestMemberImport(unittest.TestCase):
+    def test_plan(self):
+        table = [["會員名單"], ["姓名", "手機", "備註"],
+                 ["王小美", "0912-345-678"], ["李大華", 912000111.0], ["", ""], ["陳一", "+886 933 222 111"],
+                 ["舊會員", "0955111222"], ["改名的人", "0955333444"]]
+        out = R.plan_members(table, {"0955111222": "舊會員", "0955333444": "原本的名字"})
+        self.assertEqual(out["errors"], [])
+        self.assertEqual([(m["row"], m["name"], m["phone"]) for m in out["new"]],
+                         [(3, "王小美", "0912345678"), (4, "李大華", "0912000111"), (6, "陳一", "0933222111")])
+        self.assertEqual([m["phone"] for m in out["skipped"]], ["0955111222", "0955333444"])
+        self.assertEqual(len(out["warnings"]), 1)
+        self.assertIn("不會改成「改名的人」", out["warnings"][0])
+
+    def test_errors(self):
+        out = R.plan_members([["姓名", "電話"], ["", "0912345678"], ["甲", "12345"], ["乙", "0912000001"], ["丙", "0912-000-001"]], {})
+        self.assertEqual(len(out["errors"]), 3, out["errors"])
+        self.assertIn("第 2 列：姓名空白", out["errors"][0])
+        self.assertIn("第 3 列（甲）", out["errors"][1])
+        self.assertIn("和第 4 列重複", out["errors"][2])
+
+    def test_missing_header(self):
+        self.assertIn("找不到標題列", R.plan_members([["名字", "號碼"]], {})["errors"][0])
+
+
 if __name__ == "__main__":
     unittest.main()

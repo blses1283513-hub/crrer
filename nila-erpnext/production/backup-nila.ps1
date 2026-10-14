@@ -36,6 +36,13 @@ if ($RegisterDaily) {
     exit 0
 }
 
+# 記錄每次備份的結果（成功或失敗），讓 check-nila.ps1 檢查「多久沒有備份」與「第二個地方有沒有複製成功」
+$statePath = Join-Path $InstallDir "last-backup.json"
+trap {
+    Save-NilaJson -Path $statePath -Value ([ordered]@{ ok = $false; time = (Get-Date -Format "yyyy-MM-dd HH:mm:ss"); error = "$_" })
+    break
+}
+
 Assert-Docker
 $site = (Get-NilaEnv -Path (Join-Path $prodDir ".env"))["SITE_NAME"]
 if (-not $site) { $site = "nila" }
@@ -84,4 +91,6 @@ if ($CopyTo) {
 }
 
 $size = (Get-ChildItem $dest | Measure-Object Length -Sum).Sum / 1MB
+Save-NilaJson -Path $statePath -Value ([ordered]@{ ok = $true; time = (Get-Date -Format "yyyy-MM-dd HH:mm:ss"); dir = $dest
+    copy_to = $CopyTo; size_mb = [math]::Round($size, 1) })
 Write-Host ("✓ 備份完成：{0}（{1:N1} MB，保留最近 {2} 份）" -f $dest, $size, $Keep) -ForegroundColor Green

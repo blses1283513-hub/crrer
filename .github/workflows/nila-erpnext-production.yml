@@ -24,7 +24,7 @@ permissions:
 env:
   INSTALL: ${{ github.workspace }}/../nila-install
   ADMIN_PW: 'Prod $pw"2026x'
-  VERSION: '0.8.0'
+  VERSION: '1.0.0'
   P0_COMMIT: ab1df1e3a0a81f1d48bad5084c424040a4c6e699
 
 jobs:
@@ -79,12 +79,43 @@ jobs:
           docker compose exec -T backend bash -c "cd sites && ../env/bin/python -W ignore /tmp/live_perms.py nila"
           docker compose cp "$GITHUB_WORKSPACE/tests/erpnext/live_shopline.py" backend:/tmp/live_shopline.py
           docker compose exec -T backend bash -c "cd sites && ../env/bin/python -W ignore /tmp/live_shopline.py nila"
+      - name: 上線功能整合測試（會員匯入含 5,000 位的速度測試、還原演練的資料摘要）
+        working-directory: ${{ env.INSTALL }}/production
+        run: |
+          docker compose cp "$GITHUB_WORKSPACE/tests/erpnext/live_golive.py" backend:/tmp/live_golive.py
+          docker compose exec -T backend bash -c "cd sites && ../env/bin/python -W ignore /tmp/live_golive.py nila 5000"
       - name: 備份（含第二個地方）
         shell: pwsh
         run: |
           ./tests/erpnext/Invoke-WithAnswers.ps1 -Script "$env:INSTALL/production/backup-nila.ps1" -OutDir "$env:RUNNER_TEMP/b1" -CopyTo "$env:RUNNER_TEMP/b2"
           if (@(Get-ChildItem "$env:RUNNER_TEMP/b1/*/*-database.sql.gz").Count -ne 1) { throw '沒有資料庫備份' }
           if (@(Get-ChildItem "$env:RUNNER_TEMP/b2/*/*-database.sql.gz").Count -ne 1) { throw '第二個地方沒有備份' }
+      - name: 健康檢查、還原演練（用第二個地方的備份）、最高管理員忘記密碼
+        shell: pwsh
+        run: |
+          & "$env:INSTALL/production/check-nila.ps1"
+          if ($LASTEXITCODE -ne 0) { throw '健康檢查有問題' }
+          $b = (Get-ChildItem "$env:RUNNER_TEMP/b2" -Directory | Select-Object -First 1).FullName
+          & "$env:INSTALL/production/drill-nila.ps1" -BackupDir $b
+          $d = Get-Content "$env:INSTALL/last-drill.json" -Raw | ConvertFrom-Json
+          if (-not $d.ok) { throw '還原演練失敗' }
+          & "$env:INSTALL/production/check-nila.ps1"
+          if ($LASTEXITCODE -ne 0) { throw '演練後健康檢查有問題' }
+          # 停掉前端：健康檢查要發現，-Fix 要自動恢復
+          docker compose -f "$env:INSTALL/production/docker-compose.yml" stop frontend
+          & "$env:INSTALL/production/check-nila.ps1"
+          if ($LASTEXITCODE -eq 0) { throw '前端停了，健康檢查卻沒有發現' }
+          & "$env:INSTALL/production/check-nila.ps1" -Fix
+          if ($LASTEXITCODE -ne 0) { throw '-Fix 沒有自動恢復' }
+          $tmp = 'Reset-Test-2026!q'
+          $env:NILA_ANSWERS = "$tmp`n$tmp"
+          ./tests/erpnext/Invoke-WithAnswers.ps1 -Script "$env:INSTALL/production/reset-admin-password.ps1"
+          $login = { param($pw) (Invoke-WebRequest http://localhost:8090/api/method/login -Method Post -ContentType 'application/json' -Body (@{ usr = 'Administrator'; pwd = $pw } | ConvertTo-Json) -SkipHttpErrorCheck).StatusCode }
+          if ((& $login $tmp) -ne 200) { throw '新密碼不能登入' }
+          if ((& $login $env:ADMIN_PW) -eq 200) { throw '舊密碼還能登入' }
+          $env:NILA_ANSWERS = "$env:ADMIN_PW`n$env:ADMIN_PW"
+          ./tests/erpnext/Invoke-WithAnswers.ps1 -Script "$env:INSTALL/production/reset-admin-password.ps1"
+          if ((& $login $env:ADMIN_PW) -ne 200) { throw '改回原密碼後不能登入' }
       - name: 備份後修改資料
         run: python3 tests/erpnext/check_production.py --password "$ADMIN_PW" --phase mutate
       - name: 還原
@@ -95,18 +126,18 @@ jobs:
           ./tests/erpnext/Invoke-WithAnswers.ps1 -Script "$env:INSTALL/production/restore-nila.ps1" -BackupDir $b
       - name: 檢查還原結果
         run: python3 tests/erpnext/check_production.py --password "$ADMIN_PW" --phase restored
-      - name: 更新到新版本（模擬 0.1.0 → 0.9.9）
+      - name: 更新到新版本（模擬 1.0.0 → 1.0.1）
         shell: pwsh
         run: |
           $dl = "$env:RUNNER_TEMP/download/nila-erpnext"
           New-Item -ItemType Directory -Force -Path $dl | Out-Null
           Copy-Item ./nila-erpnext/apps, ./nila-erpnext/production $dl -Recurse
           $init = "$dl/apps/nila_app/nila_app/__init__.py"
-          (Get-Content $init -Raw) -replace '__version__ = ".*"', '__version__ = "0.9.9"' | Set-Content $init -NoNewline
+          (Get-Content $init -Raw) -replace '__version__ = ".*"', '__version__ = "1.0.1"' | Set-Content $init -NoNewline
           $env:NILA_ANSWERS = 'Y'
           ./tests/erpnext/Invoke-WithAnswers.ps1 -Script "$dl/production/update-nila.ps1" -InstallDir $env:INSTALL
       - name: 檢查更新結果
-        run: python3 tests/erpnext/check_production.py --password "$ADMIN_PW" --expect-version 0.9.9 --phase restored
+        run: python3 tests/erpnext/check_production.py --password "$ADMIN_PW" --expect-version 1.0.1 --phase restored
       - name: 失敗時的紀錄
         if: failure()
         working-directory: ${{ env.INSTALL }}/production
@@ -144,6 +175,13 @@ jobs:
           ./tests/erpnext/Invoke-WithAnswers.ps1 -Script "$dl/production/update-nila.ps1" -InstallDir $env:INSTALL
       - name: 檢查更新結果（資料保留、新功能生效）
         run: python3 tests/erpnext/check_production.py --password "$ADMIN_PW" --expect-version "$VERSION" --phase restored
+      - name: 舊版更新後也有新的維護腳本，健康檢查可以執行
+        shell: pwsh
+        run: |
+          foreach ($f in 'check-nila.ps1', 'drill-nila.ps1', 'reset-admin-password.ps1') { if (-not (Test-Path "$env:INSTALL/production/$f")) { throw "更新後缺少 $f" } }
+          & "$env:INSTALL/production/check-nila.ps1"
+          # 還沒有備份紀錄，所以會有 1 個問題；確認腳本本身可以執行完畢
+          if ($LASTEXITCODE -gt 1) { throw '健康檢查無法執行' }
       - name: 商品功能整合測試
         working-directory: ${{ env.INSTALL }}/production
         run: |
