@@ -261,6 +261,8 @@ def test_replenish(env, so1):
           (env.bin(x, env.hq), frappe.db.get_value("Material Request", mr, "status")))
     check("到貨後訂單 1 變可出貨", status(so1) == "可出貨", status(so1))
 
+    # 讓一個規格需要補貨（甲型 2 原本沒有目標），確保不受網站上其他資料影響
+    frappe.db.set_value("Item", env.items[2], "nila_reorder_target", 5)
     before = frappe.db.count("Notification Log", {"link": "/app/nila-replenish", "for_user": "Administrator"})
     replenish.daily()
     check("每日：有需要補貨時通知 Administrator（可能是唯一的使用者）",
