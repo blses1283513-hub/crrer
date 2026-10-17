@@ -29,6 +29,7 @@ expected yield gain@<b>expected yield gain</b>　<span style="color:#1c5cab">預
 explainability@<b>explainability</b>　<span style="color:#1c5cab">可解釋性</span><br>說明模型為何做出某預測，如 SHAP 值。<br><i>SHAP explainability ranks which process parameters drive yield.</i><br>SHAP 可解釋性排出哪些製程參數影響良率最大。<br><span style="color:#898781;font-size:smaller">semiyield, sem-toolkit</span>
 film stress@<b>film stress</b>　<span style="color:#1c5cab">薄膜應力</span><br>薄膜內的張應力或壓應力，會造成晶圓翹曲。<br><i>Film stress combines intrinsic stress and thermal mismatch.</i><br>薄膜應力包含本質應力與熱膨脹不匹配。<br><span style="color:#898781;font-size:smaller">semiyield, sem-toolkit</span>
 film thickness@<b>film thickness</b>　<span style="color:#1c5cab">膜厚</span><br>最常見的薄膜量測參數，單位多為 nm 或 Å。<br><i>Film thickness is fitted at 49 sites to build the wafer map.</i><br>在 49 個量測點擬合膜厚，以建立晶圓圖。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, waferlens, sem-toolkit</span>
+four-point probe@<b>four-point probe</b>　<span style="color:#1c5cab">四點探針</span><br>四根探針接觸晶圓量片電阻 Rs；會接觸並留下探針痕，所以多用在空白監控片。<br><i>The four-point probe map on the monitor wafer showed Rs higher at the edge.</i><br>監控片的四點探針分布圖顯示邊緣的 Rs 較高。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield</span>
 full factorial design@<b>full factorial design</b>　<span style="color:#1c5cab">全因子設計</span><br>所有因子所有水準組合都做實驗；2⁴ 為 16 組。<br><i>A 2-to-the-4 full factorial design with four center points needs 20 runs.</i><br>2⁴ 全因子設計加四個中心點需要 20 次實驗。<br><span style="color:#898781;font-size:smaller">sem-toolkit, semiyield, metro-toolkit</span>
 gate oxide@<b>gate oxide</b>　<span style="color:#1c5cab">閘極氧化層</span><br>電晶體閘極下的薄氧化層，常只有數奈米。<br><i>A gate oxide of 1.8 nm is measured with multi-angle SE.</i><br>1.8 nm 的閘極氧化層用多角度 SE 量測。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, sem-toolkit</span>
 Gaussian process@<b>Gaussian process</b>　<span style="color:#1c5cab">高斯過程</span><br>可同時給出預測值與不確定度的代理模型。<br><i>The Gaussian process predicts both the response and its uncertainty.</i><br>高斯過程同時預測響應值與其不確定度。<br><span style="color:#898781;font-size:smaller">semiyield</span>
@@ -105,6 +106,7 @@ yield model@<b>yield model</b>　<span style="color:#1c5cab">良率模型</span>
 可解釋性@→ <b>explainability</b>
 薄膜應力@→ <b>film stress</b>
 膜厚@→ <b>film thickness</b>
+四點探針@→ <b>four-point probe</b>
 全因子設計@→ <b>full factorial design</b>
 閘極氧化層@→ <b>gate oxide</b>
 高斯過程@→ <b>Gaussian process</b>

@@ -2,9 +2,11 @@ accuracy
 activation energy
 adder
 adjusted R-squared
+AIM target
 ALD window
 aliasing
 ambient medium
+amorphization
 amorphous silicon
 analysis of variance
 angle of incidence
@@ -12,6 +14,7 @@ applications engineer
 aspect ratio
 atomic layer deposition
 attribution
+Auger electron spectroscopy (AES)
 average run length
 band gap
 Bayesian optimization
@@ -22,6 +25,9 @@ Brewster angle
 capacitor dielectric
 capture rate
 Cauchy model
+CD-AFM
+CD-SAXS
+CD-SEM
 center point
 center-to-edge
 central composite design
@@ -35,6 +41,7 @@ commonality analysis
 confirmation run
 confounding
 confusion matrix
+contact angle
 container
 containment
 contour plot
@@ -43,6 +50,7 @@ control limits
 convolutional neural network
 Cpk
 critical dimension
+cross-section TEM
 curvature
 CUSUM chart
 dashboard
@@ -61,17 +69,22 @@ detection delay
 die
 die area
 die-weighted net effect
+diffraction-based overlay (DBO)
 diffusion barrier
 dishing
 dispersion model
 disposition
+dopant activation
 drift
 dynamic repeatability
 e-log
+eddy current
 edge exclusion
 edge ring
 edge roll-off
 editable install
+effective attenuation length (EAL)
+electrochemical capacitance-voltage (ECV)
 energy-dispersive X-ray spectroscopy
 ensemble model
 environment variable
@@ -87,6 +100,7 @@ explainability
 extinction coefficient
 false alarm
 false call
+Faraday cup
 fault detection and classification
 feature selection
 FIB cross-section
@@ -95,6 +109,7 @@ film stress
 film thickness
 floated parameter
 focus-exposure matrix
+four-point probe
 fractional factorial design
 Fresnel coefficients
 full factorial design
@@ -112,6 +127,9 @@ head-to-head split
 high-k dielectric
 hold
 Hotelling T-squared
+hybrid bonding
+image-based overlay (IBO)
+in-die overlay
 inconclusive
 individuals and moving range chart
 inhibit
@@ -120,6 +138,8 @@ interfacial layer
 interference fringe
 interpolation
 ion implantation
+IR alignment (wafer-to-wafer)
+junction photovoltage (JPV)
 kill ratio
 killer defect
 Kramers-Kronig relations
@@ -131,6 +151,7 @@ local minimum
 long format
 long-term stability
 lot
+mass metrology
 mass-transport limited
 maxout
 measurement site
@@ -158,6 +179,7 @@ passivation layer
 PECVD
 Phase I
 physical vapor deposition
+picosecond ultrasonics
 polarization
 Ppk
 precision
@@ -177,6 +199,7 @@ purge
 qual
 queue time
 radial profile
+Raman spectroscopy
 random forest
 random vs systematic loss
 recall
@@ -197,10 +220,13 @@ RF power
 root cause analysis
 run log
 run order randomization
+Rutherford backscattering (RBS)
 sampling plan
+scatterometry (OCD)
 schema
 scrap
 scratch
+secondary ion mass spectrometry (SIMS)
 Sellmeier equation
 sensitivity
 sensor
@@ -217,10 +243,13 @@ specification limits
 spectroscopic ellipsometry
 SPICE netlist
 split lot
+spreading resistance profiling (SRP)
 standard error
 star schema
 statistical process control
 step coverage
+Stoney equation
+stylus profiler
 substrate
 subsurface defect
 surface-reaction limited
@@ -228,6 +257,7 @@ synthetic data
 Tauc-Lorentz model
 technology node
 thermal oxidation
+thermal wave (TW)
 thin film
 tilt
 time-series database
@@ -238,11 +268,16 @@ underlayer
 unit test
 variance component
 virtual environment
+wafer curvature
 wafer genealogy
 wafer map
 wafer-to-wafer variation
 Western Electric rules
 within-wafer uniformity
+X-ray diffraction (XRD)
+X-ray fluorescence (XRF)
+X-ray photoelectron spectroscopy (XPS)
+X-ray reflectivity (XRR)
 Xbar-R chart
 yield
 yield model

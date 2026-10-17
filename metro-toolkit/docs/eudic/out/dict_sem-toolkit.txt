@@ -1,12 +1,14 @@
 ambient medium@<b>ambient medium</b>　<span style="color:#1c5cab">環境介質</span><br>光入射前所在的介質，一般為空氣（n = 1）。<br><i>Setting the ambient medium to n = 1.5 instead of air shifts every reflectance curve.</i><br>把環境介質設成 n = 1.5 而不是空氣，會讓每一條反射率曲線都偏移。<br><span style="color:#898781;font-size:smaller">metro-toolkit, sem-toolkit</span>
 angle of incidence@<b>angle of incidence</b>　<span style="color:#1c5cab">入射角</span><br>入射光與表面法線的夾角；SE 常用 65°–75°。<br><i>Using several angles of incidence reduces correlation between fitted parameters.</i><br>使用多個入射角可以降低擬合參數之間的相關性。<br><span style="color:#898781;font-size:smaller">metro-toolkit, sem-toolkit</span>
 atomic layer deposition@<b>atomic layer deposition</b>　<span style="color:#1c5cab">原子層沉積（ALD）</span><br>以自我限制反應逐層沉積，厚度以循環數控制，覆蓋性極佳。<br><i>Atomic layer deposition adds about 0.1 nm per cycle.</i><br>原子層沉積每個循環約增加 0.1 nm。<br><span style="color:#898781;font-size:smaller">semiyield, metro-toolkit, sem-toolkit</span>
+CD-SEM@<b>CD-SEM</b>　<span style="color:#1c5cab">關鍵尺寸掃描式電子顯微鏡</span><br>由上往下看的電子束影像量 CD 與 LER；電子束可能讓光阻收縮，屬輕微影響樣品。<br><i>The CD-SEM landing energy was lowered to limit resist shrinkage.</i><br>降低 CD-SEM 的電子入射能量，以減少光阻收縮。<br><span style="color:#898781;font-size:smaller">metro-toolkit, sem-toolkit</span>
 center point@<b>center point</b>　<span style="color:#1c5cab">中心點</span><br>因子皆在中間水準的實驗，用於檢查曲率與估計誤差。<br><i>Center points reveal curvature that a two-level design would miss.</i><br>中心點能發現二水準設計會漏掉的曲率。<br><span style="color:#898781;font-size:smaller">sem-toolkit, semiyield, metro-toolkit</span>
 chemical vapor deposition@<b>chemical vapor deposition</b>　<span style="color:#1c5cab">化學氣相沉積（CVD）</span><br>以氣體前驅物反應沉積薄膜。<br><i>Chemical vapor deposition rate rises exponentially with temperature.</i><br>化學氣相沉積速率隨溫度呈指數上升。<br><span style="color:#898781;font-size:smaller">semiyield, sem-toolkit, waferlens</span>
 class imbalance@<b>class imbalance</b>　<span style="color:#1c5cab">類別不平衡</span><br>某一類樣本遠少於其他類，如失效晶圓只佔少數。<br><i>SECOM has a 14 to 1 class imbalance between pass and fail.</i><br>SECOM 的合格與失效之間有 14 比 1 的類別不平衡。<br><span style="color:#898781;font-size:smaller">sem-toolkit</span>
 confusion matrix@<b>confusion matrix</b>　<span style="color:#1c5cab">混淆矩陣</span><br>列出實際類別與預測類別對照的表格。<br><i>The confusion matrix shows Loc and Edge-Loc are often confused.</i><br>混淆矩陣顯示 Loc 與 Edge-Loc 常被混淆。<br><span style="color:#898781;font-size:smaller">sem-toolkit, metro-toolkit</span>
 contour plot@<b>contour plot</b>　<span style="color:#1c5cab">等高線圖</span><br>以等值線或色階呈現二維分布。<br><i>The contour plot uses a single blue scale for thickness.</i><br>等高線圖用單一藍色色階表示膜厚。<br><span style="color:#898781;font-size:smaller">metro-toolkit, sem-toolkit</span>
 convolutional neural network@<b>convolutional neural network</b>　<span style="color:#1c5cab">卷積神經網路（CNN）</span><br>擅長影像辨識的深度學習模型。<br><i>A convolutional neural network classifies wafer-map defect patterns.</i><br>卷積神經網路對晶圓圖缺陷圖樣進行分類。<br><span style="color:#898781;font-size:smaller">sem-toolkit</span>
+cross-section TEM@<b>cross-section TEM</b>　<span style="color:#1c5cab">穿透式電子顯微鏡切面</span><br>FIB 切片後用 TEM 看剖面，解析度最高，但破壞樣品且耗時，用來當作厚度與輪廓的參考答案。<br><i>Cross-section TEM showed a 1.2 nm interface layer the optical model had left out.</i><br>TEM 切面顯示一層光學模型漏掉的 1.2 nm 界面層。<br><span style="color:#898781;font-size:smaller">metro-toolkit, sem-toolkit</span>
 dashboard@<b>dashboard</b>　<span style="color:#1c5cab">儀表板</span><br>互動式網頁，集中呈現圖表與指標。<br><i>Open the dashboard with streamlit run.</i><br>用 streamlit run 開啟儀表板。<br><span style="color:#898781;font-size:smaller">metro-toolkit, semiyield, waferlens, sem-toolkit</span>
 defect pattern@<b>defect pattern</b>　<span style="color:#1c5cab">缺陷圖樣</span><br>晶圓圖上失效晶粒的空間分布型態，如 Center、Edge-Ring、Scratch。<br><i>An edge-ring defect pattern often points to deposition edge effects.</i><br>邊緣環狀缺陷圖樣常指向沉積的邊緣效應。<br><span style="color:#898781;font-size:smaller">sem-toolkit, waferlens, metro-toolkit</span>
 deposition rate@<b>deposition rate</b>　<span style="color:#1c5cab">沉積速率</span><br>單位時間沉積的厚度，nm/min。<br><i>The optimal recipe reaches a deposition rate of 62 nm per minute.</i><br>最佳 recipe 達到每分鐘 62 nm 的沉積速率。<br><span style="color:#898781;font-size:smaller">semiyield, sem-toolkit, metro-toolkit</span>
@@ -61,12 +63,14 @@ yield@<b>yield</b>　<span style="color:#1c5cab">良率</span><br>合格晶粒�
 環境介質@→ <b>ambient medium</b>
 入射角@→ <b>angle of incidence</b>
 原子層沉積@→ <b>atomic layer deposition</b>
+關鍵尺寸掃描式電子顯微鏡@→ <b>CD-SEM</b>
 中心點@→ <b>center point</b>
 化學氣相沉積@→ <b>chemical vapor deposition</b>
 類別不平衡@→ <b>class imbalance</b>
 混淆矩陣@→ <b>confusion matrix</b>
 等高線圖@→ <b>contour plot</b>
 卷積神經網路@→ <b>convolutional neural network</b>
+穿透式電子顯微鏡切面@→ <b>cross-section TEM</b>
 儀表板@→ <b>dashboard</b>
 缺陷圖樣@→ <b>defect pattern</b>
 沉積速率@→ <b>deposition rate</b>

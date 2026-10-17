@@ -29,6 +29,7 @@ expected yield gain,預期良率回收｜修好某個缺陷來源後估計能回
 explainability,可解釋性｜說明模型為何做出某預測，如 SHAP 值。｜例：SHAP explainability ranks which process parameters drive yield.｜譯：SHAP 可解釋性排出哪些製程參數影響良率最大。
 film stress,薄膜應力｜薄膜內的張應力或壓應力，會造成晶圓翹曲。｜例：Film stress combines intrinsic stress and thermal mismatch.｜譯：薄膜應力包含本質應力與熱膨脹不匹配。
 film thickness,膜厚｜最常見的薄膜量測參數，單位多為 nm 或 Å。｜例：Film thickness is fitted at 49 sites to build the wafer map.｜譯：在 49 個量測點擬合膜厚，以建立晶圓圖。
+four-point probe,四點探針｜四根探針接觸晶圓量片電阻 Rs；會接觸並留下探針痕，所以多用在空白監控片。｜例：The four-point probe map on the monitor wafer showed Rs higher at the edge.｜譯：監控片的四點探針分布圖顯示邊緣的 Rs 較高。
 full factorial design,全因子設計｜所有因子所有水準組合都做實驗；2⁴ 為 16 組。｜例：A 2-to-the-4 full factorial design with four center points needs 20 runs.｜譯：2⁴ 全因子設計加四個中心點需要 20 次實驗。
 gate oxide,閘極氧化層｜電晶體閘極下的薄氧化層，常只有數奈米。｜例：A gate oxide of 1.8 nm is measured with multi-angle SE.｜譯：1.8 nm 的閘極氧化層用多角度 SE 量測。
 Gaussian process,高斯過程｜可同時給出預測值與不確定度的代理模型。｜例：The Gaussian process predicts both the response and its uncertainty.｜譯：高斯過程同時預測響應值與其不確定度。

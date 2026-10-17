@@ -1,12 +1,14 @@
 ambient medium,環境介質｜光入射前所在的介質，一般為空氣（n = 1）。｜例：Setting the ambient medium to n = 1.5 instead of air shifts every reflectance curve.｜譯：把環境介質設成 n = 1.5 而不是空氣，會讓每一條反射率曲線都偏移。
 angle of incidence,入射角｜入射光與表面法線的夾角；SE 常用 65°–75°。｜例：Using several angles of incidence reduces correlation between fitted parameters.｜譯：使用多個入射角可以降低擬合參數之間的相關性。
 atomic layer deposition,原子層沉積（ALD）｜以自我限制反應逐層沉積，厚度以循環數控制，覆蓋性極佳。｜例：Atomic layer deposition adds about 0.1 nm per cycle.｜譯：原子層沉積每個循環約增加 0.1 nm。
+CD-SEM,關鍵尺寸掃描式電子顯微鏡｜由上往下看的電子束影像量 CD 與 LER；電子束可能讓光阻收縮，屬輕微影響樣品。｜例：The CD-SEM landing energy was lowered to limit resist shrinkage.｜譯：降低 CD-SEM 的電子入射能量，以減少光阻收縮。
 center point,中心點｜因子皆在中間水準的實驗，用於檢查曲率與估計誤差。｜例：Center points reveal curvature that a two-level design would miss.｜譯：中心點能發現二水準設計會漏掉的曲率。
 chemical vapor deposition,化學氣相沉積（CVD）｜以氣體前驅物反應沉積薄膜。｜例：Chemical vapor deposition rate rises exponentially with temperature.｜譯：化學氣相沉積速率隨溫度呈指數上升。
 class imbalance,類別不平衡｜某一類樣本遠少於其他類，如失效晶圓只佔少數。｜例：SECOM has a 14 to 1 class imbalance between pass and fail.｜譯：SECOM 的合格與失效之間有 14 比 1 的類別不平衡。
 confusion matrix,混淆矩陣｜列出實際類別與預測類別對照的表格。｜例：The confusion matrix shows Loc and Edge-Loc are often confused.｜譯：混淆矩陣顯示 Loc 與 Edge-Loc 常被混淆。
 contour plot,等高線圖｜以等值線或色階呈現二維分布。｜例：The contour plot uses a single blue scale for thickness.｜譯：等高線圖用單一藍色色階表示膜厚。
 convolutional neural network,卷積神經網路（CNN）｜擅長影像辨識的深度學習模型。｜例：A convolutional neural network classifies wafer-map defect patterns.｜譯：卷積神經網路對晶圓圖缺陷圖樣進行分類。
+cross-section TEM,穿透式電子顯微鏡切面｜FIB 切片後用 TEM 看剖面，解析度最高，但破壞樣品且耗時，用來當作厚度與輪廓的參考答案。｜例：Cross-section TEM showed a 1.2 nm interface layer the optical model had left out.｜譯：TEM 切面顯示一層光學模型漏掉的 1.2 nm 界面層。
 dashboard,儀表板｜互動式網頁，集中呈現圖表與指標。｜例：Open the dashboard with streamlit run.｜譯：用 streamlit run 開啟儀表板。
 defect pattern,缺陷圖樣｜晶圓圖上失效晶粒的空間分布型態，如 Center、Edge-Ring、Scratch。｜例：An edge-ring defect pattern often points to deposition edge effects.｜譯：邊緣環狀缺陷圖樣常指向沉積的邊緣效應。
 deposition rate,沉積速率｜單位時間沉積的厚度，nm/min。｜例：The optimal recipe reaches a deposition rate of 62 nm per minute.｜譯：最佳 recipe 達到每分鐘 62 nm 的沉積速率。

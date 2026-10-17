@@ -1,12 +1,14 @@
 ambient medium
 angle of incidence
 atomic layer deposition
+CD-SEM
 center point
 chemical vapor deposition
 class imbalance
 confusion matrix
 contour plot
 convolutional neural network
+cross-section TEM
 dashboard
 defect pattern
 deposition rate

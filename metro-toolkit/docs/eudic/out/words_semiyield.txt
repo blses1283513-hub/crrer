@@ -29,6 +29,7 @@ expected yield gain
 explainability
 film stress
 film thickness
+four-point probe
 full factorial design
 gate oxide
 Gaussian process

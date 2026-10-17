@@ -1,9 +1,11 @@
 accuracy
 adder
 adjusted R-squared
+AIM target
 ALD window
 aliasing
 ambient medium
+amorphization
 amorphous silicon
 analysis of variance
 angle of incidence
@@ -11,6 +13,7 @@ applications engineer
 aspect ratio
 atomic layer deposition
 attribution
+Auger electron spectroscopy (AES)
 average run length
 band gap
 Bland-Altman plot
@@ -20,6 +23,9 @@ Brewster angle
 capacitor dielectric
 capture rate
 Cauchy model
+CD-AFM
+CD-SAXS
+CD-SEM
 center point
 center-to-edge
 central composite design
@@ -30,12 +36,14 @@ commonality analysis
 confirmation run
 confounding
 confusion matrix
+contact angle
 containment
 contour plot
 control chart
 control limits
 Cpk
 critical dimension
+cross-section TEM
 curvature
 CUSUM chart
 dashboard
@@ -50,15 +58,20 @@ desirability function
 detection delay
 die area
 die-weighted net effect
+diffraction-based overlay (DBO)
 dispersion model
 disposition
+dopant activation
 drift
 dynamic repeatability
 e-log
+eddy current
 edge exclusion
 edge ring
 edge roll-off
 editable install
+effective attenuation length (EAL)
+electrochemical capacitance-voltage (ECV)
 energy-dispersive X-ray spectroscopy
 environment variable
 equivalence test
@@ -70,11 +83,13 @@ expected yield gain
 extinction coefficient
 false alarm
 false call
+Faraday cup
 FIB cross-section
 film stack
 film thickness
 floated parameter
 focus-exposure matrix
+four-point probe
 fractional factorial design
 Fresnel coefficients
 full factorial design
@@ -89,6 +104,9 @@ hard mask
 head-to-head split
 high-k dielectric
 hold
+hybrid bonding
+image-based overlay (IBO)
+in-die overlay
 inconclusive
 individuals and moving range chart
 inhibit
@@ -96,6 +114,8 @@ inline inspection
 interfacial layer
 interference fringe
 interpolation
+IR alignment (wafer-to-wafer)
+junction photovoltage (JPV)
 kill ratio
 killer defect
 Kramers-Kronig relations
@@ -106,6 +126,7 @@ local minimum
 long format
 long-term stability
 lot
+mass metrology
 mass-transport limited
 maxout
 measurement site
@@ -128,6 +149,7 @@ out of spec
 overlay
 parameter correlation
 Phase I
+picosecond ultrasonics
 polarization
 Ppk
 precision
@@ -142,6 +164,7 @@ Psi and Delta
 purge
 qual
 radial profile
+Raman spectroscopy
 random vs systematic loss
 recall
 recipe
@@ -159,9 +182,12 @@ response surface
 root cause analysis
 run log
 run order randomization
+Rutherford backscattering (RBS)
 sampling plan
+scatterometry (OCD)
 schema
 scratch
+secondary ion mass spectrometry (SIMS)
 Sellmeier equation
 sensitivity
 short / open
@@ -172,13 +198,17 @@ slot
 spatial signature
 specification limits
 spectroscopic ellipsometry
+spreading resistance profiling (SRP)
 standard error
 statistical process control
+Stoney equation
+stylus profiler
 substrate
 subsurface defect
 surface-reaction limited
 synthetic data
 Tauc-Lorentz model
+thermal wave (TW)
 thin film
 tilt
 tool matching
@@ -187,9 +217,14 @@ underlayer
 unit test
 variance component
 virtual environment
+wafer curvature
 wafer map
 wafer-to-wafer variation
 Western Electric rules
 within-wafer uniformity
+X-ray diffraction (XRD)
+X-ray fluorescence (XRF)
+X-ray photoelectron spectroscopy (XPS)
+X-ray reflectivity (XRR)
 Xbar-R chart
 Zernike polynomials
