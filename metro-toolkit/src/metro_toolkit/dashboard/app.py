@@ -1921,9 +1921,177 @@ def page_guide():
             st.markdown(f"{v['icon']} **{v['zh']} · {v['en']}**")
 
 
+# --------------------------------------------------------------------------- metrology map
+VERDICT_ICON = {"verified": "✅ 正確 verified", "corrected": "✏️ 已更正 corrected", "unresolved": "❓ 未定 unresolved"}
+LOC_NAME = {"in_die": "晶粒內 in-die", "scribe": "切割道測試圖形 scribe", "blanket": "空白片 blanket"}
+INLINE_NAME = {"inline": "線上 inline", "integrated": "整合在製程機台 integrated", "lab": "實驗室 lab"}
+DESTR_NAME = {"no": "否 no", "slight": "輕微 slight", "yes": "是 yes"}
+
+
+def _t(entry) -> str:
+    """A {zh, en} text (or a plain string) in the chosen guide language."""
+    if not entry:
+        return "—"
+    return bi_block(entry.get("zh", ""), entry.get("en", "")) if isinstance(entry, dict) else str(entry)
+
+
+def tool_card(tid: str, key: str):
+    from metro_toolkit.guide import metrology as mt
+
+    t = mt.tools().get(tid)
+    if not t:
+        return
+    with st.container(border=True):
+        st.markdown(f"**{t.get('name', tid)}** · {bi_line(t['full']) if isinstance(t.get('full'), dict) else t.get('full', '')}")
+        st.markdown(_t(t.get("principle")))
+        integ = t.get("inline") or []
+        integ = integ if isinstance(integ, list) else [integ]
+        facts = pd.DataFrame([
+            {"項目 item": "量什麼 measures", "內容 value": _t(t.get("measures")).replace("  \n", " / ")},
+            {"項目 item": "範圍 range (typical)", "內容 value": _t(t.get("range")).replace("  \n", " / ")},
+            {"項目 item": "精度 precision (typical)", "內容 value": _t(t.get("precision")).replace("  \n", " / ")},
+            {"項目 item": "位置 location", "內容 value": "、".join(LOC_NAME.get(x, x) for x in t.get("location") or []) or "—"},
+            {"項目 item": "接觸 contact", "內容 value": "是 yes" if t.get("contact") else "否 no"},
+            {"項目 item": "破壞性 destructive", "內容 value": DESTR_NAME.get(str(t.get("destructive")), str(t.get("destructive", "—")))},
+            {"項目 item": "線上／整合 inline / integrated", "內容 value": "、".join(INLINE_NAME.get(x, x) for x in integ) or "—"},
+            {"項目 item": "速度 speed", "內容 value": {"fast": "快 fast", "medium": "中 medium", "slow": "慢 slow"}.get(t.get("speed"), "—")},
+        ])
+        st.dataframe(facts, hide_index=True, width="stretch")
+        c1, c2 = st.columns(2)
+        c1.markdown("**優點 Strengths**  \n" + _t(t.get("strengths")))
+        c2.markdown("**限制 Limits**  \n" + _t(t.get("limits")))
+        if t.get("instead"):
+            st.markdown("**改用什麼 Choose something else when**  \n" + _t(t.get("instead")))
+        notes = t.get("notes") or []
+        if notes:
+            with st.expander(f"筆記查核 Your notes checked（{len(notes)}）"):
+                for n in notes:
+                    st.markdown(f"- {VERDICT_ICON.get(n.get('verdict'), n.get('verdict'))}：“{n.get('claim', '')}”  \n  "
+                                + _t(n.get("fix")).replace("  \n", "  \n  ") + (f"  \n  *{n['source']}*" if n.get("source") else ""))
+        pages = [p_ for p_ in t.get("toolkit") or [] if p_ in PAGES]
+        if pages:
+            cols = st.columns(len(pages))
+            for col, p_ in zip(cols, pages):
+                if col.button(f"🔗 在 {p_} 練習 · practise", key=f"{key}_go_{p_}", help=H("metro.goto")):
+                    st.session_state["nav_goto"] = p_
+                    st.rerun()
+
+
+def page_metrology():
+    from metro_toolkit.dashboard.figures import metrology_treemap
+    from metro_toolkit.guide import metrology as mt
+    from metro_toolkit.guide.render import lang
+
+    st.header("量測地圖 · Metrology map")
+    st.markdown(bi("每個製程參數用哪些量測技術：參數 → 量測類別 → 量測機台 → 特性。每個技術都經過查證並附來源；你原本筆記裡的每一點都標示了"
+                   "正確、已更正或未定。數字都是公開資料中的典型值，實際以所屬晶圓廠與機台規格為準。",
+                   "Which techniques measure each process parameter: parameter → metrology category → tool → characteristics. "
+                   "Every technique is researched and sourced, and each point of your original notes is marked verified, corrected "
+                   "or unresolved. Numbers are typical public values; your fab's tools and specs decide in real work."))
+    if not mt.available():
+        st.info(bi("量測地圖的資料檔還沒建立（guide/metrology_tree.yaml）。", "The metrology map data file (guide/metrology_tree.yaml) is not built yet."))
+        return
+    tabs = st.tabs(["🌳 地圖 Map", "🧭 選哪個量測？ Which technique?", "✅ 筆記查核 Your notes checked", "📚 來源 Sources"])
+    with tabs[0]:
+        st.plotly_chart(metrology_treemap(mt.tree(), mt.tools(), lang()), width="stretch", key="metro_tree")
+        st.caption(bi("點一個區塊可以放大，點上方路徑可以回上一層；滑鼠移到區塊上看說明。",
+                      "Click a tile to zoom in and the path bar to go back; hover a tile for its description."))
+        q = st.text_input("搜尋技術 Search techniques", key="metro_q", placeholder="例：XRR、overlay、stress", help=H("metro.search"))
+        hits = set(mt.search(q))
+        cats = mt.tree().get("categories", [])
+        cat = st.radio("類別 Category", [c["id"] for c in cats], horizontal=True, key="metro_cat",
+                       format_func=lambda c: bi_plain(next(x["name"] for x in cats if x["id"] == c)), help=H("metro.category"))
+        for p_ in next(c for c in cats if c["id"] == cat).get("parameters", []):
+            members = [t for t in mt.tools_for(p_["id"]) if not q or t in hits]
+            if q and not members:
+                continue
+            with st.expander(f"{bi_plain(p_['name'])}（{len(members)}）", expanded=bool(q)):
+                if p_.get("what"):
+                    st.markdown(_t(p_["what"]))
+                if p_.get("processes"):
+                    st.caption("製程 processes：" + ", ".join(p_["processes"]))
+                for g in p_.get("groups", []):
+                    tools_here = [t for t in g.get("tools", []) if t in members]
+                    if not tools_here:
+                        continue
+                    st.markdown(f"##### {bi_line(g['name'])}")
+                    if g.get("what"):
+                        st.caption(_t(g["what"]).replace("  \n", " · "))
+                    for tid in tools_here:
+                        tool_card(tid, f"metro_{p_['id']}_{g['id']}_{tid}")
+                for n in p_.get("notes") or []:
+                    st.info(f"{VERDICT_ICON.get(n.get('verdict'), '')}：“{n.get('claim', '')}” — " + _t(n.get("fix")).replace("  \n", " "))
+    with tabs[1]:
+        st.markdown(bi("選一個要量的參數，再設定限制；會列出適合的技術與原因，以及被排除的技術和排除原因。",
+                       "Pick the parameter to measure and set your constraints; you get the techniques that fit and why, and the ones "
+                       "ruled out and why."))
+        params = mt.parameters()
+        pid = st.selectbox("要量的參數 Parameter", [p_ for p_ in params if mt.tools_for(p_)], key="metro_param",
+                           format_func=lambda p_: bi_plain(params[p_]["name"]), help=H("metro.param"))
+        c1, c2, c3 = st.columns(3)
+        use_t = c1.checkbox("指定膜厚 Set a film thickness", key="metro_use_t", help=H("metro.thickness"))
+        thick = c1.number_input("膜厚 thickness (nm)", min_value=0.1, max_value=100000.0, value=10.0, key="metro_t",
+                                disabled=not use_t)
+        film = c2.selectbox("膜的種類 Film type", ["any", "transparent", "absorbing", "metal", "conductive"], key="metro_film",
+                            format_func={"any": "不限 any", "transparent": "透明介電 transparent dielectric", "absorbing": "吸光 absorbing",
+                                         "metal": "金屬（不透光）metal (opaque)", "conductive": "導電層（金屬、摻雜層）conductive"}.get,
+                            help=H("metro.film"))
+        loc = c3.selectbox("量測位置 Where", ["any", *LOC_NAME], key="metro_loc",
+                           format_func=lambda x: "不限 any" if x == "any" else LOC_NAME[x], help=H("metro.location"))
+        d1, d2, d3, d4 = st.columns(4)
+        nd = d1.checkbox("不能破壞 non-destructive", key="metro_nd")
+        nc = d2.checkbox("不能接觸 no contact", key="metro_nc")
+        il = d3.checkbox("要線上 inline", key="metro_il")
+        fa = d4.checkbox("要快 fast", key="metro_fast")
+        fits, out = mt.choose(pid, thick if use_t else None, None if film == "any" else film, None if loc == "any" else loc,
+                              nd, nc, il, fa)
+        st.markdown("#### " + bi("適合的技術", "Techniques that fit").replace("  \n", " · "))
+        if not fits:
+            st.warning(bi("沒有技術同時符合所有限制，放寬一個限制再試試。", "No technique meets every constraint; relax one and try again."))
+        for i, f in enumerate(fits):
+            t = mt.tools()[f["tool"]]
+            why = "；".join(w["zh"] for w in f["why"]) if lang() == "zh" else "; ".join(w["en"] for w in f["why"]) if lang() == "en" else \
+                "；".join(w["zh"] for w in f["why"]) + "  \n*" + "; ".join(w["en"] for w in f["why"]) + "*"
+            st.markdown(f"{i + 1}. **{t.get('name', f['tool'])}**" + (f" — {why}" if f["why"] else ""))
+        if out:
+            with st.expander(f"被排除的技術 Ruled out（{len(out)}）", expanded=not fits):
+                for f in out:
+                    t = mt.tools()[f["tool"]]
+                    st.markdown(f"- **{t.get('name', f['tool'])}**：" + "；".join(w["zh"] for w in f["why"]) + "  \n  *"
+                                + "; ".join(w["en"] for w in f["why"]) + "*")
+        if fits:
+            st.markdown("##### " + bi("第一名的技術卡", "Card of the top technique").replace("  \n", " · "))
+            tool_card(fits[0]["tool"], "metro_choose_top")
+    with tabs[2]:
+        rows = mt.claims()
+        verdicts = st.multiselect("顯示 Show", list(VERDICT_ICON), default=list(VERDICT_ICON), key="metro_verdicts",
+                                  format_func=VERDICT_ICON.get, help=H("metro.verdict"))
+        names = {**{tid: t.get("name", tid) for tid, t in mt.tools().items()},
+                 **{pid_: bi_plain(p_["name"]) for pid_, p_ in mt.parameters().items()}}
+        df = pd.DataFrame([{"技術 technique": names.get(r["tool"], r["tool"]), "原本的筆記 your note": r.get("claim", ""),
+                            "結果 verdict": VERDICT_ICON.get(r.get("verdict"), r.get("verdict")),
+                            "說明 correction / detail": (r.get("fix") or {}).get("zh" if lang() == "zh" else "en", ""),
+                            "來源 source": r.get("source", "")} for r in rows if r.get("verdict") in verdicts])
+        k = st.columns(3)
+        for col, v in zip(k, VERDICT_ICON):
+            col.metric(VERDICT_ICON[v], sum(r.get("verdict") == v for r in rows))
+        st.dataframe(df, hide_index=True, width="stretch")
+    with tabs[3]:
+        for tid, t in mt.tools().items():
+            src = t.get("sources") or []
+            if src:
+                st.markdown(f"**{t.get('name', tid)}**")
+                for s_ in src:
+                    st.markdown(f"- [{s_.get('title', s_.get('url'))}]({s_['url']})" if isinstance(s_, dict) and s_.get("url")
+                                else f"- {s_.get('title') if isinstance(s_, dict) else s_}")
+        st.caption(bi("完整研究報告與筆記在 research_notes/Metrology tree verification/。",
+                      "The full research notes are in research_notes/Metrology tree verification/."))
+
+
 PAGES = {
     "Data import": lambda df: page_import(),
     "Fab simulator": lambda df: page_fab(),
+    "量測地圖 Metrology map": lambda df: page_metrology(),
     "Film stack & fit": lambda df: page_stack(),
     "Wafer map": page_wafer,
     "SPC": page_spc,

@@ -1,0 +1,26 @@
+# Metrology map page: help text for every control (metro.*). zh + en.
+params:
+  metro.search:
+    zh: "**搜尋技術**：輸入技術名稱或關鍵字（例如 XRR、overlay、stress、scribe），只顯示說明裡含有這個字的技術。不分大小寫。"
+    en: "**Search techniques**: type a technique name or keyword (e.g. XRR, overlay, stress, scribe) to show only the techniques whose description contains it. Not case-sensitive."
+  metro.category:
+    zh: "**類別**：依製程家族分類：圖形類（CD、profile、overlay）、膜層類（厚度、光學性質、成分、應力、密度、質量、晶體結構、接觸角）、佈植類（摻雜濃度、晶格損傷）。"
+    en: "**Category**: grouped by process family: pattern (CD, profile, overlay), film (thickness, optical properties, composition, stress, density, mass, crystal structure, contact angle) and implantation (dopant concentration, lattice damage)."
+  metro.goto:
+    zh: "**在這頁練習**：跳到 toolkit 裡模擬或使用這個技術的頁面（例如反射儀與橢偏儀在 Film stack & fit 與 Recipe studies；任何量測的結果都可以用 SPC、MSA、Wafer map 分析）。"
+    en: "**Practise here**: jumps to the toolkit page that simulates or uses this technique (e.g. reflectometry and ellipsometry in Film stack & fit and Recipe studies; any technique's results can be analysed with SPC, MSA and Wafer map)."
+  metro.param:
+    zh: "**要量的參數**：選你要量測的物理量（例如膜厚、CD、overlay、應力）。下面會列出所有能量這個參數的技術，再依你設定的限制排序或排除。"
+    en: "**Parameter**: the quantity you need to measure (e.g. film thickness, CD, overlay, stress). Every technique that measures it is listed, then ranked or ruled out by your constraints."
+  metro.thickness:
+    zh: "**指定膜厚**：勾選後輸入膜厚（nm）；超出某技術典型量測範圍的會被排除。範圍是公開資料中的典型值，會依材料與機台而不同。"
+    en: "**Set a film thickness**: tick it and enter the thickness (nm); techniques whose typical range does not cover it are ruled out. The ranges are typical public values and vary with material and tool."
+  metro.film:
+    zh: "**膜的種類**：透明介電（氧化層、氮化矽）可用光學量測；吸光膜（poly-Si、TiN）光學模型要能處理吸收；不透光的金屬超過約 50–100 nm 光學量不到，要改用 X 光、聲學或電性方法；導電層（金屬、摻雜層）可以量片電阻。"
+    en: "**Film type**: transparent dielectrics (oxide, nitride) suit optical methods; absorbing films (poly-Si, TiN) need an optical model that handles absorption; opaque metals beyond about 50–100 nm are out of optical reach and need X-ray, acoustic or electrical methods; conductive layers (metals, doped layers) can be measured by sheet resistance."
+  metro.location:
+    zh: "**量測位置**：晶粒內（in-die，直接量元件或等效圖形）、切割道測試圖形（scribe pad，約數十 µm 的方塊）、空白片（blanket monitor wafer，沒有圖形）。不是每種技術都能量每個位置。"
+    en: "**Where**: in-die (on the device or an equivalent pattern), scribe test structure (a pad of a few tens of µm), or a blanket monitor wafer (no pattern). Not every technique can measure every location."
+  metro.verdict:
+    zh: "**顯示**：篩選你原本筆記的查核結果：✅ 正確（公開資料支持）、✏️ 已更正（有更準確的說法，見說明欄）、❓ 未定（找不到公開資料，或是廠內用語）。"
+    en: "**Show**: filter the check of your original notes: ✅ verified (public sources support it), ✏️ corrected (a more accurate statement is in the detail column), ❓ unresolved (no public source, or fab-internal wording)."

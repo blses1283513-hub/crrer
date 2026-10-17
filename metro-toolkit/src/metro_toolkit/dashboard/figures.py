@@ -1369,3 +1369,43 @@ def layer_repeat_figure(d1: pd.DataFrame, d2: pd.DataFrame, radius: float, layer
     fig = layout(fig, title or "本層 vs 下一層缺陷位置", "x (mm)", "y (mm)", 540)
     fig.update_yaxes(scaleanchor="x", scaleratio=1)
     return fig
+
+
+# --------------------------------------------------------------------------- metrology map
+def metrology_treemap(tree: dict, tools: dict, lang: str = "both") -> go.Figure:
+    """The metrology tree as a treemap: category -> parameter -> tool. One fixed hue per category (identity), labels on
+    the tiles, and a hover card on every tile (what it is, what it measures, where it measures)."""
+    def name(d):
+        if isinstance(d, str):
+            return d
+        return d["zh"] if lang == "zh" else d["en"] if lang == "en" else f"{d['zh']} {d['en']}"
+
+    ids, parents, labels, colors, cards = [], [], [], [], []
+    for i, cat in enumerate(tree.get("categories", [])):
+        hue = viz.SERIES[i % len(viz.SERIES)]
+        n_par = len(cat.get("parameters", []))
+        ids.append(cat["id"]); parents.append(""); labels.append(name(cat["name"])); colors.append(hue)
+        cards.append(hover_card([f"<b>{name(cat['name'])}</b>", f"製程 processes：{', '.join(cat.get('processes', []))}",
+                                 f"{n_par} 個參數 parameters"], None, "類別 category"))
+        for p in cat.get("parameters", []):
+            pid = f"{cat['id']}/{p['id']}"
+            members = [t for g in p.get("groups", []) for t in g.get("tools", [])]
+            ids.append(pid); parents.append(cat["id"]); labels.append(name(p["name"])); colors.append(hue)
+            what = p.get("what") or {"zh": "", "en": ""}
+            cards.append(hover_card([f"<b>{name(p['name'])}</b>", f"{len(dict.fromkeys(members))} 種量測 techniques"], None,
+                                    "量測參數 parameter", [(what.get("zh", ""), what.get("en", ""))] if what.get("en") else []))
+            for tid in dict.fromkeys(members):
+                t = tools.get(tid, {})
+                ids.append(f"{pid}/{tid}"); parents.append(pid); labels.append(t.get("name", tid)); colors.append(hue)
+                meas = t.get("measures") or {"zh": "", "en": ""}
+                loc = "、".join(t.get("location") or []) or "—"
+                cards.append(hover_card([f"<b>{t.get('name', tid)}</b>", f"位置 location：{loc}",
+                                         f"接觸 contact：{'是 yes' if t.get('contact') else '否 no'} · 破壞 destructive：{t.get('destructive', '—')}"],
+                                        None, "量測技術 technique", [(meas.get("zh", ""), meas.get("en", ""))] if meas.get("en") else []))
+    fig = go.Figure(go.Treemap(ids=ids, parents=parents, labels=labels, branchvalues="remainder",
+                               marker=dict(colors=colors, line=dict(color=viz.SURFACE, width=2)),
+                               customdata=cards, hovertemplate=card_template(), tiling=dict(pad=3),
+                               pathbar=dict(visible=True), root_color=viz.SURFACE))
+    fig.update_layout(**{**viz.PLOTLY_LAYOUT, "margin": dict(t=30, l=0, r=0, b=0)}, height=560,
+                      hoverlabel=dict(align="left", bgcolor=viz.SURFACE, bordercolor=viz.AXIS, font=dict(color=viz.INK, size=12)))
+    return fig
