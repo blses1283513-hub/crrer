@@ -1,6 +1,6 @@
 """The metrology map: which technique measures what, and which one fits a measurement need.
 
-metrology_tree.yaml follows the learner's tree, parameter -> metrology category -> tool -> characteristics, with every
+metrology_tree_*.yaml (merged) follow the learner's tree, parameter -> metrology category -> tool -> characteristics, with every
 tool's facts researched and sourced (research_notes/Metrology tree verification/). Each tool lists the toolkit pages
 that simulate it, and every original note is kept with its verdict (verified / corrected / unresolved).
 
@@ -22,15 +22,38 @@ SPEED = {"fast": 0, "medium": 1, "slow": 2}
 DESTRUCTIVE = {"no": 0, "slight": 1, "yes": 2}
 
 
+def _files() -> list[Path]:
+    return sorted(HERE.glob("metrology_tree*.yaml"))
+
+
 def available() -> bool:
-    return (HERE / "metrology_tree.yaml").exists()
+    return bool(_files())
 
 
 @lru_cache(maxsize=None)
 def tree() -> dict:
-    if not available():
-        return {}
-    return yaml.safe_load((HERE / "metrology_tree.yaml").read_text(encoding="utf-8")) or {}
+    """All metrology_tree*.yaml files merged (in file-name order): categories with the same id share their
+    parameters, tools and relations are combined. Duplicate parameter or tool ids are an error."""
+    out = {"meta": {}, "categories": [], "tools": {}, "relations": []}
+    cats = {}
+    for path in _files():
+        part = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        out["meta"] = out["meta"] or part.get("meta", {})
+        for cat in part.get("categories", []):
+            if cat["id"] not in cats:
+                cats[cat["id"]] = {**cat, "parameters": []}
+                out["categories"].append(cats[cat["id"]])
+            known = {p_["id"] for c in out["categories"] for p_ in c["parameters"]}
+            for p_ in cat.get("parameters", []):
+                if p_["id"] in known:
+                    raise ValueError(f"{path.name}: duplicate parameter {p_['id']}")
+                cats[cat["id"]]["parameters"].append(p_)
+        dup = set(out["tools"]) & set(part.get("tools", {}))
+        if dup:
+            raise ValueError(f"{path.name}: duplicate tools {sorted(dup)}")
+        out["tools"].update(part.get("tools", {}))
+        out["relations"] += part.get("relations", [])
+    return out
 
 
 def tools() -> dict:

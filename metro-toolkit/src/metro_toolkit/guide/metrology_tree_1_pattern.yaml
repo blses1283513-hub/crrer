@@ -1,0 +1,466 @@
+# Metrology map, category "pattern" (CD, profile, registration / overlay incl. wafer-to-wafer alignment).
+# Facts from reports/Metrology tree verification.md (Tables 1-3, selection guide, verdicts C1-C47) and
+# research_notes/Metrology tree verification/cd_profile.md, overlay_alignment.md. Numbers are typical public values.
+meta:
+  title: {zh: "半導體製程量測地圖", en: "Semiconductor process metrology map"}
+  structure: "parameter -> metrology category -> tool -> characteristics"
+  disclaimer: {zh: "數字為廠商與公開文獻的典型值；實際工作以所屬晶圓廠的機台與規格為準。", en: "Typical public values from vendor and published sources; your fab's tools and specs decide in real work."}
+
+categories:
+  - id: pattern
+    name: {zh: "圖形類", en: "Pattern"}
+    processes: ["Photo-litho", "Dry Etch", "CMP"]
+    parameters:
+      - id: cd
+        name: {zh: "CD（關鍵尺寸）", en: "CD (critical dimension)"}
+        what: {zh: "CD 是圖形的關鍵線寬、孔徑或間距，決定元件的尺寸是否符合設計；微影後 (ADI) 與蝕刻後 (AEI) 都要監控，形成微影與蝕刻之間的回饋。", en: "CD is the critical linewidth, hole size or space of a pattern and shows whether the device is built to design; it is monitored after litho (ADI) and after etch (AEI), closing the litho-etch feedback loop."}
+        processes: ["Photo-litho", "Dry Etch"]
+        groups:
+          - id: cd-metrology
+            name: {zh: "CD 量測", en: "CD metrology"}
+            what: {zh: "線寬、孔徑、LER/LWR 與輪廓；CD-SEM 直接成像，OCD、IR-CD、CD-SAXS 則是對週期結構做模型擬合。", en: "Linewidth, hole size, LER/LWR and profile; CD-SEM images directly, while OCD, IR-CD and CD-SAXS fit models to periodic structures."}
+            tools: [cd-sem, ocd, ir-cd, cd-saxs]
+        notes:
+          - {claim: "measure 位置: product wafer: live die array structure / product wafer: test structure in frame (OCD, IR-CD)", verdict: verified, fix: {zh: "正確，兩種位置都有使用：晶粒內元件陣列，或切割道上的測試結構；趨勢是往晶粒內、元件上量測。", en: "Verified: both are used, in-die device arrays or scribe test structures; the trend is toward in-die and on-device measurement."}, source: "Nova SPIE 2022; SemiEngineering 2023"}
+
+      - id: profile
+        name: {zh: "Profile（輪廓／形貌）", en: "Profile"}
+        what: {zh: "Profile 是圖形的立體形狀：trench／hole 深度、側壁角 (SWA)、高度與 recess，以及 CMP 後的 dishing、erosion 與 step height；IRDS 把 SWA 列為關鍵製程變數。", en: "Profile is the 3D shape of a pattern: trench or hole depth, sidewall angle (SWA), height and recess, plus post-CMP dishing, erosion and step height; IRDS names SWA as the key process variable."}
+        processes: ["Dry Etch", "CMP"]
+        groups:
+          - id: profile-inline
+            name: {zh: "線上量測", en: "Inline"}
+            what: {zh: "光學、X 光、電子束與自動 AFM，在量產中監控深度、SWA 與 CMP 形貌。", en: "Optical, X-ray, e-beam and automated AFM tools that monitor depth, SWA and CMP topography in production."}
+            tools: [ocd, ir-cd, cd-saxs, afm, cd-sem]
+          - id: profile-near-line
+            name: {zh: "近線量測", en: "Near-line"}
+            what: {zh: "在廠內但不在產品流程中，用於較大的圖形。", en: "In the fab but off the product flow, for larger features."}
+            tools: [stylus-profiler]
+          - id: profile-reference
+            name: {zh: "參考量測", en: "Reference"}
+            what: {zh: "慢或破壞性，用來錨定線上機台的準確度。", en: "Slow or destructive; anchors the accuracy of the inline tools."}
+            tools: [cd-afm, xsem-tem]
+        notes:
+          - {claim: "OCD and CD-SAXS can solve trench / sidewall angle (inferred link, not explicit in notes)", verdict: verified, fix: {zh: "正確但不完整，已補齊：還有 IR-CD、傾斜／高 kV BSE CD-SEM、自動 AFM／AFP、stylus profiler，以及參考量測 CD-AFM 與 XS-SEM／FIB-SEM／TEM。", en: "Verified but incomplete, now filled: add IR-CD, tilt-beam / high-kV BSE CD-SEM, automated AFM / AFP, stylus profiler, and the references CD-AFM and XS-SEM / FIB-SEM / TEM."}, source: "IRDS 2024 Metrology; Bruker InSight AFP"}
+
+      - id: registration
+        name: {zh: "Registration（Reg、overlay）", en: "Registration (Reg, overlay)"}
+        what: {zh: "Overlay 是目前這層圖形相對前層的位置偏移，以每個量測點的 x/y 向量回報，再建模成曝光機可修正項與殘差；晶圓對晶圓接合後跨接合介面的 overlay 也屬於這裡。", en: "Overlay is the placement error of the current layer relative to a previous layer, reported as x/y vectors per site and modelled into scanner correctables plus residuals; overlay across a wafer-to-wafer bonding interface belongs here too."}
+        processes: ["Photo-litho", "Dry Etch", "Wafer bonding"]
+        groups:
+          - id: reg-metrology
+            name: {zh: "Reg 量測（層間 overlay）", en: "Reg metrology (layer-to-layer overlay)"}
+            what: {zh: "ADI 用光學量專用 target（IBO、DBO）每批控制；AEI 量元件本身（SEM、光學 in-device），兩者的系統差 (NZO) 回饋給 ADI。", en: "At ADI, optical tools measure dedicated targets (IBO, DBO) every lot; at AEI the device itself is measured (SEM, optical in-device), and the systematic difference (NZO) is fed back to ADI."}
+            tools: [sem-reg, reg-ibo, reg-dbo, overlay-in-die]
+          - id: w2w-alignment
+            name: {zh: "晶圓對晶圓接合對準", en: "Wafer-to-wafer alignment"}
+            what: {zh: "Face to face 接合（例如 NAND）後、研磨前，用紅外光穿透矽量接合介面兩側的 overlay。", en: "After face-to-face bonding (for example NAND) and before grind, infrared light through the silicon measures overlay across the bonding interface."}
+            tools: [ir-alignment]
+
+tools:
+  cd-sem:
+    name: "CD-SEM"
+    full: {zh: "關鍵尺寸掃描式電子顯微鏡", en: "Critical-dimension scanning electron microscope"}
+    principle: {zh: "由上往下的低著陸能量電子束掃描（典型 300–800 eV），以 through-lens 二次電子 (SE) 偵測器成像，直接從影像讀出線寬、邊緣粗糙度與接觸孔，頂部 CD 不需要模型。高 kV 背向散射電子 (BSE) 可看到深溝槽／孔底與埋層 overlay；另有傾斜電子束模式量側壁與高度。", en: "A top-down SEM with low landing energy (typically 300–800 eV) and through-lens secondary-electron (SE) detection; linewidth, edge roughness and contact holes are read directly from the image, with no model needed for top CD. High-kV backscattered-electron (BSE) imaging sees deep trench and hole bottoms and buried overlay; a separate tilted-beam mode measures sidewall and height."}
+    measures: {zh: "頂部 CD、LER/LWR、接觸孔、2D 輪廓；BSE 可量高深寬比底部 CD 與埋層 overlay；傾斜模式可量側壁與高度。", en: "Top CD, LER/LWR, contact holes, 2D contours; with BSE, HAR bottom CD and buried overlay; with tilt, sidewall and height."}
+    range: {zh: "視野內任何圖形，不需週期結構；BSE 底部 CD 可達深寬比 ≥ 60:1（典型廠商數據）。", en: "Any feature in the field of view, no periodic target needed; BSE bottom CD to aspect ratio ≥ 60:1 (typical vendor figure)."}
+    precision: {zh: "典型重複性約為量測 CD 的 1%（3σ）；EUV 光阻上最佳案例約 0.05–0.13 nm（2023 廠商數據，未註明 σ）。", en: "Typical repeatability about 1% of the measured CD (3σ); best cases on EUV resist about 0.05–0.13 nm (2023 vendor data, sigma not stated)."}
+    location: [in_die, scribe]
+    contact: false
+    destructive: slight
+    inline: [inline]
+    speed: medium
+    reference: false
+    processes: ["Photo-litho", "Dry Etch"]
+    strengths: {zh: "直接、局部、不需模型的頂部 CD；能看局部 CDU、LER 與非週期圖形，這只有成像技術做得到。", en: "Direct, local, model-free top CD; it sees local CDU, LER and non-periodic features, which only an imaging tool can."}
+    limits: {zh: "視線式量測，看不到內凹 (re-entrant) 輪廓；受漂移、充電與光阻收縮影響；> 10 keV 電子束會在量測點造成局部電性損傷。", en: "Line-of-sight, so it cannot see re-entrant profiles; limited by drift, charging and resist shrinkage; beams above 10 keV cause local electrical damage at the site."}
+    instead: {zh: "要快速量週期陣列的平均 CD、高度與 SWA 用 OCD；深介電高深寬比用 IR-CD；不透光堆疊或傾斜用 CD-SAXS；需要非破壞參考值用 CD-AFM。", en: "Use OCD for fast array-average CD, height and SWA; IR-CD for deep dielectric HAR; CD-SAXS for opaque stacks or tilt; CD-AFM for a non-destructive reference."}
+    toolkit: ["SPC", "MSA", "Wafer map"]
+    notes:
+      - {claim: "precision 0.25 nm", verdict: corrected, fix: {zh: "重複性約為 CD 的 1%（3σ）；EUV 光阻上約 0.05–0.13 nm（2023，未註明 σ）。0.25 nm 符合 ITRS 時代的目標，是舊的整數值，不是現行規格；精度一定要註明 σ 與 static／dynamic。", en: "Repeatability is about 1% of CD (3σ); 0.05–0.13 nm on EUV resist (2023, sigma not stated). 0.25 nm matches ITRS-era targets, a legacy round number rather than a current spec; always state sigma and static or dynamic."}, source: "Hitachi High-Tech; Hitachi EUVL 2023; ITRS 2007"}
+      - {claim: "可直接量測", verdict: verified, fix: {zh: "正確：由上往下直接成像，頂部 CD 不需要模型。", en: "Verified: direct top-down imaging; no model is needed for top CD."}, source: "Orji et al. 2018"}
+      - {claim: "未與製程機台整合", verdict: verified, fix: {zh: "正確：是線上獨立式真空機台；整合在製程機台上的量測是光學類。", en: "Verified: an inline standalone vacuum tool; integrated metrology is optical."}, source: "Hitachi CV7300; Nova Integrated Metrology"}
+      - {claim: "most non-destructive", verdict: corrected, fix: {zh: "實務上近乎非破壞，但在線上 CD 機台中是破壞性「最高」的：光阻收縮、充電、污染，以及 > 10 keV 時的局部損傷。", en: "Practically non-destructive but the least so of the inline CD tools: resist shrinkage, charging, contamination and local damage above 10 keV."}, source: "Hitachi EUVL 2023; IRDS 2024 Metrology"}
+      - {claim: "SE: surface topography", verdict: verified, fix: {zh: "正確：低 kV through-lens SE 是標準的 CD 量測模式。", en: "Verified: low-kV through-lens SE is the standard CD mode."}, source: "Orji et al. 2018"}
+      - {claim: "BSE: underlying layers (ex: slant measure)", verdict: verified, fix: {zh: "正確並補充：高 kV BSE 可看高深寬比底部與埋層 overlay；斜面／側壁量測則是另外的傾斜電子束模式，不屬於 BSE。", en: "Verified and expanded: high-kV BSE images HAR bottoms and buried overlay; slant or sidewall measurement is the separate tilted-beam mode, not BSE."}, source: "Hitachi Review 2017; AMAT 2015"}
+    sources:
+      - {title: "Orji et al., Metrology for the next generation of semiconductor devices, Nature Electronics 2018", url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC6605074/"}
+      - {title: "Hitachi High-Tech, accuracy and precision of CD-SEM", url: "https://www.hitachi-hightech.com/global/en/knowledge/semiconductor/room/manufacturing/accuracy-precision.html"}
+      - {title: "Hitachi, CD-SEM on EUV resist, EUVL Workshop 2023", url: "https://euvlitho.com/2023/P73.pdf"}
+      - {title: "IRDS 2024 Metrology chapter", url: "https://irds.ieee.org/images/files/pdf/2024/2024IRDS_MET.pdf"}
+      - {title: "Hitachi Review 2017, high-voltage CD-SEM", url: "https://www.hitachihyoron.com/rev/archive/2017/r2017_04/eG02/index.html"}
+      - {title: "Hitachi CV7300 high-voltage CD-SEM", url: "https://www.hitachi-hightech.com/global/en/products/semiconductor-manufacturing/cd-sem/metrology-solution/semi-cv7300.html"}
+      - {title: "Applied Materials 2015, e-beam metrology tool release", url: "https://ir.appliedmaterials.com/news-releases/news-release-details/applied-materials-unveils-breakthrough-e-beam-metrology-tool"}
+      - {title: "SPIE 8681 (2013), quantitative CD-SEM resist shrinkage study", url: "https://proceedings.spiedigitallibrary.org/conference-proceedings-of-spie/8681/868128/Quantitative-CD-SEM-resist-shrinkage-study-and-its-application-for/10.1117/12.2011244.full"}
+      - {title: "ITRS 2007 Metrology (older)", url: "https://www.semiconductors.org/wp-content/uploads/2018/08/2007Metrology.pdf"}
+
+  ocd:
+    name: "OCD (Scatterometry)"
+    full: {zh: "光學關鍵尺寸量測（散射量測）", en: "Optical critical-dimension metrology (scatterometry)"}
+    principle: {zh: "非成像、以模型為基礎的光學量測：量測週期 target 的寬頻偏振反射或橢偏光譜，再用電磁模擬 (RCWA) 或 ML 模型擬合，一次解出 top／mid／bottom CD、高度、SWA、膜厚與 n,k，常多達 10 個以上參數。結果是間接的模型值，不是影像。", en: "Non-imaging, model-based optics: broadband polarized reflectance or ellipsometry spectra from a periodic target are fitted to electromagnetic simulations (RCWA) or ML models, extracting top, middle and bottom CD, height, SWA, film thicknesses and n,k, often ten or more parameters at once. The result is an indirect model value, not an image."}
+    measures: {zh: "模型擬合的 CD（top／mid／bottom）、高度／深度、SWA、膜厚與 n,k（≥ 10 個參數）。", en: "Model-fitted CD (top, middle, bottom), height or depth, SWA, film thicknesses and n,k (10 or more parameters)."}
+    range: {zh: "只適用週期陣列，不能量孤立線；切割道 pad 約 50 × 50 µm 或晶粒內陣列，光點約 10–50 µm（典型）。", en: "Periodic arrays only, not isolated lines; scribe pads of about 50 × 50 µm or in-die arrays, spot about 10–50 µm (typical)."}
+    precision: {zh: "公開資料只說「埃等級」重複性（廠商）；學員的 0.05–0.12 nm 沒有公開來源，視為本廠機台值。", en: "Public sources say only 'angstrom level' repeatability (vendor); the learner's 0.05–0.12 nm has no public source, so treat it as a local tool value."}
+    location: [scribe, in_die]
+    contact: false
+    destructive: "no"
+    inline: [inline, integrated]
+    speed: fast
+    reference: false
+    processes: ["Photo-litho", "Dry Etch", "CMP"]
+    strengths: {zh: "快（廠商：每次量測 < 1 s）、非破壞，可同時得到輪廓與埋層；有獨立式，也有整合在 CMP、蝕刻與微影 track 上的版本，適合 APC。", en: "Fast (vendor: under 1 s per measurement) and non-destructive, giving profile and buried layers together; available standalone and integrated on CMP, etch and litho track, so it is APC-ready."}
+    limits: {zh: "參數相關性：高度與寬度的變化可能造成相似光譜，反演沒有唯一解；需要週期 target，準確度要靠 SEM、AFM 或 TEM 錨定。", en: "Parameter correlation: height and width changes can alter the spectrum in similar ways, so the inverse problem has no unique solution; needs a periodic target and SEM, AFM or TEM to anchor accuracy."}
+    instead: {zh: "局部 CDU、LER 或非週期圖形用 CD-SEM；深介電高深寬比用 IR-CD；不透光、極小結構或傾斜用 CD-SAXS；相關性解不開時與 CD-SEM、AFM 或 CD-SAXS 做 hybrid。", en: "Use CD-SEM for local CDU, LER or non-periodic features; IR-CD for deep dielectric HAR; CD-SAXS for opaque or very small structures or tilt; hybridize with CD-SEM, AFM or CD-SAXS when correlations remain."}
+    toolkit: ["SPC", "MSA", "Wafer map", "DOE / recipe"]
+    notes:
+      - {claim: "precision 0.05-0.12 nm", verdict: unresolved, fix: {zh: "公開來源只說「埃等級」；當作本廠機台值，不是業界事實。", en: "Public sources say only 'angstrom level'; treat it as a local tool value, not an industry fact."}, source: "Onto 2023"}
+      - {claim: "precision better than CD-SEM, faster than CD-SEM", verdict: verified, fix: {zh: "有條件成立：比較快是對的；對陣列平均 CD 的精度較好，但局部 CDU 與 LER 仍需要 CD-SEM。", en: "Verified with qualifiers: faster, yes; more precise for array-averaged CD, but CD-SEM is still needed for local CDU and LER."}, source: "halbleiter.org; IRDS 2024 Metrology"}
+      - {claim: "no contact with wafer, non-destructive", verdict: verified, fix: {zh: "正確。", en: "Verified."}, source: "NIST 2011"}
+      - {claim: "usually not directly measured on wafer", verdict: corrected, fix: {zh: "是在產品晶圓上量，量的是切割道週期 pad（約 50 µm）或晶粒內陣列；結果是間接的模型值，不是影像。", en: "Measured on the product wafer, on periodic scribe pads (about 50 µm) or in-die arrays; the result is indirect (model-based), not an image."}, source: "Nova SPIE 2025; IRDS 2024 Metrology"}
+      - {claim: "can measure multiple layers", verdict: verified, fix: {zh: "正確：同一次擬合可得到各層膜厚與 n,k。", en: "Verified: film thicknesses and n,k come from the same fit."}, source: "Orji et al. 2018"}
+      - {claim: "solves CD, trenches, sidewall angles", verdict: verified, fix: {zh: "正確：可解 10 個以上參數。", en: "Verified: 10 or more parameters."}, source: "Orji et al. 2018"}
+      - {claim: "(missing in notes) integration", verdict: corrected, fix: {zh: "補充：OCD 有獨立式，也有整合在 CMP、蝕刻與微影 track 上的版本。", en: "Added: OCD is available standalone and integrated on CMP, etch and litho track."}, source: "Nova 2026; ITRS 2009"}
+    sources:
+      - {title: "Orji et al., Nature Electronics 2018", url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC6605074/"}
+      - {title: "Orji et al. preprint (NIST), Table 1", url: "https://tsapps.nist.gov/publication/get_pdf.cfm?pub_id=926234"}
+      - {title: "IRDS 2024 Metrology chapter", url: "https://irds.ieee.org/images/files/pdf/2024/2024IRDS_MET.pdf"}
+      - {title: "NIST 2011, traceable scatterometry", url: "https://tsapps.nist.gov/publication/get_pdf.cfm?pub_id=908506"}
+      - {title: "Nova SPIE 2025, BEOL dimensional characterization using scatterometry", url: "https://www.novami.com/wp-content/uploads/2025/04/13426-33-stefan-schoeche-beol-dimensional-characterization-using-scatterometry-v3.pdf"}
+      - {title: "Onto Innovation 2023, Compound Semiconductor article", url: "https://ontoinnovation.com/wp-content/uploads/2025/08/The-road-to-SiC-process-control_CS-Mag_Oct23.pdf"}
+      - {title: "Nova dimensional metrology 2026 (integrated OCD)", url: "https://www.novami.com/wp-content/uploads/2026/02/dmd-all.pdf"}
+      - {title: "NIST 2014, Bayesian hybrid metrology", url: "https://tsapps.nist.gov/publication/get_pdf.cfm?pub_id=915846"}
+      - {title: "halbleiter.org, CD-SEM vs scatterometry (educational)", url: "https://www.halbleiter.org/en/metrology/cdsem"}
+
+  ir-cd:
+    name: "IR-CD (IR Scatterometry)"
+    full: {zh: "紅外光關鍵尺寸量測（中紅外散射量測）", en: "Infrared critical-dimension metrology (mid-IR scatterometry)"}
+    principle: {zh: "把 OCD 移到中紅外 (5.0–10.5 µm)。SiO₂ 與 Si₃N₄ 在 UV–NIR 幾乎透明、輪廓靈敏度低，在中紅外則有吸收特徵；以 Mueller-matrix 橢偏光譜加模型擬合，得到 CD 隨深度的輪廓。", en: "OCD moved to the mid-infrared (5.0–10.5 µm). SiO₂ and Si₃N₄ are nearly transparent in the UV–NIR and give little profile sensitivity, but have absorption features in the mid-IR; Mueller-matrix ellipsometry plus a model fit gives CD versus depth."}
+    measures: {zh: "CD 隨深度變化（bow、z-profile），以及深介電高深寬比中的氮化物與 W recess。", en: "CD versus depth (bow, z-profile) and nitride and W recess in deep dielectric HAR structures."}
+    range: {zh: "3D NAND channel hole 與 slit，深寬比約 80:1（2020 首次客戶驗證：孔徑約 100 nm、深 8,000 nm，廠商數據）。", en: "3D NAND channel holes and slits to about 80:1 (2020 first customer qualification: holes about 100 nm wide, 8,000 nm deep; vendor data)."}
+    precision: {zh: "短期精度 1.3%（3σ），channel-hole CD 與氮化物 recess（2023 公開資料）。", en: "Short-term precision 1.3% (3σ) on channel-hole CD and nitride recess (2023 public data)."}
+    location: [in_die, scribe]
+    contact: false
+    destructive: "no"
+    inline: [inline]
+    speed: medium
+    reference: false
+    processes: ["Dry Etch"]
+    strengths: {zh: "UV–VIS OCD 失去深度靈敏度時仍能量深度解析輪廓；非接觸、非破壞，直接量晶粒內元件陣列。", en: "Depth-resolved profile where UV–VIS OCD loses sensitivity; non-contact and non-destructive, measured on in-die device arrays."}
+    limits: {zh: "主要針對介電高深寬比；只找到一家廠商與獨立式產品；沒有公開產能數據（廠商目標是與 OCD 相當）。", en: "Focused on dielectric HAR; only one vendor and standalone products found; no public throughput figure (vendor target is comparable to OCD)."}
+    instead: {zh: "不透光堆疊、孔傾斜或需要準確度參考時用 CD-SAXS；最終真值用 FIB-SEM／TEM；淺的結構用一般 OCD。", en: "Use CD-SAXS for opaque stacks, hole tilt or an accuracy reference; FIB-SEM or TEM for final truth; ordinary OCD for shallow structures."}
+    toolkit: ["SPC", "Wafer map", "MSA"]
+    notes:
+      - {claim: "High aspect ratio", verdict: verified, fix: {zh: "正確：3D NAND 孔與 slit 約可到 80:1，波長 5–10.5 µm。", en: "Verified: 3D NAND holes and slits to about 80:1, at 5–10.5 µm."}, source: "SemiEngineering 2023"}
+      - {claim: "non-contact", verdict: verified, fix: {zh: "正確，而且是非破壞。", en: "Verified, and also non-destructive."}, source: "Onto Aspect"}
+      - {claim: "slower than OCD", verdict: unresolved, fix: {zh: "廠商目標是速度「與 OCD 相當」，沒有公開數字。", en: "The vendor target is speed 'comparable to OCD'; no public figure."}, source: "SemiEngineering 2023"}
+      - {claim: "not integrated with tool", verdict: verified, fix: {zh: "正確：只找到獨立式產品。", en: "Verified: only standalone products were found."}, source: "Onto Aspect"}
+    sources:
+      - {title: "SemiEngineering 2023, How metrology tools stack up in 3D NAND devices", url: "https://semiengineering.com/how-metrology-tools-stack-up-in-3d-nand-devices"}
+      - {title: "Onto Innovation Aspect IRCD system", url: "https://ontoinnovation.com/products/aspect-system"}
+      - {title: "Onto Innovation 2020, first customer qualification of Aspect IRCD", url: "https://investors.ontoinnovation.com/news/news-details/2020/Product-News-Onto-Innovation-Announces-First-Customer-Qualification-of-New-Aspect-IRCD-System/default.aspx"}
+      - {title: "Onto Innovation 2021, mid-infrared optical metrology for HAR holes", url: "https://ontoinnovation.com/resources/mid-infrared-optical-metrology-for-high-aspect-ratio-holes-in-3d-nand-memory-manufacturing"}
+
+  cd-saxs:
+    name: "CD-SAXS / CD-Xray"
+    full: {zh: "關鍵尺寸小角度 X 光散射", en: "Critical-dimension small-angle X-ray scattering"}
+    principle: {zh: "硬 X 光（> 15–17 keV）穿透整片晶圓，在多個入射角與方位角量測週期陣列的繞射級，反演擬合出平均 3D 形狀。訊號與電子密度對比及高度平方成正比，所以高深寬比記憶體訊號強、薄的邏輯層弱。", en: "Hard X-rays (above 15–17 keV) pass through the full wafer; diffraction orders from a periodic array are measured at many incidence and azimuth angles and inverse-fitted to the average 3D shape. The signal scales with electron-density contrast and height squared, so HAR memory scatters strongly and thin logic layers weakly."}
+    measures: {zh: "平均 3D 形狀：CD 隨深度、高度、SWA、pitch walk、LER/LWR、孔傾斜／中心線偏移。", en: "Average 3D shape: CD versus depth, height, SWA, pitch walk, LER/LWR, hole tilt and centre-line shift."}
+    range: {zh: "高深寬比 ≥ 100:1（廠商，KLA Axion T2000，2022）；陣列 ≥ 50 µm；反射式幾何適用數 nm 到約 200 nm 的邏輯結構（廠商）。", en: "HAR of 100:1 or more (vendor, KLA Axion T2000, 2022); arrays of 50 µm or more; reflection geometry for logic structures from a few nm to about 200 nm (vendor)."}
+    precision: {zh: "CD 0.1 nm（3σ），2008 年研究設備的較舊數據；廠商稱 sub-nm 靈敏度；在廠機台沒有公開精度規格。", en: "CD 0.1 nm (3σ) from an older 2008 research setup; vendors claim sub-nm sensitivity; no public precision spec for in-fab tools."}
+    location: [in_die, scribe]
+    contact: false
+    destructive: "no"
+    inline: [inline]
+    speed: slow
+    reference: false
+    processes: ["Dry Etch"]
+    strengths: {zh: "可穿透不透光的金屬與硬遮罩、可追溯至 SI、量得到傾斜；IRDS 認為是能量 < 5 nm 特徵的技術；也用來校準 OCD。", en: "Works through opaque metals and hardmasks, is SI-traceable and measures tilt; IRDS sees it as able to measure features below 5 nm; also used to calibrate OCD."}
+    limits: {zh: "光源亮度有限，每點需數分鐘，持有成本較高；薄的邏輯層訊號弱。", en: "Limited source brightness, minutes per site and higher cost of ownership; weak signal on thin logic layers."}
+    instead: {zh: "要更快、更密的取樣用 IR-CD；準確度查核用 FIB-SEM／TEM；局部 CD 與 LER 用 CD-SEM。", en: "Use IR-CD for faster, denser sampling; FIB-SEM or TEM to check accuracy; CD-SEM for local CD and LER."}
+    toolkit: ["SPC", "MSA"]
+    notes:
+      - {claim: "layer dependent", verdict: verified, fix: {zh: "正確並說明：訊號與電子密度對比 × 高度平方成正比，高深寬比記憶體強、薄的邏輯層弱。", en: "Verified and clarified: signal scales with electron-density contrast × height², strong on HAR memory and weak on thin logic."}, source: "IRDS 2024 Metrology"}
+      - {claim: "non-destructive", verdict: verified, fix: {zh: "正確。", en: "Verified."}, source: "KLA Axion"}
+      - {claim: "not integrated with a process tool", verdict: verified, fix: {zh: "正確：線上獨立式（Axion T2000）。", en: "Verified: inline standalone (Axion T2000)."}, source: "KLA Axion"}
+      - {claim: "can measure CD, trench, sidewall angle", verdict: verified, fix: {zh: "正確並補充：還有 pitch walk、LER/LWR 與孔傾斜。", en: "Verified and expanded: add pitch walk, LER/LWR and hole tilt."}, source: "Orji et al. 2018; Gin 2023"}
+      - {claim: "must correlate with CD-SEM to ensure accuracy", verdict: corrected, fix: {zh: "準確度是用 FIB-SEM、TEM 與 3D tomography 驗證；CD-SAXS 可追溯至 SI，還用來校準 OCD。與 CD-SEM 比對是常見做法，但不是準確度錨點。", en: "Accuracy is verified against FIB-SEM, TEM and tomography; CD-SAXS is SI-traceable and calibrates OCD. CD-SEM comparison is common practice, not the anchor."}, source: "SemiEngineering 2023; Jang 2025"}
+    sources:
+      - {title: "Orji et al., Nature Electronics 2018", url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC6605074/"}
+      - {title: "IRDS 2024 Metrology chapter", url: "https://irds.ieee.org/images/files/pdf/2024/2024IRDS_MET.pdf"}
+      - {title: "KLA 2022, Axion T2000 X-ray metrology system", url: "https://ir.kla.com/news-events/press-releases/detail/447/kla-launches-revolutionary-x-ray-metrology-system"}
+      - {title: "Rigaku, critical-dimension SAXS", url: "https://rigaku.com/resources/techniques/critical-dimension-saxs"}
+      - {title: "Kline et al., JM3 2023, review of CD-SAXS milestones", url: "https://www.spiedigitallibrary.org/journals/journal-of-micro-nanopatterning-materials-and-metrology/volume-22/issue-3/031206/Review-of-the-key-milestones-in-the-development-of-critical/10.1117/1.JMM.22.3.031206.full"}
+      - {title: "NIST 2008, CD-SAXS precision (older)", url: "https://tsapps.nist.gov/publication/get_pdf.cfm?pub_id=853580"}
+      - {title: "SemiEngineering 2023, How metrology tools stack up in 3D NAND devices", url: "https://semiengineering.com/how-metrology-tools-stack-up-in-3d-nand-devices"}
+      - {title: "Jang et al., JM3 24(3) 034004, 2025", url: "https://www.spiedigitallibrary.org/journals/journal-of-micro-nanopatterning-materials-and-metrology/volume-24/issue-3/034004/Study-of-critical-dimension-small-angle-X-ray-scattering-within/10.1117/1.JMM.24.3.034004.full"}
+      - {title: "Gin et al., JM3 2023", url: "https://doi.org/10.1117/1.JMM.22.3.031205"}
+
+  afm:
+    name: "Automated AFM / AFP"
+    full: {zh: "自動化原子力顯微鏡／原子力輪廓儀（線上）", en: "Automated atomic force microscope / atomic force profiler (inline)"}
+    principle: {zh: "探針在表面掃描，直接量出形貌高度，不需要模型或測試鍵。自動化機台在晶粒主動區直接量蝕刻深度，以及 CMP 後的 dishing、erosion 與 step height。", en: "A probe scans the surface and measures topography height directly, with no model or test key. Automated tools measure etch depth and post-CMP dishing, erosion and step height directly in the die active area."}
+    measures: {zh: "蝕刻深度、dishing、erosion、step height 與粗糙度（不需模型）。", en: "Etch depth, dishing, erosion, step height and roughness (model-free)."}
+    range: {zh: "溝槽／介層孔深度從數十 nm 到 > 10 µm（廠商，DTMode）；掃描面積有限。", en: "Trench and via depths from tens of nm to over 10 µm (vendor, DTMode); limited scan area."}
+    precision: {zh: "post-CMP dishing 3σ = 0.14 nm、erosion 3σ = 0.32 nm；長期穩定度 0.3 nm（典型廠商數據）。", en: "Post-CMP dishing 3σ = 0.14 nm and erosion 3σ = 0.32 nm; long-term stability 0.3 nm (typical vendor data)."}
+    location: [in_die]
+    contact: true
+    destructive: "no"
+    inline: [inline]
+    speed: medium
+    reference: false
+    processes: ["Dry Etch", "CMP"]
+    strengths: {zh: "晶粒主動區內的直接形貌，不靠模型；結果可追溯至 NIST；廠商稱每小時 260–340 點、最多 50 WPH。", en: "Direct topography in the die active area without a model; NIST-traceable; vendor quotes 260–340 sites/hr and up to 50 WPH."}
+    limits: {zh: "接觸式探針（非破壞）；掃描面積有限（SEMI 2025 缺口表）；比光學方法慢，難以每片都量。", en: "Contact probe (non-destructive); limited scan area (SEMI 2025 gap table); slower than optics, so hard to run on every wafer."}
+    instead: {zh: "每片都要晶粒內結果時，用整合 OCD 加 ML（以 AFM 為標籤）；大圖形可用 stylus profiler；真值用 TEM 或 XS-SEM。", en: "For every-wafer in-die results use integrated OCD plus ML trained on AFM labels; use a stylus profiler for large features; TEM or XS-SEM for truth."}
+    toolkit: ["SPC", "Wafer map", "MSA"]
+    sources:
+      - {title: "Bruker InSight AFP atomic force profiler", url: "https://www.bruker.com/en/products-and-solutions/semiconductor-solutions/automated-afm-and-cipt-systems/insight-afp.html"}
+      - {title: "Bruker InSight 300 automated AFM", url: "https://www.bruker.com/en/products-and-solutions/semiconductor-solutions/automated-afm-and-cipt-systems/insight-300.html"}
+      - {title: "SEMI AUX036-0825, CMP metrology gap table (2025)", url: "https://www.semi.org/sites/semi.org/files/2025-09/AUX036-00-0825.pdf"}
+      - {title: "Nova, SEMI 2021, in-die dishing and erosion with ML", url: "https://www.semi.org/sites/semi.org/files/2021-11/03%20Ovadia%20Ilgayev%20Nova.pdf"}
+      - {title: "IRDS 2024 Metrology chapter", url: "https://irds.ieee.org/images/files/pdf/2024/2024IRDS_MET.pdf"}
+
+  cd-afm:
+    name: "CD-AFM / 3D-AFM"
+    full: {zh: "關鍵尺寸原子力顯微鏡（參考量測）", en: "Critical-dimension atomic force microscope (reference metrology)"}
+    principle: {zh: "以 3D 原子力顯微鏡掃描線條的頂部與側壁，量出 CD、SWA 與高度；準確度高、原子級解析度、不傷樣品，但非常慢。它是參考鏈的中間一環：先在少量截面樣品上用 TEM 或 XS-SEM 校準 SWA，再用它量過的晶圓評估較快的線上機台。", en: "A 3D atomic force microscope scans the top and sidewalls of lines to give CD, SWA and height; it is accurate, atomic-resolution and damage-free but very slow. It sits in the middle of the reference chain: SWA is calibrated against TEM or XS-SEM on a cross-sectioned subset, then its wafers qualify the faster inline tools."}
+    measures: {zh: "參考 CD、側壁角 (SWA) 與高度。", en: "Reference CD, sidewall angle (SWA) and height."}
+    range: {zh: "任何圖形；ITRS 2016 對這類參考量測的不確定度規格為 SWA 0.3°、fin 高 0.5 nm、gate 高 0.9 nm。", en: "Any feature; ITRS 2016 set uncertainty specs of 0.3° SWA, 0.5 nm fin height and 0.9 nm gate height for this reference role."}
+    precision: {zh: "線寬標準不確定度約 1 nm（k = 1，2005 年參考系統，較舊）；3D-AFM 奈米線類參數不確定度 < 1 nm。", en: "Linewidth standard uncertainty about 1 nm (k = 1, 2005 reference system, older); 3D-AFM uncertainty below 1 nm for nanowire-type parameters."}
+    location: [in_die, scribe]
+    contact: true
+    destructive: "no"
+    inline: [lab]
+    speed: slow
+    reference: true
+    processes: ["Photo-litho", "Dry Etch"]
+    strengths: {zh: "非破壞的參考值，可用來校準 CD-SEM 與 OCD；與 OCD 做 hybrid 常可改善頂部寬度最多 4 nm。", en: "A non-destructive reference used to calibrate CD-SEM and OCD; hybridizing with OCD commonly improves top width by up to 4 nm."}
+    limits: {zh: "非常慢，只適合少量參考取樣；自身的 SWA 準確度仍要靠 TEM 或 XS-SEM 校準。", en: "Very slow, only for sparse reference sampling; its own SWA accuracy still has to be calibrated against TEM or XS-SEM."}
+    instead: {zh: "例行監控用 CD-SEM 或 OCD；需要最終真值且可以犧牲樣品時用 XS-SEM／FIB-SEM／TEM。", en: "Use CD-SEM or OCD for routine monitoring; XS-SEM / FIB-SEM / TEM when final truth is needed and the sample can be sacrificed."}
+    toolkit: ["MSA"]
+    sources:
+      - {title: "NIST 2005, CD-AFM reference measurement system (older)", url: "https://tsapps.nist.gov/publication/get_pdf.cfm?pub_id=32108"}
+      - {title: "NIST 2019, 3D-AFM review", url: "https://tsapps.nist.gov/publication/get_pdf.cfm?pub_id=918090"}
+      - {title: "ECS 2016, in-line 3D-AFM", url: "https://iopscience.iop.org/article/10.1149/MA2016-02/30/1950/meta"}
+      - {title: "Orji et al., Nature Electronics 2018", url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC6605074/"}
+      - {title: "IRDS 2024 Metrology chapter", url: "https://irds.ieee.org/images/files/pdf/2024/2024IRDS_MET.pdf"}
+
+  stylus-profiler:
+    name: "Stylus profiler"
+    full: {zh: "探針式表面輪廓儀", en: "Stylus surface profiler"}
+    principle: {zh: "針尖以接觸方式在表面移動並記錄高度變化，量測大圖形的 step height 與 CMP 形貌。", en: "A stylus tip moves across the surface in contact and records height changes, measuring step height and CMP topography on large features."}
+    measures: {zh: "大圖形的 step height、CMP dishing、erosion 與 roll-off。", en: "Step height, CMP dishing, erosion and roll-off on large features."}
+    range: {zh: "較大的圖形；可用於 300 mm 晶圓（2014 年產品資料，較舊）。", en: "Large features; 300 mm capable (2014 product data, older)."}
+    precision: {zh: "公開來源沒有可引用的精度數字，以本廠機台規格為準。", en: "No citable public precision figure; use your fab's tool spec."}
+    location: [scribe, blanket]
+    contact: true
+    destructive: "no"
+    inline: [lab]
+    speed: medium
+    reference: false
+    processes: ["CMP"]
+    strengths: {zh: "成本低，直接量測，不需模型。", en: "Cost-effective, direct and model-free."}
+    limits: {zh: "接觸式，只適合大圖形；在先進節點的使用狀況沒有公開資料。", en: "Contact method for large features only; no public data on its use at advanced nodes."}
+    instead: {zh: "晶粒內小圖形用自動 AFM／AFP；每片監控用 OCD。", en: "Use automated AFM / AFP for small in-die features and OCD for every-wafer monitoring."}
+    toolkit: ["SPC"]
+    sources:
+      - {title: "ASM International 2014, stylus profiler enables 300 mm wafer analysis (older)", url: "https://www.asminternational.org/bruker-stylus-profiler-enables-300-mm-wafer-analysis"}
+
+  xsem-tem:
+    name: "XS-SEM / FIB-SEM / TEM"
+    full: {zh: "截面 SEM／聚焦離子束 SEM／穿透式電子顯微鏡（參考量測，破壞性）", en: "Cross-section SEM / focused-ion-beam SEM / transmission electron microscope (reference, destructive)"}
+    principle: {zh: "把晶圓劈開或用聚焦離子束 (FIB) 切出截面，再用 SEM 或 TEM 直接看剖面形狀，得到最終真值 (ground truth)。", en: "The wafer is cleaved or a cross-section is milled with a focused ion beam (FIB), and SEM or TEM images the profile directly, giving the final ground truth."}
+    measures: {zh: "截面真值：CD 隨深度、側壁角、深度與各層形狀。", en: "Ground-truth cross-section: CD versus depth, sidewall angle, depth and layer shapes."}
+    range: {zh: "任何結構，但只看到切到的少數位置。", en: "Any structure, but only the few sites that are cut."}
+    precision: {zh: "公開來源沒有統一規格；IRDS 要求參考量測的精度要等於或優於線上 CD 機台。", en: "No single public spec; IRDS requires reference metrology precision to match or exceed the inline CD tools."}
+    location: [in_die, scribe]
+    contact: true
+    destructive: "yes"
+    inline: [lab, inline]
+    speed: slow
+    reference: true
+    processes: ["Photo-litho", "Dry Etch", "CMP"]
+    strengths: {zh: "最終真值，是 IR-CD、CD-SAXS、CD-AFM 與其他線上機台準確度的錨點。", en: "Final truth: the accuracy anchor for IR-CD, CD-SAXS, CD-AFM and the other inline tools."}
+    limits: {zh: "破壞性、慢、取樣點很少；IRDS 說 dual-beam FIB 現在常在線上使用，但仍是局部破壞。", en: "Destructive, slow and sparsely sampled; IRDS says dual-beam FIB is now commonly used inline, but it is still locally destructive."}
+    instead: {zh: "需要保留樣品時用 CD-AFM；量產監控用 OCD、IR-CD 或 CD-SAXS。", en: "Use CD-AFM when the sample must be kept; OCD, IR-CD or CD-SAXS for production monitoring."}
+    toolkit: ["MSA"]
+    sources:
+      - {title: "IRDS 2024 Metrology chapter", url: "https://irds.ieee.org/images/files/pdf/2024/2024IRDS_MET.pdf"}
+      - {title: "SemiEngineering 2023, How metrology tools stack up in 3D NAND devices", url: "https://semiengineering.com/how-metrology-tools-stack-up-in-3d-nand-devices"}
+      - {title: "NIST 2019, 3D-AFM review (reference chain)", url: "https://tsapps.nist.gov/publication/get_pdf.cfm?pub_id=918090"}
+      - {title: "Nova, SEMI 2021, in-die dishing and erosion", url: "https://www.semi.org/sites/semi.org/files/2021-11/03%20Ovadia%20Ilgayev%20Nova.pdf"}
+
+  sem-reg:
+    name: "SEM-Reg"
+    full: {zh: "電子束 overlay（蝕刻後）", en: "E-beam overlay after etch"}
+    principle: {zh: "在 CD-SEM 或高電壓 SEM 上，於蝕刻後 (AEI／FI) 直接拍元件圖形（晶粒內、cell 內、設計規則 pitch），量上下層的相對位置；高電壓可看到埋層。用來量 ADI 光學 target overlay 與真實元件 overlay 的系統差 (NZO)，再回饋給 ADI 的 APC。", en: "On a CD-SEM or high-voltage SEM, real device features are imaged after etch (AEI / FI), in-die, in-cell and at design-rule pitch, to measure layer-to-layer placement; high voltage reaches buried layers. It measures the systematic difference (NZO) between ADI optical target overlay and true device overlay, which is fed back to the ADI APC loop."}
+    measures: {zh: "蝕刻後元件上的真實 overlay，包含埋層（高電壓）。", en: "True on-device overlay after etch, including buried layers (high voltage)."}
+    range: {zh: "晶粒內元件結構，設計規則 pitch；ADI 也可以量，但有光阻收縮風險。", en: "In-die device structures at design-rule pitch; ADI is possible but carries a resist-shrink risk."}
+    precision: {zh: "2017 年資料稱 sub-nm；2024–2026 年機台沒有公開精度規格。", en: "Sub-nm claimed in 2017; no public precision spec for 2024–2026 tools."}
+    location: [in_die]
+    contact: false
+    destructive: slight
+    inline: [inline]
+    speed: slow
+    reference: false
+    processes: ["Photo-litho", "Dry Etch"]
+    strengths: {zh: "元件上的 ground truth，能解析 NZO；高電壓可看到埋層。", en: "Ground truth on the device that resolves NZO; high voltage sees buried layers."}
+    limits: {zh: "產能低、成本高、材料穿透有限、蝕刻後無法 rework；典型取樣是每幾週一次。大視野電子束機台宣稱產能為傳統 CD-SEM 的 5–30 倍（廠商）。", en: "Low throughput, high cost, limited material transparency and no rework after etch; typical sampling is every few weeks. Large-field e-beam tools claim 5–30× conventional CD-SEM throughput (vendor)."}
+    instead: {zh: "要密集的蝕刻後 overlay 圖用光學 in-device overlay；每批 ADI 控制用 IBO 或 DBO。", en: "Use optical in-device overlay for dense after-etch maps; IBO or DBO for every-lot ADI control."}
+    toolkit: ["SPC", "Wafer map"]
+    notes:
+      - {claim: "pattern after Dry Etch", verdict: verified, fix: {zh: "正確：在 AEI／FI 量元件；ADI 也可量，但有光阻收縮風險。", en: "Verified: AEI / FI on the device; ADI is possible with a shrink risk."}, source: "SemiEngineering 2018"}
+      - {claim: "not integrated with tool", verdict: verified, fix: {zh: "正確：獨立式 CD-SEM／高電壓 SEM。", en: "Verified: standalone CD-SEM / HV-SEM."}, source: "Hitachi CV7300"}
+      - {claim: "slower than CD-SEM", verdict: corrected, fix: {zh: "SEM-Reg 本身就在 CD-SEM／高電壓 SEM 上跑；正確的比較是它比光學 overlay 慢很多、取樣也稀疏很多（每幾週）。", en: "It runs on CD-SEM / HV-SEM; it is far slower and more sparsely sampled than optical overlay (every few weeks)."}, source: "SemiEngineering 2018; SemiEngineering in-cell overlay"}
+    sources:
+      - {title: "SemiEngineering 2018, High-volume manufacturing device overlay process control", url: "https://semiengineering.com/high-volume-manufacturing-device-overlay-process-control/"}
+      - {title: "SemiEngineering 2018, In-cell overlay metrology by using optical metrology tool", url: "https://semiengineering.com/in-cell-overlay-metrology-by-using-optical-metrology-tool"}
+      - {title: "SemiEngineering 2017, Improving optical overlay and measurement", url: "https://semiengineering.com/improving-optical-overlay-and-measurement"}
+      - {title: "Hitachi CV7300 high-voltage CD-SEM", url: "https://www.hitachi-hightech.com/global/en/products/semiconductor-manufacturing/cd-sem/metrology-solution/semi-cv7300.html"}
+      - {title: "eBeam Initiative 2023 (ASML), large-field e-beam metrology", url: "http://www.ebeam.org/docs/2023-02-28-ebeam-initiative-yu-cao-final.pdf"}
+
+  reg-ibo:
+    name: "Reg-IBO (Image)"
+    full: {zh: "影像式 overlay 量測", en: "Image-based overlay metrology"}
+    principle: {zh: "明場光學顯微成像，在影像平面量目前層與前層圖形對稱中心的偏移。Target 有 box-in-box (BiB)、frame-in-frame 與 AIM 系列：AIM (Advanced Imaging Metrology) 在 2003 年推出，以更密、更耐 CMP 的光柵取代 BiB，之後有 µAIM（約 10 µm²，可放晶粒內）、ProAIM、rAIM、DAIM 與 AIMid。AIM 是 IBO 的 target 類型，不是另一種技術。", en: "Bright-field optical microscopy measures the centre-of-symmetry offset between current-layer and previous-layer features in the image plane. Targets are box-in-box (BiB), frame-in-frame and the AIM family: AIM (Advanced Imaging Metrology), introduced in 2003, replaced BiB with denser, more CMP-robust gratings and grew into µAIM (about 10 µm², in-die capable), ProAIM, rAIM, DAIM and AIMid. AIM is an IBO target type, not a separate technique."}
+    measures: {zh: "Target overlay，每點 x/y；多層 target 可從同一張影像得到層內與層間 overlay。", en: "Target overlay, x/y per site; multi-layer targets give intra- and inter-layer overlay from one image."}
+    range: {zh: "切割道（BiB／AIM）或晶粒內（µAIM 約 10 µm²）；主要用在 ADI。", en: "Scribe (BiB / AIM) or in-die (µAIM about 10 µm²); mainly at ADI."}
+    precision: {zh: "公開 TMU 在 2010 年代降到 < 1 nm（約 2011，較舊）；最新機型沒有公開規格。", en: "Published TMU fell below 1 nm in the 2010s (about 2011, older); no public spec for current models."}
+    location: [scribe, in_die]
+    contact: false
+    destructive: "no"
+    inline: [inline]
+    speed: fast
+    reference: false
+    processes: ["Photo-litho"]
+    strengths: {zh: "成熟、穩健、多層、可調波長（color per layer）；產能高（2005 年 180 WPH，較舊數據）。", en: "Mature, robust, multi-layer and wavelength-tunable (color per layer); high throughput (180 WPH in 2005, older figure)."}
+    limits: {zh: "Target 與元件之間有偏差：傳統 target 在晶粒外，比 cell 圖形大約兩個數量級；沒找到整合在 track 上的 IBO 產品。", en: "Target-to-device bias: classic targets sit outside the die and are about two orders of magnitude larger than cell features; no track-integrated IBO product was found."}
+    instead: {zh: "要更小的 target、更高精度或整合在 track 上用 DBO；蝕刻後元件 overlay 用光學 in-device overlay 或 SEM-Reg。", en: "Use DBO for smaller targets, higher precision or track integration; optical in-device overlay or SEM-Reg for after-etch device overlay."}
+    toolkit: ["SPC", "Wafer map", "MSA"]
+    notes:
+      - {claim: "non-destructive", verdict: verified, fix: {zh: "正確。", en: "Verified."}, source: "KLA 2020"}
+      - {claim: "measure on test structure", verdict: verified, fix: {zh: "正確：BiB、frame-in-frame 與 AIM 系列 target。", en: "Verified: BiB, frame-in-frame and AIM-family targets."}, source: "EDN 2003"}
+      - {claim: "able to measure multiple layers", verdict: verified, fix: {zh: "正確，但不是 IBO 獨有：DBO 也有多層 target。", en: "Verified but not unique: DBO also has multi-layer targets."}, source: "KLA 2012"}
+      - {claim: "Reg-AIM: for critical layer", verdict: verified, fix: {zh: "大致正確：AIM 是為先進節點控制推出的；BiB 仍有支援與使用。", en: "Broadly verified: AIM was introduced for advanced-node control; BiB is still supported and used."}, source: "EDN 2003"}
+      - {claim: "Reg-AIM: box-in-box", verdict: corrected, fix: {zh: "AIM (Advanced Imaging Metrology) 是取代 box-in-box 的光柵式 IBO target；應放在 IBO 底下當作 target 類型。", en: "AIM (Advanced Imaging Metrology) is a grating-style IBO target that replaced box-in-box; place it under IBO as a target type."}, source: "EDN 2003; ARCNL 2022"}
+    sources:
+      - {title: "EDN 2003, Archer AIM grating targets", url: "https://www.edn.com/kla-tencors-archer-takes-aim"}
+      - {title: "KLA 2012, Archer 500 multi-layer overlay target", url: "https://ir.kla.com/news-events/press-releases/detail/204/kla-tencor-announces-new-archer-500-overlay-metrology"}
+      - {title: "KLA 2020, Archer 750 imaging overlay", url: "https://ir.kla.com/news-events/press-releases/detail/24/kla-introduces-new-ic-metrology-systems"}
+      - {title: "EE Times 2020, Overlay metrology challenges for advanced memory ICs", url: "https://www.eetimes.com/overlay-metrology-challenges-for-advanced-memory-ics"}
+      - {title: "EE Times 2005, Archer XT+ (older)", url: "https://www.eetimes.com/kla-tencor-rolls-new-overlay-metrology-tool"}
+      - {title: "InTech chapter, diffraction-based overlay for double patterning (TMU, older)", url: "https://cdn.intechopen.com/pdfs/24510/InTech-Diffraction_based_overlay_metrology_for_double_patterning_technologies.pdf"}
+      - {title: "ARCNL / ASML 2022, J. Micro/Nanopattern.", url: "https://ir.arcnl.nl/pub/269/00216publishedVersion.pdf"}
+      - {title: "SPIE 2003, grating vs box-in-box overlay targets (older)", url: "https://www.nxp.com/docs/en/white-paper/SPIE_2003_MICROLITHOGRAPHY_JA.pdf"}
+
+  reg-dbo:
+    name: "Reg-DBO (Diffraction)"
+    full: {zh: "繞射式 overlay 量測", en: "Diffraction-based overlay metrology"}
+    principle: {zh: "量測上下疊合、帶 ±bias 的光柵對 (grating-over-grating) 其 +1 與 −1 繞射級的強度不對稱，換算成 overlay。µDBO target 有四組 bias 光柵對，使結果不受堆疊影響。可在 pupil（角度解析）平面或暗場影像讀取，但訊號都是繞射級不對稱，不是邊緣影像；KLA 的同類技術稱為 SCOL。", en: "Overlay comes from the intensity asymmetry between the +1 and −1 diffraction orders of grating-over-grating targets with built-in ±bias. A µDBO target has four biased grating pairs, which makes the result independent of the stack. It can be read in the pupil (angle-resolved) plane or from dark-field images, but the signal is always order asymmetry, not an edge image; KLA's flavour is called SCOL."}
+    measures: {zh: "由 ±1 級不對稱得到的 target overlay；也有多層 target。", en: "Target overlay from ±1st-order asymmetry; multi-layer targets exist too."}
+    range: {zh: "切割道或晶粒內小 target（4–10 µm）；以 ADI 為主，也有 AEI 版本。", en: "Scribe or small in-die targets (4–10 µm); mainly ADI, with AEI versions too."}
+    precision: {zh: "TMU < 0.33 nm（6 × 6 µm target，較舊數據）；2011 年雙重曝光案例：dynamic precision < 0.2 nm、TMU < 0.5 nm（較舊）。", en: "TMU below 0.33 nm on 6 × 6 µm targets (older data); a 2011 double-patterning case gave dynamic precision below 0.2 nm and TMU below 0.5 nm (older)."}
+    location: [scribe, in_die]
+    contact: false
+    destructive: "no"
+    inline: [inline, integrated]
+    speed: fast
+    reference: false
+    processes: ["Photo-litho"]
+    strengths: {zh: "小 target、高精度、非常快（move-acquire-measure < 60 ms，較舊數據）；ADI 機型有整合在 track 上的版本，回饋迴路最短。", en: "Small targets, high precision and very fast (move-acquire-measure below 60 ms, older figure); ADI models come track-integrated for the shortest loop."}
+    limits: {zh: "對 target 不對稱與堆疊敏感；量的是 target，不是元件本身。", en: "Sensitive to target asymmetry and the stack; it measures targets, not the device."}
+    instead: {zh: "要成熟的影像式 target 用 IBO；蝕刻後元件 overlay 用光學 in-device overlay。", en: "Use IBO for mature image-based targets; optical in-device overlay for after-etch device overlay."}
+    toolkit: ["SPC", "Wafer map", "MSA"]
+    notes:
+      - {claim: "non-destructive, no-contact", verdict: verified, fix: {zh: "正確。", en: "Verified."}, source: "ARCNL 2022"}
+      - {claim: "not integrated", verdict: corrected, fix: {zh: "ADI 的 DBO (YieldStar) 有整合在 track 上與獨立式兩種；蝕刻後的版本才是獨立式。", en: "ADI DBO (YieldStar) comes track-integrated or standalone; post-etch versions are standalone."}, source: "ASML YieldStar 380G"}
+      - {claim: "measure multiple sites on wafer & on test structure", verdict: verified, fix: {zh: "正確：µDBO／SCOL target 放在切割道或晶粒內小區域。", en: "Verified: µDBO / SCOL targets in the scribe or small in-die areas."}, source: "ARCNL 2022"}
+    sources:
+      - {title: "ARCNL / ASML 2022, J. Micro/Nanopattern.", url: "https://ir.arcnl.nl/pub/269/00216publishedVersion.pdf"}
+      - {title: "ASML YieldStar 380G", url: "https://www.asml.com/en/products/metrology-and-inspection-systems/yieldstar-380g"}
+      - {title: "science.gov, diffraction-based overlay topic page (older abstracts)", url: "https://www.science.gov/topicpages/d/diffraction+based+overlay"}
+      - {title: "InTech chapter, diffraction-based overlay for double patterning (older)", url: "https://cdn.intechopen.com/pdfs/24510/InTech-Diffraction_based_overlay_metrology_for_double_patterning_technologies.pdf"}
+
+  overlay-in-die:
+    name: "Overlay (optical in-die)"
+    full: {zh: "光學晶粒內／元件上 overlay 量測", en: "Optical in-die / in-device overlay metrology"}
+    principle: {zh: "蝕刻後 (AEI) 的繞射式光學量測（例如 ASML YieldStar 1375F、1385、1390）：量元件本身或晶粒內小 target 的 pupil 平面角度解析繞射不對稱，再用以光罩上專用 training mark 訓練的 ML 換算 overlay。元件圖形遠小於光學解析度，不會被解析成顯微影像。", en: "After-etch (AEI) diffraction-based optics (for example ASML YieldStar 1375F, 1385, 1390): pupil-plane, angle-resolved diffraction asymmetry from device features or small in-chip targets is converted to overlay with ML trained on dedicated reticle training marks. Device features are far below optical resolution and are never resolved as a microscope image."}
+    measures: {zh: "蝕刻後元件上的 overlay（1390 另可量 tilt 與 CD）。", en: "After-etch on-device overlay (plus tilt and CD on the 1390)."}
+    range: {zh: "元件結構或晶粒內小 target，只用在 AEI；可一次量多層。", en: "Device features or small in-chip targets, AEI only; several layers at once."}
+    precision: {zh: "沒有公開的 in-device 專屬規格；學員的 0.7 nm 合理（光學 SCOL 在 2008 年已達 TMU 0.7 nm），但仍未定。", en: "No public in-device-specific spec; the learner's 0.7 nm is plausible (optical SCOL reached TMU 0.7 nm in 2008) but stays unresolved."}
+    location: [in_die]
+    contact: false
+    destructive: "no"
+    inline: [inline]
+    speed: fast
+    reference: false
+    processes: ["Photo-litho", "Dry Etch"]
+    strengths: {zh: "以光學速度取得密集的蝕刻後元件資料，可關閉 NZO；比 SEM 方案快很多（廠商）；DRAM 案例藉此推向 sub-2 nm 元件 overlay。", en: "Dense after-etch device data at optical speed that closes NZO; considerably faster than SEM (vendor); a DRAM case used it to push toward sub-2 nm on-device overlay."}
+    limits: {zh: "需要 ML 與光罩上的 training mark；只用在 AEI；獨立式機台。", en: "Needs ML and reticle training marks; AEI only; standalone tool."}
+    instead: {zh: "需要元件上的真值時用 SEM-Reg；每批 ADI 控制用 IBO 或 DBO。", en: "Use SEM-Reg for on-device ground truth; IBO or DBO for every-lot ADI control."}
+    toolkit: ["SPC", "Wafer map"]
+    notes:
+      - {claim: "precision 0.7 nm", verdict: unresolved, fix: {zh: "合理：光學 overlay 自 2008 年起就有 sub-nm TMU，但沒有 in-device 專屬的公開規格。", en: "Plausible: sub-nm optical TMU is documented since 2008, but there is no public in-device-specific spec."}, source: "Semiconductor Digest 2008"}
+      - {claim: "non-destructive, no contact with wafer", verdict: verified, fix: {zh: "正確。", en: "Verified."}, source: "ASML YieldStar 1385"}
+      - {claim: "measures product wafer directly on die structure with equivalent pattern", verdict: verified, fix: {zh: "正確但要補充：量的是元件圖形或晶粒內小 target，並用光罩 training mark 訓練 ML。", en: "Verified with nuance: device features or small in-chip targets, with ML trained on reticle training marks."}, source: "ASML YieldStar 1375F"}
+      - {claim: "much faster than SEM-Reg", verdict: verified, fix: {zh: "正確：廠商稱「比 SEM 方案快很多」。", en: "Verified: 'considerably faster than SEM solutions' (vendor)."}, source: "ASML YieldStar 1385"}
+      - {claim: "standalone, not integrated", verdict: verified, fix: {zh: "正確。", en: "Verified."}, source: "ASML YieldStar 1385"}
+      - {claim: "uses pupil images, but actual optical microscope image", verdict: corrected, fix: {zh: "Overlay 來自 pupil 平面的繞射不對稱；機台可能也會記錄 field 影像，但元件圖形不會被解析成顯微影像。", en: "Overlay comes from pupil-plane diffraction asymmetry; field images may be recorded, but device features are not resolved as a microscope image."}, source: "SPIE 13981 (2026); ASML"}
+    sources:
+      - {title: "ASML YieldStar 1385", url: "https://www.asml.com/en/products/metrology-and-inspection-systems/yieldstar-1385"}
+      - {title: "ASML YieldStar 1375F", url: "https://www.asml.com/en/products/metrology-and-inspection-systems/yieldstar-1375f"}
+      - {title: "ASML YieldStar 1390", url: "https://www.asml.com/en/products/metrology-and-inspection-systems/yieldstar-1390"}
+      - {title: "ASML, measuring accuracy (diffraction-based metrology)", url: "https://www.asml.com/en/en/technology/lithography-principles/measuring-accuracy"}
+      - {title: "SPIE 13981 (2026), Beyond overlay: additional parameters from overlay metrology", url: "https://www.spiedigitallibrary.org/conference-proceedings-of-spie/13981/3092351/Beyond-overlay-additional-parameters-extracted-from-overlay-metrology-measurements/10.1117/12.3092351.full"}
+      - {title: "SPIE 11325 (2020), after-etch overlay with high-density in-device metrology", url: "https://www.spiedigitallibrary.org/conference-proceedings-of-spie/11325/2552028/Improving-after-etch-overlay-performance-using-high-density-in-device/10.1117/12.2552028.full"}
+      - {title: "Semiconductor Digest 2008, Archer 200 with SCOL (older)", url: "https://sst.semiconductor-digest.com/2008/06/kla-tencor-announces-archer-200-overlay-metrology-system"}
+
+  ir-alignment:
+    name: "IR alignment (W2W overlay)"
+    full: {zh: "紅外光晶圓對晶圓接合 overlay 量測", en: "Infrared wafer-to-wafer bonding overlay metrology"}
+    principle: {zh: "接合後、研磨前，用短波紅外 (SWIR) 反射式顯微鏡穿透矽，讀取接合介面兩側、放在切割道上的 AIMid 或 box-in-box target，量兩片晶圓之間的 overlay；本質上就是 SWIR 版的 IBO。可見光機台在研磨前量不到。", en: "After bonding and before grind, a short-wave-infrared (SWIR) reflection microscope looks through the silicon at AIMid or box-in-box targets in the scribe line on either side of the bonding interface and measures the overlay between the two wafers; in practice it is IBO in the SWIR. Visible-light tools cannot measure before grind."}
+    measures: {zh: "跨接合介面的 overlay（x/y），再建模成平移、旋轉、縮放與殘差。", en: "Overlay across the bonding interface (x/y), modelled as translation, rotation, scale and residuals."}
+    range: {zh: "切割道上的 target，內外 target 距離可達 5 µm；可處理數百 µm 的翹曲（廠商）。接合 overlay 本身約 40–100 nm。", en: "Scribe-line targets with inner-to-outer distance up to 5 µm; handles hundreds of µm of warpage (vendor). Bond overlay itself is about 40–100 nm."}
+    precision: {zh: "專用 SWIR IBO 機台在量產 CIS 晶圓上 TMU 約 1 nm（2023）；較舊的一般紅外顯微鏡為 1σ 重複性 < 0.1 µm。", en: "Dedicated SWIR IBO tools reach about 1 nm TMU on production CIS wafers (2023); older generic IR microscopes give 1σ repeatability below 0.1 µm."}
+    location: [scribe]
+    contact: false
+    destructive: "no"
+    inline: [inline]
+    speed: medium
+    reference: false
+    processes: ["Wafer bonding"]
+    strengths: {zh: "研磨前唯一能看到接合介面的方法；非接觸、非破壞，產能適合量產。", en: "The only way to see the bonded interface before grind; non-contact, non-destructive and HVM-suitable throughput."}
+    limits: {zh: "金屬會擋住紅外光；受晶圓翹曲影響；只能量 target，不能量晶粒結構。", en: "Metal blocks IR; affected by wafer warpage; measures targets only, not die structures."}
+    instead: {zh: "接合前的對準由接合機內建的 in-situ 對準驗證模組處理，不需要這台機台。", en: "Pre-bond alignment is checked by the bonder's built-in in-situ alignment verification module instead."}
+    toolkit: ["SPC", "Wafer map"]
+    notes:
+      - {claim: "precision ~15 nm", verdict: corrected, fix: {zh: "專用 SWIR IBO 機台在量產晶圓上 TMU 約 1 nm；一般紅外顯微鏡約 0.1 µm（1σ）。15 nm 的來源不明，而且會違反 TMU 約為預算 10% 的原則。", en: "Dedicated SWIR IBO tools reach about 1 nm TMU on production wafers; generic IR microscopes about 0.1 µm (1σ). The origin of 15 nm is unknown, and it would break the TMU of about 10% of budget rule."}, source: "IEEE ECTC 2023; IRDS 2024"}
+      - {claim: "principle same as Reg-IBO", verdict: verified, fix: {zh: "正確：SWIR 反射式 IBO。", en: "Verified: SWIR reflection IBO."}, source: "KIOXIA 2024"}
+      - {claim: "non-destructive, no contact with bonded wafer", verdict: verified, fix: {zh: "正確。", en: "Verified."}, source: "SPIE 12955"}
+      - {claim: "can measure product wafer or patterned wafer (short loop)", verdict: verified, fix: {zh: "正確。", en: "Verified."}, source: "IEEE ECTC 2023"}
+      - {claim: "cannot measure directly on die structure; measures the Reg boxes (test structures)", verdict: verified, fix: {zh: "正確：量切割道上的 AIMid／BiB target；金屬會擋紅外光。", en: "Verified: AIMid / BiB scribe targets; metal blocks IR."}, source: "SPIE 12955"}
+      - {claim: "not integrated", verdict: verified, fix: {zh: "正確但要補充：量測機台是獨立式，但接合機本身有 in-situ 對準驗證模組。", en: "Verified with nuance: the metrology tool is standalone, but bonders have in-situ alignment verification modules."}, source: "EVG GEMINI FB"}
+    sources:
+      - {title: "IEEE ECTC 2023, irArcher W2W post-bond overlay on production wafers", url: "https://ieeexplore.ieee.org/document/10195808"}
+      - {title: "SPIE 12955 (2024), Advanced processing control for wafer-to-wafer hybrid bonding", url: "https://www.spiedigitallibrary.org/conference-proceedings-of-spie/12955/129551Q/Advanced-processing-control-for-wafer-to-wafer-hybrid-bonding/10.1117/12.3010036.full"}
+      - {title: "KIOXIA R&D topic 2024, SWIR IBO overlay for bonded wafers", url: "https://www.kioxia.com/en-jp/rd/technology/topics/topics-68.html"}
+      - {title: "IRDS 2024 Metrology (NIST copy), IR microscopy of bonded wafers", url: "https://tsapps.nist.gov/publication/get_pdf.cfm?pub_id=959302"}
+      - {title: "EVG GEMINI FB hybrid bonding system", url: "https://www.evgroup.com/products/bonding/fusion-and-hybrid-bonding-systems/gemini-fb"}
+      - {title: "imec 2026, wafer-to-wafer hybrid bonding at 200 nm pitch", url: "https://www.imec-int.com/en/press/imec-and-ev-group-demonstrate-wafer-wafer-hybrid-bonding-200nm-interconnect-pitch-and-record"}
+      - {title: "EVG / imec, Hybrid Bonding Symposium 2026", url: "https://attend.ieee.org/hbs/wp-content/uploads/sites/692/2026-2-6-Alexeev.pdf"}
+
+relations:
+  - {from: ocd, to: cd-sem, type: faster_and_more_precise_than, note: {zh: "有條件成立 (C8)：OCD 較快，對陣列平均 CD 精度較好；局部 CDU 與 LER 仍要 CD-SEM。", en: "Qualified (C8): OCD is faster and more precise for array-averaged CD; local CDU and LER still need CD-SEM."}}
+  - {from: ir-cd, to: ocd, type: slower_than, note: {zh: "未定 (C16)：廠商目標是與 OCD 相當的速度，沒有公開數字。", en: "Unresolved (C16): the vendor target is speed comparable to OCD; no public figure."}}
+  - {from: cd-saxs, to: cd-sem, type: correlated_with, note: {zh: "已更正 (C23)：與 CD-SEM 比對是常見做法，但不是準確度錨點；準確度錨點是 FIB-SEM、TEM 與 tomography。", en: "Corrected (C23): comparison with CD-SEM is common practice but not the accuracy anchor; FIB-SEM, TEM and tomography are."}}
+  - {from: xsem-tem, to: cd-saxs, type: accuracy_reference_for, note: {zh: "FIB-SEM 與 TEM 是 CD-SAXS 與 IR-CD 的離線準確度查核。", en: "FIB-SEM and TEM are the offline accuracy check for CD-SAXS and IR-CD."}}
+  - {from: xsem-tem, to: ir-cd, type: accuracy_reference_for, note: {zh: "IR-CD 與破壞性參考 CD 的相關性良好。", en: "IR-CD correlates well with destructive reference CDs."}}
+  - {from: cd-saxs, to: ocd, type: calibrates, note: {zh: "CD-SAXS 可追溯至 SI，用來校準 OCD 或與 OCD 做 hybrid。", en: "CD-SAXS is SI-traceable and is used to calibrate or hybridize with OCD."}}
+  - {from: xsem-tem, to: cd-afm, type: calibrates, note: {zh: "先在截面樣品上用 TEM 或 XS-SEM 校準 3D-AFM 的 SWA，再用 3D-AFM 量過的晶圓評估線上機台。", en: "3D-AFM SWA is calibrated against TEM or XS-SEM on a cross-sectioned subset; its wafers then qualify the inline tools."}}
+  - {from: cd-afm, to: ocd, type: calibrates, note: {zh: "OCD 模型定期以 SEM 與 CD-AFM 驗證；與 AFM 做 hybrid 常可改善頂部寬度最多 4 nm。", en: "OCD models are periodically verified against SEM and CD-AFM; hybridizing with AFM commonly improves top width by up to 4 nm."}}
+  - {from: afm, to: ocd, type: labels_ml_for, note: {zh: "以 AFM 量測當標籤，加上整合 OCD 光譜做 ML，得到每片晶圓的晶粒內 dishing 與 erosion。", en: "AFM labels plus integrated OCD spectra train ML for every-wafer in-die dishing and erosion."}}
+  - {from: sem-reg, to: cd-sem, type: runs_on, note: {zh: "已更正 (C27)：SEM-Reg 就在 CD-SEM／高電壓 SEM 上跑；它比光學 overlay 慢很多、取樣稀疏。", en: "Corrected (C27): SEM-Reg runs on CD-SEM / HV-SEM; it is far slower and sparser than optical overlay."}}
+  - {from: sem-reg, to: reg-ibo, type: corrects_offset_of, note: {zh: "蝕刻後 SEM 量到的元件 overlay 與 ADI 光學 target overlay 的差 (NZO)，回饋成 ADI 迴路的 offset。", en: "The difference (NZO) between after-etch SEM device overlay and ADI optical target overlay is fed back as an offset to the ADI loop."}}
+  - {from: overlay-in-die, to: sem-reg, type: faster_than, note: {zh: "正確 (C39)：廠商稱比 SEM 方案快很多。", en: "Verified (C39): considerably faster than SEM solutions (vendor)."}}
+  - {from: ir-alignment, to: reg-ibo, type: same_principle_as, note: {zh: "正確 (C43)：就是 SWIR 版的 IBO，讀 AIMid 或 BiB target。", en: "Verified (C43): it is IBO in the SWIR, reading AIMid or BiB targets."}}
+  - {from: reg-dbo, to: reg-ibo, type: competes_with, note: {zh: "ADI target overlay 的兩種主要光學方法；兩者都有多層 target。", en: "The two main optical methods for ADI target overlay; both have multi-layer targets."}}

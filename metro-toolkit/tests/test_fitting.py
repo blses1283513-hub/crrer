@@ -78,3 +78,12 @@ def test_site_pipeline():
     out = fit_sites(stack, recipe["fit_params"], meas)
     assert np.allclose(out["L0.thickness"], truth, atol=0.15)
     assert out.fit_ok.all()
+
+
+def test_fit_reports_goodness_of_fit():
+    meas = simulate_reflectometry(oxide(342.0), WL, noise=0.002, rng=3)
+    good = fit(oxide(60.0), meas, [FitParameter(0, bounds=(1, 1500))])
+    assert 0.99 < good.gof <= 1.0 and "GOF" in good.summary()
+    wrong = Stack([Layer(LIB["Si3N4"], 10.0), Layer(LIB["SiO2"], 300.0)], LIB["Si"])
+    bad = fit(oxide(300.0), simulate_reflectometry(wrong, WL, noise=0.002, rng=3), [FitParameter(0, bounds=(1, 1500))])
+    assert bad.gof < good.gof  # a missing layer in the model lowers GOF

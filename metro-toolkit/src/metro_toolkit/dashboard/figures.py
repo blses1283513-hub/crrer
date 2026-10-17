@@ -37,6 +37,10 @@ def unit_of(param: str, df: pd.DataFrame | None = None) -> str:
         pass
     if param == "defect_density":
         return "1/cm²"
+    if param.startswith("sheet_res"):
+        return "Ω/sq"
+    if param == "thermal_wave":
+        return "TW units"
     if param.endswith("_nm") or param.endswith("_thk") or param.startswith("wl_cd"):
         return "nm"
     return {"pct": "%", "mv": "mV"}.get(param.rsplit("_", 1)[-1], "")

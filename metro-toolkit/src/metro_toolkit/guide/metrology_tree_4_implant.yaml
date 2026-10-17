@@ -1,0 +1,417 @@
+# Metrology map, part 4: Implantation (dopant concentration, implant damage).
+# Facts from reports/Metrology tree verification.md (Implantation section, Table 7, Table 8, verdicts C60, C102-C104)
+# and research_notes/Metrology tree verification/implant.md. Numbers are typical values from the named public sources.
+# Tools referenced here but defined in other files: four-point-probe, ellipsometry (2), sims (3), xsem-tem (1).
+
+categories:
+  - id: implantation
+    name: {zh: "佈植類", en: "Implantation"}
+    processes: ["Implantation"]
+    parameters:
+      - id: dopant-concentration
+        name: {zh: "摻雜濃度（劑量、分布、接面深度）", en: "Dopant concentration (dose, profile, junction depth)"}
+        what:
+          zh: "佈植進去的 dopant 有多少（dose）、在深度方向怎麼分布（profile），以及接面深度 Xj。劑量分四層監控：機台 Faraday cup、退火前 thermal-wave／PMR、退火後 Rs，最後由 SIMS 等實驗室方法當參考。"
+          en: "How much dopant went in (dose), how it is distributed with depth (profile) and the junction depth Xj. Dose is monitored in four layers: the implanter's Faraday cup, pre-anneal thermal-wave / PMR, post-anneal Rs, and lab references such as SIMS."
+        processes: ["Implantation"]
+        groups:
+          - id: dose-monitor
+            name: {zh: "劑量與均勻度監控", en: "Dose and uniformity monitors"}
+            what:
+              zh: "例行監控：Faraday cup 每片即時量；thermal-wave／PMR 在退火前量（非接觸、可量產品片）；4PP 或 JPV 在退火後的空白監控片上量 Rs（包含活化結果）。"
+              en: "Routine monitors: the Faraday cup on every wafer in real time; thermal-wave / PMR before anneal (non-contact, product wafers allowed); 4PP or JPV Rs after anneal on blanket monitor wafers (includes activation)."
+            tools: [faraday-cup, thermal-wave, four-point-probe, jpv-rsl]
+          - id: profile
+            name: {zh: "深度分布與接面深度（實驗室參考）", en: "Depth profile and junction depth (lab reference)"}
+            what:
+              zh: "SIMS 給化學濃度分布與絕對劑量（不分是否活化）；SRP、ECV 給退火後電性活化的載子分布與電性接面深度。都是破壞性的實驗室方法。"
+              en: "SIMS gives the chemical profile and absolute dose (active and inactive together); SRP and ECV give the electrically active carrier profile and electrical junction depth after anneal. All are destructive lab methods."
+            tools: [sims, srp, ecv]
+        notes:
+          - claim: "Dopant / damage 量測技術筆記未列"
+            verdict: corrected
+            fix:
+              zh: "已補上：劑量用 Faraday cup（機台內）、thermal-wave／PMR（退火前）、4PP／JPV（退火後）；分布與 Xj 用 SIMS（化學）與 SRP／ECV／differential Hall（電性）。"
+              en: "Filled: dose by Faraday cup (in the implanter), thermal-wave / PMR (pre-anneal), 4PP / JPV (post-anneal); profile and Xj by SIMS (chemical) and SRP / ECV / differential Hall (electrical)."
+            source: "C103 · Eurofins EAG, IIT 2022 (JTG)"
+          - claim: "Sheet resistance, ex: Implant"
+            verdict: verified
+            fix:
+              zh: "正確但有條件：4PP 量佈植層必須先做活化退火，並在空白監控片上量（摻雜層下方要有 junction 或絕緣層）。Rs 反映劑量 × 活化 × 接面深度；超淺接面可改用非接觸 JPV；退火前的劑量用 thermal-wave／PMR。"
+              en: "Correct, with a condition: 4PP on an implant layer needs an activation anneal first and runs on a blanket monitor wafer (a junction or insulator must lie under the doped layer). Rs reflects dose × activation × junction depth; use non-contact JPV for ultra-shallow junctions and thermal-wave / PMR for as-implanted dose."
+            source: "C102 · AZoM / KLA Instruments 2025; Semilab sheet resistance page"
+
+      - id: implant-damage
+        name: {zh: "佈植損傷（晶格損傷／非晶化）", en: "Implant damage (lattice damage / amorphization)"}
+        what:
+          zh: "離子撞擊造成的晶格損傷與非晶層。損傷分布在整個佈植深度，直到 end-of-range 缺陷帶（略深於 Rp），不只在表面。低中劑量用 thermal-wave 線上看；高劑量與 PAI 用 SE 量非晶層厚度；實驗室用 RBS-channeling、XTEM、Raman、HRXRD。"
+          en: "Lattice damage and amorphous layers caused by the ions. The damage spans the whole implanted range down to end-of-range defect bands (slightly deeper than Rp), not only the surface. Thermal-wave reads it in-line at low and medium dose; SE measures amorphous-layer thickness at high dose and for PAI; RBS-channeling, XTEM, Raman and HRXRD are the lab methods."
+        processes: ["Implantation"]
+        groups:
+          - id: damage
+            name: {zh: "損傷、非晶層與應變", en: "Damage, amorphous layer and strain"}
+            what:
+              zh: "退火前線上：thermal-wave／PMR（低中劑量）、SE（高劑量非晶層厚度）。實驗室：RBS-channeling 定量位移原子、XTEM 直接看非晶層與缺陷環、Raman 看非晶比例、HRXRD 看應變。"
+              en: "Pre-anneal in-line: thermal-wave / PMR (low and medium dose), SE (amorphous thickness at high dose). Lab: RBS-channeling quantifies displaced atoms, XTEM images amorphous layers and loops, Raman gives the amorphous fraction, HRXRD gives strain."
+            tools: [thermal-wave, ellipsometry, rbs-channeling, xsem-tem, raman, hrxrd]
+        notes:
+          - claim: "Surface damage"
+            verdict: corrected
+            fix:
+              zh: "改名為「佈植損傷（晶格損傷／非晶化）」implant damage：損傷延伸到 end-of-range，XTEM 與 RBS 顯示缺陷帶略深於 Rp，不只在表面。原本空白，已補上 thermal-wave／PMR、SE、RBS-channeling、Raman、XTEM、HRXRD。"
+              en: "Renamed to implant (lattice) damage / amorphization: the damage extends to end-of-range, and XTEM and RBS place defect bands slightly deeper than Rp, not only at the surface. The empty branch is now filled with thermal-wave / PMR, SE, RBS-channeling, Raman, XTEM and HRXRD."
+            source: "C104 · US6671047B2; Chinese Physics (self-ion implanted Si)"
+
+tools:
+  faraday-cup:
+    name: "Faraday cup"
+    full: {zh: "Faraday cup 劑量計（佈植機內）", en: "Faraday cup dosimetry (in the implanter)"}
+    principle:
+      zh: "離子束打進 Faraday cup，劑量處理器把電流對時間積分得到總劑量，並可回饋控制佈植機；角落的 cup 可監控均勻度。"
+      en: "The beam enters a Faraday cup; a dose processor integrates the current over time to get total dose and can feed back to control the implanter. Corner cups monitor uniformity."
+    measures:
+      zh: "離子束電流 → 積分劑量；角落 cup → 劑量均勻度。量的是束流，不是晶圓本身。"
+      en: "Beam current → integrated dose; corner cups → dose uniformity. It measures the beam, not the wafer itself."
+    range:
+      zh: "Faraday cup 陣列約 1e11–1e18 ions/cm²（typical）；矽製程佈植劑量約 5e11 到 1e16 以上 ions/cm²。"
+      en: "Faraday cup arrays about 1e11–1e18 ions/cm² (typical); Si implant doses about 5e11 to above 1e16 ions/cm²."
+    precision:
+      zh: "許多應用的均勻度與總劑量容許誤差約 1%（1998 年專利）。佈植機只規格化均勻度，不規格化絕對劑量準確度。"
+      en: "Uniformity and total-dose tolerances at about the 1% level in many applications (1998 patent). Implanters are specified for uniformity, not absolute dose accuracy."
+    location: [in_die, scribe, blanket]
+    contact: false
+    destructive: "no"
+    inline: [integrated]
+    speed: fast
+    reference: false
+    processes: ["Implantation"]
+    strengths:
+      zh: "每一片、即時、不需額外量測片，可直接閉迴路控制劑量。"
+      en: "Every wafer, real time, no extra wafer needed; closes the dose control loop directly."
+    limits:
+      zh: "與殘氣的電荷交換會讓計數偏低或偏高，需依 end-station 壓力補償（一項測試中未補償時平均 Rs 偏移達 15%）。不保證絕對劑量。"
+      en: "Charge exchange with residual gas makes the cup under- or over-count, so end-station pressure compensation is applied (in one test mean Rs shifted up to 15% without it). Absolute dose is not guaranteed."
+    instead:
+      zh: "要確認晶圓實際拿到的劑量用 thermal-wave／PMR 或退火後 Rs；要絕對劑量與機台匹配用 SIMS 對 NIST 標準片。"
+      en: "To check what the wafer actually received, use thermal-wave / PMR or post-anneal Rs; for absolute dose and tool matching, use SIMS against NIST reference materials."
+    toolkit: ["SPC"]
+    notes: []
+    sources:
+      - {title: "US6797967B1 patent (Faraday dosimetry)", url: "https://patents.google.com/patent/US6797967B1/en"}
+      - {title: "EP0854494 Dose control patent", url: "https://data.epo.org/publication-server/rest/v1.0/publication-dates/19980722/patents/EP0854494NWA2/document.html"}
+      - {title: "OSTI: pressure compensation on single-wafer implanters", url: "https://www.osti.gov/biblio/21251647"}
+      - {title: "OSTI: LLNL Faraday cup array patent", url: "https://www.osti.gov/biblio/874991"}
+      - {title: "Eurofins EAG, Metrologies to Study Ion Implanted Semiconductor Materials (IIT 2022, JTG)", url: "https://nccavs-usergroups.avs.org/wp-content/uploads/2023/01/JTG-1222-2-BuyuklimanliT-EurofinsEAG.pdf"}
+      - {title: "Coherent ion implantation glossary", url: "https://www.coherent.com/resources/datasheet/materials/related-resources/ion-implantation/application-note-glossary-of-terms-for-ion-implantation-and-related-processes.pdf"}
+
+  thermal-wave:
+    name: "Thermal-wave / PMR"
+    full: {zh: "熱波／光調制反射率（退火前）", en: "Thermal-wave / photo-modulated reflectance (before anneal)"}
+    principle:
+      zh: "調制的 pump 雷射在矽中激發熱波與載子波，probe 雷射量反射率的調制變化。訊號跟晶格損傷有關，再用軟體與劑量梯度校正對應到劑量。"
+      en: "A modulated pump laser excites thermal and carrier waves in Si; a probe laser reads the modulated change in reflectance. The signal tracks lattice damage and is correlated to dose with dose-ladder calibration."
+    measures:
+      zh: "以損傷為基礎的訊號 → 劑量、能量、入射角（tilt）、均勻度 micro-map、end-of-range 損傷、退火後損傷恢復。"
+      en: "Damage-based signal → dose, energy, angle of incidence (tilt), uniformity micro-maps, end-of-range damage, damage recovery after anneal."
+    range:
+      zh: "早期研究可量到約 1e10 ions/cm²；某 PMR 工具 5e10–5.5e16 ions/cm²（vendor typical），光點小於 3 µm。"
+      en: "Early work reached about 1e10 ions/cm²; one PMR tool 5e10–5.5e16 ions/cm² (vendor typical), spot under 3 µm."
+    precision:
+      zh: "PMR：劑量偵測 <0.5%（1σ）、tilt 約 0.1°（1σ）（vendor typical）。熱波劑量靈敏度呈 V 形，在約 600–700 TW units 最低（0.083–0.223）。"
+      en: "PMR: dose detectability <0.5% (1σ), tilt about 0.1° (1σ) (vendor typical). Thermal-wave dose sensitivity is V-shaped, with a minimum of 0.083–0.223 near 600–700 TW units."
+    location: [blanket, scribe]
+    contact: false
+    destructive: "no"
+    inline: [inline]
+    speed: fast
+    reference: false
+    processes: ["Implantation"]
+    strengths:
+      zh: "非接觸、不破壞，佈植完馬上量、不需退火，可量產品片；能在退火前抓到佈植機異常，也可做機台匹配與 tilt V-curve。"
+      en: "Non-contact and non-damaging; measures right after implant with no anneal and works on product wafers. Catches implanter faults before anneal; used for tool matching and tilt V-curves."
+    limits:
+      zh: "一定要在退火前量（退火會消除損傷，靈敏度大幅下降）。中劑量靈敏度低；一旦非晶化，訊號與劑量不再單調。訊號也受通道效應、劑量率、佈植後經過時間與表面狀態影響。"
+      en: "Must measure before anneal (anneal removes the damage and sensitivity drops sharply). Weak mid-dose sensitivity; once amorphization sets in the signal is no longer monotonic with dose. Also depends on channeling, dose rate, time since implant and surface condition."
+    instead:
+      zh: "高劑量或 PAI 改用 SE 量非晶層厚度；要電性結果（含活化）用退火後 4PP 或 JPV；要絕對劑量用 SIMS。"
+      en: "For high dose or PAI, use SE for amorphous-layer thickness; for the electrical result (with activation), use post-anneal 4PP or JPV; for absolute dose, use SIMS."
+    toolkit: ["SPC", "Wafer map"]
+    notes: []
+    sources:
+      - {title: "US6671047B2 patent (Therma-Wave)", url: "https://patents.google.com/patent/US6671047B2/en"}
+      - {title: "Smith 1987, NIM B", url: "https://www.sciencedirect.com/science/article/pii/0168583X87908998"}
+      - {title: "IIT 2000, thermal-wave dose sensitivity (IEEE 924243)", url: "https://ieeexplore.ieee.org/document/924243"}
+      - {title: "Semilab, Photomodulated Reflectance for implantation tilt-angle monitoring (hosted by Axcelis)", url: "https://www.axcelis.com/wp-content/uploads/2019/03/Photomodulated-Reflectance-Measurement-Technique-for-Implantation-Tilt-Angle-Monitoring.pdf"}
+      - {title: "KLA Therma-Probe product listing (DirectIndustry)", url: "https://www.directindustry.com/prod/kla-corporation/product-113449-1595647.html"}
+      - {title: "Bakshi et al., annealed USJ thermal-wave, ECS 2002", url: "https://www.electrochem.org/dl/ma/201/pdfs/0738.pdf"}
+      - {title: "Kamenitsa 1993, sources of variation", url: "https://www.sciencedirect.com/science/article/abs/pii/0168583X9395050F"}
+
+  jpv-rsl:
+    name: "JPV / RsL"
+    full: {zh: "接面光電壓／非接觸片電阻", en: "Junction photovoltage / non-contact sheet resistance"}
+    principle:
+      zh: "調制 LED 光產生載子，被 p-n junction 分開；接面光電壓在佈植層內橫向擴散，用電容式探頭在多個調制頻率下量測，推出 Rs、接面電容 Cd、二極體電阻 Rd 與漏電流。用 4PP 驗證過的晶圓校正。"
+      en: "Chopped LED light creates carriers that the p-n junction separates; the junction photovoltage spreads laterally in the implanted layer and a capacitive probe reads it at several modulation frequencies, giving Rs, junction capacitance Cd, diode resistance Rd and leakage current. Calibrated on 4PP-verified wafers."
+    measures:
+      zh: "退火後的 Rs（劑量 × 活化）、接面漏電流、Cd；Rs map 可看出佈植機 twist／tilt 與批次式機台的弧形痕跡。"
+      en: "Post-anneal Rs (dose × activation), junction leakage, Cd; Rs maps reveal implanter twist / tilt and batch-implanter arcs."
+    range:
+      zh: "需要有 junction 的退火監控片；特別適合超淺接面（例：B 1 keV 4e14）。300 mm 片 1 mm 間距約 70k 點，約 1k 點／分鐘。"
+      en: "Needs an annealed monitor wafer with a junction; especially suited to ultra-shallow junctions (example: B 1 keV 4e14). About 70k points on 300 mm at 1 mm raster, about 1k points/min."
+    precision:
+      zh: "沒有公開的重複性數字；範例 map 可解析 ±2% 的 Rs 變化。"
+      en: "No public repeatability figure; an example map resolved ±2% Rs variation."
+    location: [blanket]
+    contact: false
+    destructive: "no"
+    inline: [inline]
+    speed: fast
+    reference: false
+    processes: ["Implantation"]
+    strengths:
+      zh: "非接觸，沒有探針穿透超淺接面的問題；高密度 map 同時給 Rs 與漏電流。"
+      en: "Non-contact, so no probe punch-through on ultra-shallow junctions; dense maps give Rs and leakage together."
+    limits:
+      zh: "只能在退火後、有 junction 的空白監控片上量；高劑量 B 活化飽和時 Rs 對劑量不敏感（1 keV B 到 4e15 都平坦）。"
+      en: "Only after anneal, on blanket monitor wafers with a junction; when B activation saturates at high dose Rs stops tracking dose (1 keV B stayed flat up to 4e15)."
+    instead:
+      zh: "退火前的劑量用 thermal-wave／PMR；一般中高劑量 Rs 監控用 4PP；要深度分布用 SIMS 或 SRP。"
+      en: "For pre-anneal dose use thermal-wave / PMR; for routine medium/high-dose Rs use 4PP; for depth profiles use SIMS or SRP."
+    toolkit: ["SPC", "Wafer map"]
+    notes: []
+    sources:
+      - {title: "Semilab non-contact sheet resistance", url: "https://semilab.com/category/products/non-contact-sheet-resistance-measurement"}
+      - {title: "Semilab, Junction Technology Group 2007", url: "https://nccavs-usergroups.avs.org/wp-content/uploads/JTG2007/JTG_2007_07_9Kohn.pdf"}
+      - {title: "Non-contact measurement of sheet resistance and leakage current for USJ-SDE/Halo junctions", url: "https://www.researchgate.net/publication/4224992_Non-contact_measurement_of_sheet_resistance_and_leakage_current_Applications_for_USJ-SDEHalo_junctions"}
+
+  srp:
+    name: "SRP"
+    full: {zh: "展阻剖析", en: "Spreading resistance profiling"}
+    principle:
+      zh: "樣品磨成斜面（約 0.001–0.2 rad），兩根很近的探針以約 5 mV 沿斜面逐步量展阻，再用校正標準與計算換算成電阻率與載子濃度隨深度的分布。"
+      en: "The sample is angle-lapped (about 0.001–0.2 rad) and two closely spaced probes step down the bevel at about 5 mV; calibration standards and mathematics convert the spreading resistance into resistivity and carrier concentration vs depth."
+    measures:
+      zh: "電性活化的淨載子濃度分布、電性接面深度、多重 junction。"
+      en: "Electrically active net carrier profile, electrical junction depth, multiple junctions."
+    range:
+      zh: "約 8 個數量級；可到約 1e12 cm⁻³；深度可超過 500 µm；圖形至少約 100 × 400 µm。"
+      en: "About 8 decades; down to about 1e12 cm⁻³; depth beyond 500 µm; structures at least about 100 × 400 µm."
+    precision:
+      zh: "沒有公開的精度數字；結果依賴校正標準與換算。"
+      en: "No public precision figure; results depend on calibration standards and the conversion."
+    location: [blanket, scribe]
+    contact: true
+    destructive: "yes"
+    inline: [lab]
+    speed: slow
+    reference: true
+    processes: ["Implantation"]
+    strengths:
+      zh: "直接給電性活化的分布與電性 Xj，適合深井、epi 等深分布。"
+      en: "Gives the electrically active profile and electrical Xj directly; suits deep well and epi profiles."
+    limits:
+      zh: "破壞性（磨斜面）；需先活化，無法量剛佈植的分布；只看淨載子，分不出 p、n 型 dopant；poly 中因遷移率低會低估；超淺接面需 Poisson solver 且非常困難。"
+      en: "Destructive (bevel); needs activation, so no as-implanted profile; shows net carriers only, not separate p- and n-type dopants; under-reports in poly because of lower mobility; ultra-shallow junctions need a Poisson solver and are very difficult."
+    instead:
+      zh: "要化學濃度與絕對劑量用 SIMS；超薄層的活化分布可用 differential Hall；化合物半導體可用 ECV。"
+      en: "For chemical concentration and absolute dose use SIMS; for active profiles of ultrathin layers use differential Hall; for compound semiconductors use ECV."
+    toolkit: []
+    notes: []
+    sources:
+      - {title: "Solecon Labs, SRP and SIMS", url: "https://soleconstage.com/wp-content/uploads/2026/03/srp-sims.pdf"}
+      - {title: "Wikipedia: Spreading resistance profiling", url: "https://en.wikipedia.org/wiki/Spreading_resistance_profiling"}
+      - {title: "SGS Institut Fresenius, SRP", url: "https://sgs-institut-fresenius.de/en/material-failure-analysis/measuring-and-analysis-methods/physical-surface-analysis/spreading-resistance-profiling"}
+      - {title: "ScienceDirect 2024, proton implant profiling", url: "https://www.sciencedirect.com/science/article/pii/S136980012400115X"}
+      - {title: "Differential Hall paper, PMC 2018", url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC6036972"}
+
+  ecv:
+    name: "ECV"
+    full: {zh: "電化學電容－電壓剖析", en: "Electrochemical capacitance-voltage profiling"}
+    principle:
+      zh: "用電解液形成 Schottky 接觸並量 C-V；同一電解液也會蝕刻，靠蝕刻往下推進深度，而不是加大偏壓。"
+      en: "An electrolyte forms the Schottky contact for C-V; the same electrolyte etches, so the profile goes deeper by etching rather than by increasing bias."
+    measures:
+      zh: "電性活化的載子濃度分布與導電型態。"
+      en: "Electrically active carrier profile and carrier type."
+    range:
+      zh: "濃度 <1e12 到 >1e21 cm⁻³、深度 1 nm–100 µm、樣品 4 × 2 mm² 到 8 吋（某機型規格，typical）；IV 族與 III-V。"
+      en: "Concentration <1e12 to >1e21 cm⁻³, depth 1 nm–100 µm, samples 4 × 2 mm² up to 8-inch (one tool's spec, typical); group IV and III-V."
+    precision:
+      zh: "沒有公開的精度數字；蝕刻深度要另外量。"
+      en: "No public precision figure; etch depth must be measured separately."
+    location: [blanket]
+    contact: true
+    destructive: "yes"
+    inline: [lab]
+    speed: slow
+    reference: true
+    processes: ["Implantation"]
+    strengths:
+      zh: "濃度與深度範圍很寬，給活化載子分布；也適用化合物半導體。"
+      en: "Wide concentration and depth range; gives the active carrier profile; also works on compound semiconductors."
+    limits:
+      zh: "破壞性（電解蝕刻）；剛佈植（非晶）的分布無法解讀，需先活化；有額外電性活化缺陷時不可靠。"
+      en: "Destructive (electrolytic etch); as-implanted (amorphous) profiles are not interpretable, so activation comes first; unreliable when extra electrically active defects are present."
+    instead:
+      zh: "要化學濃度與絕對劑量用 SIMS；矽的深分布用 SRP；小於 10 nm 的活化層用 differential Hall。"
+      en: "For chemical concentration and absolute dose use SIMS; for deep Si profiles use SRP; for active layers under 10 nm use differential Hall."
+    toolkit: []
+    notes: []
+    sources:
+      - {title: "UCF ECS abstract (ECV)", url: "https://ecs.confex.com/ecs/224/webprogram/Abstract/Paper25304/A1-0130.pdf"}
+      - {title: "NMTronics / WEP CVP21", url: "https://www.nmtronics.com/solar/wep.html"}
+      - {title: "IOP Semicond. Sci. Technol. 2021", url: "https://iopscience.iop.org/article/10.1088/1361-6641/ac0854"}
+      - {title: "Differential Hall paper, PMC 2018", url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC6036972"}
+
+  rbs-channeling:
+    name: "RBS-channeling"
+    full: {zh: "拉塞福背向散射－通道模式", en: "Rutherford backscattering spectrometry in channeling (RBS/C)"}
+    principle:
+      zh: "MeV He 離子束對準晶軸入射時散射減少（通道效應）；損傷區被移位的晶格原子會提高對準時的產率並造成去通道，藉此定量晶格損傷。"
+      en: "A MeV He beam aligned with a crystal axis sees reduced scattering (channeling); displaced lattice atoms in the damaged zone raise the aligned yield and cause dechanneling, which quantifies crystal damage."
+    measures:
+      zh: "位移原子的深度分布、非晶層深度、退火後損傷恢復。"
+      en: "Displaced-atom depth profile, amorphous-layer depth, damage recovery after anneal."
+    range:
+      zh: "損傷峰處位移原子比例隨劑量上升可達約 90%；對準譜達到隨機譜時即為完全非晶化。"
+      en: "Displaced-atom fraction at the damage peak rises with fluence to about 90%; full amorphization when the aligned spectrum reaches the random level."
+    precision:
+      zh: "沒有公開的精度數字；自動化系統的損傷分布與 SRIM 一致。"
+      en: "No public precision figure; damage profiles from an automated system agreed with SRIM."
+    location: [blanket]
+    contact: false
+    destructive: "no"
+    inline: [lab]
+    speed: slow
+    reference: true
+    processes: ["Implantation"]
+    strengths:
+      zh: "基本上不破壞、可定量損傷與非晶深度；自動化系統每片約 20–30 分鐘。"
+      en: "Essentially non-destructive and quantitative for damage and amorphous depth; about 20–30 min per sample on an automated system."
+    limits:
+      zh: "需要加速器（MeV He 束），在實驗室量切下的小片。"
+      en: "Needs an accelerator (MeV He beam); measured in the lab on coupons."
+    instead:
+      zh: "線上看非晶層厚度用 SE；要直接影像（非晶層、缺陷環）用 XTEM。"
+      en: "For in-line amorphous thickness use SE; for direct images (amorphous layer, loops) use XTEM."
+    toolkit: []
+    notes: []
+    sources:
+      - {title: "Eurofins EAG, IIT 2022 (JTG)", url: "https://nccavs-usergroups.avs.org/wp-content/uploads/2023/01/JTG-1222-2-BuyuklimanliT-EurofinsEAG.pdf"}
+      - {title: "PubMed 11999162, automated RBS/C", url: "https://pubmed.ncbi.nlm.nih.gov/11999162"}
+      - {title: "INIS RBS / Raman / TEM study", url: "https://inis.iaea.org/records/fj845-tne62/files/48098816.pdf"}
+      - {title: "Chinese Physics, self-ion implanted Si (XTEM + RBS)", url: "https://iopscience.iop.org/article/10.1088/1004-423X/2/11/005"}
+
+  raman:
+    name: "Raman"
+    full: {zh: "拉曼光譜", en: "Raman spectroscopy"}
+    principle:
+      zh: "結晶矽在約 521 cm⁻¹ 有尖峰，非晶矽在約 480 cm⁻¹ 有寬峰；兩峰比例估算結晶／非晶比例。"
+      en: "Crystalline Si gives a sharp band at about 521 cm⁻¹ and amorphous Si a broad band at about 480 cm⁻¹; the peak ratio estimates the crystalline / amorphous fraction."
+    measures:
+      zh: "非晶化程度（非晶比例）。"
+      en: "Degree of amorphization (amorphous fraction)."
+    range:
+      zh: "用於非晶化檢查，例如 Si 佈植 Si（200 keV、5e14）隨佈植溫度的變化。"
+      en: "Used for amorphization checks, for example Si-implanted Si (200 keV, 5e14) vs implant temperature."
+    precision:
+      zh: "沒有找到佈植監控用的公開精度數字。"
+      en: "No public precision figure found for implant monitoring."
+    location: [blanket]
+    contact: false
+    destructive: "no"
+    inline: [lab]
+    speed: medium
+    reference: true
+    processes: ["Implantation"]
+    strengths:
+      zh: "非接觸、不破壞，直接分辨結晶與非晶。"
+      en: "Non-contact and non-destructive; separates crystalline from amorphous directly."
+    limits:
+      zh: "沒有找到矽佈植監控片的量產例行使用來源（多為研究或 SiC），視為實驗室方法。"
+      en: "No fab-floor source for routine use on Si implant monitors (sources are research or SiC); treat as a lab method."
+    instead:
+      zh: "要非晶層厚度用 SE；要定量位移原子用 RBS-channeling；要影像用 XTEM。"
+      en: "For amorphous-layer thickness use SE; for quantified displaced atoms use RBS-channeling; for images use XTEM."
+    toolkit: []
+    notes: []
+    sources:
+      - {title: "Thermo Fisher application note (c-Si / a-Si Raman)", url: "https://documents.thermofisher.com/TFS-Assets/CAD/Application-Notes/D16998~.pdf"}
+      - {title: "JJAP 30, 3617 (Raman + XTEM)", url: "https://iopscience.iop.org/article/10.1143/JJAP.30.3617"}
+      - {title: "ORNL 6H-SiC, RBS/C + Raman + XRD", url: "https://www.ornl.gov/publications/investigation-of-irradiation-effects-induced-by-self-ion-in-6h-sic-combining-rbs-c-raman-and-xrd/"}
+
+  hrxrd:
+    name: "HRXRD"
+    full: {zh: "高解析 X 光繞射", en: "High-resolution X-ray diffraction"}
+    principle:
+      zh: "量 ω/2θ 繞射曲線，損傷與 dopant 造成的晶格應變會改變曲線，可反推應變的深度分布。"
+      en: "Measures ω/2θ diffraction profiles; lattice strain from damage and dopant changes the profile, from which the strain depth profile is derived."
+    measures:
+      zh: "損傷或 dopant 造成的應變深度分布，佈植後與退火後比較。"
+      en: "Strain depth profile from damage or dopant, compared as implanted and after anneal."
+    range:
+      zh: "SiC 研究中最大應變約 2%，隨 dpa 分布變化。"
+      en: "Maximum strain about 2% in a SiC study, following the dpa profile."
+    precision:
+      zh: "沒有找到矽佈植監控用的公開精度數字。"
+      en: "No public precision figure found for Si implant monitoring."
+    location: [blanket]
+    contact: false
+    destructive: "no"
+    inline: [lab]
+    speed: medium
+    reference: true
+    processes: ["Implantation"]
+    strengths:
+      zh: "非接觸、不破壞，是佈植損傷的有力結構診斷，可給應變深度分布。"
+      en: "Non-contact and non-destructive; a powerful structural diagnostic of implant damage that gives strain depth profiles."
+    limits:
+      zh: "來源多為研究與 SiC；沒有矽佈植監控片的量產例行使用來源，視為實驗室方法。"
+      en: "Sources are research and SiC; no fab-floor source for routine Si implant monitoring, so treat as a lab method."
+    instead:
+      zh: "要非晶層厚度用 SE；要定量位移原子用 RBS-channeling。"
+      en: "For amorphous-layer thickness use SE; for quantified displaced atoms use RBS-channeling."
+    toolkit: []
+    notes: []
+    sources:
+      - {title: "Ion Implantation (InTech 2012)", url: "http://www.issp.ac.ru/ebooks/books/open/Ion_Implantation.pdf"}
+      - {title: "Applied Surface Science 2024 (4H-SiC)", url: "https://www.sciencedirect.com/science/article/pii/S0169433224010092"}
+      - {title: "ORNL 6H-SiC, RBS/C + Raman + XRD", url: "https://www.ornl.gov/publications/investigation-of-irradiation-effects-induced-by-self-ion-in-6h-sic-combining-rbs-c-raman-and-xrd/"}
+
+relations:
+  - from: four-point-probe
+    to: implantation
+    type: applies_to
+    note:
+      zh: "只在活化退火後的空白監控片上（原筆記 ex: Implant, Diffusion film；正確但有條件）；超淺接面可改用 JPV。"
+      en: "Only after an activation anneal on a blanket monitor wafer (original note ex: Implant, Diffusion film; correct with a condition); use JPV for ultra-shallow junctions."
+  - from: thermal-wave
+    to: four-point-probe
+    type: correlate_with
+    note:
+      zh: "thermal-wave 當量產監控前，會在測試片上與退火後 4PP Rs 做相關性比對。"
+      en: "Thermal-wave is correlated against post-anneal 4PP Rs on test wafers when qualified as a production monitor."
+  - from: jpv-rsl
+    to: four-point-probe
+    type: correlate_with
+    note:
+      zh: "JPV 用 4PP 驗證過的晶圓校正。"
+      en: "JPV is calibrated on wafers verified with 4PP."
+  - from: faraday-cup
+    to: sims
+    type: correlate_with
+    note:
+      zh: "佈植機不保證絕對劑量；絕對劑量由 SIMS 對 NIST 標準片確認。"
+      en: "Implanters are not specified for absolute dose; absolute dose is checked by SIMS against NIST reference materials."
+  - from: srp
+    to: sims
+    type: correlate_with
+    note:
+      zh: "SRP 給電性活化的淨載子分布，SIMS 給化學總濃度；兩者互補。"
+      en: "SRP gives the electrically active net carrier profile, SIMS the total chemical concentration; they complement each other."
+  - from: ellipsometry
+    to: implant-damage
+    type: also_measures
+    note:
+      zh: "高劑量與 PAI 時量非晶層厚度，正好是 thermal-wave 失效的區域。"
+      en: "Measures amorphous-layer thickness at high dose and for PAI, exactly where thermal-wave fails."

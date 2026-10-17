@@ -61,6 +61,10 @@ pools:
     C_LEVEL_SYSTEMATIC: {zh: "某一金屬層的系統性損失（opens／shorts）持續變大", en: "A systematic loss (opens / shorts) on one metal level keeps growing"}
     C_SUBSURFACE: {zh: "真的實體缺陷在表面下或被覆蓋：SEM 俯視只看到粗糙表面", en: "A real physical defect below the surface or covered: SEM top-down sees only roughness"}
     C_SURFACE_ARTIFACT: {zh: "只在表面的假訊號（色差、粗糙度），下一層就消失：nuisance", en: "A surface-only signal (colour, roughness) that vanishes at the next layer: nuisance"}
+    C_MISSING_LAYER: {zh: "擬合模型少了一層晶圓上真的存在的膜（例如很薄的 cap 或介面層）", en: "The fit model lacks a layer that is really on the wafer (e.g. a thin cap or interface layer)"}
+    C_WRONG_ORDER: {zh: "擬合落在錯的干涉級數／局部最小值：厚度搜尋範圍或初始值沒有涵蓋真正的厚度", en: "The fit landed on the wrong fringe order / a local minimum: the thickness search window or starting value excludes the real thickness"}
+    C_DOSE_DRIFT: {zh: "某一台佈植機的劑量偏移（Rs 與退火前 thermal-wave 都只在這台變）", en: "A dose drift on one implanter (Rs and pre-anneal thermal-wave both move on that implanter only)"}
+    C_ANNEAL_DRIFT: {zh: "退火（活化）機台的問題：在同一台退火的所有佈植機監控片 Rs 都變，退火前 thermal-wave 正常", en: "An anneal (activation) tool problem: Rs moves on monitors from every implanter annealed in one tool, while pre-anneal thermal-wave is normal"}
   actions:
     A_VERIFY: {zh: "先確認量測：同片重測（同機台＋參考機台）、查 GOF 與量測機台的監控片", en: "Verify the measurement first: re-measure the wafer (same and reference tool), check GOF and the metrology monitor wafer"}
     A_HOLD_INHIBIT: {zh: "hold 受影響 lot、inhibit 該 chamber，請 EE 檢查，修復後跑 qual 再放行", en: "Hold the affected lots, inhibit the chamber, have EE check it and run qual after the fix"}
@@ -99,6 +103,10 @@ pools:
     A_REPORT_BOTH: {zh: "同時報告含與不含異常晶圓的數字並寫明原因，異常另開追蹤，不刪資料", en: "Report the number with and without the excursion wafers and why; track the excursion separately and never delete data"}
     A_ESCALATE_LEVEL: {zh: "對該層 module 開 excursion：commonality、該層 inline 資料、失效晶粒 FA", en: "Open an excursion on that level's module: commonality, that level's inline data, FA on failing dies"}
     A_XSECTION: {zh: "換 review 方式（傾斜 SEM、EDX）、在 cluster 做 FIB 切面，並在下一層與 probe 追蹤", en: "Use other review modes (tilted SEM, EDX), cut a FIB cross-section in the cluster, and follow it at the next layer and at probe"}
+    A_ADD_LAYER: {zh: "不要發行讀值；把缺的那層（含 n、k）加進模型，重新擬合，並用參考量測驗證 recipe", en: "Do not release the readings; add the missing layer (with its n, k) to the model, refit and validate the recipe against a reference"}
+    A_WIDEN_SEARCH: {zh: "放寬厚度搜尋範圍（或用全域搜尋）、修正初始值，重新擬合後用參考量測確認", en: "Widen the thickness search window (or use a global search), correct the starting value, refit and confirm with a reference"}
+    A_IMPLANTER_CHECK: {zh: "hold 該佈植機，請 EE 檢查劑量量測（Faraday cup、beam current），用監控片重新 qual", en: "Hold that implanter, have EE check its dosimetry (Faraday cup, beam current) and re-qualify with monitor wafers"}
+    A_ANNEAL_CHECK: {zh: "請 EE 檢查退火機台（溫度校正、燈管／分區、recipe），重新退火監控片確認；佈植機不用動", en: "Have EE check the anneal tool (temperature calibration, lamps / zones, recipe) and re-anneal a monitor to confirm; leave the implanters alone"}
   decisions:
     D_HOLD: {zh: "受影響 lot hold，等 PIE／PE 做 disposition", en: "Hold the affected lots pending disposition by PIE / PE"}
     D_RELEASE: {zh: "產品照常放行，不需要 hold", en: "Release product as normal; no hold"}
@@ -162,6 +170,7 @@ domains:
   defect: {zh: "Inline defect 缺陷檢查", en: "Inline defect inspection"}
   request: {zh: "跨部門請求 Cross-role requests", en: "Cross-role requests"}
   yield: {zh: "良率分析與實驗 Yield & splits", en: "Yield analysis & splits"}
+  implant: {zh: "佈植監控 Implant monitoring", en: "Implant monitoring"}
   mix: {zh: "多重問題 Multi-issue", en: "Multi-issue"}
   custom: {zh: "我的案例 My cases", en: "My cases"}
 
@@ -1023,3 +1032,58 @@ cases:
       zh: "SEM 俯視只看得到表面：在表面下、被覆蓋或很淺的缺陷，可能只看到粗糙或什麼都沒有。分不出類別時，最有力的證據是「下一層同位置有沒有再出現」：cluster {cluster_n} 顆中 {repeat_pct}% 在下一層 ±{radius} mm 內再出現 → {verdict}。真的缺陷：換 review 方式（傾斜 SEM、EDX）、在 cluster 做 FIB 切面，並追到下一層與 probe；cluster 的位置（{cluster_loc}）也是找來源的線索（邊緣常指向夾持、邊緣去除、斜面；中心指向噴嘴、氣流）。表面假訊號：用 review 結果調 recipe，產品照常放行。"
       en: "SEM top-down sees only the surface: a defect below it, covered or very shallow may show as roughness or nothing at all. When review cannot classify, the strongest evidence is whether it comes back at the same place at the next layer: {repeat_pct}% of the {cluster_n} cluster defects reappear within ±{radius} mm → {verdict}. A real defect: try other review modes (tilted SEM, EDX), cut a FIB cross-section in the cluster and follow it to the next layer and probe; the location ({cluster_loc}) is a lead to the source (edge: clamp, edge removal, bevel; centre: nozzle, gas flow). A surface artefact: tune the recipe with the review data and release the product as normal."
     urgency: 2
+
+  # ---------------------------------------------------------------- metrology map: fit quality and implant monitors
+  film_gof_reject:
+    domain: film
+    title: {zh: "新 recipe 的 GOF 太低", en: "A new recipe with low GOF"}
+    brief:
+      zh: "【recipe 驗證】新的反射儀氧化層 recipe（單層 SiO₂ on Si）在驗證片上 GOF = {gof}，低於這個 recipe 訂的標準 {limit}；reduced χ² = {chi2}。擬合厚度 {fitted} nm，標稱厚度約 {nominal} nm，厚度搜尋範圍 {lo}–{hi} nm。PE 問：可以先發行，之後再調嗎？"
+      en: "[Recipe qualification] A new reflectometry oxide recipe (single SiO₂ layer on Si) gives GOF = {gof} on the qualification wafer, below the {limit} this recipe set; reduced χ² = {chi2}. Fitted thickness {fitted} nm, nominal about {nominal} nm, thickness search window {lo}–{hi} nm. PE asks: can we release it now and tune it later?"
+    cause: C_MISSING_LAYER
+    cause_options: [C_MISSING_LAYER, C_WRONG_ORDER, C_FIXED_LAYER, C_NOISE_TOOL, C_CORR]
+    action: A_ADD_LAYER
+    action_options: [A_ADD_LAYER, A_WIDEN_SEARCH, A_RECORD, A_RELEASE_RECIPE]
+    decision: D_RECIPE_NOT_READY
+    decision_options: [D_RECIPE_NOT_READY, D_RECIPE_FIX, D_RECIPE_OK, D_RELEASE]
+    notify: [PE, MGR_QE]
+    message_role: PE
+    model_message:
+      zh: "【先不要發行】驗證片 GOF {gof}，低於 recipe 標準 {limit}（χ² {chi2}）。擬合厚度 {fitted} nm，標稱約 {nominal} nm，搜尋範圍 {lo}–{hi} nm。判讀：{verdict}。下一步：{ask}。"
+      en: "[Please do not release yet] The qualification wafer gives GOF {gof}, below the recipe limit {limit} (χ² {chi2}). Fitted thickness {fitted} nm vs about {nominal} nm nominal, search window {lo}–{hi} nm. Reading: {verdict}. Next: {ask}."
+    keypoints:
+      - {zh: "給出 GOF 與 recipe 標準", en: "Gives the GOF and the recipe limit", any: ["{gof}", "{limit}", "gof"]}
+      - {zh: "比較擬合厚度與標稱厚度", en: "Compares fitted and nominal thickness", any: ["{fitted}", "{nominal}", "標稱", "nominal"]}
+      - {zh: "說明原因（模型或搜尋範圍）", en: "Names the cause (model or search window)", any: ["少了一層", "missing", "干涉級數", "fringe order", "搜尋範圍", "search window"]}
+      - {zh: "明確說不要發行", en: "Says clearly not to release", any: ["不要發行", "not release", "do not release", "不要用", "do not use"]}
+    explanation:
+      zh: "GOF 低於 recipe 自己訂的標準，代表模型解釋不了量到的光譜，讀值不能用。分辨兩種原因：擬合厚度接近標稱、但殘差有消不掉的結構 → 模型少了一層（加進模型、重新驗證）；擬合厚度和標稱差很多（這次是 {ratio} 倍）、真正的厚度不在搜尋範圍 → 落在錯的干涉級數（放寬範圍、修正初始值）。這次：{verdict}。注意反過來也成立：GOF 高也不保證正確（參數相關、固定參數設錯），所以要搭配參考量測。"
+      en: "A GOF below the limit this recipe set means the model cannot explain the measured spectrum, so the readings cannot be used. Tell the two causes apart: fitted thickness near nominal but a residual structure no thickness change removes → a missing layer (add it, re-validate); fitted thickness far from nominal (here {ratio}×) with the real thickness outside the search window → the wrong fringe order (widen the window, fix the starting value). Here: {verdict}. The reverse holds too: a high GOF does not prove the answer is right (correlated or wrongly fixed parameters), so pair it with a reference measurement."
+    urgency: 1
+
+  implant_rs_monitor:
+    domain: implant
+    title: {zh: "佈植監控片 Rs 上升", en: "Implant monitor Rs going up"}
+    brief:
+      zh: "【早班】佈植監控片（每天每台佈植機一片，退火後量 Rs）從第 {start_day} 天起有一部分 Rs 偏高，有幾片接近上限。你有三張圖：Rs 依佈植機分組、Rs 依退火機台分組，以及退火前的 thermal-wave 依佈植機分組。產線問要 hold 哪一台。"
+      en: "[Morning shift] Some implant monitor wafers (one per implanter per day, Rs measured after anneal) have read high since day {start_day}, a few near the upper limit. You have three charts: Rs grouped by implanter, Rs grouped by anneal tool, and the pre-anneal thermal-wave grouped by implanter. Production asks which tool to hold."
+    cause: C_DOSE_DRIFT
+    cause_options: [C_DOSE_DRIFT, C_ANNEAL_DRIFT, C_METRO_OFFSET, C_RANDOM]
+    action: A_IMPLANTER_CHECK
+    action_options: [A_IMPLANTER_CHECK, A_ANNEAL_CHECK, A_REGROUP, A_RECORD]
+    decision: D_HOLD
+    decision_options: [D_HOLD, D_RELEASE, D_RETARGET, D_SCRAP]
+    notify: [EE, PE, PIE_YE]
+    message_role: EE
+    model_message:
+      zh: "【{key} 需要檢查】第 {start_day} 天起：{verdict}。{ask}。這段期間經過 {key} 的產品先 hold，等 PE／PIE 判定。"
+      en: "[{key} needs a check] Since day {start_day}: {verdict}. {ask}. Product that went through {key} in this window is on hold for PE / PIE disposition."
+    keypoints:
+      - {zh: "指出是哪一台", en: "Names the tool", any: ["{key}"]}
+      - {zh: "用退火前 thermal-wave 分辨佈植與退火", en: "Uses the pre-anneal thermal-wave to separate implant from anneal", any: ["thermal-wave", "thermal wave", "退火前"]}
+      - {zh: "給出 Rs 變化量", en: "Gives the size of the Rs change", any: ["{shift_pct}", "%"]}
+      - {zh: "請 EE 做具體檢查", en: "Asks EE for a concrete check", any: ["faraday", "beam current", "劑量", "dosimetry", "溫度", "temperature", "校正", "calibration"]}
+    explanation:
+      zh: "Rs 是退火後量的，所以同時受劑量和活化（退火）影響；要分辨就看兩種分組加上退火前的 thermal-wave。只有一台佈植機的 Rs 變、而且兩台退火機都一樣、thermal-wave 也在那台變 → 劑量偏移（低劑量時 Rs 變化約等於劑量變化的百分比）；所有佈植機在同一台退火的 Rs 都變、thermal-wave 正常 → 退火問題（thermal-wave 在退火前量，看不到活化）。這次：{verdict}。"
+      en: "Rs is measured after anneal, so it moves with both dose and activation; separate them with the two groupings plus the pre-anneal thermal-wave. Only one implanter's Rs moved, on both anneal tools, with its thermal-wave moving too → a dose drift (at low dose the % Rs change roughly equals the % dose change); every implanter's Rs moved when annealed in one tool while thermal-wave is normal → an anneal problem (thermal-wave is measured before anneal and cannot see activation). Here: {verdict}."
+    urgency: 3

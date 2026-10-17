@@ -62,12 +62,14 @@ Full step-by-step Windows instructions (including SemiYield and the other upstre
 ### Dashboard pages
 
 1. **Film stack & fit**: pick a stack from `films.yaml`, set the true thicknesses and noise, and watch the
-   fit, χ², ±1σ and parameter correlation. Change a *fixed* underlayer to see a biased result that χ² does not flag.
+   fit, χ², GOF, ±1σ and parameter correlation. Change a *fixed* underlayer to see a biased result that neither χ²
+   nor GOF flags.
 2. **Wafer map**: contour map (absolute or deviation), uniformity metrics, Zernike signature, radial profile.
    Upload your own CSV in the standard schema.
 3. **SPC**: per chamber / tool / metrology tool; wafer mean, within-wafer 1σ %, or range; I-MR, EWMA or CUSUM.
 4. **MSA**: GR&R with adjustable variance sources (or upload part/operator/value), tool matching (Bland-Altman).
-5. **Recipe studies**: reflectometry-vs-SE sensitivity, thickness/n correlation.
+5. **Recipe studies**: reflectometry-vs-SE sensitivity, thickness/n correlation, and "which thickness technique
+   fits?" for a film thickness and type.
 6. **Data import** and **Fab simulator**: see the sections below.
 7. **DOE / recipe**: design an experiment, run it on a virtual ALD or CVD tool (or upload your own results),
    fit a response surface, optimise thickness + uniformity together, confirm, and check against the answer key.
@@ -77,6 +79,7 @@ Full step-by-step Windows instructions (including SemiYield and the other upstre
 9. **My case reports 我的案例報告**: browse, search, open and retry your saved case reports, plus a cross study
    of where you lose points (see below).
 10. **Guide 參數與圖表說明**: every parameter and chart explanation in one searchable place (see below).
+11. **量測地圖 Metrology map**: which technique measures what, and which one fits your measurement (see below).
 
 ## Five lessons the demo makes concrete
 
@@ -173,6 +176,7 @@ the other pages, so the evidence looks exactly like it would there.
 | Recipe studies | can the new spec stay on reflectometry? (thin: switch to SE; thick: keep it) |
 | DOE / recipe | setting a recipe from a 2-level DOE (curvature) · optimum on the edge of the range · a DOE with almost nothing significant |
 | Fab simulator | yield drop with a gate-oxide shift · yield drop with clean parameter SPC (particles) · many chambers OOC with steady yield (metrology offset) |
+| Technique & fit quality | a thickness result rejected for low GOF (a missing layer in the model, or a search window around the wrong order) · implant monitor Rs up (dose drift on one implanter, seen in Rs and thermal-wave, or an anneal-tool drift seen in Rs only) |
 | Inline defect | counts explode / hit the maxout, but review is mostly non-visible (nuisance recipe) · more defects on a split: incoming from the previous layer or added by the new condition (adder analysis) · a cluster SEM review cannot classify ("rough surface"): does it come back at the same place at the next layer (a real, possibly sub-surface defect: cross-section it) or vanish (a surface artefact: tune the recipe)? |
 | Cross-role requests | FA asks whether a recess was on target (routine sites fine, the outermost ring is not, or the whole wafer is on target) · YE asks which inline parameter goes with a bin (one strong correlation, or none) |
 | Yield analysis & splits | inline defects vs probe fails: capture rate and kill ratio per inspection step (is the monitor blind, or does it work and the source needs fixing?) with the expected gain from Y = exp(−D·A·KR) · can this split be used? (a litho FEM on the same wafers confounds it, a group never ran per the run log, or it is clean) · better centre, worse edge: the die-weighted net decides convert or keep POR · weekly KPI red: DLY vs goal, random vs systematic loss, inline density by process week, opens / shorts per metal level (a fix still waiting for probe, a few excursion wafers, or a real systematic loss on one level) |
@@ -232,6 +236,25 @@ case type can turn out either way, so the charts have to be read, not guessed.
   rarely; the level steps up after a recent score >= 85 and down after one < 50 (unless you fix the level).
 * Texts live in `src/metro_toolkit/cases/cases.yaml` (zh + en), data in `cases/generators.py` and `cases/generators_yield.py` (yield, split, KPI and unclassified-defect cases), multi-issue
   building blocks in `cases/issues.yaml` + `cases/compose.py`, your templates in `cases/custom.py`. Answers follow generic OCAP practice; in real work your fab's OCAP and sign-off rules decide.
+
+## Metrology map (量測地圖)
+
+Dashboard → **量測地圖 Metrology map**. The learner's tree, parameter → metrology category → tool → characteristics,
+researched and sourced node by node (`research_notes/Metrology tree verification/`), in 繁中 + English:
+
+* **🌳 Map**: a treemap of 13 parameters (CD, profile, registration; thickness, optical properties, composition,
+  stress, density, mass, crystal structure, contact angle; dopant concentration, implant damage) and 36 tools. Search
+  any technique; every tool card has its principle, what it measures, typical range and precision, location (in-die,
+  scribe, blanket), contact, destructiveness, inline / integrated / lab, speed, strengths, limits, when to choose
+  something else, and 🔗 buttons to the pages that simulate it.
+* **🧭 Which technique?**: pick a parameter and your constraints (thickness, film type, location, non-destructive, no
+  contact, inline, fast); it ranks the techniques that fit and says why each other one drops out.
+* **✅ Your notes checked**: every point of the original notes with its verdict (verified, corrected or unresolved)
+  and the correction.
+* **📚 Sources**.
+
+Numbers are typical public values; your fab's tools and specs decide in real work. The data lives in
+`guide/metrology_tree_*.yaml`; the Claude tutor also gets the parameter → technique list as context.
 
 ## Vocabulary study files (Eudic 歐路詞典)
 
@@ -367,8 +390,9 @@ metro-toolkit/
 │   ├── analysis/spc.py     control charts, WE rules, capability, per-chamber SPC
 │   ├── datagen/            synthetic thickness data, fab simulator + answer key, MSA study data
 │   ├── doe/                designs · model · optimize · virtual (process tools with an answer key)
-│   ├── guide/              chart & parameter guide: params_*.yaml · charts_*.yaml · insights (data → status)
-│   ├── cases/              case study practice: cases.yaml · generators.py + generators_yield.py (32 case types) · issues.yaml +
+│   ├── guide/              chart & parameter guide: params_*.yaml · charts_*.yaml · insights (data → status) ·
+│   │                       metrology.py + metrology_tree_*.yaml (metrology map, technique chooser)
+│   ├── cases/              case study practice: cases.yaml · generators.py + generators_yield.py + generators_tech.py (34 case types) · issues.yaml +
 │   │                       compose.py (multi-issue, builder) · custom.py (your templates) · why.py + why_*.yaml (comments on wrong
 │   │                       answers) · tutor.py (Claude tutor)
 │   ├── ingest/             readers · mapping · convert · checks · store (your own data)

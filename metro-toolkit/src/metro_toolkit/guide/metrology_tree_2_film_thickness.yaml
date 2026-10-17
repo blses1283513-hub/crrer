@@ -1,0 +1,637 @@
+# Metrology map, part 2: film category, parameters thickness and optical (with tools reflectometry, ellipsometry,
+# reflectance, four-point-probe, eddy-current, xrf, xrr, picosecond-ultrasonics, xps).
+# Facts from reports/Metrology tree verification.md (Film branch, Tables 4-5, Table 8, verdicts C48-C67, C69-C73, C85-C89)
+# and research_notes/Metrology tree verification/optical_thin_film.md, nonoptical_thickness.md.
+# C68 (XRR density) is kept on the density parameter and C74-C84 (XPS) on the composition parameter in
+# metrology_tree_3_film_properties.yaml; C102 (4PP on implant) is in metrology_tree_4_implant.yaml.
+categories:
+  - id: film
+    name: {zh: "膜層類", en: "Film"}
+    processes: ["Photo-litho", "Dry Etch", "Diffusion", "CVD", "PVD", "CMP", "Wet"]
+    parameters:
+      - id: thickness
+        name: {zh: "膜厚", en: "Thickness"}
+        what:
+          zh: "膜層厚度：Photo-litho 量光阻厚度；Dry Etch、Diffusion、CVD、PVD、CMP、Wet 量膜厚。透明介電膜用光學量測；不透光金屬與導電膜改用片電阻、X-ray、聲學或 XPS。"
+          en: "Layer thickness: resist thickness in photo-litho and film thickness in dry etch, diffusion, CVD, PVD, CMP and wet. Transparent dielectrics are measured optically; opaque metals and conductive films move to sheet-resistance, X-ray, acoustic or XPS methods."
+        processes: ["Photo-litho", "Dry Etch", "Diffusion", "CVD", "PVD", "CMP", "Wet"]
+        groups:
+          - id: optical-thin-film
+            name: {zh: "光學薄膜量測", en: "Optical thin-film metrology"}
+            what:
+              zh: "SR 與 SE 都把量到的光譜和膜堆模型做擬合（fit）。擬合品質指標依廠商而不同：許多反射儀與量產機台用 0–1 的 GOF（越接近 1 越好），橢偏儀軟體多用 MSE 或 χ²（越低越好）。門檻要依每個 recipe 自己的 baseline 設定，不是通用數字；GOF 高也不代表答案正確，還要對照目標值、鄰近點與趨勢檢查是否合理。"
+              en: "Both SR and SE fit a measured spectrum to a film-stack model. The fit-quality number is vendor-specific: many reflectometers and production tools report GOF on a 0–1 scale (closer to 1 is better), while ellipsometry software usually reports MSE or χ² (lower is better). Limits are set per recipe from its own baseline, not as universal numbers, and a high GOF does not prove the answer is right; check it against target, neighbouring sites and trend."
+            tools: [reflectometry, ellipsometry]
+          - id: sheet-resistance
+            name: {zh: "片電阻", en: "Sheet resistance"}
+            what:
+              zh: "由片電阻換算導電膜厚度：t = ρ/Rs，ρ 必須是該厚度下的薄膜電阻率。適用任何導電層（薄金屬、佈植層、擴散層），不只厚金屬；金屬約 50–100 nm 變不透光後光學量測才失效。"
+              en: "Thickness of a conductive film from its sheet resistance: t = ρ/Rs, where ρ must be the thin-film resistivity at that thickness. It works on any conductive layer (thin metal, implant or diffused layers), not only thick metal; optics fail on metals once they turn opaque at about 50–100 nm."
+            tools: [four-point-probe, eddy-current]
+          - id: xray-thickness
+            name: {zh: "X-ray 膜厚量測", en: "X-ray thickness metrology"}
+            what:
+              zh: "XRF 與 XRR 都是非接觸、非破壞；可量空白片，也可用 micro-spot 加 pattern recognition 量產品片切割道 pad（WDXRF 只能量空白片）。XRF 給單位面積質量，XRR 給絕對厚度、密度與粗糙度，常用來標定 XRF。"
+              en: "XRF and XRR are both non-contact and non-destructive; they measure blanket wafers, and with micro-spot optics plus pattern recognition also scribe pads on product wafers (WDXRF is blanket-only). XRF gives mass per area; XRR gives absolute thickness, density and roughness and is often used to calibrate XRF."
+            tools: [xrf, xrr]
+          - id: acoustic
+            name: {zh: "聲學量測", en: "Acoustic metrology"}
+            what:
+              zh: "用雷射在膜中激發聲波並量回波時間，量不透光（金屬）單層或多層膜，可直接在產品片的小 pad 上量。"
+              en: "A laser launches a sound pulse into the film and times the echoes; it measures opaque (metal) single films and multilayers, directly on small pads of product wafers."
+            tools: [picosecond-ultrasonics]
+          - id: surface-sensitive
+            name: {zh: "表面敏感量測", en: "Surface-sensitive metrology"}
+            what:
+              zh: "XPS 用光電子強度的衰減量 < 約 10 nm 超薄膜的厚度，同時得到成分與化學態；主要放在「成分」參數，這裡交叉參照。"
+              en: "XPS measures the thickness of ultrathin films below about 10 nm from photoelectron attenuation, together with composition and chemical state; its main home is the composition parameter, cross-linked here."
+            tools: [xps]
+        notes:
+          - claim: "KPI GOF: GOF < 0.9 = not acceptable, GOF > 0.95 = acceptable"
+            verdict: corrected
+            fix:
+              zh: "已更正：GOF 的尺度與門檻依廠商與 recipe 而定（SE 用 MSE／χ²，越低越好），沒有 SEMI 標準或公開來源規定 0.9／0.95。門檻要從該 recipe 的 baseline 設定；GOF 高不等於準確。"
+              en: "Corrected: GOF scale and limits are vendor- and recipe-specific (SE uses MSE / χ², lower is better), and no SEMI standard or public source sets 0.9 / 0.95. Set limits from the recipe's baseline; a high GOF does not mean an accurate result."
+            source: "C55 · halbleiter.org Metrology; J.A. Woollam Data Analysis; Filmetrics F20 manual"
+          - claim: "ex: 2000 A oxide ~ 1000 A oxide ?"
+            verdict: unresolved
+            fix:
+              zh: "未定：最可能指擬合落入錯的干涉級數或局部最小值（Filmetrics 預設只在初始猜測值約 1000 Å 範圍內搜尋），結果錯但 GOF 看起來還可以。請和講師確認原意；重點是結果要做物理合理性檢查。"
+              en: "Unresolved: most likely the wrong-fringe-order or local-minimum trap (Filmetrics by default searches only about 1000 Å around the initial guess), giving a wrong thickness with a decent-looking GOF. Confirm the meaning with the trainer; the lesson is to check every result for physical plausibility."
+            source: "C56 · Filmetrics F20 manual; J.A. Woollam Data Analysis"
+          - claim: "Sheet resistance: thick metal films > 300 A, where optical techniques are not enough"
+            verdict: corrected
+            fix:
+              zh: "已更正：Rs 適用任何導電層（薄金屬、佈植、擴散層）。金屬在變不透光（約 50–100 nm）後光學才失效；4PP 的上限約是數 µm 的金屬。"
+              en: "Corrected: Rs applies to any conductive layer (thin metal, implant, diffusion). Optics fail on metals once they are opaque (about 50–100 nm); 4PP tops out at a few µm of metal."
+            source: "C57 · Bruker AN-583; ASTM F1529; AZoM / KLA R50"
+          - claim: "X-ray metal thickness: both non-contact, non-destructive; blanket wafers, and SLAM on product wafers"
+            verdict: verified
+            fix:
+              zh: "正確：micro-spot 光點 φ20–85 µm 加 pattern recognition 可量產品片 pad；WDXRF 機台只量空白片。「SLAM」沒有公開定義，視為廠內對切割道量測 pad 的叫法。"
+              en: "Correct: micro-spot φ20–85 µm with pattern recognition measures product-wafer pads; WDXRF tools are blanket-only. 'SLAM' has no public definition; treat it as fab jargon for a scribe-line metrology pad."
+            source: "C63 · Rigaku XTRAIA MF-3000-R; Rigaku WaferX 310"
+      - id: optical
+        name: {zh: "光學性質（n、k、反射率）", en: "Optical properties (n, k, reflectance)"}
+        what:
+          zh: "光學性質：Diffusion 的光學量測、CVD 的 n、k，以及 PVD 的反射率。複折射率 Ñ = n + ik：n 決定相速度，k 決定吸收（α = 4πk/λ）；反射率 R 是反射功率與入射功率之比。"
+          en: "Optical properties: optical checks in diffusion, n and k in CVD, and reflectivity in PVD. The complex index Ñ = n + ik: n sets the phase velocity and k the absorption (α = 4πk/λ); reflectance R is reflected over incident power."
+        processes: ["Diffusion", "CVD", "PVD"]
+        groups:
+          - id: optical-properties
+            name: {zh: "光學性質量測", en: "Optical-property metrology"}
+            what:
+              zh: "SE 是量 n、k 的首選；膜夠厚（約 ≥ 50 nm）時 SR 也能擬合 n、k。PVD 金屬用反射率監控表面狀態。介電膜在可見光大多透明（Cauchy／Sellmeier 模型），poly-Si、TiN 與金屬會吸光，需要 Tauc–Lorentz 等振子模型。"
+              en: "SE is the preferred n, k tool; SR also fits n, k when the film is thick enough (about ≥ 50 nm). Reflectance monitors the surface of PVD metals. Dielectrics are mostly transparent in the visible (Cauchy / Sellmeier models); poly-Si, TiN and metals absorb and need oscillator models such as Tauc–Lorentz."
+            tools: [ellipsometry, reflectometry, reflectance]
+        notes:
+          - claim: "CVD & Diffusion films are transparent to light"
+            verdict: corrected
+            fix:
+              zh: "已更正：介電膜（SiO₂、TEOS、Si₃N₄）在大部分可見光波段透明；poly-Si、TiN 與金屬會吸光。是否透明取決於量測的波段。"
+              en: "Corrected: dielectrics (SiO₂, TEOS, Si₃N₄) are transparent over most of the visible; poly-Si, TiN and metals absorb. Transparency depends on the wavelength band measured."
+            source: "C85 · J.A. Woollam, Optical Constants"
+          - claim: "n: refractive index, k: extinction index; k = how much light is absorbed through the film"
+            verdict: verified
+            fix:
+              zh: "正確但要精確：k 是材料性質，決定吸收係數 α = 4πk/λ，強度依 I = I₀·e^(−αz) 衰減；實際被吸收的比例還取決於膜厚。"
+              en: "Correct but refine it: k is a material property that sets the absorption coefficient α = 4πk/λ, with intensity decaying as I = I₀·e^(−αz); the fraction actually absorbed also depends on thickness."
+            source: "C86 · J.A. Woollam, Light and Materials"
+          - claim: "n, k measured by Ellipsometry (see thickness)"
+            verdict: verified
+            fix:
+              zh: "正確但不是唯一：SE 是首選，膜夠厚時反射儀（SR）也能同時擬合 n、k。"
+              en: "Correct but not exclusive: SE is preferred, and a reflectometer (SR) also fits n, k when the film is thick enough."
+            source: "C87 · Filmetrics F20 manual"
+
+tools:
+  reflectometry:
+    name: "Reflectometry"
+    full: {zh: "光譜反射儀（SR）", en: "Spectroscopic reflectometry (SR)"}
+    principle:
+      zh: "通常以正向入射，量反射光強度與入射光強度的比值隨波長的變化，R(λ) = I_ref/I_in。厚度資訊來自膜表面反射光與各個下方介面反射光之間的干涉，不是入射光與反射光的干涉。把光譜與膜堆模型擬合得到厚度，膜夠厚時也可得到 n、k。"
+      en: "Usually at normal incidence, it measures reflected over incident intensity versus wavelength, R(λ) = I_ref/I_in. The thickness information comes from interference between light reflected at the top surface and light reflected at each buried interface, not between the incident and reflected beams. Fitting the spectrum to a film-stack model gives thickness, and n, k when the film is thick enough."
+    measures: {zh: "厚度（膜夠厚時含 n、k），單層與多層膜堆。", en: "Thickness (and n, k if thick enough) of single films and multilayer stacks."}
+    range:
+      zh: "典型：只量厚度時 UV 機型約 1 nm 起（F20-UV 1 nm–40 µm），NIR 機型可到 250 µm；同時擬合 n、k 時最小厚度升到約 500–2000 Å。約 500–1000 nm 以上不確定度比 SE 低。"
+      en: "Typical: thickness-only from about 1 nm on UV tools (F20-UV 1 nm–40 µm) to 250 µm on NIR variants; fitting n, k too raises the minimum to about 500–2000 Å. Lower uncertainty than SE above about 500–1000 nm."
+    precision:
+      zh: "典型（廠商值）：桌上型在 500 nm 氧化層約 1–2 Å（1σ）。光點：微光點數 µm、量產機台 25–50 µm、桌上型 0.5 mm–1 cm。"
+      en: "Typical (vendor): 1–2 Å 1σ on 500 nm oxide for a benchtop tool. Spot: a few µm (microspot), 25–50 µm on production heads, 0.5 mm–1 cm on benchtop tools."
+    thickness_nm: [1, 250000]
+    film: [transparent, absorbing]
+    location: [in_die, scribe, blanket]
+    contact: false
+    destructive: "no"
+    inline: [inline, integrated, lab]
+    speed: fast
+    reference: false
+    processes: ["Photo-litho", "Dry Etch", "Diffusion", "CVD", "CMP", "Wet"]
+    strengths:
+      zh: "快、簡單、非接觸；厚透明膜干涉條紋多、不確定度低。正向入射 SR 是 CMP 整合式量測（integrated metrology）的基礎，約 100 WPH 以上。"
+      en: "Fast, simple and non-contact; thick transparent films give many fringes and low uncertainty. Normal-incidence SR is the basis of integrated CMP metrology at about 100 WPH or more."
+    limits:
+      zh: "薄膜條紋少（< 約 200 Å 幾乎看不到振盪）；n、k 需要足夠厚度；不透光金屬量不到；擬合可能落入錯的干涉級數，GOF 好也可能是錯的答案。"
+      en: "Thin films give few fringes (almost no oscillation below about 200 Å); n, k need enough thickness; opaque metals cannot be measured; the fit can lock onto a wrong fringe order, so a good GOF can still give a wrong answer."
+    instead:
+      zh: "薄膜（< 約 100 nm）或需要 n、k 時改用 Ellipsometry；需要絕對參考值時用 XRR；不透光金屬改用 4-point probe、picosecond ultrasonics 或 XRF。"
+      en: "For thin films (below about 100 nm) or when n, k are needed, use ellipsometry; for an absolute reference use XRR; for opaque metals use 4-point probe, picosecond ultrasonics or XRF."
+    toolkit: ["Film stack & fit", "Recipe studies", "Wafer map"]
+    notes:
+      - claim: "beam size >= 40 um"
+        verdict: unresolved
+        fix:
+          zh: "與機台有關：量產小光點機台多為 25–50 µm，桌上型 0.5 mm–1 cm，微光點只有數 µm。40 µm 請標成「本廠機台」的值，不是技術本身的特性。"
+          en: "Tool-specific: production small-spot heads are typically 25–50 µm, benchtop tools 0.5 mm–1 cm, microspots a few µm. Label 40 µm as 'our tool', not a property of the technique."
+        source: "C48 · Bruker FilmTek 2000 PAR-SE; KLA Filmetrics F20 datasheet"
+      - claim: "film thickness > 1000 A"
+        verdict: corrected
+        fix:
+          zh: "已更正：只量厚度時 SR 可從約 1–15 nm 量到數百 µm；約 500–1000 nm 以上不確定度最好；若同時擬合 n、k，最小厚度約 500–2000 Å。「> 1000 Å」是本地 recipe 分工慣例，不是物理極限。"
+          en: "Corrected: thickness-only SR works from about 1–15 nm to hundreds of µm; its uncertainty is best above about 500–1000 nm; about 500–2000 Å is the minimum if n, k are fitted. '> 1000 Å' is a local recipe allocation, not a physical limit."
+        source: "C49 · KLA Filmetrics F20; Rastgou et al., Metrologia 2026; Filmetrics technote"
+      - claim: "principle: optical interference (incident + reflected light)"
+        verdict: corrected
+        fix:
+          zh: "已更正：干涉發生在膜表面反射光與下方介面反射光之間；量測值是 R(λ) = I_ref/I_in。"
+          en: "Corrected: the interference is between light reflected from the top surface and from the buried interfaces; the measured quantity is R(λ) = I_ref/I_in."
+        source: "C50 · Rastgou et al., Metrologia 2026"
+    sources:
+      - {title: "Rastgou et al., Metrologia 2026 (SE vs SR comparison)", url: "https://iopscience.iop.org/article/10.1088/1681-7575/ae3964"}
+      - {title: "KLA Filmetrics F20 thin-film reflectometers", url: "http://kla.com/products/instruments/thin-film-reflectometers/filmetrics-f20"}
+      - {title: "Filmetrics F20 datasheet (University of Arizona copy)", url: "https://cores.arizona.edu/sites/default/files/attachments-service/f20_application_sheet.pdf"}
+      - {title: "Filmetrics technote: Taking the mystery out of thin-film measurement", url: "https://sites.science.oregonstate.edu/~tatej/TateLabWiki/lib/exe/fetch.php?media=opticalspectrometers%3Afilmetrix_ref_technote.pdf"}
+      - {title: "Filmetrics F20 manual", url: "http://sites.science.oregonstate.edu/~tatej/TateLabWiki/lib/exe/fetch.php?media=manuals%3Afilmetrics_f20_manual.pdf"}
+      - {title: "Bruker FilmTek 2000 PAR-SE", url: "https://www.bruker.com/de/products-and-solutions/test-and-measurement/ellipsometers-and-reflectometers/filmtek-2000-par-se.html"}
+      - {title: "Nova 6-K 2008 (normal-incidence SR in integrated metrology)", url: "https://www.sec.gov/Archives/edgar/data/1109345/000117891308001861/zk85542.htm"}
+
+  ellipsometry:
+    name: "Ellipsometry"
+    full: {zh: "光譜式橢圓偏光儀（SE）", en: "Spectroscopic ellipsometry (SE)"}
+    principle:
+      zh: "以斜角入射偏振光，量反射後偏振態的變化（Ψ、Δ），再用膜堆模型擬合。Δ 對 nm 級薄膜非常敏感，即使反射光強度幾乎不變也分辨得出來。擬合品質通常用 MSE 或 χ² 表示（越低越好）。"
+      en: "Polarized light hits the wafer at an oblique angle and the change in polarization state (Ψ, Δ) is fitted to a film-stack model. Δ is highly sensitive to nm-scale films whose reflected intensity barely changes. Fit quality is usually reported as MSE or χ² (lower is better)."
+    measures:
+      zh: "厚度、n、k、粗糙度、成分（透過模型）與多層膜堆；也可量高劑量佈植後的非晶層厚度。"
+      en: "Thickness, n, k, roughness, composition (through the model) and multilayer stacks; also the amorphous-layer thickness after high-dose implant."
+    range:
+      zh: "典型：次 nm 到數 µm；約 500 nm 以下不確定度比 SR 低。< 約 10 nm 時厚度與 n 強相關，量產 recipe 固定 n、只浮動厚度。金屬約 100 nm 以上不透光。"
+      en: "Typical: sub-nm to a few µm; lower uncertainty than SR below about 500 nm. Below about 10 nm, thickness and n are strongly correlated, so production recipes fix n and float only thickness. Metals are opaque above about 100 nm."
+    precision:
+      zh: "典型（廠商量產值）：0–1000 Å 氧化層 0.03 Å（1σ），每點 < 1–2 s。量產光點 25–50 µm；斜角入射會把光點拉長（1 mm 光束在 70° 變成 1 × 3 mm）。"
+      en: "Typical (vendor, production): 0.03 Å 1σ on 0–1000 Å oxide, under 1–2 s per site. Production spot 25–50 µm; oblique incidence stretches the spot (a 1 mm beam becomes 1 × 3 mm at 70°)."
+    thickness_nm: [0.1, 5000]
+    film: [transparent, absorbing]
+    location: [scribe, blanket]
+    contact: false
+    destructive: "no"
+    inline: [inline, lab]
+    speed: fast
+    reference: false
+    processes: ["Photo-litho", "Dry Etch", "Diffusion", "CVD", "CMP", "Wet", "Implantation"]
+    strengths:
+      zh: "薄膜與超薄膜的首選；可同時得到 n、k；能處理複雜多層膜堆。"
+      en: "First choice for thin and ultrathin films; gives n and k as well; handles complex multilayer stacks."
+    limits:
+      zh: "結果受模型主導，厚膜的不確定度多來自模型；< 10 nm 時厚度與 n 相關；不透光金屬量不到；pad 要大於光點加定位誤差。"
+      en: "Results are model-dominated, and on thick films the uncertainty comes mostly from the model; thickness and n correlate below 10 nm; opaque metals are out of reach; the pad must exceed the spot plus placement error."
+    instead:
+      zh: "厚透明膜（> 約 500–1000 nm）或要每片整合量測時改用 Reflectometry；< 10 nm 又需要化學資訊時用 XPS；需要絕對參考時用 XRR。"
+      en: "For thick transparent films (above about 500–1000 nm) or every-wafer integrated control, use reflectometry; below 10 nm with chemistry needed, use XPS; for an absolute reference, use XRR."
+    toolkit: ["Film stack & fit", "Recipe studies", "MSA"]
+    notes:
+      - claim: "measures films < 1000 A thick"
+        verdict: corrected
+        fix:
+          zh: "已更正：SE 可量次 nm 到數 µm；約 100 nm 以下是首選，約 10 nm 以下幾乎非用不可。「< 1000 Å」是本地 recipe 分工，不是極限。"
+          en: "Corrected: SE measures from sub-nm to a few µm; it is preferred below about 100 nm and essential below about 10 nm. '< 1000 Å' is a local recipe allocation, not a limit."
+        source: "C51 · J.A. Woollam, Thin Film Thickness"
+      - claim: "beam size ~45 um"
+        verdict: unresolved
+        fix:
+          zh: "與機台有關：量產 SE 光點多為 25–50 µm，斜角入射會把光點拉長成橢圓。45 µm 請標成「本廠機台」的值。"
+          en: "Tool-specific: production SE spots are typically 25–50 µm, and oblique incidence elongates the spot. Label 45 µm as 'our tool'."
+        source: "C52 · Bruker FilmTek 2000 PAR-SE; UIC Gaertner ellipsometer"
+      - claim: "uses polarization to get thickness and refractive index"
+        verdict: verified
+        fix:
+          zh: "正確：也可得到 k 與粗糙度；約 10 nm 以下厚度與 n 相關，要固定 n。"
+          en: "Correct: it also gives k and roughness; below about 10 nm thickness and n correlate, so n is fixed."
+        source: "C53 · Hilfiker et al. 2018"
+      - claim: "stacked structures can be measured"
+        verdict: verified
+        fix:
+          zh: "正確但不是 SE 獨有：SR 也能擬合多層膜堆。"
+          en: "Correct but not unique to SE: SR also fits multilayer stacks."
+        source: "C54 · Bruker FilmTek 2000 PAR-SE"
+    sources:
+      - {title: "J.A. Woollam, Thin Film Thickness", url: "https://www.jawoollam.com/resources/ellipsometry-tutorial/thin-film-thickness"}
+      - {title: "J.A. Woollam ellipsometry tutorial (Purdue copy)", url: "https://www.chem.purdue.edu/ric/docs/Gaertner-Ellipsometer-Handout-2---JAWoollamCo-Ellipsometry-Tutorial.pdf"}
+      - {title: "J.A. Woollam, Ellipsometry Data Analysis", url: "https://www.jawoollam.com/resources/ellipsometry-tutorial/ellipsometry-data-analysis"}
+      - {title: "Hilfiker et al. 2018 (thickness-index correlation)", url: "https://www.osti.gov/servlets/purl/1438647"}
+      - {title: "Bruker FilmTek 2000 PAR-SE", url: "https://www.bruker.com/de/products-and-solutions/test-and-measurement/ellipsometers-and-reflectometers/filmtek-2000-par-se.html"}
+      - {title: "UIC Gaertner ellipsometer (spot elongation)", url: "https://rrc.uic.edu/wp-content/uploads/sites/112/2020/02/Gaertner_Ellipsometer.pdf"}
+      - {title: "Rastgou et al., Metrologia 2026", url: "https://iopscience.iop.org/article/10.1088/1681-7575/ae3964"}
+      - {title: "Quantum Design, short introduction to ellipsometry", url: "https://qd-europe.com/de/en/product/short-introduction-ellipsometry"}
+
+  reflectance:
+    name: "Reflectance"
+    full: {zh: "反射率量測（PVD 反射率）", en: "Reflectance / reflectivity measurement (PVD)"}
+    principle:
+      zh: "反射率 R 是反射光功率（flux）與入射光功率之比，R = |r|²，其中 r = E_ref/E_in 是電場振幅的 Fresnel 反射係數。粗糙度讓鏡面反射率大約依 R_s = R₀·exp[−(4πσ·cosθ/λ)²] 下降（σ 為 rms 粗糙度，且 σ 遠小於 λ）。在 PVD 金屬上用來快速監控表面狀態。"
+      en: "Reflectance R is the ratio of reflected to incident flux (power), R = |r|², where r = E_ref/E_in is the field-amplitude Fresnel coefficient. Roughness lowers specular reflectance roughly as R_s = R₀·exp[−(4πσ·cosθ/λ)²] for rms roughness σ much smaller than λ. On PVD metals it is a quick surface-condition monitor."
+    measures:
+      zh: "PVD 金屬膜的鏡面反射率，間接反映粗糙度、晶粒與 hillock、成分、氧化或污染，以及很薄半透明金屬的厚度。"
+      en: "Specular reflectance of PVD metal films, an indirect signal of roughness, grain and hillocks, composition, oxidation or contamination, and the thickness of very thin semi-transparent metals."
+    range:
+      zh: "0 到 1。典型：乾淨鋁在可見光 > 0.9；低溫 PVD 鋁在約 380 nm 約 0.925，高溫 PVD 反射率下降（專利數據）。依公式在 480 nm 正向入射，σ = 5、20、30 nm 時 R_s/R₀ 約 0.98、0.76、0.54（報告計算值）。"
+      en: "0 to 1. Typical: clean aluminium above 0.9 in the visible; cold PVD Al about 0.925 at about 380 nm, with a drop for hot PVD (patent data). From the formula at 480 nm, normal incidence, σ = 5, 20 and 30 nm give R_s/R₀ of about 0.98, 0.76 and 0.54 (report calculation)."
+    precision:
+      zh: "沒有公開的量產規格；是相對監控值，依金屬、波長與 recipe 而定。"
+      en: "No public production spec; it is a relative monitor that depends on metal, wavelength and recipe."
+    film: [metal]
+    location: [blanket]
+    contact: false
+    destructive: "no"
+    inline: [inline]
+    speed: fast
+    reference: false
+    processes: ["PVD"]
+    strengths:
+      zh: "快速、非接觸；適合 SPC 趨勢與機台匹配；對 PVD 溫度與晶粒結構敏感。"
+      en: "Fast and non-contact; good for SPC trending and tool matching; sensitive to PVD temperature and grain structure."
+    limits:
+      zh: "間接量測：反射率同時受金屬種類、波長、晶粒、氧化層與厚度影響；各金屬本身反射率不同，所以一組數字只能當單一金屬、單一波長的 recipe 限值。"
+      en: "Indirect: reflectance depends on metal, wavelength, grain, oxide and thickness at once; intrinsic reflectance differs between metals, so any number is only a recipe limit for one metal at one wavelength."
+    instead:
+      zh: "要直接量粗糙度時改用 AFM、散射 haze（TIS）或 XRR；晶粒大小用 SEM／EBSD；厚度與晶粒也可用 4-point probe 的 Rs 輔助判斷。"
+      en: "For direct roughness use AFM, haze / TIS scatter or XRR; for grain size use SEM / EBSD; 4-point-probe Rs also helps with thickness and grain."
+    toolkit: ["SPC"]
+    notes:
+      - claim: "= E_ref / E_in (light intensity ratio)"
+        verdict: corrected
+        fix:
+          zh: "已更正：R = 反射功率／入射功率 = |r|²；E_ref/E_in 是振幅反射係數 r，不是 R。"
+          en: "Corrected: R = reflected power / incident power = |r|²; E_ref/E_in is the amplitude coefficient r, not R."
+        source: "C88 · NBS Monograph 160"
+      - claim: "tells roughness: 0.8 = smooth, 0.5 = rough"
+        verdict: corrected
+        fix:
+          zh: "已更正：這是相對、依 recipe 而定的監控值。R_s = R₀·exp[−(4πσ/λ)²]，還取決於金屬、波長、晶粒與氧化層；鋁從約 0.9 掉到 0.5 大約對應 25–30 nm rms 粗糙度，或 hillock、氧化、污染。"
+          en: "Corrected: it is a relative, recipe-specific monitor. R_s = R₀·exp[−(4πσ/λ)²] and also depends on metal, wavelength, grain and oxide; on aluminium a drop from about 0.9 to 0.5 implies roughly 25–30 nm rms, or hillocks, oxidation or contamination."
+        source: "C89 · Bennett & Porteus, JOSA 1961; US 7,462,560"
+    sources:
+      - {title: "Nicodemus et al., NBS Monograph 160", url: "https://nvlpubs.nist.gov/nistpubs/Legacy/MONO/nbsmonograph160.pdf"}
+      - {title: "Bennett & Porteus, JOSA 51, 123 (1961)", url: "https://opg.optica.org/abstract.cfm?URI=josa-51-2-123"}
+      - {title: "NBS IR 73-219, Eight techniques for optical roughness measurement", url: "https://nvlpubs.nist.gov/nistpubs/Legacy/IR/nbsir73-219.pdf"}
+      - {title: "US 7,462,560 (PVD Al reflectivity vs deposition temperature)", url: "https://patents.justia.com/patent/7462560"}
+
+  four-point-probe:
+    name: "4-point probe"
+    full: {zh: "四點探針（4PP）片電阻量測", en: "Four-point probe (4PP) sheet resistance"}
+    principle:
+      zh: "外側兩根探針送電流、內側兩根量電壓。無限大薄片時 Rs = (π/ln2)·V/I ≈ 4.532·V/I，靠近邊緣要用修正係數。R = ρL/(W·t)，所以 ρ = R·W·t/L、Rs = ρ/t、t = ρ/Rs；ρ 要用該厚度下的薄膜電阻率（膜越薄 ρ 越大）。"
+      en: "Current flows through the outer pins and voltage is read across the inner pins. For an infinite thin sheet Rs = (π/ln2)·V/I ≈ 4.532·V/I; near edges correction factors apply. R = ρL/(W·t), so ρ = R·W·t/L, Rs = ρ/t and t = ρ/Rs, with ρ the thin-film resistivity at that thickness (it rises as films thin)."
+    measures:
+      zh: "片電阻 Rs 與均勻性 map，用已知薄膜 ρ 換算導電膜厚度。用於金屬膜、佈植層（活化退火後）、擴散層、摻雜 Si 與 epi。"
+      en: "Sheet resistance Rs and uniformity maps, converted to conductive-film thickness with a known thin-film ρ. Used on metal films, implant layers (after activation anneal), diffused layers, doped Si and epi."
+    range:
+      zh: "典型：10 mΩ/□ 以下（金屬膜）到 25 kΩ/□ 以上（薄 Si 膜）（ASTM F1529）；金屬上限約數 µm（電壓訊號太小）。"
+      en: "Typical: below 10 mΩ/□ (metal films) to over 25 kΩ/□ (thin Si films) per ASTM F1529; the ceiling is a few µm of metal, where the voltage signal becomes too small."
+    precision:
+      zh: "典型（廠商值）：重複性 static 0.02%、鄰近點 0.1%（1σ）；每點約 1 s，49 點約 40 WPH。"
+      en: "Typical (vendor): repeatability 0.02% static and 0.1% at nearby sites (1σ); about 1 s per site, 40 WPH at 49 sites."
+    thickness_nm: [10, 5000]
+    film: [conductive, metal]
+    location: [blanket]
+    contact: true
+    destructive: slight
+    inline: [inline, lab]
+    speed: fast
+    reference: false
+    processes: ["PVD", "Diffusion", "Implantation"]
+    strengths:
+      zh: "簡單、有直接的電性意義；適合佈植與退火監控、金屬膜均勻性；薄到中厚導電膜都能量。"
+      en: "Simple, with a direct electrical meaning; suits implant and anneal monitoring and metal-film uniformity; works from thin to medium conductive films."
+    limits:
+      zh: "接觸式，會留下探針痕、可能穿透超淺層；約 1 mm 針距需要約 3 mm 量測區，放不進切割道 pad，只能量空白監控片；換算厚度需要薄膜 ρ；邊緣要修正。"
+      en: "Contact method that leaves probe marks and can punch through ultra-shallow layers; ~1 mm pin spacing needs a ~3 mm area that cannot fit a scribe pad, so it runs on blanket monitors; thickness needs the thin-film ρ; edges need corrections."
+    instead:
+      zh: "厚、低 Rs 金屬或不能接觸時改用 eddy current；產品片的 Rs 由參數測試（parametric test）的電性測試結構量；產品 pad 上的不透光金屬厚度用 picosecond ultrasonics 或 µXRF。"
+      en: "For thick, low-Rs metal or no contact, use eddy current; product-wafer Rs comes from electrical test structures at parametric test; for opaque metal thickness on product pads use picosecond ultrasonics or µXRF."
+    toolkit: ["Wafer map", "SPC"]
+    notes:
+      - claim: "resistivity rho = L/A = L/(W*t), t = thickness"
+        verdict: corrected
+        fix:
+          zh: "已更正：漏了電阻 R。應為 R = ρL/(W·t)，所以 ρ = R·W·t/L。"
+          en: "Corrected: the resistance R is missing. It should read R = ρL/(W·t), so ρ = R·W·t/L."
+        source: "C58 · NIST / Brown 2005"
+      - claim: "sheet resistance Rs = rho/t, so t = rho/Rs"
+        verdict: verified
+        fix:
+          zh: "正確但有條件：要用薄膜電阻率（尺寸效應，Cu 電子平均自由徑 39 nm）；無限大薄片 Rs = 4.532·V/I。"
+          en: "Correct with a caveat: use the thin-film resistivity (size effect; the electron mean free path in Cu is 39 nm); Rs = 4.532·V/I for an infinite sheet."
+        source: "C59 · NIST Schuster et al. (Cu); ASU / KLA OmniMapper"
+      - claim: "ex: Implant, Diffusion film"
+        verdict: verified
+        fix:
+          zh: "正確但有條件：佈植層必須先活化退火，再在監控片上量（約 1e12 cm⁻² 以上可靠）。"
+          en: "Correct with a condition: implant layers are measured only after activation anneal, on a monitor wafer (reliable from about 1e12 cm⁻²)."
+        source: "C60 · AZoM / KLA Instruments 2025"
+      - claim: "destructive; measured on production wafers in SLAM"
+        verdict: corrected
+        fix:
+          zh: "已更正：接觸式、近似破壞（探針痕），在空白監控片上量；約 3 mm 量測區放不進切割道 pad。產品片的 Rs 來自電性測試結構。「SLAM」沒有公開定義。"
+          en: "Corrected: contact and quasi-destructive (probe marks), run on blanket monitor wafers; the ~3 mm area cannot fit a scribe pad. Product-wafer Rs comes from electrical test structures. 'SLAM' has no public definition."
+        source: "C61 · Napson products; NIST small-area 4PP (ICMTS 1999)"
+      - claim: "not integrated, fast ~2 s, typically 49 points"
+        verdict: verified
+        fix:
+          zh: "正確（典型值）：每點約 1 s，49 點約 40 WPH，獨立式機台。"
+          en: "Correct (typical): about 1 s per site, 40 WPH at 49 sites, standalone tool."
+        source: "C62 · CDE ResMap manual"
+    sources:
+      - {title: "NIST / Solid State Measurements, Brown 2005", url: "https://www.nist.gov/system/files/documents/pml/div683/conference/Brown-Benjamin_2005.pdf"}
+      - {title: "ASU Core Facilities, KLA OmniMapper 4-point probe", url: "https://cores.research.asu.edu/semiconductor-device-processing/advanced-electronics-and-packaging/equipment-and-rates/kla-tencor-omnimapper-4-point-probe"}
+      - {title: "NBS Technical Note 199 (correction factors)", url: "https://nvlpubs.nist.gov/nistpubs/Legacy/TN/nbstechnicalnote199.pdf"}
+      - {title: "NIST, Schuster et al. (Cu thin-film resistivity)", url: "https://tsapps.nist.gov/publication/get_pdf.cfm?pub_id=32595"}
+      - {title: "Napson products (4PP vs eddy current)", url: "http://www.napson-resistivity.com/products/"}
+      - {title: "ASTM F1529-02", url: "https://store.astm.org/f1529-02.html"}
+      - {title: "AZoM / KLA Filmetrics R50", url: "https://www.azom.com/article.aspx?ArticleID=20588"}
+      - {title: "CDE ResMap operation manual (University of Arizona)", url: "https://nfc.arizona.edu/sites/default/files/2022-02/cde_operation_manual.pdf"}
+      - {title: "AZoM / KLA Instruments 2025 (implant sheet resistance)", url: "https://www.azom.com/article.aspx?ArticleID=24723"}
+
+  eddy-current:
+    name: "Eddy current"
+    full: {zh: "渦電流（eddy current）非接觸片電阻", en: "Eddy-current non-contact sheet resistance"}
+    principle:
+      zh: "交流線圈在導電膜中感應渦電流，量電性損耗（導電度）再換算片電阻，厚度同樣用 t = ρ/Rs。需要用標準片校正，並修正線圈與樣品的間距。"
+      en: "An AC coil induces eddy currents in the conductive film and the tool measures the electrical loss (conductance), converted to sheet resistance; thickness again follows t = ρ/Rs. It needs calibration against reference samples and a coil-gap correction."
+    measures:
+      zh: "厚、高導電金屬膜的片電阻與厚度 map；也是 Cu CMP in-situ 厚度感測器的基礎。"
+      en: "Sheet resistance and thickness maps of thick, highly conductive metal films; also the basis of in-situ Cu-CMP thickness sensors."
+    range:
+      zh: "典型：約 0.035–3200 Ω/□（單一廠商）；最適合約 ≥ 100 nm、≲ 10 Ω/□ 的金屬，太薄的膜渦電流太小。厚度範圍依金屬 ρ 而定。"
+      en: "Typical: about 0.035–3200 Ω/□ (one vendor); best on metal of about ≥ 100 nm and ≲ 10 Ω/□, since very thin films carry too little eddy current. The thickness span depends on the metal's ρ."
+    precision:
+      zh: "依校正而定，沒有公開的量產重複性規格。量測區約 Φ5–60 mm。"
+      en: "Calibration-dependent; no public production repeatability spec. Measurement area about Φ5–60 mm."
+    thickness_nm: [100, 5000]
+    film: [metal, conductive]
+    location: [blanket]
+    contact: false
+    destructive: "no"
+    inline: [inline]
+    speed: fast
+    reference: false
+    processes: ["PVD", "CMP"]
+    strengths:
+      zh: "不接觸、不破壞、沒有探針磨耗；適合厚金屬快速 mapping。"
+      en: "No contact, no damage and no wearing probe; fast mapping of thick metals."
+    limits:
+      zh: "需要標準片校正與間距修正；薄膜訊號弱；mm 級大光點會把圖形平均掉，所以實務上多量空白片。"
+      en: "Needs reference calibration and gap correction; thin films give a weak signal; the mm-scale spot averages over patterns, so blanket wafers remain typical."
+    instead:
+      zh: "薄到中厚導電膜或佈植層改用 4-point probe；產品片小 pad 上的金屬改用 picosecond ultrasonics 或 µXRF。"
+      en: "For thin to medium conductive films or implant layers use 4-point probe; for metal on small product pads use picosecond ultrasonics or µXRF."
+    toolkit: ["Wafer map"]
+    sources:
+      - {title: "AZoM / KLA Filmetrics R50", url: "https://www.azom.com/article.aspx?ArticleID=20588"}
+      - {title: "SEMI MF673 (non-contact eddy-current gauge)", url: "https://store-us.semi.org/products/mf067300-semi-mf673-test-method-for-measuring-resistivity-of-semiconductor-wafers-or-sheet-resistance-of-semiconductor-films-with-a-noncontact-eddy-current-gauge"}
+      - {title: "Semilab non-contact sheet resistance (eddy current)", url: "https://semilab.com/category/products/non-contact-sheet-resistance-eddy-current"}
+      - {title: "Napson products (4PP vs eddy current)", url: "http://www.napson-resistivity.com/products/"}
+      - {title: "Qu et al., Microelectronic Engineering 2013 (in-situ Cu-CMP sensors)", url: "https://www.sciencedirect.com/science/article/abs/pii/S0167931713002633"}
+
+  xrf:
+    name: "XRF"
+    full: {zh: "X 射線螢光（XRF）", en: "X-ray fluorescence (XRF)"}
+    principle:
+      zh: "X-ray 激發膜中元素放出特徵螢光，量特徵線強度（或基板線被衰減的程度）得到單位面積質量，再除以假設的密度換算厚度。需要標準片或基本參數（FP）模型校正。膜太厚時強度不再隨厚度變化，稱為飽和。"
+      en: "X-rays excite characteristic fluorescence from the film's elements; the line intensity (or the attenuation of a substrate line) gives mass per unit area, which becomes thickness through an assumed density. It needs standards or fundamental-parameter (FP) models. Above a certain thickness the intensity stops changing, which is called saturation."
+    measures:
+      zh: "元素別的膜厚（單位面積質量）與成分：金屬膜、阻障／晶種層，以及 BPSG/PSG、WSix 等；也用於「成分」參數。"
+      en: "Element-specific thickness (mass per area) and composition: metal films, barrier / seed layers, and BPSG/PSG or WSix; also used for the composition parameter."
+    range:
+      zh: "典型：約 1 Å 到數 µm，依元素與譜線而定（筆記的 10 Å–50 kÅ 合理）。Cu Lα 直接法到約 0.7 µm，改用 Si Kα 基板衰減可到約 1.4 µm；硬 K 線約 6–60 µm 飽和。"
+      en: "Typical: about 1 Å to several µm, element- and line-dependent (the noted 10 Å–50 kÅ is fair). Cu Lα measures directly to about 0.7 µm, and Si Kα substrate attenuation extends this to about 1.4 µm; hard K-lines saturate at 6–60 µm."
+    precision:
+      zh: "典型（廠商應用值）：Ru ≥ 1 Å 時精度 < 0.2 Å（每點 60 s）。µXRF 光點 φ20–85 µm；WDXRF 最高約 25 WPH。"
+      en: "Typical (vendor application data): under 0.2 Å precision on Ru ≥ 1 Å (60 s per site). µXRF spot φ20–85 µm; WDXRF up to about 25 WPH."
+    thickness_nm: [0.1, 5000]
+    film: [metal, conductive, absorbing, transparent]
+    location: [scribe, blanket]
+    contact: false
+    destructive: "no"
+    inline: [inline, lab]
+    speed: medium
+    reference: false
+    processes: ["PVD", "CVD", "CMP"]
+    strengths:
+      zh: "元素專一，可從超薄量到 µm 級並同時給成分；非接觸、非破壞；micro-spot 可量產品片 pad。"
+      en: "Element-specific, from ultrathin to µm, with composition at the same time; non-contact and non-destructive; micro-spot optics reach product-wafer pads."
+    limits:
+      zh: "需假設密度（孔隙或相變會被誤讀成厚度）；接近飽和時失去靈敏度；同元素出現在多層時訊號重疊（如 Ti/TiN）；需要校正；輕元素需要真空或 WDXRF。"
+      en: "Needs an assumed density (porosity or phase change reads as thickness); loses sensitivity near saturation; same-element layers overlap (e.g. Ti/TiN); needs calibration; light elements need vacuum or WDXRF."
+    instead:
+      zh: "需要絕對參考或密度時用 XRR；< 10 nm 又要化學態時用 XPS；產品 pad 上的多層不透光金屬可改用 picosecond ultrasonics。"
+      en: "For an absolute reference or density use XRR; below 10 nm with chemical state use XPS; for opaque metal multilayers on product pads use picosecond ultrasonics."
+    toolkit: ["Wafer map", "SPC"]
+    notes:
+      - claim: "range: 10 A ~ 50 kA"
+        verdict: verified
+        fix:
+          zh: "正確（典型值）：依元素與譜線而定；Ru 可達 < 0.2 Å 精度，上限由飽和決定。"
+          en: "Correct (typical): element- and line-dependent; under 0.2 Å precision on Ru, with saturation setting the upper end."
+        source: "C64 · Rigaku RSMD-20101831 (Ru); Thermo Fisher XRF coating thickness"
+      - claim: "metal thickness - 'too thick' (as written)"
+        verdict: unresolved
+        fix:
+          zh: "未定，有兩種讀法：(a) 飽和極限，膜太厚時強度不再變化；(b) 分工註記，膜對 XRR 太厚時改用 XRF。請講師確認原意。"
+          en: "Unresolved, two readings: (a) the saturation limit, where intensity stops changing for thick films; (b) a routing note, use XRF when the film is too thick for XRR. Ask the trainer which is meant."
+        source: "C65 · ISO 3497 summary; Rigaku RSMD-20101936 (Cu seed)"
+    sources:
+      - {title: "ISO 3497:2000 summary (XRF coating thickness)", url: "https://standards.iteh.ai/catalog/standards/iso/653c536e-966d-40e2-b6e0-1cc23505a968/iso-3497-2000"}
+      - {title: "Rigaku RSMD-20101831, ultrathin Ru thickness", url: "https://rigaku.com/products/semiconductor-metrology/application-notes/rsmd-20101831-ultrathin-ru-thickness-measurement-combined-xrd"}
+      - {title: "Rigaku RSMD-20101936, Cu seed and thickness", url: "https://rigaku.com/products/semiconductor-metrology/application-notes/rsmd-20101936-cu-seed-and-thickness"}
+      - {title: "Thermo Fisher, XRF coating thickness", url: "https://documents.thermofisher.com/TFS-Assets/CAD/Reference-Materials/qlt-article-xrf-thickness.pdf"}
+      - {title: "Rigaku XTRAIA MF-3000-R", url: "https://rigaku.com/products/semiconductor-metrology/xrr-edxrf-and-optical-tools/xtraia-mf-3000-r"}
+      - {title: "Rigaku WaferX 310 (WDXRF)", url: "https://rigaku.com/products/semiconductor-metrology/wdxrf/waferx-310"}
+      - {title: "Malvern Panalytical, silicon semiconductors", url: "https://www.malvernpanalytical.com/en/industries/electronics/silicon-semiconductors"}
+
+  xrr:
+    name: "XRR"
+    full: {zh: "X 射線反射率（XRR）", en: "X-ray reflectivity (XRR)"}
+    principle:
+      zh: "在掠角入射量鏡面 X-ray 反射率：臨界角給電子密度，Kiessig 干涉條紋週期給厚度（t ≈ λ/(2Δθ)），條紋衰減給表面與介面粗糙度。屬第一原理（絕對）量測，不需校正，常用來標定 XRF 標準片。"
+      en: "Specular X-ray reflectivity is measured at grazing angles: the critical angle gives electron density, the Kiessig fringe period gives thickness (t ≈ λ/(2Δθ)) and fringe damping gives surface and interface roughness. It is first-principles (absolute), needs no calibration and is often used to certify XRF standards."
+    measures:
+      zh: "厚度、電子密度（加上假設成分可換算質量密度）與表面／介面粗糙度；也是「密度」參數的主要工具。"
+      en: "Thickness, electron density (mass density with an assumed composition) and surface / interface roughness; also the main tool of the density parameter."
+    range:
+      zh: "典型：約 1–200 nm（部分設備可到 500 nm–1 µm）；廠內 micro-spot 機台總膜堆 ≤ 200 nm。粗糙度需 < 約 3–5 nm；層間密度差需 ≥ 約 5%。"
+      en: "Typical: about 1–200 nm (some set-ups to 500 nm–1 µm); in-fab micro-spot tools up to 200 nm total stack. Roughness must be below about 3–5 nm and layers must differ in density by about ≥ 5%."
+    precision:
+      zh: "典型：厚度準確度約 0.2 nm（研究機構值）；沒有公開的量產精度規格。"
+      en: "Typical: about 0.2 nm thickness accuracy (research institute); no public production precision spec."
+    thickness_nm: [1, 200]
+    film: [transparent, absorbing, metal, conductive]
+    location: [scribe, blanket]
+    contact: false
+    destructive: "no"
+    inline: [inline, lab]
+    speed: medium
+    reference: false
+    processes: ["CVD", "PVD", "Diffusion"]
+    strengths:
+      zh: "不需校正的絕對量測；一次給厚度、密度與粗糙度；可當 XRF 的參考。"
+      en: "Absolute, calibration-free; gives thickness, density and roughness at once; serves as the reference for XRF."
+    limits:
+      zh: "粗糙度 > 約 3–5 nm 條紋被洗掉；厚度 > 約 200 nm 條紋太密；密度相近的層難分；比光學慢；掠角入射使光斑沿光束方向拉長，pad 要夠長；質量密度需要正確成分。"
+      en: "Roughness above about 3–5 nm washes out the fringes; above about 200 nm the fringes get too dense; similar-density layers are hard to separate; slower than optics; the grazing footprint is elongated, so pads must be long enough; mass density needs the right composition."
+    instead:
+      zh: "較厚或粗糙的金屬改用 XRF 或 picosecond ultrasonics；透明膜例行監控用 SE；密度要搭配 XPS 或 XRF 的成分。"
+      en: "For thicker or rough metals use XRF or picosecond ultrasonics; for routine monitoring of transparent films use SE; pair density with XPS or XRF composition."
+    toolkit: ["MSA"]
+    notes:
+      - claim: "range: < 500 A"
+        verdict: corrected
+        fix:
+          zh: "已更正：典型約 1–200 nm（部分設備到 500 nm–1 µm）；廠內 micro-spot 機台總膜堆 ≤ 200 nm。「< 500 Å」太保守。"
+          en: "Corrected: typically about 1–200 nm (some set-ups to 500 nm–1 µm); in-fab micro-spot tools handle up to 200 nm total stack. '< 500 Å' is too conservative."
+        source: "C66 · Rigaku XRR; Fraunhofer IST"
+      - claim: "metal thickness - 'too rough' (as written)"
+        verdict: verified
+        fix:
+          zh: "正確（依字面解讀）：粗糙度 > 約 3–5 nm 會讓干涉條紋衰減，無法擬合。"
+          en: "Correct (wording interpreted): roughness above about 3–5 nm damps the fringes and prevents fitting."
+        source: "C67 · Iowa State lecture; Imashuku 2025"
+    sources:
+      - {title: "Rigaku, X-ray reflectometry (XRR)", url: "https://rigaku.com/resources/techniques/x-ray-reflectometry-xrr"}
+      - {title: "Fraunhofer IST, XRR", url: "https://www.ist.fraunhofer.de/en/expertise/analytics-testing-technology/xrr.html"}
+      - {title: "Malvern Panalytical Aeris XRR", url: "https://www2.malvernpanalytical.com/Aeris/X-ray-reflectometry"}
+      - {title: "Rigaku XTRAIA MF-3000-R", url: "https://rigaku.com/products/semiconductor-metrology/xrr-edxrf-and-optical-tools/xtraia-mf-3000-r"}
+      - {title: "Iowa State thin-film characterization lecture", url: "https://faculty.sites.iastate.edu/canfield/files/inline-files/Characterizations%20Films%20class%202.pdf"}
+      - {title: "Imashuku, X-Ray Spectrometry 2025", url: "https://analyticalsciencejournals.onlinelibrary.wiley.com/doi/10.1002/xrs.3499?af=R"}
+
+  picosecond-ultrasonics:
+    name: "Picosecond ultrasonics"
+    full: {zh: "皮秒超音波（picosecond ultrasonics）", en: "Picosecond ultrasonics (picosecond laser acoustics)"}
+    principle:
+      zh: "次皮秒的 pump 雷射脈衝在不透光膜中激發聲波（應變脈衝），延遲的 probe 脈衝偵測介面回波時間，厚度 t = v·Δt/2（v 為聲速，Δt 為來回時間）。例：TaN 中回波 12.9 ps、聲速 53.6 Å/ps，得到 345.7 Å。"
+      en: "A sub-ps pump pulse launches an acoustic strain pulse into an opaque film, and a delayed probe pulse times the echoes from interfaces: t = v·Δt/2 (v sound velocity, Δt round trip). Example: a 12.9 ps echo in TaN at 53.6 Å/ps gives 345.7 Å."
+    measures:
+      zh: "不透光金屬單層或多層（最多約 6 層同時）厚度；也可量半透明 a-C 硬遮罩、low-k 模數，以及附著與 silicide 相。"
+      en: "Thickness of opaque metal single films or multilayers (up to about six at once); also semi-transparent a-C hard mask, low-k modulus, adhesion and silicide phase."
+    range:
+      zh: "典型（廠商值）：約 40 Å 到 5 µm 以上，現行機型（Echo）50 Å–35 µm；最高約 60–70 WPH。"
+      en: "Typical (vendor): about 40 Å to more than 5 µm, current Echo 50 Å–35 µm; up to about 60–70 WPH."
+    precision:
+      zh: "典型（廠商值）：薄金屬 sub-Å 重複性；厚膜 < 1%，a-C < 0.5%（3σ）。光點約 10 µm，配合 pattern recognition。"
+      en: "Typical (vendor): sub-Å repeatability on thin metals; under 1% on thick films and under 0.5% (3σ) on a-C. About 10 µm spot with pattern recognition."
+    thickness_nm: [4, 35000]
+    film: [metal, absorbing]
+    location: [scribe, blanket]
+    contact: false
+    destructive: "no"
+    inline: [inline]
+    speed: fast
+    reference: false
+    processes: ["PVD", "CVD", "CMP"]
+    strengths:
+      zh: "量不透光多層金屬；10 µm 光點可放進產品片既有量測 pad（≥ 15–30 µm），減少監控片；非接觸、非破壞。"
+      en: "Measures opaque metal multilayers; the 10 µm spot lands inside existing product-wafer pads (≥ 15–30 µm), cutting monitor-wafer use; non-contact and non-destructive."
+    limits:
+      zh: "需要已知（或同時量測）的聲速，聲速誤差直接變成厚度誤差；頂層要能吸收 pump 光；< 約 40 Å 太薄；層間需要聲阻抗差；多層要膜堆模型。"
+      en: "Needs a known or co-measured sound velocity, whose error passes straight into thickness; the top layer must absorb the pump; below about 40 Å is too thin; interfaces need acoustic-impedance contrast; multilayers need a stack model."
+    instead:
+      zh: "需要元素資訊或同元素多層時用 XRF；空白片 Rs 或均勻性用 4-point probe 或 eddy current；透明介電膜用 SR 或 SE。"
+      en: "For element information use XRF; for blanket Rs or uniformity use 4-point probe or eddy current; for transparent dielectrics use SR or SE."
+    toolkit: ["Wafer map", "SPC"]
+    notes:
+      - claim: "precision: < 1 A"
+        verdict: verified
+        fix:
+          zh: "正確（廠商值）：「sub-Å repeatability」；厚膜改用百分比表示，< 1%。"
+          en: "Correct (vendor): 'sub-Å repeatability'; on thick films express it as a fraction, under 1%."
+        source: "C69 · MetaPULSE 200; Rudolph 10-K FY2016"
+      - claim: "opaque films, A-scale thickness, non-destructive"
+        verdict: corrected
+        fix:
+          zh: "已更正：範圍約 40 Å 到 5 µm 以上（Echo 到 35 µm），是「Å 級精度」不是「Å 級厚度」；也能量半透明 a-C 與 low-k 模數。"
+          en: "Corrected: the range is about 40 Å to more than 5 µm (Echo to 35 µm) with Å-level precision, not Å-scale thickness; it also measures semi-transparent a-C and low-k modulus."
+        source: "C70 · Onto Echo; Onto 3D NAND paper"
+      - claim: "mostly on SLAM; can measure blanket or product wafers"
+        verdict: verified
+        fix:
+          zh: "正確：10 µm 光點加 pattern recognition，可量產品片 pad，也可量空白片。「SLAM」沒有公開定義，視為切割道量測 pad。"
+          en: "Correct: a 10 µm spot with pattern recognition measures product-wafer pads as well as blanket wafers. 'SLAM' has no public definition; read it as a scribe-line metrology pad."
+        source: "C71 · MetaPULSE 200"
+      - claim: "not integrated"
+        verdict: unresolved
+        fix:
+          zh: "未定（合理）：公開資料只找到獨立式線上機台。"
+          en: "Unresolved (plausible): only standalone in-line tools were found."
+        source: "C72 · Onto Echo"
+      - claim: "fast: 2-5 s"
+        verdict: unresolved
+        fix:
+          zh: "未定：公開資料只有 60–70 WPH，沒有每點時間。當作本廠機台值。"
+          en: "Unresolved: public sources give 60–70 WPH but no per-site time. Treat it as a local tool value."
+        source: "C73 · Rudolph 10-K FY2016"
+    sources:
+      - {title: "Stoner, AIP Conference Proceedings 2001", url: "https://pubs.aip.org/aip/acp/article-pdf/550/1/468/11602897/468_1_online.pdf"}
+      - {title: "Rudolph Technologies 10-K FY2016", url: "https://www.sec.gov/Archives/edgar/data/1094392/000109439217000009/rtec10k12312016.htm"}
+      - {title: "Onto Innovation Echo", url: "https://ontoinnovation.com/products/echo"}
+      - {title: "Onto, Monitoring process steps in 3D NAND using picosecond ultrasonics", url: "https://ontoinnovation.com/wp-content/uploads/2025/08/Monitoring-process-steps-in-3D-NAND-using-picosecond-ultrasonics.pdf"}
+      - {title: "SemiconductorOnline, MetaPULSE 200", url: "https://www.semiconductoronline.com/doc/metapulse-200-0001"}
+
+  xps:
+    name: "XPS"
+    full: {zh: "X 射線光電子能譜（XPS）", en: "X-ray photoelectron spectroscopy (XPS)"}
+    principle:
+      zh: "單色 X-ray 打出內層電子，半球形分析器依動能分類（KE = hν − BE − φ），結合能 BE 辨識元素與化學態。厚度用光電子的指數衰減：I_sub = I_sub∞·exp(−d/EAL)；EAL（有效衰減長度）包含彈性散射，與 IMFP 不同，可查 NIST SRD 82。電子往表面走時會損失能量，所以只看得到表面約 10 nm。"
+      en: "Monochromatic X-rays eject core-level electrons and a hemispherical analyser sorts them by kinetic energy (KE = hν − BE − φ); the binding energy BE identifies element and chemical state. Thickness uses exponential photoelectron attenuation, I_sub = I_sub∞·exp(−d/EAL); the effective attenuation length includes elastic scattering, unlike the IMFP, and is tabulated in NIST SRD 82. Electrons lose energy on the way out, so only the top ~10 nm is seen."
+    measures:
+      zh: "超薄膜厚度、原子濃度（at%）與化學態：high-k、SiON 的 N、TiN 金屬閘、阻障層、SiGe 的 Ge%。也是「成分」參數的主要工具。"
+      en: "Ultrathin-film thickness, atomic concentration (at%) and chemical state: high-k, N in SiON, TiN metal gate, barriers, Ge% in SiGe. Also the main tool of the composition parameter."
+    range:
+      zh: "典型：資訊深度 < 約 10 nm（Al Kα）；< 約 2 nm 對小變化最精準，> 約 10 nm 失去靈敏度。實驗室偵測極限約 0.1 at%，定量約 ±5%。"
+      en: "Typical: information depth below about 10 nm (Al Kα); most precise for small changes below about 2 nm, with sensitivity lost above about 10 nm. Lab detection limit about 0.1 at%, quantification about ±5%."
+    precision:
+      zh: "線上機台沒有公開的精度與每點時間；光點約 50 µm（Al Kα），真空 < 5×10⁻⁷ Torr，有 load-lock。"
+      en: "No public precision or per-site time for in-line tools; about 50 µm Al Kα spot, vacuum below 5×10⁻⁷ Torr, with a load lock."
+    thickness_nm: [0.1, 10]
+    film: [transparent, absorbing, metal, conductive]
+    location: [in_die, scribe, blanket]
+    contact: false
+    destructive: "no"
+    inline: [inline, lab]
+    speed: slow
+    reference: false
+    processes: ["Diffusion", "CVD", "PVD", "CMP"]
+    strengths:
+      zh: "同時給厚度、成分與化學態，沒有 SE 的厚度與 n 相關問題；每層有自己的峰就能分開。"
+      en: "Thickness, composition and chemical state together, without SE's thickness-index correlation; layers separate when each has its own peak."
+    limits:
+      zh: "資訊深度 < 10 nm；每層需要可辨識的獨特峰（Si/SiGe 要修正模型）；真空、速度慢；量不到 H、He。"
+      en: "Information depth below 10 nm; each layer needs a unique identifiable peak (Si/SiGe needs corrected models); vacuum and slow; cannot see H or He."
+    instead:
+      zh: "> 10 nm 或埋層改用 XRF（部分機台可同時收 XRF）；只要厚度且可固定 n 時用 SE；微量（ppm–ppb）用 SIMS（破壞性）。"
+      en: "Above 10 nm or for buried layers use XRF (some tools collect it at the same time); for thickness only with fixed n use SE; for trace levels (ppm–ppb) use SIMS (destructive)."
+    toolkit: ["SPC"]
+    sources:
+      - {title: "Nova/IBM SPIE 139810A (2026), in-line XPS on integrated targets", url: "https://www.novami.com/wp-content/uploads/2026/04/139810a-xps-integrated-trgts.pdf"}
+      - {title: "NIST, Powell & Jablonski 2020 (EAL practical guide)", url: "https://tsapps.nist.gov/publication/get_pdf.cfm?pub_id=929257"}
+      - {title: "Northwestern NUANCE XPS tech talk 2019", url: "https://nuance.northwestern.edu/documents/techtalks/2019-01-16-tt-keckll-xinqi.pdf"}
+      - {title: "Thermo Fisher ARXPS application note", url: "https://documents.thermofisher.com/TFS-Assets/CAD/Application-Notes/D16069~.pdf"}
+      - {title: "Nova materials metrology brochure 2022", url: "https://www.novami.com/wp-content/uploads/2023/05/nova-brochure-materials-metrology-2022-compressed-1.pdf"}
+
+relations:
+  - {from: ellipsometry, to: optical, type: measures, note: {zh: "量 n、k 的首選，但不是唯一（C87）。", en: "Preferred n, k tool, but not the only one (C87)."}}
+  - {from: reflectometry, to: optical, type: measures, note: {zh: "膜夠厚（約 ≥ 50 nm）時也能擬合 n、k。", en: "Also fits n, k when the film is thick enough (about ≥ 50 nm)."}}
+  - {from: reflectance, to: optical, type: measures, note: {zh: "PVD 金屬的反射率監控。", en: "Reflectivity monitor for PVD metals."}}
+  - {from: reflectometry, to: ellipsometry, type: complements, note: {zh: "約 500 nm 以下 SE 不確定度較低，較厚時 SR 較低；許多機台把兩者裝在同一個量測頭。", en: "SE has lower uncertainty below about 500 nm and SR above; many tools combine both in one head."}}
+  - {from: xps, to: thickness, type: also_measures, note: {zh: "< 約 10 nm 超薄膜厚度，同時給成分。", en: "Ultrathin thickness below about 10 nm, with composition."}}
+  - {from: xrr, to: xrf, type: calibrates, note: {zh: "XRR 不需校正，常用來標定 XRF 的厚度標準片。", en: "Calibration-free XRR often certifies XRF thickness standards."}}
+  - {from: eddy-current, to: four-point-probe, type: alternative_to, note: {zh: "厚、低 Rs 金屬的非接觸替代方案。", en: "Non-contact alternative for thick, low-Rs metal."}}

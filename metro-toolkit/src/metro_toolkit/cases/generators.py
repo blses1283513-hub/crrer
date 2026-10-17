@@ -868,3 +868,7 @@ GENERATORS = {
 from .generators_yield import YIELD_GENERATORS  # noqa: E402 - needs the helpers above
 
 GENERATORS.update(YIELD_GENERATORS)
+
+from .generators_tech import TECH_GENERATORS  # noqa: E402 - needs the helpers above
+
+GENERATORS.update(TECH_GENERATORS)

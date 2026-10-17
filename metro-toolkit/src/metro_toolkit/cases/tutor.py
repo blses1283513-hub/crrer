@@ -92,8 +92,20 @@ def case_context(case: Case, answers: dict, result: dict, lang: str = "en") -> s
     return "\n".join(out)
 
 
+def techniques() -> str:
+    """A compact map of which techniques measure which parameter (from the metrology map), or "" without it."""
+    from ..guide import metrology as mt
+
+    if not mt.available():
+        return ""
+    names = {tid: t.get("name", tid) for tid, t in mt.tools().items()}
+    lines = [f"- {pid}: " + ", ".join(names.get(t, t) for t in mt.tools_for(pid)) for pid in mt.parameters()]
+    return "\n\n<techniques>\nWhich metrology techniques measure each parameter (the toolkit's metrology map):\n" + \
+        "\n".join(lines) + "\n</techniques>"
+
+
 def system_prompt(case: Case, answers: dict, result: dict, lang: str = "both") -> str:
-    return (INSTRUCTIONS.format(lang_rule=LANG_RULE.get(lang, LANG_RULE["both"])) + "\n\n<case>\n"
+    return (INSTRUCTIONS.format(lang_rule=LANG_RULE.get(lang, LANG_RULE["both"])) + techniques() + "\n\n<case>\n"
             + case_context(case, answers, result, "zh" if lang == "zh" else "en") + "\n</case>")
 
 
@@ -134,4 +146,4 @@ def ask(system: str, history: list[dict], api_key: str | None = None, client=Non
         yield f"Anthropic API 錯誤 error {e.status_code}: {e.message}"
 
 
-__all__ = ["MODEL", "ask", "available", "case_context", "guard", "make_client", "system_prompt"]
+__all__ = ["MODEL", "ask", "available", "case_context", "guard", "make_client", "system_prompt", "techniques"]

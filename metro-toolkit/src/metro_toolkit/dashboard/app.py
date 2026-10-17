@@ -373,6 +373,7 @@ def page_stack():
                                                   "fitted": "stack.col.fitted", "± 1σ": "stack.col.sigma",
                                                   "error": "stack.col.error"}))
     m2.metric("reduced χ²", f"{res.chi2_red:.2f}", help=H("stack.chi2"))
+    m2.metric("GOF（擬合優度）", f"{res.gof:.4f}", help=H("stack.gof"))
     if len(res.labels) > 1:
         m2.caption("Parameter correlation", help=H("stack.corr"))
         m2.dataframe(pd.DataFrame(res.correlation, index=res.labels, columns=res.labels).style.format(precision=3))
@@ -529,6 +530,22 @@ def page_studies():
         st.dataframe(c.style.format(precision=4), hide_index=True,
                      column_config=col_help(c, {col: f"study.col.{col}" for col in c.columns}))
         explain("study_tn", gi.study_tn(c))
+    from metro_toolkit.guide import metrology as mt
+
+    if mt.available():
+        with st.expander("🧭 這個厚度該用哪種量測？ Which thickness technique fits?"):
+            c1, c2 = st.columns(2)
+            t_nm = c1.number_input("膜厚 thickness (nm)", 0.1, 50000.0, 10.0, key="study_tech_t", help=H("metro.thickness"))
+            film = c2.selectbox("膜種類 film", ["transparent", "absorbing", "metal", "conductive"], key="study_tech_film",
+                                help=H("metro.film"))
+            fits, out = mt.choose("thickness", t_nm, film, no_contact=True, inline=True)
+            st.markdown("**適合 Fits:** " + ("、".join(mt.tools()[f["tool"]].get("name", f["tool"]) for f in fits) or "—"))
+            for e in out:
+                st.caption(f"✗ {mt.tools()[e['tool']].get('name', e['tool'])}: "
+                           + "; ".join(bi_line(w) for w in e["why"]))
+            if st.button("🔗 在量測地圖看完整比較 · open the Metrology map", key="study_tech_go"):
+                st.session_state["nav_goto"] = "量測地圖 Metrology map"
+                st.rerun()
 
 DESIGNS = {"full2": "2 水準全因子 (2^k) + 中心點", "fractional": "部分因子 2^(k-p) + 中心點",
            "ccd": "中心合成 CCD（可估彎曲）", "bbd": "Box-Behnken（可估彎曲、不跑角落）", "full3": "3 水準全因子 3^k"}
@@ -1068,6 +1085,7 @@ def render_evidence(ev: dict, key: str):
         c1, c2 = st.columns([2, 1])
         c1.dataframe(ev["table"].style.format(precision=4), hide_index=True)
         c2.metric("reduced χ²", f"{res.chi2_red:.2f}", help=H("stack.chi2"))
+        c2.metric("GOF（擬合優度）", f"{res.gof:.4f}", help=H("stack.gof"))
         if len(res.labels) > 1:
             c2.caption("Parameter correlation", help=H("stack.corr"))
             c2.dataframe(pd.DataFrame(res.correlation, index=res.labels, columns=res.labels).style.format(precision=3))
@@ -1989,7 +2007,7 @@ def page_metrology():
                    "Every technique is researched and sourced, and each point of your original notes is marked verified, corrected "
                    "or unresolved. Numbers are typical public values; your fab's tools and specs decide in real work."))
     if not mt.available():
-        st.info(bi("量測地圖的資料檔還沒建立（guide/metrology_tree.yaml）。", "The metrology map data file (guide/metrology_tree.yaml) is not built yet."))
+        st.info(bi("量測地圖的資料檔還沒建立（guide/metrology_tree_*.yaml）。", "The metrology map data files (guide/metrology_tree_*.yaml) are not built yet."))
         return
     tabs = st.tabs(["🌳 地圖 Map", "🧭 選哪個量測？ Which technique?", "✅ 筆記查核 Your notes checked", "📚 來源 Sources"])
     with tabs[0]:

@@ -1,0 +1,243 @@
+# Metrology map, part 3: film properties beyond thickness (composition, stress, density, mass, crystal structure, contact angle).
+# Facts from reports/Metrology tree verification.md (Film properties, Table 6, Table 8, verdicts C68, C74-C84, C90-C101)
+# and research_notes/Metrology tree verification/film_properties.md. Numbers are typical public or vendor values, not fab specs.
+# xps, xrf and xrr are defined in metrology_tree_2_film_thickness.yaml.
+
+categories:
+  - id: film
+    name: {zh: "膜層類", en: "Film"}
+    processes: ["Photo-litho", "Dry Etch", "Diffusion", "CVD", "PVD", "CMP", "Wet"]
+    parameters:
+      - id: composition
+        name: {zh: "成分", en: "Composition"}
+        what: {zh: "膜裡有哪些元素、各占多少（at%），以及化學鍵結態（chemical state）。", en: "Which elements a film contains, how much of each (at%), and their chemical state."}
+        processes: ["Diffusion", "CVD"]
+        groups:
+          - {id: composition-inline, name: {zh: "線上 X-ray 成分量測", en: "In-line X-ray composition"}, what: {zh: "XPS 看 < 10 nm 的表層與化學態；XRF 穿得更深，訊號與材料量成正比。", en: "XPS sees the top < 10 nm with chemical state; XRF reaches deeper and scales linearly with the amount of material."}, tools: [xps, xrf]}
+          - {id: composition-lab, name: {zh: "實驗室參考分析", en: "Lab reference analysis"}, what: {zh: "SIMS 測 ppm–ppb 微量元素與縱深分布；AES 縱深解析度較好，但化學資訊較弱。兩者都是離線、會破壞樣品。", en: "SIMS for ppm–ppb traces and depth profiles; AES for finer depth resolution with weaker chemical information. Both are offline and destructive."}, tools: [sims, aes]}
+        notes:
+          - {claim: "film thickness, atomic concentration", verdict: verified, fix: {zh: "正確：XPS 同時給出膜厚與原子濃度（at%）。", en: "Correct: XPS gives film thickness and atomic concentration (at%) together."}, source: "C74 · Nova materials metrology brochure 2022"}
+          - {claim: "photon in -> kinetic-energy measurement", verdict: verified, fix: {zh: "正確：KE = hν − BE − φ，由結合能（BE）判斷元素與化學態。", en: "Correct: KE = hν − BE − φ; the binding energy (BE) identifies the element and its chemical state."}, source: "C75 · Northwestern NUANCE 2019"}
+          - {claim: "non-destructive; product wafer in SLAM pad, or test wafer", verdict: verified, fix: {zh: "正確：不濺鍍（no sputtering）所以不破壞；量測 pad 至少 50 µm，可在切割道或晶粒內，也用空白監控片。「SLAM」沒有公開定義，視為廠內對切割道量測 pad 的叫法。", en: "Correct: no sputtering, so non-destructive; pads of at least 50 µm in the scribe line or in-die, and blanket monitors too. 'SLAM' has no public definition; treat it as fab jargon for a scribe-line metrology pad."}, source: "C76, C105 · Nova/IBM SPIE 139810A (2026)"}
+          - {claim: "not integrated", verdict: verified, fix: {zh: "正確：線上獨立式真空機台，有 load lock；公開資料找不到整合式 XPS。", en: "Correct: a standalone in-line vacuum tool with a load lock; no integrated XPS product was found."}, source: "C77 · Nova/IBM SPIE 139810A (2026)"}
+          - {claim: "30-60 s per point", verdict: unresolved, fix: {zh: "未定：沒有公開的每點時間，來源只說 recipe 會盡量縮短擷取時間。當作本廠機台值。", en: "Unresolved: no public per-point time; sources only say recipes minimise acquisition time. Treat it as a local tool value."}, source: "C78 · Nova/IBM SPIE 139810A (2026)"}
+          - {claim: "thickness < 100 A", verdict: verified, fix: {zh: "正確：< 2 nm 最精準；Al Kα 下超過約 10 nm 就失去靈敏度；Si 2p 有 95% 訊號來自 3λ（約 8 nm）內。", en: "Correct: most precise below 2 nm; sensitivity is lost above about 10 nm with Al Kα; 95% of the Si 2p signal comes from within 3λ (about 8 nm)."}, source: "C79 · Nova/IBM 139810A; Thermo Fisher ARXPS"}
+          - {claim: "for DRAM, NAND", verdict: verified, fix: {zh: "正確但不完整：也用於 logic 的 HKMG、GAA 與 BEOL area-selective deposition。", en: "Correct but incomplete: also used for logic HKMG, GAA and BEOL area-selective deposition."}, source: "C80 · Nova 6-K 2015; Nova/IBM SPIE 1398114 (2026)"}
+          - {claim: "recipe development flow: Acquisition -> Intensity Extraction -> Thickness & Composition", verdict: verified, fix: {zh: "正確：光譜 → peak-fit 強度 → EAL／Beer–Lambert 膜堆模型。", en: "Correct: spectra, then peak-fit intensities, then an EAL / Beer–Lambert stack model."}, source: "C81 · Nova/IBM SPIE 1398114 (2026)"}
+          - {claim: "thickness by effective attenuation length (EAL)", verdict: verified, fix: {zh: "正確：EAL 不等於 IMFP，它包含彈性散射；數值可查 NIST SRD 82。", en: "Correct: EAL is not the IMFP because it includes elastic scattering; values come from NIST SRD 82."}, source: "C82 · NIST Powell 2020"}
+          - {claim: "darker pattern -> thinner", verdict: unresolved, fix: {zh: "未定：不是物理規則。正確說法是「基底訊號越強 = 上層越薄」；顏色深淺取決於機台的色階，請問講師指的是哪張圖。", en: "Unresolved: not a physical rule. Say 'stronger substrate signal = thinner overlayer'; whether that looks darker depends on one tool's colour scale. Ask the trainer which plot is meant."}, source: "C83 · no public source"}
+          - {claim: "electrons lose energy while traveling to the surface, so XPS cannot detect electrons from deeper positions", verdict: verified, fix: {zh: "正確：非彈性散射讓深處電子離開光電峰；95% 訊號來自 3λ 內（Si 2p 約 8 nm）。", en: "Correct: inelastic scattering removes deeper electrons from the peak; 95% of the signal comes from within 3λ (about 8 nm for Si 2p)."}, source: "C84 · Thermo Fisher ARXPS"}
+
+      - id: stress
+        name: {zh: "應力", en: "Stress"}
+        what: {zh: "膜對晶圓施加的殘留應力（MPa）。由晶圓曲率換算，不是直接量；會造成 wafer bow，影響微影 DOF 與 overlay，也會造成破裂或剝離。", en: "Residual stress a film puts on the wafer (MPa). It is converted from wafer curvature, not measured directly; it drives wafer bow that hurts litho DOF and overlay, and causes cracking or delamination."}
+        processes: ["Diffusion", "CVD", "PVD"]
+        groups:
+          - {id: stress-curvature, name: {zh: "晶圓曲率法（Stoney）", en: "Wafer curvature (Stoney)"}, what: {zh: "鍍膜前後各量一次曲率，用 Stoney 方程式換算成應力。", en: "Curvature is measured before and after deposition and converted to stress with Stoney's equation."}, tools: [wafer-curvature]}
+        notes:
+          - {claim: "Deposited film (ex: CVD)", verdict: verified, fix: {zh: "正確但不完整：PVD、退火、熱膨脹係數差異（降溫時）與背面膜也會產生應力。", en: "Correct but incomplete: PVD, anneal, thermal mismatch on cool-down and backside films also create stress."}, source: "C90 · Toho FLX series"}
+          - {claim: "Compressive stress (-), Tensile stress (+)", verdict: verified, fix: {zh: "正確：壓應力為負，晶圓凸起（convex）；張應力為正，晶圓凹下（concave）。要確認機台的正負號設定。", en: "Correct: compressive is negative with a convex wafer; tensile is positive with a concave wafer. Check each tool's sign setting."}, source: "C91 · PMC review 2022"}
+          - {claim: "normalized to a 1 um film thickness", verdict: corrected, fix: {zh: "已更正：曲率給的是應力×膜厚（σ_f·t_f，N/m），除以輸入的膜厚得到 MPa，本身就與膜厚無關。1 µm 是廠商規格的參考膜厚，所以膜越薄，應力解析度按比例變差。", en: "Corrected: curvature gives the stress-thickness product σ_f·t_f (N/m); dividing by the entered thickness gives MPa, already thickness-independent. 1 µm is the vendor-spec reference film, so thinner films have proportionally worse stress resolution."}, source: "C92 · Toho FLX-2320-S spec; Chason JAP 2016"}
+
+      - id: density
+        name: {zh: "密度", en: "Density"}
+        what: {zh: "膜的密度（g/cm³）。XRR 由全反射臨界角得到電子密度，再假設成分換算成質量密度。", en: "Film density (g/cm³). XRR gets electron density from the total-reflection critical angle, then converts it to mass density using an assumed composition."}
+        processes: ["Diffusion", "CVD", "PVD"]
+        groups:
+          - {id: density-xrr, name: {zh: "X 光反射率（XRR）", en: "X-ray reflectometry (XRR)"}, what: {zh: "臨界角 θc ∝ √δ，δ 與電子密度成正比；可分辨密度差約 ≥ 5% 的膜層。搭配 XPS 或 XRF 的成分。", en: "Critical angle θc ∝ √δ, with δ proportional to electron density; separates layers differing by about ≥ 5% in density. Pair with XPS or XRF composition."}, tools: [xrr]}
+        notes:
+          - {claim: "XRR also measures density", verdict: verified, fix: {zh: "正確：XRR 量的是電子密度，換成質量密度要假設成分；膜層密度差約 ≥ 5% 才分得開。最適合約 1–200 nm 的平滑膜。", en: "Correct: XRR measures electron density, and mass density needs an assumed composition; layers must differ by about ≥ 5%. Best for smooth films about 1–200 nm thick."}, source: "C68 · Rigaku XRR"}
+
+      - id: mass
+        name: {zh: "質量", en: "Mass"}
+        what: {zh: "製程前後晶圓的質量變化（Δm），可用膜密度與覆蓋面積換算成厚度。在光學量不到的高深寬比與 3D 結構特別有用。", en: "The wafer's mass change (Δm) across a step, convertible to thickness with film density and covered area. Most useful in high-aspect-ratio and 3D structures that optics cannot see."}
+        processes: ["Diffusion", "CVD", "Dry Etch", "Wet"]
+        groups:
+          - {id: mass-weighing, name: {zh: "晶圓秤重", en: "Wafer weighing"}, what: {zh: "同一片晶圓在製程前後各秤一次，取差值。", en: "The same wafer is weighed before and after the step and the difference is taken."}, tools: [mass-metrology]}
+
+      - id: crystal-structure
+        name: {zh: "晶體結構", en: "Crystal structure"}
+        what: {zh: "晶粒大小、結晶度、織構（texture）與晶相（phase）。例如退火後 high-k 的晶相改變會改變介電常數。", en: "Grain size, crystallinity, texture and phase. For example, an anneal-driven phase change in high-k films alters the dielectric constant."}
+        processes: ["Diffusion", "CVD", "PVD"]
+        groups:
+          - {id: crystal-xrd, name: {zh: "X 光繞射（XRD）", en: "X-ray diffraction (XRD)"}, what: {zh: "追蹤繞射峰的強度、位置與寬度；超薄膜用 in-plane 或 GIXRD。", en: "Tracks diffraction peak intensity, position and width; ultrathin films need in-plane or GIXRD."}, tools: [xrd]}
+
+      - id: contact-angle
+        name: {zh: "接觸角", en: "Contact angle"}
+        what: {zh: "水滴接觸角，代表表面潤濕性與表面能。用來檢查濕式清洗後的潔淨度，以及光阻前 HMDS priming 是否到位。", en: "Water contact angle, a proxy for wettability and surface energy. It checks cleanliness after wet cleans and whether HMDS priming before resist is right."}
+        processes: ["Wet", "Photo-litho"]
+        groups:
+          - {id: contact-angle-sessile, name: {zh: "靜滴法（sessile drop）", en: "Sessile-drop goniometry"}, what: {zh: "相機拍水滴輪廓，軟體擬合接觸角；在監控片上量。", en: "A camera images the droplet profile and software fits the angle; measured on monitor wafers."}, tools: [contact-angle-goniometer]}
+        notes:
+          - {claim: "量測技術筆記未列 (no technique noted)", verdict: corrected, fix: {zh: "已補上：用靜滴法量水接觸角（goniometer）。HMDS 合格範圍 65–85°，> 85° 為過度 priming；HF-last 的 Si 約 75°；在監控片上量。", en: "Filled: water contact angle by sessile-drop goniometer. HMDS window 65–85°, above 85° means over-priming; HF-last Si sits at about 75°; measured on monitor wafers."}, source: "C101 · US 5,702,767; ECS PV 2001-26"}
+
+tools:
+  sims:
+    name: "SIMS"
+    full: {zh: "二次離子質譜（Secondary Ion Mass Spectrometry）", en: "Secondary ion mass spectrometry"}
+    principle: {zh: "一次離子束（O2+ 或 Cs+）濺射樣品，把濺出的二次離子做質量分析，邊挖邊量得到濃度對深度的分布。", en: "A primary ion beam (O2+ or Cs+) sputters the sample and the secondary ions are mass-analysed; sputtering while measuring gives concentration versus depth."}
+    measures: {zh: "元素（含 H 與同位素）濃度對深度、植入保留劑量、化學接面深度、微量雜質與能量污染。", en: "Elemental concentration versus depth (including H and isotopes), retained implant dose, chemical junction depth, trace impurities and energy contamination."}
+    range: {zh: "偵測極限約 1e10–1e16 at/cm³（依元素，ppm–ppb）；縱深解析度 > 5 Å；動態範圍可達 6 個數量級。", en: "Detection limit about 1e10–1e16 at/cm³ depending on element (ppm–ppb); depth resolution > 5 Å; dynamic range up to 6 decades."}
+    precision: {zh: "典型：高精度劑量流程總劑量 0.17% RSD，可分辨 < 2% 的劑量差；一般為半定量，要用標準片校正。", en: "Typical: a high-precision dose protocol reaches 0.17% RSD on total dose and resolves dose differences < 2%; otherwise semi-quantitative and needs standards."}
+    location: [blanket]
+    contact: false
+    destructive: "yes"
+    inline: [lab]
+    speed: slow
+    reference: true
+    processes: ["Diffusion", "CVD", "Implant"]
+    strengths: {zh: "靈敏度最高（ppm–ppb），所有元素都能量；可追溯 NIST 標準，是植入絕對劑量與機台匹配的仲裁方法。", en: "Highest sensitivity (ppm–ppb) for every element; traceable to NIST standards, so it arbitrates absolute implant dose and tool matching."}
+    limits: {zh: "會挖出坑洞（破壞性），要切樣品到實驗室；沒有化學態資訊；分不出活化與未活化的摻雜；一個縱深分布要數小時加排隊。", en: "Sputters a crater (destructive) on a coupon in the lab; no chemical state; cannot separate active from inactive dopant; hours per profile plus lab queue."}
+    instead: {zh: "要化學態或 < 10 nm 線上成分用 XPS；要活化後的電性分布用 SRP／ECV；要例行監控用線上非破壞量測。", en: "Use XPS for chemical state or in-line composition under 10 nm; SRP / ECV for the electrically active profile; non-destructive in-line tools for routine monitoring."}
+    toolkit: []
+    notes: []
+    sources:
+      - {title: "EAG, Secondary ion mass spectrometry (SIMS)", url: "https://www.eag.com/techniques/mass-spec/secondary-ion-mass-spectrometry-sims"}
+      - {title: "Eurofins EAG, Metrologies to study ion implanted materials (IIT 2022)", url: "https://nccavs-usergroups.avs.org/wp-content/uploads/2023/01/JTG-1222-2-BuyuklimanliT-EurofinsEAG.pdf"}
+      - {title: "Northwestern NUANCE, ToF-SIMS or XPS (2019)", url: "https://nuance.northwestern.edu/documents/techtalks/2019-01-16-tt-keckll-xinqi.pdf"}
+      - {title: "Northwestern NUANCE tech talk (2023)", url: "https://nuance.northwestern.edu/documents/techtalks/2023-05-18-keck-ii.pdf"}
+      - {title: "Semicond. Sci. Technol. (2021), SIMS vs active dopant", url: "https://iopscience.iop.org/article/10.1088/1361-6641/ac0854"}
+
+  aes:
+    name: "AES"
+    full: {zh: "歐傑電子能譜（Auger Electron Spectroscopy）", en: "Auger electron spectroscopy"}
+    principle: {zh: "分析表面放出的歐傑電子能量來辨識元素；搭配濺射做縱深分布。", en: "Identifies surface elements from the energies of emitted Auger electrons; combined with sputtering for depth profiles."}
+    measures: {zh: "表面與縱深的元素成分。", en: "Surface and depth-resolved elemental composition."}
+    range: {zh: "資訊深度比 XPS（< 10 nm）更淺。", en: "Information depth shallower than XPS (< 10 nm)."}
+    precision: {zh: "來源沒有公開數字；濺射縱深分析中 AES 與 XPS 的薄膜結果最可靠。", en: "No public figure in the sources; in sputter depth profiling, AES and XPS gave the most reliable thin-film results."}
+    location: [blanket]
+    contact: false
+    destructive: "yes"
+    inline: [lab]
+    speed: slow
+    reference: true
+    processes: ["Diffusion", "CVD", "PVD"]
+    strengths: {zh: "縱深與空間解析度比 XPS 好，適合奈米尺度的成分分布。", en: "Finer depth and spatial resolution than XPS, suited to nanoscale composition profiles."}
+    limits: {zh: "化學態資訊比 XPS 弱；縱深分析要濺射（破壞性）；公開資料找不到量產線上的 AES 機台。", en: "Weaker chemical information than XPS; depth profiles need sputtering (destructive); no in-line HVM AES tool was found in public sources."}
+    instead: {zh: "要化學態用 XPS；要 ppm 以下微量雜質用 SIMS。", en: "Use XPS for chemical state; SIMS for traces below ppm."}
+    toolkit: []
+    notes: []
+    sources:
+      - {title: "Vad et al., PMC (2024), AES vs XPS information depth", url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC11316073"}
+      - {title: "IAEA INIS (2003), comparison of sputter depth profiling methods", url: "https://inis.iaea.org/records/9j689-vzv96"}
+      - {title: "Northwestern NUANCE, ToF-SIMS or XPS (2019)", url: "https://nuance.northwestern.edu/documents/techtalks/2019-01-16-tt-keckll-xinqi.pdf"}
+
+  wafer-curvature:
+    name: "Wafer curvature (stress)"
+    full: {zh: "雷射掃描晶圓曲率量測膜應力（Stoney 方程式）", en: "Film stress from laser-scanned wafer curvature (Stoney equation)"}
+    principle: {zh: "雷射掃描量鍍膜前後的晶圓曲率，用 Stoney 方程式 σ_f·t_f = E_s·h²/(6(1−ν)R) 換算；除以輸入的膜厚得到平均應力。", en: "A laser scan measures wafer curvature before and after deposition; Stoney's equation σ_f·t_f = E_s·h²/(6(1−ν)R) converts it, and dividing by the entered film thickness gives average stress."}
+    measures: {zh: "晶圓曲率 → 應力×膜厚（N/m）→ 平均膜應力（MPa），可做 2-D 應力分布圖。", en: "Wafer curvature, then stress-thickness (N/m), then average film stress (MPa); 2-D stress maps are possible."}
+    range: {zh: "典型（廠商）：1 MPa–4 GPa，以 1 µm 參考膜為準。", en: "Typical (vendor): 1 MPa–4 GPa, quoted for a 1 µm reference film."}
+    precision: {zh: "典型（廠商）：重複性 1–1.3 MPa（1σ），條件是 1 µm（10,000 Å）膜；膜越薄解析度按 1/t 變差。", en: "Typical (vendor): 1–1.3 MPa repeatability (1σ) for a 1 µm (10,000 Å) film; resolution worsens as 1/t for thinner films."}
+    location: [blanket]
+    contact: false
+    destructive: "no"
+    inline: [inline]
+    speed: fast
+    reference: false
+    processes: ["Diffusion", "CVD", "PVD"]
+    strengths: {zh: "不接觸、快（每次掃描約 6 s，自動化約 25–50+ WPH）；整片晶圓的應力。", en: "Non-contact and fast (about 6 s per scan, about 25–50+ WPH automated); stress of the whole wafer."}
+    limits: {zh: "要有鍍膜前的量測；受 Stoney 假設限制（均勻膜、小變形、等向基底）；輸入膜厚的誤差直接進入應力值；薄膜解析度差。", en: "Needs a pre-deposition scan; bound by Stoney assumptions (uniform film, small deflection, isotropic substrate); errors in entered thickness pass straight into stress; poor resolution on thin films."}
+    instead: {zh: "要評估對 overlay 的影響用晶圓幾何量測（patterned wafer geometry）；也可用 stylus profiler 量晶圓形狀。", en: "Use wafer geometry (patterned wafer geometry) for overlay impact; a stylus profiler can also measure wafer shape."}
+    toolkit: ["Wafer map", "SPC"]
+    notes: []
+    sources:
+      - {title: "Janssen et al., Stoney equation 100th anniversary, Thin Solid Films (2009)", url: "https://web.mit.edu/scholvin/www/nt245/Documents/Stress%20-%20celebrating_the_100th_anniversary_of_the_stoney_equation_for_film_stress.pdf"}
+      - {title: "Chason et al., Tutorial on residual stress, JAP (2016)", url: "https://pubs.aip.org/aip/jap/article/119/19/191101/1032395/Tutorial-Understanding-residual-stress-in"}
+      - {title: "Toho FLX-2320-S spec sheet (Utah Nanofab)", url: "https://www.nanofab.utah.edu/wp-content/uploads/2022/12/Film-stress-Tencor-FLX2320-Spec-Sheet.pdf.pdf"}
+      - {title: "NIST NanoFab, Toho FLX-2320 stress tool", url: "https://www.nist.gov/laboratories/tools-instruments/nanofab-tool-toho-technology-flx-2320-stress-measurement-tool"}
+      - {title: "Toho FLX automated series", url: "https://tohotechnology.com/industries/metrology/flx-series-auto"}
+      - {title: "Metrosemi FSM 128", url: "https://test.metrosemi.com/?page_id=606"}
+      - {title: "Review of residual stress, PMC (2022)", url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC9783026"}
+      - {title: "Lam Research, wafer stress management for 3D NAND (2019)", url: "https://www.globenewswire.com/news-release/2019/08/07/1898426/0/en/lam-research-adds-global-wafer-stress-management-solutions-to-portfolio-for-3d-nand-scaling.html"}
+
+  mass-metrology:
+    name: "Mass metrology"
+    full: {zh: "晶圓質量量測（秤重）", en: "Wafer mass metrology (weighing)"}
+    principle: {zh: "同一片晶圓在製程前後各秤一次，得到質量變化 Δm；用膜密度與覆蓋面積換算成厚度（Si 在 300 mm 上約 16.5 µg/Å）。", en: "The same wafer is weighed before and after a step to get Δm; film density and covered area convert it to thickness (about 16.5 µg per Å of Si on 300 mm)."}
+    measures: {zh: "整片晶圓的質量變化 Δm（→ 等效厚度），是面積積分值：知道「多少」，不知道「在哪裡」。", en: "Whole-wafer mass change Δm (→ equivalent thickness), an area-integrated value: it says how much, not where."}
+    range: {zh: "µg 到約 1.3 g（完整 3D NAND 膜堆約 1–1.3 g）。", en: "µg to about 1.3 g (a full 3D NAND stack adds about 1–1.3 g)."}
+    precision: {zh: "典型（廠商）：約 30 µg ≈ 300 mm 上 1.8 Å 的 Si（σ 未註明）；精度與膜厚、成分、透光性無關。", en: "Typical (vendor): about 30 µg ≈ 1.8 Å of Si on 300 mm (sigma not stated); precision does not depend on layer thickness, composition or opacity."}
+    location: [in_die, scribe, blanket]
+    contact: true
+    destructive: "no"
+    inline: [inline, integrated]
+    speed: medium
+    reference: false
+    processes: ["Diffusion", "CVD", "Dry Etch", "Wet"]
+    strengths: {zh: "光學量不到的地方也能量（HAR 蝕刻、共形 ALD、厚 3D NAND 膜堆）；ALD 在圖案片上的靈敏度可比空白片高 10 倍以上；所有材料一個 recipe。", en: "Works where optics fail (HAR etch, conformal ALD, thick 3D NAND stacks); patterned wafers can be more than 10× as sensitive as blanket for ALD; one recipe for all materials."}
+    limits: {zh: "只知道量、不知道位置（洞頂或洞底）；必須在同一片晶圓上先量前值；會接觸晶圓背面。", en: "Says how much, not where (top or bottom of a hole); needs a pre-measurement on the same wafer; touches the wafer backside."}
+    instead: {zh: "要知道材料在哪裡改變，搭配 OCD 或 SEM。", en: "Pair with OCD or SEM to see where the material changed."}
+    toolkit: ["SPC", "MSA"]
+    notes:
+      - {claim: "for very thin films in high aspect ratio structures (contacts, capacitors)", verdict: verified, fix: {zh: "正確：也用於厚的 3D NAND 膜堆。", en: "Correct: also used for thick 3D NAND stacks."}, source: "C93 · Lam mass metrology page"}
+      - {claim: "ex: film deposition, etching", verdict: verified, fix: {zh: "正確：也用於清洗、退火／固化、氧化與離子植入。", en: "Correct: also cleans, anneal / cure, oxidation and implant."}, source: "C94 · Lam blog, Metior"}
+      - {claim: "mass in grams", verdict: corrected, fix: {zh: "已更正：報告的是質量變化 Δm，從 µg 到約 1.3 g；精度約 30 µg ≈ 300 mm 上 1.8 Å 的 Si，可換算成厚度。", en: "Corrected: it reports the mass change Δm, from µg to about 1.3 g; about 30 µg precision ≈ 1.8 Å of Si on 300 mm, convertible to thickness."}, source: "C95 · Lam blog, Metior"}
+      - {claim: "non-contact", verdict: corrected, fix: {zh: "已更正：只接觸晶圓背面，正面不碰，所以可用在產品片。", en: "Corrected: backside contact only; the front side is untouched, so it is safe for product wafers."}, source: "C96 · Lam blog 2019"}
+      - {claim: "non-destructive", verdict: verified, fix: {zh: "正確：不破壞，可用在產品片。", en: "Correct: non-destructive and used on product wafers."}, source: "C97 · Lam blog, Metior"}
+      - {claim: "blanket or product wafers are fine to measure", verdict: verified, fix: {zh: "正確：共形 ALD 在圖案片上的靈敏度可比空白片高 10 倍以上。", en: "Correct: for conformal ALD, patterned wafers can be more than 10× as sensitive as blanket wafers."}, source: "C98 · Lam blog 2019"}
+      - {claim: "not integrated", verdict: corrected, fix: {zh: "已更正：有整合在製程平台上的模組，也有獨立機台。", en: "Corrected: available as platform-integrated modules and as standalone systems."}, source: "C99 · Lam Metior product page"}
+    sources:
+      - {title: "Lam Research blog, Metior mass metrology and 3D architecture", url: "https://newsroom.lamresearch.com/mass-metology-metior"}
+      - {title: "Lam Research blog, Weighing wafers simplifies metrology (2019)", url: "https://newsroom.lamresearch.com/Weighing-Wafers-Simplifies-Metrology?blog=true"}
+      - {title: "Lam Research, Metior product family", url: "https://www.lamresearch.com/product/metior"}
+      - {title: "Lam Research, Mass metrology", url: "https://www.lamresearch.com/products/mass-metrology"}
+
+  xrd:
+    name: "XRD"
+    full: {zh: "X 光繞射（X-ray diffraction），含 HRXRD、GIXRD 與 in-plane XRD", en: "X-ray diffraction, including HRXRD, GIXRD and in-plane XRD"}
+    principle: {zh: "量繞射峰的位置、強度與寬度：位置看晶相與應變，強度比看織構，峰寬用 Scherrer 方程式 L = Kλ/(β·cosθ) 估晶粒大小。", en: "Measures diffraction peak position, intensity and width: position gives phase and strain, intensity ratios give texture, and width gives grain size through the Scherrer equation L = Kλ/(β·cosθ)."}
+    measures: {zh: "晶相、結晶度、織構、晶粒大小、殘留應變（HRXRD），以及磊晶層成分。", en: "Phase, crystallinity, texture, grain size, residual strain (HRXRD) and epitaxial-layer composition."}
+    range: {zh: "多晶膜與磊晶膜；超薄膜要用 in-plane 或 GIXRD。", en: "Polycrystalline and epitaxial films; ultrathin films need in-plane or GIXRD."}
+    precision: {zh: "沒有公開的精度規格。", en: "No public precision spec."}
+    location: [blanket, scribe]
+    contact: false
+    destructive: "no"
+    inline: [inline]
+    speed: medium
+    reference: false
+    processes: ["Diffusion", "CVD", "PVD"]
+    strengths: {zh: "非接觸、不破壞；線上平台可同時做 XRR、HRXRD、GIXRD；常用於 NAND 的 W 膜、DRAM 的 ZAZ 介電膜堆與 high-k 晶相。", en: "Non-contact and non-destructive; in-line platforms combine XRR, HRXRD and GIXRD; widely used for W films in NAND, ZAZ dielectric stacks in DRAM and high-k phase."}
+    limits: {zh: "超薄膜訊號弱；Scherrer 只給視晶粒大小（apparent size），較準的方法要用至少 5 個峰；多半在空白片或約 50 × 50 µm 的測試 pad 上量。", en: "Weak signal on ultrathin films; Scherrer gives only an apparent size, and a more accurate method uses at least five peaks; mostly on blanket wafers or about 50 × 50 µm test pads."}
+    instead: {zh: "要局部或交叉驗證時用 Raman 或 TEM。", en: "Use Raman or TEM for local detail or a cross-check."}
+    toolkit: []
+    notes:
+      - {claim: "grain size, crystallinity, texture, phase of crystal (no attributes noted)", verdict: verified, fix: {zh: "正確（已補上屬性）：XRD 涵蓋這四項；再加上應變（HRXRD），超薄膜用 in-plane／GIXRD；應用於 NAND 的 W、DRAM 的 ZAZ 與 high-k。", en: "Correct (attributes filled): XRD covers all four; add strain (HRXRD) and in-plane / GIXRD for ultrathin films; used for W (NAND), ZAZ (DRAM) and high-k."}, source: "C100 · Bruker film crystallinity"}
+    sources:
+      - {title: "Bruker 7300LSI automated X-ray metrology", url: "https://www.bruker.com/ko/products-and-solutions/semiconductor-solutions/automated-x-ray-metrology-systems/7300lsi.html"}
+      - {title: "Bruker, Film crystallinity in memory", url: "https://www.bruker.com/pl/applications/semiconductor-and-nanotech/memory/film-crystallinity.html"}
+      - {title: "Bruker, High-k crystallinity", url: "https://www.bruker.com/ru/applications/semiconductor-and-nanotech/logic/high-k-crystallinity.html"}
+      - {title: "Rigaku XTRAIA XD series", url: "https://rigaku.com/products/semiconductor-metrology/xtraia-xd-series"}
+      - {title: "Modified Scherrer equation (ResearchGate)", url: "https://www.researchgate.net/publication/259706971_Modified_Scherrer_Equation_to_Estimate_More_Accurately_Nano-Crystallite_Size_Using_XRD"}
+      - {title: "Nasiri et al. (2023), modified Scherrer method", url: "https://www.sciencedirect.com/science/article/pii/S2666978123000132"}
+
+  contact-angle-goniometer:
+    name: "Contact-angle goniometer"
+    full: {zh: "靜滴法水接觸角量測儀（sessile-drop goniometer）", en: "Sessile-drop water contact-angle goniometer"}
+    principle: {zh: "滴一滴超純水（或用 diiodomethane 算表面能）在晶圓上，相機拍輪廓、軟體擬合角度；Young 方程式 γ_S = γ_SL + γ_L·cosθ 把角度連到表面能。", en: "A droplet of ultrapure water (or diiodomethane for surface energy) is placed on the wafer, a camera images it and software fits the angle; Young's equation γ_S = γ_SL + γ_L·cosθ links the angle to surface energy."}
+    measures: {zh: "水接觸角 → 潤濕性與表面能；角度低 = 乾淨、親水。", en: "Water contact angle, giving wettability and surface energy; a low angle means a clean, hydrophilic surface."}
+    range: {zh: "0–180°。參考值：裸 Si ≤ 40°；HMDS 後 65–80°，合格範圍 65–85°；HF-last Si 約 75°。", en: "0–180°. Reference values: bare Si ≤ 40°; 65–80° after HMDS, accepted window 65–85°; HF-last Si about 75°."}
+    precision: {zh: "典型（廠商）：自動晶圓機台準確度 0.2°；HMDS priming 機台宣稱 ±3°。", en: "Typical (vendor): 0.2° accuracy on automated wafer tools; HMDS priming tools claim ±3°."}
+    location: [blanket]
+    contact: true
+    destructive: "slight"
+    inline: [inline]
+    speed: medium
+    reference: false
+    processes: ["Wet", "Photo-litho"]
+    strengths: {zh: "簡單直接，可檢查清洗後潔淨度與 HMDS priming；自動機台可做 300 mm 分布圖。", en: "Simple and direct check of post-clean cleanliness and HMDS priming; automated tools map 300 mm wafers."}
+    limits: {zh: "水滴會留下殘留，所以用監控片；角度受液滴體積、時間、濕度與 queue time 影響；只代表表面能，不是成分；找不到整合式量產模組。", en: "The droplet leaves residue, so monitor wafers are used; the angle depends on drop volume, time, humidity and queue time; a surface-energy proxy, not composition; no integrated HVM module was found."}
+    instead: {zh: "發現異常時用 XPS 或 TOF-SIMS 找出污染來源。", en: "When an excursion appears, use XPS or TOF-SIMS to identify the contamination."}
+    toolkit: ["SPC"]
+    notes: []
+    sources:
+      - {title: "KRÜSS glossary, Young's equation", url: "https://www.kruss-scientific.com/en/know-how/glossary/youngs-equation"}
+      - {title: "Applied Physics USA, Surface energy of treated wafers", url: "https://appliedphysicsusa.com/surface-energy-measurement-treated-wafers"}
+      - {title: "ECS Cleaning Technology VII, PV 2001-26", url: "https://www.electrochem.org/semiconductor_cleaning/pv_2001_26.pdf"}
+      - {title: "Nanoscience Instruments (2025), Wettability in semiconductor processing", url: "https://www.nanoscience.com/blogs/wettability-analysis-in-semiconductor-processing"}
+      - {title: "US Patent 5,702,767", url: "https://patents.justia.com/patent/5702767"}
+      - {title: "YES HMDS application note (MIT)", url: "https://web.mit.edu/scholvin/www/nt245/Documents/HMDS%20Application%20Note.pdf"}
+      - {title: "Kyowa DMo-WA wafer contact angle meter", url: "https://www.face-kyowa.co.jp/english/en_products/en_contact_angle/detail_01_2_4.html"}
+      - {title: "Biolin Scientific (2025), Wafer cleanliness by contact angle", url: "https://www.biolinscientific.com/blog/silicon-wafer-cleanliness-evaluation-through-contact-angle-measurement"}
+
+relations: []

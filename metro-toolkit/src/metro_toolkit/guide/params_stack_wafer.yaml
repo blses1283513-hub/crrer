@@ -81,6 +81,17 @@ params:
       - Effect: one more degree of freedom, so χ² may drop, but the thickness ± 1σ grows and L0.thickness and L0.A become correlated. For a thin film what is really measured is the optical thickness n·d: slightly higher n with slightly lower d gives almost the same spectrum. In this simulator, 3 nm HfO2 (3-angle SE) gives r ≈ −0.8; reflectometry or higher noise makes it worse.
       - Common practice: production recipes fix n,k (dispersion measured on a thick reference film or during model building) and float thickness only; float n only for thick enough films or to monitor film quality (density, composition, crystallisation after anneal), and track it on a monitor wafer.
       - Traps: a lower χ² does not mean a more accurate thickness; A stopping at a bound means the model is wrong; floating A alone only shifts n uniformly and cannot describe a change of dispersion shape or of absorption k.
+  stack.gof:
+    zh: |
+      **GOF 擬合優度（goodness of fit）**＝1 − Σ(量測 − 模型)² ÷ Σ(量測 − 平均)²，1 代表完全吻合（類似 R²）。這是許多反射儀顯示的定義；各家機台的定義不同，橢偏儀軟體多半改報 MSE 或 χ²（越小越好）。
+      - 接受標準沒有通用值，是**每個 recipe 自己訂**的（例如「GOF < 0.9 不接受、> 0.95 接受」只是某些 recipe 的例子）。
+      - GOF 低：模型少一層、n&k 錯、初始值錯、粗糙度、量到圖形上。
+      - **GOF 高也可能是錯的**：超薄膜的厚度與 n 高度相關、固定參數設錯（例如固定的底層厚度）、或擬合落在錯的干涉級數（例如 2000 Å 的氧化層被算成約 1000 Å）。所以要和 χ²、參數不確定度、相關係數與參考量測一起看。
+    en: |
+      **GOF (goodness of fit)** = 1 − Σ(measured − model)² ÷ Σ(measured − mean)², where 1 is a perfect match (R²-like). This is the definition many reflectometers show; vendors define it differently, and ellipsometry software usually reports MSE or χ² instead (lower is better).
+      - There is no universal acceptance limit: **each recipe sets its own** (e.g. "GOF < 0.9 reject, > 0.95 accept" is only one recipe's example).
+      - Low GOF: a missing layer, wrong n&k, a wrong starting value, roughness, or a spot landing on pattern.
+      - **A high GOF can still be wrong**: thickness and n of an ultra-thin film are strongly correlated, a fixed parameter can be wrong (e.g. a fixed underlayer), or the fit can land on the wrong fringe order (e.g. a 2000 Å oxide read as about 1000 Å). Read it together with χ², the parameter uncertainty, the correlations and a reference measurement.
   stack.chi2:
     zh: |
       **reduced χ² 約化卡方**＝Σ[(模型 − 量測) ÷ σ]² ÷ (N − p)。N＝資料點數（反射儀 301 個波長；SE 為 角度數 × 3（N、C、S）× 301），p＝浮動參數數，σ＝雜訊滑桿設定的量測雜訊。

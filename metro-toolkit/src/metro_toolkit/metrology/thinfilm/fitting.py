@@ -78,9 +78,10 @@ class FitResult:
     stack: Stack
     n_points: int
     candidates: list[tuple[float, list[float]]] = field(default_factory=list)
+    gof: float = float("nan")  # 1 - SSE/SST of the fitted quantity (R, or N/C/S): an R²-like 0-1 score, see fit()
 
     def summary(self) -> str:
-        lines = [f"stack     : {self.stack.describe()}", f"chi2_red  : {self.chi2_red:.3f}"]
+        lines = [f"stack     : {self.stack.describe()}", f"chi2_red  : {self.chi2_red:.3f}", f"GOF       : {self.gof:.4f}"]
         for lab in self.labels:
             lines.append(f"{lab:<12}: {self.values[lab]:.4f} +/- {self.stderr[lab]:.4f}")
         if len(self.labels) > 1:
@@ -131,6 +132,13 @@ def _apply(stack: Stack, params: list[FitParameter], p: np.ndarray) -> Stack:
             base = materials[fp.layer] or stack.layers[fp.layer].material
             materials[fp.layer] = base.with_params(**{fp.target: value})
     return stack.copy_with(thicknesses=thicknesses, materials=materials)
+
+
+def _targets(meas: Measurement) -> np.ndarray:
+    """The measured values in the same order as the residual vector (R, or N/C/S per angle)."""
+    if meas.kind == "reflectance":
+        return np.asarray(meas.data["R"], float)
+    return np.concatenate([np.concatenate(ncs(*pd)) for pd in meas.data.values()])
 
 
 def _residual_fn(stack, meas: Measurement, params):
@@ -258,7 +266,16 @@ def fit(
         stack=_apply(stack, params, best.x),
         n_points=m,
         candidates=sorted(candidates),
+        gof=_gof(_targets(measurement), best.fun * measurement.sigma),
     )
+
+
+def _gof(y: np.ndarray, resid: np.ndarray) -> float:
+    """Goodness of fit as many reflectometry tools report it: 1 - SSE/SST (1 = perfect, R²-like). Vendors define it
+    differently (and ellipsometry software usually reports MSE instead), so acceptance limits are recipe-specific, and a
+    high GOF does not prove the answer is right (correlated or wrongly fixed parameters, a wrong fringe order)."""
+    sst = float(np.sum((y - y.mean()) ** 2))
+    return float(1 - np.sum(resid ** 2) / sst) if sst > 0 else float("nan")
 
 
 def fit_thickness(stack: Stack, measurement: Measurement, layer: int = 0, bounds=(0.0, 1000.0)) -> FitResult:

@@ -289,6 +289,26 @@ options:
   D_FLAG_TRACK:
     when: {zh: "缺陷在下一層同位置再出現、是真的但影響還沒確認時：lot 繼續生產但標記這幾片與 cluster 區域，等切面與 probe 結果確認。", en: "When the defects reappear at the same spot at the next layer, so they are real but their impact is not yet known: let the lot continue with the wafers and cluster area flagged until the cross-section and probe confirm."}
 
+  C_MISSING_LAYER:
+    when: {zh: "GOF 低於 recipe 標準、擬合厚度接近標稱，但殘差有固定的結構，改變厚度也消不掉：晶圓上有一層模型裡沒有的膜。", en: "GOF is below the recipe limit and the fitted thickness is near nominal, but the residual keeps a structure no thickness change removes: a film is on the wafer that the model lacks."}
+    looks: {zh: "量測與擬合光譜整體對得上，但振幅或干涉峰的形狀一直有落差；GOF 掉到標準以下、χ² 偏高，厚度讀值看起來還合理。", en: "Measured and fitted spectra line up overall but keep a gap in fringe amplitude or shape; GOF falls below the limit and χ² is high while the thickness reading still looks plausible."}
+  C_WRONG_ORDER:
+    when: {zh: "擬合厚度和標稱差很多（常常約一半或兩倍），而且真正的厚度不在厚度搜尋範圍或初始值附近：擬合落在錯的干涉級數。", en: "The fitted thickness is far from nominal (often about half or double) and the real thickness lies outside the search window or away from the starting value: the fit landed on the wrong fringe order."}
+    looks: {zh: "擬合光譜的干涉峰數目或位置和量測對不上，GOF 很低；擬合厚度常常卡在搜尋範圍邊界附近。", en: "The fitted spectrum has the wrong number or position of fringes, GOF is very low, and the fitted thickness often sits near an edge of the search window."}
+  C_DOSE_DRIFT:
+    when: {zh: "只有一台佈植機的監控片 Rs 偏移，不論在哪台退火都一樣，而且退火前的 thermal-wave 也只在這台變。", en: "Only one implanter's monitor Rs moves, whichever anneal tool it went through, and the pre-anneal thermal-wave moves on that implanter only."}
+    looks: {zh: "Rs 依佈植機分組只有一條線偏；依退火機台分組兩台都受影響；thermal-wave 依佈植機分組也只有同一條線反向偏移。", en: "Rs grouped by implanter shows one line off; grouped by anneal tool both tools are affected; thermal-wave by implanter moves the opposite way on that same line."}
+  C_ANNEAL_DRIFT:
+    when: {zh: "在同一台退火機處理的監控片，不論來自哪台佈植機 Rs 都偏移，而退火前的 thermal-wave 全部正常。", en: "Monitors processed in one anneal tool move in Rs whichever implanter they came from, while the pre-anneal thermal-wave is normal everywhere."}
+    looks: {zh: "Rs 依退火機台分組只有一台偏；依佈植機分組每台都有一部分點偏高；thermal-wave 完全平穩。", en: "Rs grouped by anneal tool shows one tool off; grouped by implanter every implanter has some high points; thermal-wave is flat."}
+  A_ADD_LAYER:
+    when: {zh: "GOF 低而且證據指向模型少了一層時：不要用讀值，把那層（含 n、k）加進模型、重新擬合並用參考量測驗證。", en: "When GOF is low and the evidence points to a missing layer: do not use the readings; add the layer (with its n, k), refit and validate against a reference."}
+  A_WIDEN_SEARCH:
+    when: {zh: "擬合落在錯的干涉級數時：放寬厚度搜尋範圍（或全域搜尋）、修正初始值，再用參考量測確認。", en: "When the fit landed on the wrong fringe order: widen the thickness search window (or search globally), fix the starting value, and confirm with a reference."}
+  A_IMPLANTER_CHECK:
+    when: {zh: "Rs 與退火前 thermal-wave 都只在一台佈植機偏移時：hold 該機台、檢查劑量量測（Faraday cup、beam current），用監控片重新 qual。", en: "When Rs and the pre-anneal thermal-wave both move on one implanter only: hold it, check its dosimetry (Faraday cup, beam current) and re-qualify with monitors."}
+  A_ANNEAL_CHECK:
+    when: {zh: "Rs 只在同一台退火機處理的片子偏移、thermal-wave 正常時：檢查退火機台的溫度校正、燈管／分區與 recipe，佈植機不用動。", en: "When Rs moves only on wafers annealed in one tool and thermal-wave is normal: check that tool's temperature calibration, lamps / zones and recipe; leave the implanters alone."}
 roles:
   RDA:
     need: {zh: "有缺陷或失效晶粒需要 review、SEM、切面或拉片取樣時要通知 RDA：缺陷事件、檢查 recipe 的 nuisance 問題、分不出類別的缺陷，以及 FA 請求的回覆，都要讓 RDA 知道哪幾片、哪幾顆、在哪裡。", en: "Tell RDA whenever defects or failing dies need review, SEM, cross-section or pulled wafers: a defect event, a nuisance question on the inspection recipe, defects review cannot classify, and replies to an FA request, so they know which wafers, which dies and where."}

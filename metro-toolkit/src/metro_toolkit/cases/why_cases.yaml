@@ -371,3 +371,24 @@ cases:
       A_RECORD: {zh: "RDA 問的是真的還假的；下一層的重複率（{repeat_pct}%）可以回答，並導向一個行動（FIB 切面或調 recipe）。", en: "RDA asked whether it is real; the next-layer repeat rate ({repeat_pct}%) answers that and leads to an action (a FIB cross-section or recipe tuning)."}
       D_HOLD: {zh: "hold 等 disposition 需要已知的風險；這裡 lot 可以標記後繼續走（真缺陷）或照常放行（假訊號），同時用切面和 probe 確認。", en: "Holding for disposition needs a known risk; here the lot can continue flagged (a real defect) or as normal (an artefact) while the cross-section and probe confirm."}
       D_SCRAP: {zh: "缺陷還沒分類、會不會致命也不知道；在切面和 probe 結果出來前報廢太早。", en: "The defect is not classified and its kill risk is unknown; scrapping before the cross-section and probe is premature."}
+  film_gof_reject:
+    check_first: {zh: "先比對擬合厚度和標稱厚度（這次 {fitted} vs {nominal} nm），並看真正的厚度在不在搜尋範圍 {lo}–{hi} nm 內：接近標稱 → 檢查模型層數；差很多 → 檢查搜尋範圍與初始值。", en: "First compare the fitted and nominal thickness (here {fitted} vs {nominal} nm) and check whether the real thickness lies inside the search window {lo}–{hi} nm: near nominal → check the model's layers; far off → check the search window and starting value."}
+    notes:
+      C_FIXED_LAYER: {zh: "固定底層設錯時 GOF 通常還是很好（模型把差異吸收進浮動層）；這裡 GOF 只有 {gof}，模型根本解釋不了光譜。", en: "A wrongly fixed underlayer usually still gives a good GOF (the floating layer absorbs the difference); here GOF is only {gof}, so the model cannot explain the spectrum at all."}
+      C_NOISE_TOOL: {zh: "雜訊變大會讓 GOF 普遍下降但光譜形狀仍然吻合；這裡是系統性的不吻合（GOF {gof}），不是隨機雜訊。", en: "More noise lowers GOF across the board while the spectral shape still matches; here the mismatch is systematic (GOF {gof}), not random noise."}
+      C_CORR: {zh: "參數相關是超薄膜同時浮動厚度與 n 的問題，GOF 通常很好；這是約 {nominal} nm 的氧化層、只浮動厚度。", en: "Parameter correlation is a problem of floating both thickness and n on an ultra-thin film, usually with a good GOF; this is an oxide of about {nominal} nm with only thickness floating."}
+      A_RECORD: {zh: "GOF {gof} 低於 recipe 標準 {limit}，讀值不能用；只記錄等於讓錯的數字進 SPC。", en: "GOF {gof} is below the recipe limit {limit}, so the readings cannot be used; only recording it lets wrong numbers into SPC."}
+      A_RELEASE_RECIPE: {zh: "recipe 在驗證片上就沒過自己的標準（GOF {gof} < {limit}），先發行再調會讓錯誤讀值進產線。", en: "The recipe fails its own limit on the qualification wafer (GOF {gof} < {limit}); releasing it now puts wrong readings into production."}
+      D_RECIPE_OK: {zh: "GOF {gof} 低於 recipe 自己訂的 {limit}，不能進入發行。", en: "GOF {gof} is below the {limit} the recipe set itself, so it cannot be released."}
+      D_RELEASE: {zh: "這是 recipe 驗證，不是產品放行；問題在量測模型，要先修 recipe。", en: "This is a recipe qualification, not a product release; the problem is the measurement model, which must be fixed first."}
+  implant_rs_monitor:
+    check_first: {zh: "先把 Rs 依佈植機和依退火機台各分組一次，再看退火前的 thermal-wave：只有一台佈植機偏而且 thermal-wave 也偏 → 劑量；只有一台退火機偏、thermal-wave 正常 → 退火。", en: "First group Rs by implanter and by anneal tool, then look at the pre-anneal thermal-wave: one implanter off with thermal-wave off too → dose; one anneal tool off with thermal-wave normal → anneal."}
+    notes:
+      C_METRO_OFFSET: {zh: "所有監控片都在同一台 Rs 機台量，量測偏差會讓每一條線一起偏；這裡只有一部分（一台佈植機或一台退火機）的片子偏。", en: "Every monitor is measured on the same Rs tool, so a metrology offset would move every line together; here only part of the wafers (one implanter or one anneal tool) moved."}
+      C_RANDOM: {zh: "從第 {start_day} 天起持續偏高約 {shift_pct}%，而且集中在同一台機台，不是偶發的單點。", en: "Rs has stayed about {shift_pct}% high since day {start_day}, concentrated on one tool: not an isolated chance point."}
+      A_REGROUP: {zh: "重新依量測機台分組只適用於有多台量測機台的情況；這裡只有一台 Rs 機台，要分組的是佈植機與退火機。", en: "Regrouping by metrology tool helps only with several metrology tools; here there is one Rs tool, and the groupings that matter are implanter and anneal tool."}
+      A_RECORD: {zh: "Rs 持續偏移約 {shift_pct}% 而且有點接近上限，產品正在受影響，不能只記錄。", en: "Rs has drifted about {shift_pct}% and some points are near the upper limit; product is affected now, so recording alone is not enough."}
+      D_RELEASE: {zh: "找到原因前，這段期間經過問題機台的產品風險未知，要先 hold。", en: "Until the cause is fixed, product that went through the problem tool in this window carries unknown risk and must be held."}
+      D_RETARGET: {zh: "這是機台偏移，不是 target 設定問題；調 target 會把佈植機或退火機的問題藏起來。", en: "This is a tool drift, not a targeting issue; re-targeting would hide the implanter or anneal problem."}
+      D_SCRAP: {zh: "偏移約 {shift_pct}%、多數還在規格內，交給 PE／PIE 依電性資料判定，不要直接報廢。", en: "The shift is about {shift_pct}% and mostly still in spec; let PE / PIE disposition by electrical data instead of scrapping."}
+
