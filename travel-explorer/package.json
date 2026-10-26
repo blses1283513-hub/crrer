@@ -5,9 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "npm run typecheck && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc -b"
+    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.worker.json",
+    "test": "vitest run"
   },
   "dependencies": {
     "@vis.gl/react-google-maps": "^1.5.0",
@@ -17,12 +18,14 @@
     "react-leaflet": "^4.2.1"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260702.1",
     "@types/google.maps": "^3.58.1",
     "@types/leaflet": "^1.9.14",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^5.2.0",
     "typescript": "^5.6.3",
-    "vite": "^7.3.7"
+    "vite": "^7.3.7",
+    "vitest": "^5.0.5"
   }
 }

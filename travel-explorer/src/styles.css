@@ -127,3 +127,28 @@ a { color: var(--accent); }
 .float { position: absolute; z-index: 1000; border: 0; background: var(--bg); color: var(--text); box-shadow: var(--shadow); cursor: pointer; }
 .float--top { top: 12px; left: 50%; transform: translateX(-50%); padding: 8px 16px; border-radius: 999px; font-weight: 600; white-space: nowrap; }
 .float--locate { right: 12px; bottom: 120px; width: 42px; height: 42px; border-radius: 50%; font-size: 1.3rem; }
+
+/* Recommendation levels */
+.lvl { display: inline-flex; align-items: center; font-size: 0.72rem; font-weight: 800; padding: 1px 7px;
+  border-radius: 6px; color: #fff; vertical-align: 2px; letter-spacing: 0.02em; }
+.lvl--S { background: linear-gradient(135deg, #f59e0b, #dc2626); }
+.lvl--A { background: #7c3aed; }
+.lvl--B { background: #2563eb; }
+.lvl--C { background: #6b7280; }
+.lvl-label { font-weight: 600; margin-left: 5px; }
+.group { padding: 14px 6px 4px; }
+.group .lvl { font-size: 0.85rem; padding: 3px 10px; }
+.buzz { display: flex; flex-wrap: wrap; gap: 4px 10px; color: var(--muted); margin: 1px 0; }
+.pin { position: relative; }
+.pin-lvl { position: absolute; top: -7px; right: -9px; font-size: 10px; font-weight: 800; color: #fff;
+  border-radius: 5px; padding: 0 4px; line-height: 15px; border: 1.5px solid #fff; }
+.notes { font-size: 0.8rem; color: var(--muted); margin: 6px 0; }
+.notes ul { margin: 4px 0 0; padding-left: 18px; }
+.why { border-top: 1px solid var(--border); margin-top: 14px; }
+.why h4 { font-size: 0.85rem; margin: 14px 0 4px; }
+.why-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.bar-row { display: grid; grid-template-columns: 150px 1fr; align-items: center; gap: 8px; font-size: 0.8rem; margin: 5px 0; }
+.bar { height: 8px; background: var(--surface); border-radius: 4px; overflow: hidden; border: 1px solid var(--border); }
+.bar > span { display: block; height: 100%; background: var(--accent); }
+.evidence { list-style: none; padding: 0; margin: 0; font-size: 0.85rem; line-height: 1.5; }
+.evidence li { margin: 3px 0; overflow-wrap: anywhere; }

@@ -56,6 +56,7 @@ export function GoogleMapView({
           >
             <div className={selected ? 'pin pin--selected' : 'pin'} style={{ background: cat.color }}>
               {cat.emoji}
+              {p.ranking && <span className={`pin-lvl lvl--${p.ranking.level}`}>{p.ranking.level}</span>}
             </div>
           </AdvancedMarker>
         );

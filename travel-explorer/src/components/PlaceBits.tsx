@@ -1,6 +1,10 @@
 import { CATEGORY_BY_ID } from '../categories';
 import type { Strings } from '../i18n';
-import type { Place } from '../types';
+import type { Lang, Level, Place } from '../types';
+
+export function compact(n: number, lang: Lang): string {
+  return new Intl.NumberFormat(lang, { notation: 'compact', maximumFractionDigits: 1 }).format(n);
+}
 
 export function Thumb({ place, size }: { place: Place; size: number }) {
   const cat = CATEGORY_BY_ID[place.category];
@@ -16,6 +20,33 @@ export function Thumb({ place, size }: { place: Place; size: number }) {
           onError={(e) => (e.currentTarget.style.display = 'none')}
         />
       )}
+    </div>
+  );
+}
+
+export function LevelBadge({ level, t, withLabel }: { level: Level; t: Strings; withLabel?: boolean }) {
+  return (
+    <span className={`lvl lvl--${level}`} title={t.levels[level]}>
+      {level}
+      {withLabel && <span className="lvl-label">· {t.levels[level]}</span>}
+    </span>
+  );
+}
+
+/** One-line summary of the off-map evidence: ▶ videos · 👁 views · 📰 articles · W guide */
+export function BuzzLine({ place, lang, t }: { place: Place; lang: Lang; t: Strings }) {
+  const s = place.ranking?.signals;
+  if (!s || (!s.videos.length && !s.articles.length && !s.wikivoyage)) return null;
+  const views = s.videos.reduce((sum, v) => sum + v.views, 0);
+  return (
+    <div className="buzz small">
+      {s.videos.length > 0 && (
+        <span title={t.partVideo}>
+          ▶ {s.videos.length} · {compact(views, lang)} {t.views}
+        </span>
+      )}
+      {s.articles.length > 0 && <span title={t.articlesHeading}>📰 {s.articles.length}</span>}
+      {s.wikivoyage && <span title={t.wikivoyageListed}>🧭 Wikivoyage</span>}
     </div>
   );
 }

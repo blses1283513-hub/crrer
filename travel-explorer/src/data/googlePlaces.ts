@@ -1,4 +1,5 @@
 import { CATEGORY_BY_ID } from '../categories';
+import { CITY_STATES } from '../ranking/queries';
 import type { Backend, CategoryId, LatLng, Place } from '../types';
 
 type PlacesLib = google.maps.PlacesLibrary;
@@ -17,9 +18,30 @@ const FIELDS = [
   'regularOpeningHours',
   'utcOffsetMinutes',
   'businessStatus',
+  'addressComponents',
 ];
 
+// Used to learn a place's name in another language (for spotting it in videos/articles).
+const NAME_FIELDS = ['id', 'displayName', 'addressComponents'];
+
 const PRICE_LEVELS = ['FREE', 'INEXPENSIVE', 'MODERATE', 'EXPENSIVE', 'VERY_EXPENSIVE'];
+
+/** Country code and the city name to use in "best X in <city>" searches. */
+function areaOf(p: google.maps.places.Place): { countryCode?: string; city?: string } {
+  const comps = p.addressComponents ?? [];
+  const find = (type: string) => comps.find((c) => c.types.includes(type));
+  const country = find('country');
+  const countryCode = country?.shortText ?? undefined;
+  const city =
+    countryCode && CITY_STATES.has(countryCode)
+      ? country
+      : (find('locality') ?? find('postal_town') ?? find('administrative_area_level_1') ?? country);
+  return { countryCode, city: city?.longText ?? undefined };
+}
+
+function toNameOnly(p: google.maps.places.Place, category: CategoryId): Place {
+  return { id: p.id, name: p.displayName ?? '', category, location: { lat: 0, lng: 0 }, ...areaOf(p) };
+}
 
 async function toPlace(p: google.maps.places.Place, category: CategoryId): Promise<Place | null> {
   if (!p.location || p.businessStatus === 'CLOSED_PERMANENTLY') return null;
@@ -50,6 +72,7 @@ async function toPlace(p: google.maps.places.Place, category: CategoryId): Promi
     })),
     mapsUrl: p.googleMapsURI ?? undefined,
     isGooglePlace: true,
+    ...areaOf(p),
   };
 }
 
@@ -58,12 +81,13 @@ export function createGoogleBackend(lib: PlacesLib | null): Backend {
     kind: 'google',
     ready: lib !== null,
 
-    async search(center: LatLng, radius: number, categoryId: CategoryId, lang) {
+    async search(center: LatLng, radius: number, categoryId: CategoryId, lang, opts) {
       if (!lib) return [];
       const cat = CATEGORY_BY_ID[categoryId];
+      const fields = opts?.namesOnly ? NAME_FIELDS : FIELDS;
       const requests: Promise<{ places: google.maps.places.Place[] }>[] = [
         lib.Place.searchNearby({
-          fields: FIELDS,
+          fields,
           includedTypes: cat.types,
           locationRestriction: { center, radius },
           maxResultCount: 20,
@@ -75,7 +99,7 @@ export function createGoogleBackend(lib: PlacesLib | null): Backend {
         requests.push(
           lib.Place.searchByText({
             textQuery: cat.textQuery,
-            fields: FIELDS,
+            fields,
             locationBias: { center, radius },
             maxResultCount: 20,
             language: lang,
@@ -83,6 +107,7 @@ export function createGoogleBackend(lib: PlacesLib | null): Backend {
         );
       }
       const responses = await Promise.all(requests);
+      if (opts?.namesOnly) return responses.flatMap((r) => r.places).map((p) => toNameOnly(p, categoryId));
       const places = await Promise.all(responses.flatMap((r) => r.places).map((p) => toPlace(p, categoryId)));
       return places.filter((p): p is Place => p !== null);
     },

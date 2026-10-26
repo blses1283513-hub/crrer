@@ -5,29 +5,45 @@ import { PlaceDetail } from './components/PlaceDetail';
 import { PlaceList } from './components/PlaceList';
 import { distanceMeters } from './geo';
 import { STRINGS } from './i18n';
-import type { Backend, CategoryId, Filters, FlyTo, Lang, LatLng, MapViewProps, Place } from './types';
+import { rankingLangs } from './ranking/queries';
+import { mostCommon, rankPlaces } from './ranking/rank';
+import { compareRecommended } from './ranking/score';
+import type {
+  Backend,
+  CategoryId,
+  Filters,
+  FlyTo,
+  Lang,
+  LatLng,
+  MapViewProps,
+  Place,
+  QueryLang,
+  SignalProvider,
+} from './types';
 import { useFavorites } from './useFavorites';
 
 interface Props {
   backend: Backend;
+  signals: SignalProvider;
   MapView: ComponentType<MapViewProps>;
   initialCenter: LatLng;
   lang: Lang;
   onLangChange(l: Lang): void;
 }
 
-const DEFAULT_FILTERS: Filters = { minRating: 0, maxPrice: 4, openNow: false, radius: 2000, sort: 'distance' };
+const DEFAULT_FILTERS: Filters = { minRating: 0, maxPrice: 4, openNow: false, radius: 2000, sort: 'recommended' };
 const DEFAULT_CATEGORIES: CategoryId[] = ['restaurant', 'cafe', 'attractions'];
 
-export function Explorer({ backend, MapView, initialCenter, lang, onLangChange }: Props) {
+export function Explorer({ backend, signals, MapView, initialCenter, lang, onLangChange }: Props) {
   const t = STRINGS[lang];
   const [cats, setCats] = useState<Set<CategoryId>>(() => new Set(DEFAULT_CATEGORIES));
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
   const [searchCenter, setSearchCenter] = useState<LatLng>(initialCenter);
   const [viewCenter, setViewCenter] = useState<LatLng>(initialCenter);
   const [results, setResults] = useState<Place[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [phase, setPhase] = useState<'places' | 'ranking'>();
   const [error, setError] = useState<string>();
+  const [notes, setNotes] = useState<string[]>([]);
   const [tab, setTab] = useState<'results' | 'saved'>('results');
   const [selectedId, setSelectedId] = useState<string>();
   const [flyTo, setFlyTo] = useState<FlyTo>();
@@ -44,33 +60,76 @@ export function Explorer({ backend, MapView, initialCenter, lang, onLangChange }
       setSearchCenter(center);
       if (!backend.ready) return;
       const id = ++requestId.current;
+      const stale = () => id !== requestId.current; // a newer search started meanwhile
       setError(undefined);
+      setNotes([]);
       if (cats.size === 0) {
         setResults([]);
         return;
       }
-      setLoading(true);
-      const settled = await Promise.allSettled(
-        [...cats].map((c) => backend.search(center, filters.radius, c, lang)),
-      );
-      if (id !== requestId.current) return; // a newer search started meanwhile
+      const catList = [...cats];
+
+      // 1. Find candidate places on the map.
+      setPhase('places');
+      const settled = await Promise.allSettled(catList.map((c) => backend.search(center, filters.radius, c, lang)));
+      if (stale()) return;
       const seen = new Set<string>();
-      const merged: Place[] = [];
+      const found: Place[] = [];
       for (const r of settled) {
         if (r.status !== 'fulfilled') continue;
         for (const p of r.value) {
           if (!seen.has(p.id)) {
             seen.add(p.id);
-            merged.push(p);
+            found.push(p);
           }
         }
       }
       const failure = settled.find((r): r is PromiseRejectedResult => r.status === 'rejected');
       if (failure) setError(`${t.searchFailed}: ${String(failure.reason?.message ?? failure.reason)}`);
-      setResults(merged);
-      setLoading(false);
+      if (found.length === 0) {
+        setResults([]);
+        setPhase(undefined);
+        return;
+      }
+
+      // 2. Learn each place's name in English, Chinese and the local language, so we can spot it online.
+      setPhase('ranking');
+      const countryCode = mostCommon(found.map((p) => p.countryCode));
+      const langs = rankingLangs(countryCode);
+      const cityByLang: Partial<Record<QueryLang, string>> = { [lang]: mostCommon(found.map((p) => p.city)) };
+      const names = new Map(found.map((p) => [p.id, { ...p.names, [lang]: p.name } as Partial<Record<QueryLang, string>>]));
+      await Promise.all(
+        langs
+          .filter((l) => l !== lang)
+          .map(async (l) => {
+            const res = await Promise.allSettled(
+              catList.map((c) => backend.search(center, filters.radius, c, l, { namesOnly: true })),
+            );
+            const localized = res.flatMap((r) => (r.status === 'fulfilled' ? r.value : []));
+            cityByLang[l] = mostCommon(localized.map((p) => p.city));
+            for (const p of localized) {
+              const n = names.get(p.id);
+              if (n && !n[l]) n[l] = p.name;
+            }
+          }),
+      );
+      if (stale()) return;
+      const withNames = found.map((p) => ({ ...p, names: names.get(p.id) }));
+
+      // 3. Rank with videos, articles and travel guides before showing anything.
+      try {
+        const ranked = await rankPlaces(withNames, signals, { langs, cityByLang, countryCode, categories: catList });
+        if (stale()) return;
+        setResults(ranked.places);
+        setNotes(ranked.report.notes);
+      } catch (e) {
+        if (stale()) return;
+        setResults(withNames);
+        setNotes([String((e as Error).message ?? e)]);
+      }
+      setPhase(undefined);
     },
-    [backend, cats, filters.radius, lang, t.searchFailed],
+    [backend, signals, cats, filters.radius, lang, t.searchFailed],
   );
 
   // Re-search whenever the inputs that change the query change.
@@ -138,7 +197,13 @@ export function Explorer({ backend, MapView, initialCenter, lang, onLangChange }
           );
     return source
       .map((p) => ({ ...p, distance: distanceMeters(origin, p.location) }))
-      .sort((a, b) => (filters.sort === 'rating' ? (b.rating ?? 0) - (a.rating ?? 0) : a.distance - b.distance));
+      .sort((a, b) =>
+        filters.sort === 'recommended'
+          ? compareRecommended(a, b) || a.distance - b.distance
+          : filters.sort === 'rating'
+            ? (b.rating ?? 0) - (a.rating ?? 0)
+            : a.distance - b.distance,
+      );
   }, [tab, favorites, results, filters, origin]);
 
   const selected = visible.find((p) => p.id === selectedId) ?? results.concat(favorites).find((p) => p.id === selectedId);
@@ -150,6 +215,7 @@ export function Explorer({ backend, MapView, initialCenter, lang, onLangChange }
     panelRef.current?.scrollTo({ top: 0 });
   };
 
+  const busy = phase !== undefined && tab === 'results';
   const showSearchArea = backend.ready && tab === 'results' && distanceMeters(viewCenter, searchCenter) > 300;
 
   useEffect(() => {
@@ -207,7 +273,7 @@ export function Explorer({ backend, MapView, initialCenter, lang, onLangChange }
 
         <div className="tabs" role="tablist">
           <button role="tab" aria-selected={tab === 'results'} onClick={() => setTab('results')}>
-            {t.results} {tab === 'results' && !loading ? `(${visible.length})` : ''}
+            {t.results} {tab === 'results' && !busy ? `(${visible.length})` : ''}
           </button>
           <button role="tab" aria-selected={tab === 'saved'} onClick={() => setTab('saved')}>
             ♥ {t.saved} ({favorites.length})
@@ -219,6 +285,16 @@ export function Explorer({ backend, MapView, initialCenter, lang, onLangChange }
             {error}
           </div>
         )}
+        {notes.length > 0 && tab === 'results' && !busy && !selected && (
+          <details className="notes">
+            <summary>{t.sourcesNote}</summary>
+            <ul>
+              {notes.map((n) => (
+                <li key={n}>{n}</li>
+              ))}
+            </ul>
+          </details>
+        )}
 
         {selected ? (
           <PlaceDetail
@@ -227,19 +303,24 @@ export function Explorer({ backend, MapView, initialCenter, lang, onLangChange }
             saved={isSaved(selected.id)}
             onBack={() => setSelectedId(undefined)}
             onToggleSave={() => toggle(selected)}
+            lang={lang}
             t={t}
           />
-        ) : loading && tab === 'results' ? (
-          <p className="muted pad">{t.loading}</p>
+        ) : busy ? (
+          <p className="muted pad" role="status">
+            {phase === 'ranking' ? t.ranking : t.loading}
+          </p>
         ) : visible.length === 0 ? (
           <p className="muted pad">{tab === 'saved' ? t.noSaved : cats.size === 0 ? t.pickCategory : t.noResults}</p>
         ) : (
           <PlaceList
             places={visible}
+            grouped={filters.sort === 'recommended'}
             selectedId={selectedId}
             isSaved={isSaved}
             onSelect={(id) => select(id, true)}
             onToggleSave={toggle}
+            lang={lang}
             t={t}
           />
         )}
@@ -249,7 +330,7 @@ export function Explorer({ backend, MapView, initialCenter, lang, onLangChange }
         <MapView
           initialCenter={initialCenter}
           flyTo={flyTo}
-          places={visible}
+          places={busy ? [] : visible}
           selectedId={selectedId}
           userLocation={userLocation}
           onSelect={(id) => select(id, false)}

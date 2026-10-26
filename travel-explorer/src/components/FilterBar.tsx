@@ -48,6 +48,7 @@ export function FilterBar({ filters, onChange, t }: Props) {
       <label>
         {t.sortBy}
         <select value={filters.sort} onChange={(e) => set('sort', e.target.value as SortKey)}>
+          <option value="recommended">{t.sortRecommended}</option>
           <option value="distance">{t.sortDistance}</option>
           <option value="rating">{t.sortRating}</option>
         </select>

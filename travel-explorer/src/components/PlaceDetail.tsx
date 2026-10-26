@@ -1,8 +1,9 @@
 import { CATEGORY_BY_ID } from '../categories';
 import { formatDistance } from '../geo';
 import type { Strings } from '../i18n';
-import type { Place } from '../types';
-import { HeartButton, Meta, Thumb } from './PlaceBits';
+import type { Lang, Place } from '../types';
+import { BuzzLine, HeartButton, LevelBadge, Meta, Thumb } from './PlaceBits';
+import { WhyLevel } from './WhyLevel';
 
 interface Props {
   place: Place;
@@ -10,6 +11,7 @@ interface Props {
   saved: boolean;
   onBack(): void;
   onToggleSave(): void;
+  lang: Lang;
   t: Strings;
 }
 
@@ -29,7 +31,7 @@ function mapsUrl(p: Place) {
   return u.toString();
 }
 
-export function PlaceDetail({ place, distance, saved, onBack, onToggleSave, t }: Props) {
+export function PlaceDetail({ place, distance, saved, onBack, onToggleSave, lang, t }: Props) {
   const cat = CATEGORY_BY_ID[place.category];
   return (
     <div className="detail">
@@ -64,12 +66,15 @@ export function PlaceDetail({ place, distance, saved, onBack, onToggleSave, t }:
         <Thumb place={place} size={96} />
       )}
 
-      <h2>{place.name}</h2>
+      <h2>
+        {place.ranking && <LevelBadge level={place.ranking.level} t={t} />} {place.name}
+      </h2>
       <div className="muted small">
         <span className="cat-dot" style={{ background: cat.color }} /> {t.categories[place.category]} ·{' '}
         {formatDistance(distance)} {t.away}
       </div>
       <Meta place={place} t={t} />
+      <BuzzLine place={place} lang={lang} t={t} />
       {place.ratingCount !== undefined && <div className="muted small">{place.ratingCount.toLocaleString()} {t.reviews}</div>}
       {place.address && <p>{place.address}</p>}
 
@@ -81,6 +86,8 @@ export function PlaceDetail({ place, distance, saved, onBack, onToggleSave, t }:
           {t.openInGoogleMaps}
         </a>
       </div>
+
+      {place.ranking && <WhyLevel ranking={place.ranking} lang={lang} t={t} />}
 
       {place.hours?.length ? (
         <section>

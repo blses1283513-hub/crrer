@@ -3,15 +3,16 @@ import L from 'leaflet';
 import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { CATEGORY_BY_ID } from '../categories';
-import type { CategoryId, FlyTo, LatLng, MapViewProps } from '../types';
+import type { CategoryId, FlyTo, LatLng, Level, MapViewProps } from '../types';
 
 // Leaflet + OpenStreetMap map used in demo mode, so the app is usable without a Google key.
 
-function pinIcon(category: CategoryId, selected: boolean) {
+function pinIcon(category: CategoryId, selected: boolean, level?: Level) {
   const cat = CATEGORY_BY_ID[category];
+  const badge = level ? `<span class="pin-lvl lvl--${level}">${level}</span>` : '';
   return L.divIcon({
     className: '',
-    html: `<div class="pin${selected ? ' pin--selected' : ''}" style="background:${cat.color}">${cat.emoji}</div>`,
+    html: `<div class="pin${selected ? ' pin--selected' : ''}" style="background:${cat.color}">${cat.emoji}${badge}</div>`,
     iconSize: [34, 34],
     iconAnchor: [17, 17],
   });
@@ -38,9 +39,9 @@ export function DemoMapView({
   onCenterChange,
 }: MapViewProps) {
   const icons = useMemo(() => new Map<string, L.DivIcon>(), []);
-  const iconFor = (c: CategoryId, sel: boolean) => {
-    const key = `${c}-${sel}`;
-    if (!icons.has(key)) icons.set(key, pinIcon(c, sel));
+  const iconFor = (c: CategoryId, sel: boolean, level?: Level) => {
+    const key = `${c}-${sel}-${level}`;
+    if (!icons.has(key)) icons.set(key, pinIcon(c, sel, level));
     return icons.get(key)!;
   };
 
@@ -56,7 +57,7 @@ export function DemoMapView({
         <Marker
           key={p.id}
           position={p.location}
-          icon={iconFor(p.category, p.id === selectedId)}
+          icon={iconFor(p.category, p.id === selectedId, p.ranking?.level)}
           zIndexOffset={p.id === selectedId ? 1000 : 0}
           title={p.name}
           eventHandlers={{ click: () => onSelect(p.id) }}

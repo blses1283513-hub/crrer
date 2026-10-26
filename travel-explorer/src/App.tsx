@@ -2,14 +2,20 @@ import { useMemo, useState } from 'react';
 import { APIProvider, useMapsLibrary } from '@vis.gl/react-google-maps';
 import { DemoMapView } from './components/DemoMapView';
 import { GoogleMapView } from './components/GoogleMapView';
-import { createDemoBackend, DEMO_CENTER } from './data/demoPlaces';
+import { createDemoBackend, createDemoSignalProvider, DEMO_CENTER } from './data/demoPlaces';
 import { createGoogleBackend } from './data/googlePlaces';
 import { Explorer } from './Explorer';
 import { detectLang } from './i18n';
+import { createLiveSignalProvider } from './ranking/live';
 import type { Lang } from './types';
 
 const API_KEY: string | undefined = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || undefined;
 const LANG_KEY = 'travel-explorer:lang';
+
+const liveSignals = createLiveSignalProvider({
+  youtubeKey: import.meta.env.VITE_YOUTUBE_API_KEY || API_KEY,
+  articlesEndpoint: import.meta.env.VITE_ARTICLES_ENDPOINT || '/api/articles',
+});
 
 function loadLang(): Lang {
   try {
@@ -26,10 +32,11 @@ type ExplorerShellProps = { lang: Lang; onLangChange(l: Lang): void };
 function GoogleExplorer(props: ExplorerShellProps) {
   const places = useMapsLibrary('places');
   const backend = useMemo(() => createGoogleBackend(places), [places]);
-  return <Explorer backend={backend} MapView={GoogleMapView} initialCenter={DEMO_CENTER} {...props} />;
+  return <Explorer backend={backend} signals={liveSignals} MapView={GoogleMapView} initialCenter={DEMO_CENTER} {...props} />;
 }
 
 const demoBackend = createDemoBackend();
+const demoSignals = createDemoSignalProvider();
 
 export default function App() {
   const [lang, setLang] = useState<Lang>(loadLang);
@@ -46,7 +53,16 @@ export default function App() {
   };
 
   if (!API_KEY) {
-    return <Explorer backend={demoBackend} MapView={DemoMapView} initialCenter={DEMO_CENTER} lang={lang} onLangChange={onLangChange} />;
+    return (
+      <Explorer
+        backend={demoBackend}
+        signals={demoSignals}
+        MapView={DemoMapView}
+        initialCenter={DEMO_CENTER}
+        lang={lang}
+        onLangChange={onLangChange}
+      />
+    );
   }
   return (
     <APIProvider apiKey={API_KEY} language={mapsLang} libraries={['places', 'marker']}>
