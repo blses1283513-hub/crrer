@@ -1,0 +1,3 @@
+# Optional upgrades (need PyTorch + model downloads from Hugging Face / JKU)
+open_clip_torch      # zero-shot scene tags + aesthetic features (MIT)
+beat-this            # SOTA beat + downbeat tracking (MIT)

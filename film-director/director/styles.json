@@ -1,0 +1,35 @@
+{
+  "punchy": {
+    "description": "Fast travel-reel energy: hard cuts on the beat, punch-ins and whips on downbeats, white flash between places.",
+    "beats_per_shot": [2, 2, 4],
+    "hook_beats": 4,
+    "cut": {"type": "cut"},
+    "accent_every": 3,
+    "accents": [{"type": "zoomin", "dur": 0.25}, {"type": "smoothleft", "dur": 0.2}, {"type": "fadewhite", "dur": 0.15}],
+    "location": {"type": "fadewhite", "dur": 0.35},
+    "grade": "eq=contrast=1.06:saturation=1.18",
+    "end_fade": 0.5
+  },
+  "balanced": {
+    "description": "Default: cuts on every 2-4 beats, soft crossfades and slides as accents, flash between places.",
+    "beats_per_shot": [2, 4, 4],
+    "hook_beats": 4,
+    "cut": {"type": "cut"},
+    "accent_every": 3,
+    "accents": [{"type": "fade", "dur": 0.4}, {"type": "smoothleft", "dur": 0.3}, {"type": "zoomin", "dur": 0.3}],
+    "location": {"type": "fadewhite", "dur": 0.4},
+    "grade": "eq=contrast=1.04:saturation=1.10",
+    "end_fade": 0.8
+  },
+  "cinematic": {
+    "description": "Slow and dreamy: long holds, dissolves everywhere, dip to black between places.",
+    "beats_per_shot": [4, 8, 8],
+    "hook_beats": 8,
+    "cut": {"type": "fade", "dur": 0.6},
+    "accent_every": 2,
+    "accents": [{"type": "dissolve", "dur": 0.9}],
+    "location": {"type": "fadeblack", "dur": 0.8},
+    "grade": "eq=contrast=1.03:saturation=1.04",
+    "end_fade": 1.2
+  }
+}

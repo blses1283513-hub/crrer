@@ -1,0 +1,11 @@
+# Core (CPU-only, permissive licenses)
+librosa>=0.11        # beat / onset / energy analysis (ISC)
+soundfile
+scenedetect>=0.7     # shot detection (BSD-3)
+opencv-python-headless>=4.10  # sharpness / exposure scoring (Apache-2.0)
+numpy
+Pillow>=11           # image I/O (MIT-CMU)
+pillow-heif          # iPhone HEIC photos (BSD)
+ImageHash            # near-duplicate photo removal (BSD-2)
+PyExifTool>=0.5      # wraps the exiftool binary for time/GPS metadata
+reverse_geocode      # offline GPS -> city/country (LGPL)
