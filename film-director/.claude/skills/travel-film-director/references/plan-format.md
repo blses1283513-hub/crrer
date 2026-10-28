@@ -28,7 +28,12 @@ All times are seconds on the film's timeline, rounded to whole frames (1/30 s).
       "in": 1.25,                      // video only: source time to start from
       "freeze": 0.0,                   // video only: seconds of last-frame hold if the shot is too short
       "motion": "pan_lr",              // photo only: pan_lr | pan_rl | zoom_in | zoom_out
-      "transition": {"type": "cut", "dur": 0.0},  // into the NEXT segment; starts at next.start
+      "transition": {"type": "hblur", "dur": 0.27, "lead": 0.13, "why": "move"},
+                                       // into the NEXT segment; runs from next.start - lead,
+                                       // so lead = dur/2 centres it on the beat; cut: dur 0, lead 0
+      "people": [0.18, 0.18, 0.9, 1.0], // whole-person region (fractions of the photo) that must
+                                       // stay in frame; null = no people
+      "width": 1086, "height": 1448,   // source size (used for people-safe video crops)
       "city": "Taipei", "time": "2026-10-01 09:10", "score": 0.71,
       "thumb": "work/thumbs/m004s00.jpg"
     }
@@ -53,7 +58,9 @@ All times are seconds on the film's timeline, rounded to whole frames (1/30 s).
   circleclose, circlecrop, rectcrop, radial, vertopen/close, horzopen/close, diagtl/tr/bl/br,
   hlslice/hrslice/vuslice/vdslice, hblur, pixelize, fadegrays, squeezeh/v, zoomin,
   hlwind/hrwind/vuwind/vdwind.
-- For video, the renderer reads `dur + transition.dur` seconds from `in`; if the source runs
-  out it holds the last frame.
+- For video, `in` is the source time of the first visible frame (including the previous
+  transition's lead); if the source runs out the renderer holds the last frame.
+- If `people` is set, the crop and any pan or zoom keep that whole region in every frame; if it
+  cannot fit the frame shape, the photo is shown whole over a blurred fill.
 - Captions use `\n` for line breaks. Keep place captions to ~20 characters so they fit the width
   at the default size.

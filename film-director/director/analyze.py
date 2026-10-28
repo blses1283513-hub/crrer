@@ -21,6 +21,8 @@ try:
 except ImportError:  # HEIC support is optional
     pass
 
+from .people import detect as detect_people, union as people_union
+
 THUMB = (270, 480)  # 9:16 thumbnails for the storyboard
 
 
@@ -67,8 +69,10 @@ def analyze_photo(item: dict, work: Path) -> dict | None:
     thumb.parent.mkdir(parents=True, exist_ok=True)
     _thumb(bgr, thumb)
     q = quality(bgr)
+    people = detect_people(bgr)
     return {**item, "cid": item["id"], "render_src": str(norm), "width": img.width, "height": img.height,
-            "in": 0.0, "max_dur": None, "thumb": str(thumb), "hash": _phash(bgr), **q}
+            "in": 0.0, "max_dur": None, "thumb": str(thumb), "hash": _phash(bgr),
+            "people": people_union(people), "n_people": len(people), **q}
 
 
 def _shots(path: str, duration: float) -> list[tuple[float, float]]:
@@ -105,13 +109,16 @@ def analyze_video(item: dict, work: Path) -> list[dict]:
         q["motion"] = round(motion_n, 3)
         q["score"] = round(0.8 * q["score"] + 0.2 * motion_n + 0.05, 3)  # small bonus: clips feel livelier than stills
         mid = frames[len(frames) // 2]
+        found = [detect_people(f) for f in frames]
+        people = [b for boxes in found for b in boxes]
         cid = f"{item['id']}s{n:02d}"
         thumb = work / "thumbs" / f"{cid}.jpg"
         thumb.parent.mkdir(parents=True, exist_ok=True)
         _thumb(mid, thumb)
         out.append({**item, "cid": cid, "render_src": item["src"], "in": round(start, 3),
                     "max_dur": round(end - start, 3), "ts": item["ts"] + start,
-                    "thumb": str(thumb), "hash": _phash(mid), **q})
+                    "thumb": str(thumb), "hash": _phash(mid),
+                    "people": people_union(people), "n_people": max(len(b) for b in found), **q})
     cap.release()
     return out
 

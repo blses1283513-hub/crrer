@@ -90,7 +90,7 @@ what a human editor would:
 - Is the first shot a strong hook? It should be the most striking image; viewers decide in 1–2 s.
 - Does the order tell the trip (places in sequence, a satisfying last shot)?
 - Any weak, ugly or repetitive shots? Too many from one clip?
-- Do the transitions suit the feel? Location changes get the flash/dip transition by design.
+- Do the transitions suit the feel? (See "Transitions follow the music" below.)
 
 Check that the title does not sit on top of busy detail in the opening shot (signs, logos,
 faces). If it does, set the title caption's `"y"` in `plan.json` (0 = top, 1 = bottom of the
@@ -99,6 +99,36 @@ picture; default 0.5), e.g. `0.22` to move it into the sky.
 In the **film** style, also check that the long holds (opening, middle and last shot) carry
 the strongest, calmest shots, and that the quick-cut runs use lively shots. The title is two
 lines: pass `--title "DAYS IN|KYOTO"` to set both the small line and the big line.
+
+### Two rules the user has set (always apply them)
+
+**1. Never cut a person with the frame edge.** Analysis finds faces (YuNet) and grows each
+into a whole-person box. The renderer then keeps everyone inside every frame: it places the crop
+around them and limits pans and zooms so the box never leaves the picture. If the people cannot
+all fit in the frame shape (a full-length group in a widescreen frame, or a close selfie), it
+shows the **whole photo** with a blurred copy of itself filling the sides (`"framing": "fit"` in
+the render log). Faces turned away from the camera are not detected. When you check frames
+(step 6), look for anyone shown from behind or at the far edge and, if they are cut, set that
+segment's `"people"` box by hand: `[x0, y0, x1, y1]` as fractions of the photo, e.g.
+`[0, 0, 1, 1]` to force the whole photo.
+
+**2. Transitions follow the music.** Each cut's transition is chosen from what the song does on
+that beat: the hardest hits (top quarter of the track) get an **impact** transition (flash,
+punch-in), downbeats and medium hits get a **move** (whip, slide, blur), quiet passages get a
+**soft** dissolve, and weak off-beats stay hard cuts. Lengths are in beats and every transition
+is centred on its beat. Cuts of long shots are pulled up to ~0.6 s onto a nearby hard hit.
+**Customise the palette for every film** to fit the song and mood, rather than reusing the style
+default. Pass `--palette` to `plan`, each option as `name:beats`:
+```bash
+# upbeat K-pop / dance: punchy hits, whips on downbeats
+--palette "impact=fadewhite:0.25,zoomin:0.5;move=smoothleft:0.5,smoothright:0.5,hblur:0.5;soft=fade:1"
+# mellow indie / piano: gentle
+--palette "impact=fadewhite:0.5;move=dissolve:1;soft=dissolve:2,fadeblack:2"
+# electronic with drops: flashes and squeezes
+--palette "impact=fadewhite:0.25,circleopen:0.5;move=squeezeh:0.5,slideup:0.5;soft=fadegrays:1"
+```
+The plan records why each transition was chosen (`transition.why`). Tell the user the palette you
+picked in one line.
 
 Show the storyboard to the user (send the image) with a two-line summary (length, shot count,
 music, style) and ask for changes before rendering. Rendering takes a minute or two; changing the
@@ -111,8 +141,9 @@ plan is instant.
 - Swap a shot: replace a segment's `src`/`kind`/`in` with another candidate from `analysis.json`
   (keep `start` and `dur`, so cuts stay on the beat).
 - Change a transition: set `transition.type` to any FFmpeg xfade name (`cut`, `fade`, `dissolve`,
-  `fadewhite`, `fadeblack`, `zoomin`, `smoothleft`, `slideleft`, `circleopen`, `hblur`, …) and a
-  `dur` of 0.15–0.9 s, never more than half of the next shot.
+  `fadewhite`, `fadeblack`, `zoomin`, `smoothleft`, `slideleft`, `circleopen`, `hblur`, …), a
+  `dur` that is a simple fraction of the beat (¼, ½, 1 beat; beat = 60 / tempo), and
+  `lead` = half the `dur` so it stays centred on the beat. Never more than half of either shot.
 - Change photo motion: `pan_lr`, `pan_rl`, `zoom_in`, `zoom_out`.
 - Edit or remove captions, or change the title text (`\n` makes a second line).
 - To shorten the film, drop segments from the end and set `duration` to the new last segment's
@@ -131,8 +162,9 @@ Then grab a few frames to look at the real output, not just the plan:
 ```bash
 ffmpeg -v error -i output/<file>.mp4 -vf "fps=1/3,scale=270:480,tile=6x2" -frames:v 1 work/check.jpg
 ```
-Look for black frames, awkward crops (heads cut off by the 9:16 crop) and unreadable captions.
-Fix crops by swapping the shot or changing photo motion, then re-render.
+Look for black frames, anyone cut by an edge (rule 1), and unreadable captions. The render log
+prints each segment's framing (`crop`, `people-safe crop` or `fit`). Fix problems by setting the
+segment's `people` box, swapping the shot or changing photo motion, then re-render.
 
 Deliver the MP4 to the user (send the file; upload to Google Drive if they asked) with a one-line
 summary: length, shots, music track, style. Mention that Instagram covers the bottom ~20% with
@@ -155,6 +187,7 @@ look at the storyboard and frames yourself before delivering:
   Captions then show only the date; ask the user for place names and put them in the plan.
 - "Could not find a steady beat": the track is ambient or rubato. Choose one with drums.
 - Wrong order: phones in different time zones or edited copies with new dates. Reorder segments
-  in the plan by hand.
+  in the plan by hand. Photos sent through chat apps lose their dates: copy them in story order,
+  stamp `DateTimeOriginal` with exiftool, and plan with `--keep-order`.
 - Optional upgrades in `requirements-ml.txt` (CLIP scene tags and beauty scores, beat_this
   downbeats) need PyTorch and model downloads; the pipeline works without them.

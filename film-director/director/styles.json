@@ -30,7 +30,39 @@
       "dur": 0.35
     },
     "grade": "eq=contrast=1.06:saturation=1.18",
-    "end_fade": 0.5
+    "end_fade": 0.5,
+    "rhythm": {
+      "impact": [
+        [
+          "zoomin",
+          0.5
+        ],
+        [
+          "fadewhite",
+          0.25
+        ]
+      ],
+      "move": [
+        [
+          "smoothleft",
+          0.5
+        ],
+        [
+          "smoothright",
+          0.5
+        ],
+        [
+          "slideup",
+          0.5
+        ]
+      ],
+      "soft": [
+        [
+          "fade",
+          1
+        ]
+      ]
+    }
   },
   "balanced": {
     "description": "Default: cuts on every 2-4 beats, soft crossfades and slides as accents, flash between places.",
@@ -63,7 +95,35 @@
       "dur": 0.4
     },
     "grade": "eq=contrast=1.04:saturation=1.10",
-    "end_fade": 0.8
+    "end_fade": 0.8,
+    "rhythm": {
+      "impact": [
+        [
+          "fadewhite",
+          0.25
+        ],
+        [
+          "zoomin",
+          0.5
+        ]
+      ],
+      "move": [
+        [
+          "smoothleft",
+          0.5
+        ],
+        [
+          "smoothup",
+          0.5
+        ]
+      ],
+      "soft": [
+        [
+          "fade",
+          1
+        ]
+      ]
+    }
   },
   "cinematic": {
     "description": "Slow and dreamy: long holds, dissolves everywhere, dip to black between places.",
@@ -89,7 +149,31 @@
       "dur": 0.8
     },
     "grade": "eq=contrast=1.03:saturation=1.04",
-    "end_fade": 1.2
+    "end_fade": 1.2,
+    "rhythm": {
+      "impact": [
+        [
+          "fadewhite",
+          0.5
+        ]
+      ],
+      "move": [
+        [
+          "dissolve",
+          1
+        ]
+      ],
+      "soft": [
+        [
+          "dissolve",
+          2
+        ],
+        [
+          "fadeblack",
+          2
+        ]
+      ]
+    }
   },
   "film": {
     "description": "Film look from your reference reel: 3:2 frame letterboxed in 9:16, bursts of quick cuts between long holds, teal/orange grade with grain, bold yellow title.",
@@ -131,6 +215,30 @@
     "kicker": "DAYS IN",
     "grade": "curves=master='0/0 0.25/0.21 0.75/0.76 1/0.86',colorbalance=rs=-0.06:gs=0.01:bs=0.07:rm=0.02:bm=-0.02:rh=0.07:gh=0.02:bh=-0.08,huesaturation=saturation=-0.3:colors=g,eq=saturation=0.92,vignette=angle=PI/5,noise=alls=6:allf=t+u",
     "end_fade": 2.0,
-    "audio_fade": 3.0
+    "audio_fade": 3.0,
+    "rhythm": {
+      "impact": [
+        [
+          "fadewhite",
+          0.25
+        ]
+      ],
+      "move": [
+        [
+          "hblur",
+          0.5
+        ],
+        [
+          "smoothleft",
+          0.5
+        ]
+      ],
+      "soft": [
+        [
+          "dissolve",
+          1.5
+        ]
+      ]
+    }
   }
 }

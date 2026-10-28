@@ -21,6 +21,17 @@ def _save(obj, path: Path) -> None:
     path.write_text(json.dumps(obj, indent=2, ensure_ascii=False))
 
 
+def _palette(text: str | None) -> dict | None:
+    """'impact=fadewhite:0.25,zoomin:0.5;move=hblur:0.5;soft=dissolve:1.5' -> palette dict."""
+    if not text:
+        return None
+    out = {}
+    for part in text.split(";"):
+        kind, _, items = part.partition("=")
+        out[kind.strip()] = [[n.strip(), float(b)] for n, b in (i.split(":") for i in items.split(",") if i)]
+    return out
+
+
 def cmd_analyze(a) -> list[dict]:
     from .analyze import analyze
     from .ingest import scan
@@ -44,7 +55,7 @@ def cmd_plan(a, cands=None) -> dict:
     _save(music, work / "music.json")
     print(f"  {music['tempo']} BPM, {len(music['beats'])} beats, {music['duration']:.1f}s")
     plan = build_plan(cands, music, a.style, a.max_duration, a.title, captions=not a.no_captions,
-                      keep_order=a.keep_order)
+                      keep_order=a.keep_order, palette=_palette(a.palette))
     _save(plan, work / "plan.json")
     sb = storyboard(plan, work / "storyboard.jpg")
     print(f"  plan: {len(plan['segments'])} shots, {plan['duration']:.2f}s -> {work / 'plan.json'}")
@@ -77,6 +88,9 @@ def main() -> None:
             sp.add_argument("--style", default="balanced", help="punchy | balanced | cinematic")
             sp.add_argument("--title", help="opening title (default: place + month)")
             sp.add_argument("--no-captions", action="store_true")
+            sp.add_argument("--palette", help='custom transitions per musical moment, e.g. '
+                            '"impact=fadewhite:0.25,zoomin:0.5;move=hblur:0.5;soft=dissolve:1.5" '
+                            "(name:length-in-beats)")
             sp.add_argument("--keep-order", action="store_true",
                             help="keep shots in time order (no hook shot moved to the front)")
         sp.add_argument("--max-duration", type=float, default=MAX_DURATION, help="seconds, capped at 60")

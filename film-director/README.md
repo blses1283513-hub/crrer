@@ -39,6 +39,12 @@ Or step by step: `analyze` → `plan` (then look at `work/storyboard.jpg` and ed
 | `cinematic` | every 4–8 beats | dissolves; dip to black between places |
 | `film` | bursts of ~1-beat cuts between 3–6 s holds; cuts snap to musical accents | hard cuts; short dissolve between places. 3:2 frame letterboxed in 9:16, teal/orange grade with grain, bold yellow title with a spaced serif kicker |
 
+**Rules that always apply:** people are never cut by the frame edge (faces are detected and
+grown into whole-person boxes; if a group can't fit, the whole photo is shown over a blurred
+fill), and transitions follow the music (hard hits get flashes or punch-ins, downbeats get whips,
+quiet passages dissolve; lengths are in beats and centred on the beat). Pass
+`--palette "impact=fadewhite:0.25;move=hblur:0.5;soft=dissolve:1"` to customise them per film.
+
 In the beat styles, every cut lands on a detected beat (the `film` style snaps cuts to musical
 accents instead, like a hand edit). Shots get shorter when the music gets louder. The film opens
 on the highest-scoring shot as a hook, then follows the trip in time order. It ends on a downbeat
@@ -63,6 +69,8 @@ with a fade.
 | `director/storyboard.py` | Contact sheet for approval |
 | `director/styles.json` | Editing styles (add your own) |
 | `reports/` | Research report on the tools chosen and why |
+| `director/people.py` | Face detection (YuNet) grown into whole-person regions |
+| `assets/models/` | YuNet face detector (OpenCV Zoo, MIT) |
 | `assets/fonts/` | Anton and Crimson Text (SIL Open Font License) for the `film` title |
 | `requirements-ml.txt` | Optional: CLIP scene tags and beauty scores, beat_this downbeats (needs PyTorch) |
 

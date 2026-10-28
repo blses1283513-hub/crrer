@@ -29,6 +29,11 @@ def analyze_music(path: str) -> dict:
     if energy.max() > energy.min():
         energy = (energy - energy.min()) / (energy.max() - energy.min())
 
+    # How hard each beat hits, as a percentile within this track (0 = softest, 1 = hardest), so one
+    # huge drop doesn't make every other beat look weak. Strong hits get "impact" transitions.
+    order = np.argsort(np.argsort(strength))
+    accent = order / max(1, len(strength) - 1)
+
     # Musical accents (note and hit onsets); the "film" pacing snaps cuts to these, not a strict grid.
     onsets = librosa.onset.onset_detect(onset_envelope=onset_env, sr=sr, units="time")
 
@@ -40,6 +45,7 @@ def analyze_music(path: str) -> dict:
         "downbeats": [round(float(b), 3) for b in downbeats],
         "energy": [round(float(e), 3) for e in energy],
         "onsets": [round(float(o), 3) for o in onsets],
+        "accent": [round(float(x), 3) for x in accent],
     }
 
 

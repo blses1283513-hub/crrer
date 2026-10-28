@@ -59,16 +59,84 @@ def _transition_len(seg: dict, last: bool) -> float:
     return 1 / FPS if t["type"] == "cut" or t["dur"] <= 0 else t["dur"]
 
 
+def _lead(seg: dict | None) -> float:
+    """How far before the cut a transition starts (centred transitions straddle the beat)."""
+    if not seg or seg["transition"]["type"] == "cut":
+        return 0.0
+    return float(seg["transition"].get("lead", 0.0))
+
+
+def _cover(w: float, h: float, fw: int, fh: int) -> tuple[float, float]:
+    """Largest window with the frame's shape that fits inside a w x h picture."""
+    a = fw / fh
+    return (h * a, h) if w / h > a else (w, w / a)
+
+
+def _people_window(w, h, fw, fh, people):
+    """Where to put the cover window so it holds everyone, or None if they can't all fit."""
+    cw, ch = _cover(w, h, fw, fh)
+    px0, py0, px1, py1 = people[0] * w, people[1] * h, people[2] * w, people[3] * h
+    if px1 - px0 > cw + 0.5 or py1 - py0 > ch + 0.5:
+        return None
+
+    def place(c, size, lo_edge, hi_edge, total):
+        lo, hi = max(0.0, hi_edge - size), min(lo_edge, total - size)
+        return min(max(c - size / 2, lo), hi)
+
+    x0 = place((px0 + px1) / 2, cw, px0, px1, w)
+    y0 = place((py0 + py1) / 2, ch, py0, py1, h)
+    return x0, y0, cw, ch, (px0, py0, px1, py1)
+
+
+def _fit_graph(fw: int, fh: int, pre: str = "") -> str:
+    """Whole picture, nothing cropped; a blurred, darkened copy of itself fills the frame."""
+    return (f"{pre}split[a][b];"
+            f"[a]scale={fw}:{fh}:force_original_aspect_ratio=increase,crop={fw}:{fh},"
+            f"gblur=sigma=40,eq=brightness=-0.08:saturation=0.8[bg];"
+            f"[b]scale={fw}:{fh}:force_original_aspect_ratio=decrease:flags=lanczos[fg];"
+            f"[bg][fg]overlay=(W-w)/2:(H-h)/2,setsar=1,fps={FPS},format=yuv420p")
+
+
 def _photo_filter(seg: dict, length: float, fw: int, fh: int) -> str:
     img = Image.open(seg["src"])
     w, h = img.size
     frames = max(1, round(length * FPS))
     motion = seg.get("motion", "zoom_in")
-    # Portrait photos in a wider frame: keep the upper part, where faces usually are.
-    ybias = 0.35 if h > 1.05 * w * fh / fw else 0.5
     # Lift very dark photos (night shots) so they still read after the grade.
     luma = sum(img.convert("L").resize((64, 64)).getdata()) / (64 * 64 * 255)
     lift = ",eq=gamma=1.45:saturation=1.1" if luma < 0.18 else ",eq=gamma=1.2" if luma < 0.28 else ""
+
+    people = seg.get("people")
+    if people:
+        win = _people_window(w, h, fw, fh, people)
+        if win is None:  # everyone can't fit in a crop: show the whole photo instead
+            seg["framing"] = "fit"
+            return _fit_graph(fw, fh, lift.lstrip(",") + "," if lift else "")
+        x0, y0, cw, ch, (px0, py0, px1, py1) = win
+        k = 2 * fw / cw  # crop window -> 2x working resolution
+        qx0, qy0, qx1, qy1 = (px0 - x0) * k, (py0 - y0) * k, (px1 - x0) * k, (py1 - y0) * k
+        zmax = max(1.0, min(1.10, 2 * fw / (qx1 - qx0), 2 * fh / (qy1 - qy0)))
+        if motion == "zoom_in":
+            z = f"1+{zmax - 1:.4f}*on/{frames}"
+        elif motion == "zoom_out":
+            z = f"{zmax:.4f}-{zmax - 1:.4f}*on/{frames}"
+        else:
+            z = f"{zmax:.4f}"
+        # Every frame's window is clamped so it still contains everyone.
+        xlo, xhi = f"max(0,{qx1:.1f}-iw/zoom)", f"min({qx0:.1f},iw-iw/zoom)"
+        ylo, yhi = f"max(0,{qy1:.1f}-ih/zoom)", f"min({qy0:.1f},ih-ih/zoom)"
+        if motion == "pan_lr":
+            x = f"clip({xlo}+({xhi}-{xlo})*on/{frames},{xlo},{xhi})"
+        elif motion == "pan_rl":
+            x = f"clip({xhi}-({xhi}-{xlo})*on/{frames},{xlo},{xhi})"
+        else:
+            x = f"clip({(qx0 + qx1) / 2:.1f}-iw/zoom/2,{xlo},{xhi})"
+        y = f"clip({(qy0 + qy1) / 2:.1f}-ih/zoom/2,{ylo},{yhi})"
+        seg["framing"] = "people-safe crop"
+        return (f"crop={cw:.0f}:{ch:.0f}:{x0:.0f}:{y0:.0f},scale={2 * fw}:{2 * fh}:flags=lanczos{lift},"
+                f"zoompan=z='{z}':x='{x}':y='{y}':d=1:s={fw}x{fh}:fps={FPS},setsar=1,format=yuv420p")
+
+    seg["framing"] = "crop"
     if motion.startswith("pan"):
         # 10% overscan guarantees some travel even when the photo already matches the frame shape.
         scale = max(fw / w, fh / h) * 1.10
@@ -76,14 +144,28 @@ def _photo_filter(seg: dict, length: float, fw: int, fh: int) -> str:
         travel = min(sw - fw, round(0.18 * fw * length))  # gentle: ~200 px per second
         x0 = (sw - fw - travel) / 2
         x = f"{x0:.1f}+{travel}*t/{length:.4f}" if motion == "pan_lr" else f"{x0 + travel:.1f}-{travel}*t/{length:.4f}"
-        return (f"scale={sw}:{sh}:flags=lanczos,crop={fw}:{fh}:x='{x}':y='(ih-{fh})*{ybias}'{lift},"
+        return (f"scale={sw}:{sh}:flags=lanczos,crop={fw}:{fh}:x='{x}':y='(ih-{fh})/2'{lift},"
                 f"setsar=1,fps={FPS},format=yuv420p")
     z = f"1+0.10*on/{frames}" if motion == "zoom_in" else f"1.10-0.10*on/{frames}"
     # Work at 2x resolution so zoompan's integer positions do not jitter.
     return (f"scale={2 * fw}:{2 * fh}:force_original_aspect_ratio=increase:flags=lanczos,"
-            f"crop={2 * fw}:{2 * fh}:(iw-ow)/2:(ih-oh)*{ybias}{lift},"
+            f"crop={2 * fw}:{2 * fh}{lift},"
             f"zoompan=z='{z}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:s={fw}x{fh}:fps={FPS},"
             f"setsar=1,format=yuv420p")
+
+
+def _video_filter(seg: dict, fw: int, fh: int) -> str:
+    people, w, h = seg.get("people"), seg.get("width"), seg.get("height")
+    if people and w and h:
+        win = _people_window(w, h, fw, fh, people)
+        if win is None:
+            seg["framing"] = "fit"
+            return _fit_graph(fw, fh, f"fps={FPS},")
+        x0, y0, cw, ch, _ = win
+        seg["framing"] = "people-safe crop"
+        return f"fps={FPS},crop={cw:.0f}:{ch:.0f}:{x0:.0f}:{y0:.0f},scale={fw}:{fh},setsar=1"
+    seg["framing"] = "crop"
+    return f"fps={FPS},scale={fw}:{fh}:force_original_aspect_ratio=increase,crop={fw}:{fh},setsar=1"
 
 
 def render_segment(seg: dict, length: float, out: Path, frame=(WIDTH, HEIGHT)) -> None:
@@ -95,10 +177,8 @@ def render_segment(seg: dict, length: float, out: Path, frame=(WIDTH, HEIGHT)) -
         cmd = ["ffmpeg", "-y", "-v", "error", "-loop", "1", "-framerate", str(FPS), "-t", f"{length + 0.5:.3f}",
                "-i", seg["src"], "-vf", _photo_filter(seg, length, fw, fh)] + common
     else:
-        vf = (f"fps={FPS},scale={fw}:{fh}:force_original_aspect_ratio=increase,"
-              f"crop={fw}:{fh},setsar=1")
         # Pad generously with the last frame; -frames:v trims to the exact length.
-        vf += f",tpad=stop_mode=clone:stop_duration={length:.3f},format=yuv420p"
+        vf = _video_filter(seg, fw, fh) + f",tpad=stop_mode=clone:stop_duration={length:.3f},format=yuv420p"
         cmd = ["ffmpeg", "-y", "-v", "error", "-ss", f"{seg['in']:.3f}", "-i", seg["src"],
                "-t", f"{length + 0.2:.3f}", "-vf", vf] + common
     _run(cmd)
@@ -161,10 +241,12 @@ def render(plan: dict, work: Path, out: Path, keep_segments: bool = False) -> Pa
     frame = tuple(plan["canvas"].get("frame", [WIDTH, HEIGHT]))
     files = []
     for k, seg in enumerate(segs):
-        length = seg["dur"] + _transition_len(seg, k == n - 1)
+        # Visible span: from (start - previous lead) to (next cut - own lead + own transition).
+        prev = segs[k - 1] if k else None
+        length = seg["dur"] + _transition_len(seg, k == n - 1) - (_lead(seg) if k < n - 1 else 0) + _lead(prev)
         path = seg_dir / f"seg{k:03d}.mp4"
-        print(f"  segment {k + 1}/{n}: {seg['name']} ({seg['kind']}, {length:.2f}s)")
         render_segment(seg, length, path, frame)
+        print(f"  segment {k + 1}/{n}: {seg['name']} ({seg['kind']}, {length:.2f}s, {seg.get('framing')})")
         files.append(path)
 
     total = plan["duration"]
@@ -175,7 +257,8 @@ def render(plan: dict, work: Path, out: Path, keep_segments: bool = False) -> Pa
         kind = "fade" if t["type"] == "cut" else t["type"]
         dur = _transition_len(segs[k - 1], False)
         label = f"x{k}"
-        lines.append(f"[{prev}][{k}:v]xfade=transition={kind}:duration={dur:.4f}:offset={segs[k]['start']:.4f}[{label}]")
+        offset = segs[k]["start"] - _lead(segs[k - 1])  # centred: the transition's middle is on the beat
+        lines.append(f"[{prev}][{k}:v]xfade=transition={kind}:duration={dur:.4f}:offset={offset:.4f}[{label}]")
         prev = label
 
     post = [f for f in [plan.get("grade")] if f]

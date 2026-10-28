@@ -60,7 +60,7 @@ def _snap(t: float, accents: list[float], tol: float) -> float:
     return near if abs(near - t) <= tol else t
 
 
-def _burst_grid(rel_beats, accents, style, tempo, limit, n_avail):
+def _burst_grid(rel_beats, accents, style, tempo, limit, n_avail, strong=()):
     """"Film" pacing: opening hold, a burst of quick cuts, a long hold, a second burst,
     medium shots, then a long closing hold. Cuts snap to musical accents (onsets or beats)
     rather than a strict beat grid. Returns (cuts, roles)."""
@@ -99,7 +99,12 @@ def _burst_grid(rel_beats, accents, style, tempo, limit, n_avail):
     grid = sorted(set(accents) | set(rel_beats))
     cuts, t = [0.0], 0.0
     for r, l in zip(roles[:-1], lens[:-1]):
-        t = _snap(t + l, grid, 0.08 if r == "burst" else 0.15)
+        if r == "burst":
+            t = _snap(t + l, grid, 0.08)
+        else:
+            # Longer shots can wait for (or jump to) a hard-hitting beat close by.
+            hit = _snap(t + l, list(strong), min(0.6, 0.3 * l))
+            t = hit if hit != t + l else _snap(t + l, grid, 0.15)
         t = max(t, cuts[-1] + 0.3)
         cuts.append(t)
     end = min(limit, cuts[-1] + lens[-1])
@@ -130,6 +135,53 @@ def _fit_holds(story: list[dict], roles: list[str], cuts: list[float]) -> list[d
     return story
 
 
+def _rhythm_context(music: dict, start: float, cuts: list[float], palette: dict | None):
+    """Per-beat facts the transition chooser needs, on the film's timeline."""
+    if not palette:
+        return None
+    beats = [b - start for b in music["beats"]]
+    accent = music.get("accent") or [0.5] * len(beats)
+    downs = [d - start for d in music["downbeats"]]
+    return {"palette": palette, "beats": beats, "energy": music["energy"], "accent": accent,
+            "downbeats": downs, "beat_len": 60 / max(music["tempo"], 1)}
+
+
+def _rhythm_transition(rx: dict, t: float, in_burst: bool, place_change: bool, used: Counter,
+                       max_dur: float, edge: bool = False) -> dict:
+    """Choose the transition at cut time t from what the music does on that beat.
+
+    impact (flash, punch-in)  - the hardest hits (top quarter of the track's beats), or a change
+                                of place on a loud beat
+    move   (whip, slide)      - downbeats, medium hits, and the edges of quick-cut runs
+    soft   (dissolve)         - quiet passages, or a change of place on a quiet beat
+    cut                       - weak off-beats; inside quick-cut runs only cut or flash (top 15%)
+    Durations are in beats and the transition is centred on the cut (lead = half its length),
+    so its peak lands on the beat."""
+    beats = rx["beats"]
+    j = min(range(len(beats)), key=lambda i: abs(beats[i] - t))
+    energy, accent = rx["energy"][j], rx["accent"][j]
+    downbeat = any(abs(d - t) < 0.07 for d in rx["downbeats"])
+    if in_burst:
+        kind = "impact" if accent >= 0.85 else "cut"
+    elif place_change:
+        kind = "impact" if energy > 0.5 else "soft"
+    elif energy < 0.3:
+        kind = "soft"
+    elif accent >= 0.75 or (downbeat and accent >= 0.6):
+        kind = "impact"
+    elif downbeat or accent >= 0.45 or edge:
+        kind = "move"
+    else:
+        kind = "cut"
+    options = rx["palette"].get(kind) or []
+    if kind == "cut" or not options:
+        return {"type": "cut", "dur": 0.0, "lead": 0.0, "why": kind}
+    name, n_beats = options[used[kind] % len(options)]
+    used[kind] += 1
+    dur = _frame(min(n_beats * rx["beat_len"], max_dur))
+    return {"type": name, "dur": dur, "lead": _frame(dur / 2), "why": kind}
+
+
 def _select(cands: list[dict], n: int, per_source: int = 3) -> list[dict]:
     ranked = sorted(cands, key=lambda c: -c["score"])
     for cap in (per_source, per_source * 2, 10**6):
@@ -155,7 +207,8 @@ def _auto_title(chosen: list[dict]) -> str:
 
 def build_plan(cands: list[dict], music: dict, style_name: str = "balanced",
                max_duration: float = MAX_DURATION, title: str | None = None,
-               min_duration: float = 8.0, captions: bool = True, keep_order: bool = False) -> dict:
+               min_duration: float = 8.0, captions: bool = True, keep_order: bool = False,
+               palette: dict | None = None) -> dict:
     if style_name not in STYLES:
         raise SystemExit(f"Unknown style {style_name!r}; choose from {', '.join(STYLES)}")
     if not cands:
@@ -177,8 +230,10 @@ def build_plan(cands: list[dict], music: dict, style_name: str = "balanced",
         downbeats = [d - start for d in music["downbeats"] if start <= d <= start + window]
         if style.get("pacing") == "bursts":
             accents = [o - start for o in music.get("onsets", []) if start <= o <= start + window]
+            strong = [b - start for b, a in zip(music["beats"], music.get("accent", []))
+                      if a >= 0.75 and start <= b <= start + window]
             n_avail = len(_select(cands, len(cands)))
-            return _burst_grid(rel, accents, style, music["tempo"], window, n_avail)
+            return _burst_grid(rel, accents, style, music["tempo"], window, n_avail, strong)
         # Fewer shots than beats? Hold each one longer instead of making a 5-second film.
         for mult in (1, 2, 3, 4):
             cuts = _cut_grid(rel, energy, downbeats, style, music["tempo"], window, len(cands), mult)
@@ -216,32 +271,39 @@ def build_plan(cands: list[dict], music: dict, style_name: str = "balanced",
             story = _fit_holds(story, roles, cuts)
 
     segments = []
-    accent_i = 0
     moves_used = Counter()
+    rhythm = _rhythm_context(music, start, cuts, palette or style.get("rhythm"))
+    used = Counter()
     for k, c in enumerate(story):
         seg_len = cuts[k + 1] - cuts[k]
-        trans = {"type": "cut", "dur": 0.0}
+        trans = {"type": "cut", "dur": 0.0, "lead": 0.0}
         if k < n - 1:
             nxt = story[k + 1]
-            if k > 0 and c.get("city") and nxt.get("city") and c["city"] != nxt["city"]:
-                trans = dict(style["location"])
-            elif (k + 1) % style["accent_every"] == 0:
-                trans = dict(style["accents"][accent_i % len(style["accents"])])
-                accent_i += 1
-            else:
-                trans = dict(style["cut"])
-            trans.setdefault("dur", 0.0)
-            if roles and "burst" in (roles[k], roles[k + 1]):
-                trans = {"type": "cut", "dur": 0.0}  # quick-cut runs stay hard cuts
+            place_change = bool(k > 0 and c.get("city") and nxt.get("city") and c["city"] != nxt["city"])
+            # Inside a quick-cut run (burst on both sides); entering or leaving a run is a
+            # musical turning point and gets a real transition.
+            in_burst = bool(roles and roles[k] == "burst" and roles[k + 1] == "burst")
             next_len = cuts[k + 2] - cuts[k + 1]
-            trans["dur"] = _frame(min(trans["dur"], 0.5 * next_len, 0.5 * seg_len))
+            if rhythm:
+                edge = bool(roles and (roles[k] == "burst") != (roles[k + 1] == "burst"))
+                trans = _rhythm_transition(rhythm, cuts[k + 1], in_burst, place_change, used,
+                                           max_dur=0.5 * min(next_len, seg_len), edge=edge)
+            else:
+                trans = dict(style["location"] if place_change else style["cut"])
+                trans.setdefault("dur", 0.0)
+                if in_burst:
+                    trans = {"type": "cut", "dur": 0.0}
+                trans["dur"] = _frame(min(trans["dur"], 0.5 * next_len, 0.5 * seg_len))
+                trans["lead"] = 0.0
             if trans["type"] != "cut" and trans["dur"] < 2 / FPS:
-                trans = {"type": "cut", "dur": 0.0}
+                trans = {"type": "cut", "dur": 0.0, "lead": 0.0}
 
         seg = {"cid": c["cid"], "kind": c["kind"], "src": c["render_src"], "name": c["name"],
                "start": cuts[k], "dur": _frame(seg_len), "transition": trans,
-               "city": c.get("city"), "time": c["time"], "score": c["score"], "thumb": c["thumb"]}
-        need = seg_len + trans["dur"]
+               "city": c.get("city"), "time": c["time"], "score": c["score"], "thumb": c["thumb"],
+               "people": c.get("people"), "width": c.get("width"), "height": c.get("height")}
+        lead_in = segments[-1]["transition"]["lead"] if segments else 0.0
+        need = seg_len + trans["dur"] - trans["lead"] + lead_in
         if c["kind"] == "video":
             slack = max(0.0, c["max_dur"] - need)
             seg["in"] = round(c["in"] + slack / 2, 3)
