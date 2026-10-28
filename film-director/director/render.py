@@ -60,9 +60,15 @@ def _transition_len(seg: dict, last: bool) -> float:
 
 
 def _photo_filter(seg: dict, length: float, fw: int, fh: int) -> str:
-    w, h = Image.open(seg["src"]).size
+    img = Image.open(seg["src"])
+    w, h = img.size
     frames = max(1, round(length * FPS))
     motion = seg.get("motion", "zoom_in")
+    # Portrait photos in a wider frame: keep the upper part, where faces usually are.
+    ybias = 0.35 if h > 1.05 * w * fh / fw else 0.5
+    # Lift very dark photos (night shots) so they still read after the grade.
+    luma = sum(img.convert("L").resize((64, 64)).getdata()) / (64 * 64 * 255)
+    lift = ",eq=gamma=1.45:saturation=1.1" if luma < 0.18 else ",eq=gamma=1.2" if luma < 0.28 else ""
     if motion.startswith("pan"):
         # 10% overscan guarantees some travel even when the photo already matches the frame shape.
         scale = max(fw / w, fh / h) * 1.10
@@ -70,12 +76,12 @@ def _photo_filter(seg: dict, length: float, fw: int, fh: int) -> str:
         travel = min(sw - fw, round(0.18 * fw * length))  # gentle: ~200 px per second
         x0 = (sw - fw - travel) / 2
         x = f"{x0:.1f}+{travel}*t/{length:.4f}" if motion == "pan_lr" else f"{x0 + travel:.1f}-{travel}*t/{length:.4f}"
-        return (f"scale={sw}:{sh}:flags=lanczos,crop={fw}:{fh}:x='{x}':y='(ih-{fh})/2',"
+        return (f"scale={sw}:{sh}:flags=lanczos,crop={fw}:{fh}:x='{x}':y='(ih-{fh})*{ybias}'{lift},"
                 f"setsar=1,fps={FPS},format=yuv420p")
     z = f"1+0.10*on/{frames}" if motion == "zoom_in" else f"1.10-0.10*on/{frames}"
     # Work at 2x resolution so zoompan's integer positions do not jitter.
     return (f"scale={2 * fw}:{2 * fh}:force_original_aspect_ratio=increase:flags=lanczos,"
-            f"crop={2 * fw}:{2 * fh},"
+            f"crop={2 * fw}:{2 * fh}:(iw-ow)/2:(ih-oh)*{ybias}{lift},"
             f"zoompan=z='{z}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:s={fw}x{fh}:fps={FPS},"
             f"setsar=1,format=yuv420p")
 
@@ -106,13 +112,13 @@ def _film_title(cap: dict, i: int, work: Path, fh: int, alpha: str, a: float, b:
     title.write_text(cap["text"], encoding="utf-8")
     common = f"fontcolor={FILM_YELLOW}:x=(w-text_w)/2:enable='between(t,{a},{b})':alpha='{alpha}'"
     out.append(f"drawtext=fontfile={_q(FILM_TITLE_FONT)}:textfile={_q(title)}:fontsize={size}:"
-               f"y=(h-text_h)/2+{round(size * 0.18)}:shadowcolor=black@0.35:shadowx=2:shadowy=2:{common}")
+               f"y={cap.get('y', 0.5)}*h-text_h/2+{round(size * 0.18)}:shadowcolor=black@0.35:shadowx=2:shadowy=2:{common}")
     if cap.get("kicker"):
         kick = work / "captions" / f"cap{i}k.txt"
         kick.write_text("  ".join(" ".join(word) for word in cap["kicker"].split()), encoding="utf-8")
         ksize = round(fh * 0.034)
         out.append(f"drawtext=fontfile={_q(FILM_KICKER_FONT)}:textfile={_q(kick)}:fontsize={ksize}:"
-                   f"y=(h/2)-{round(size * 0.55)}-{ksize}:shadowcolor=black@0.5:shadowx=1:shadowy=1:{common}")
+                   f"y={cap.get('y', 0.5)}*h-{round(size * 0.55)}-{ksize}:shadowcolor=black@0.5:shadowx=1:shadowy=1:{common}")
     return out
 
 

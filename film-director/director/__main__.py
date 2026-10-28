@@ -43,7 +43,8 @@ def cmd_plan(a, cands=None) -> dict:
     music = analyze_music(str(Path(a.music).resolve()))
     _save(music, work / "music.json")
     print(f"  {music['tempo']} BPM, {len(music['beats'])} beats, {music['duration']:.1f}s")
-    plan = build_plan(cands, music, a.style, a.max_duration, a.title, captions=not a.no_captions)
+    plan = build_plan(cands, music, a.style, a.max_duration, a.title, captions=not a.no_captions,
+                      keep_order=a.keep_order)
     _save(plan, work / "plan.json")
     sb = storyboard(plan, work / "storyboard.jpg")
     print(f"  plan: {len(plan['segments'])} shots, {plan['duration']:.2f}s -> {work / 'plan.json'}")
@@ -76,6 +77,8 @@ def main() -> None:
             sp.add_argument("--style", default="balanced", help="punchy | balanced | cinematic")
             sp.add_argument("--title", help="opening title (default: place + month)")
             sp.add_argument("--no-captions", action="store_true")
+            sp.add_argument("--keep-order", action="store_true",
+                            help="keep shots in time order (no hook shot moved to the front)")
         sp.add_argument("--max-duration", type=float, default=MAX_DURATION, help="seconds, capped at 60")
         if render:
             sp.add_argument("--out", default="output/reel.mp4")

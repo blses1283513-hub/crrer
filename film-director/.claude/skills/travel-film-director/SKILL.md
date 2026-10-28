@@ -92,6 +92,10 @@ what a human editor would:
 - Any weak, ugly or repetitive shots? Too many from one clip?
 - Do the transitions suit the feel? Location changes get the flash/dip transition by design.
 
+Check that the title does not sit on top of busy detail in the opening shot (signs, logos,
+faces). If it does, set the title caption's `"y"` in `plan.json` (0 = top, 1 = bottom of the
+picture; default 0.5), e.g. `0.22` to move it into the sky.
+
 In the **film** style, also check that the long holds (opening, middle and last shot) carry
 the strongest, calmest shots, and that the quick-cut runs use lively shots. The title is two
 lines: pass `--title "DAYS IN|KYOTO"` to set both the small line and the big line.

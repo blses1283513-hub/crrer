@@ -155,7 +155,7 @@ def _auto_title(chosen: list[dict]) -> str:
 
 def build_plan(cands: list[dict], music: dict, style_name: str = "balanced",
                max_duration: float = MAX_DURATION, title: str | None = None,
-               min_duration: float = 8.0, captions: bool = True) -> dict:
+               min_duration: float = 8.0, captions: bool = True, keep_order: bool = False) -> dict:
     if style_name not in STYLES:
         raise SystemExit(f"Unknown style {style_name!r}; choose from {', '.join(STYLES)}")
     if not cands:
@@ -164,28 +164,37 @@ def build_plan(cands: list[dict], music: dict, style_name: str = "balanced",
     max_duration = min(max_duration, MAX_DURATION)
 
     usable = min(max_duration, music["duration"])
-    start = best_window(music, usable)
-    rel, energy = [], []
-    for b, e in zip(music["beats"], music["energy"]):
-        if start - 1e-3 <= b <= start + usable + 1e-3:
-            rel.append(b - start)
-            energy.append(e)
-    if not rel or rel[0] > 1e-3:
-        rel.insert(0, 0.0)
-        energy.insert(0, energy[0] if energy else 0.5)
-    downbeats = [d - start for d in music["downbeats"] if start <= d <= start + usable]
 
-    roles = None
-    if style.get("pacing") == "bursts":
-        accents = [o - start for o in music.get("onsets", []) if start <= o <= start + usable]
-        n_avail = len(_select(cands, len(cands)))
-        cuts, roles = _burst_grid(rel, accents, style, music["tempo"], usable, n_avail)
-    else:
+    def grid_from(start: float, window: float):
+        rel, energy = [], []
+        for b, e in zip(music["beats"], music["energy"]):
+            if start - 1e-3 <= b <= start + window + 1e-3:
+                rel.append(b - start)
+                energy.append(e)
+        if not rel or rel[0] > 1e-3:
+            rel.insert(0, 0.0)
+            energy.insert(0, energy[0] if energy else 0.5)
+        downbeats = [d - start for d in music["downbeats"] if start <= d <= start + window]
+        if style.get("pacing") == "bursts":
+            accents = [o - start for o in music.get("onsets", []) if start <= o <= start + window]
+            n_avail = len(_select(cands, len(cands)))
+            return _burst_grid(rel, accents, style, music["tempo"], window, n_avail)
         # Fewer shots than beats? Hold each one longer instead of making a 5-second film.
         for mult in (1, 2, 3, 4):
-            cuts = _cut_grid(rel, energy, downbeats, style, music["tempo"], usable, len(cands), mult)
-            if cuts[-1] >= min(min_duration, usable) * 0.95:
+            cuts = _cut_grid(rel, energy, downbeats, style, music["tempo"], window, len(cands), mult)
+            if cuts[-1] >= min(min_duration, window) * 0.95:
                 break
+        return cuts, None
+
+    # Pass 1 finds how long the film wants to be; pass 2 re-centres the music on the loudest
+    # section of that length, so a short film gets the chorus rather than the run-up to it.
+    start = best_window(music, usable)
+    cuts, roles = grid_from(start, usable)
+    if cuts[-1] < usable - 1.0:
+        start2 = best_window(music, cuts[-1] + 0.5)
+        if abs(start2 - start) > 0.05:
+            start = start2
+            cuts, roles = grid_from(start, min(usable, music["duration"] - start))
     cuts = [_frame(c) for c in cuts]
     n = len(cuts) - 1
     if n < 1:
@@ -198,10 +207,13 @@ def build_plan(cands: list[dict], music: dict, style_name: str = "balanced",
         roles = roles[: len(chosen) - 1] + ["end"] if roles else None
     n = len(chosen)
     cuts = cuts[: n + 1]
-    hook = max(chosen, key=lambda c: c["score"])
-    story = [hook] + sorted((c for c in chosen if c is not hook), key=lambda c: c["ts"])
-    if roles:
-        story = _fit_holds(story, roles, cuts)
+    if keep_order:  # the user's own sequence (capture time, or the order they set)
+        story = sorted(chosen, key=lambda c: c["ts"])
+    else:
+        hook = max(chosen, key=lambda c: c["score"])
+        story = [hook] + sorted((c for c in chosen if c is not hook), key=lambda c: c["ts"])
+        if roles:
+            story = _fit_holds(story, roles, cuts)
 
     segments = []
     accent_i = 0
@@ -256,7 +268,8 @@ def build_plan(cands: list[dict], music: dict, style_name: str = "balanced",
             main = (countries.most_common(1)[0][0] if len(cities) > 1 and countries
                     else cities.most_common(1)[0][0] if cities
                     else datetime.fromtimestamp(story[0]["ts"]).strftime("%B %Y"))
-        end = cuts[1] + 2.0
+        # Hold the title into the second shot, unless a quick-cut run follows the opener.
+        end = cuts[1] - 0.05 if roles and len(roles) > 1 and roles[1] == "burst" else cuts[1] + 2.0
         texts.append({"text": main.upper(), "kicker": kicker.upper(), "start": 0.8,
                       "end": round(max(2.5, min(6.0, end, total - 1.0)), 3), "kind": "title", "look": "film"})
     elif captions:
