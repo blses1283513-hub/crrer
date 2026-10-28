@@ -6,7 +6,8 @@ All times are seconds on the film's timeline, rounded to whole frames (1/30 s).
 {
   "version": 1,
   "style": "balanced",                 // informational
-  "canvas": {"width": 1080, "height": 1920, "fps": 30},
+  "canvas": {"width": 1080, "height": 1920, "fps": 30,
+             "frame": [1080, 720]},       // picture size; smaller than canvas = letterboxed (film style)
   "duration": 30.0,                    // film length; must equal last segment start + dur, <= 60
   "music": {
     "path": "/abs/path/music.wav",     // soundtrack file
@@ -15,6 +16,7 @@ All times are seconds on the film's timeline, rounded to whole frames (1/30 s).
   },
   "grade": "eq=contrast=1.04:saturation=1.10",  // any FFmpeg video filter chain, or ""
   "end_fade": 0.8,                     // fade to black at the end (s)
+  "audio_fade": 1.5,                   // music fade-out at the end (s)
   "segments": [
     {
       "cid": "m004s00",                // candidate id from analysis.json
@@ -33,7 +35,9 @@ All times are seconds on the film's timeline, rounded to whole frames (1/30 s).
   ],
   "captions": [
     {"text": "Taipei & Jiufen\nOct 2026", "start": 0.15, "end": 2.0, "kind": "title"},  // centered, large
-    {"text": "Jiufen", "start": 13.15, "end": 15.0, "kind": "place"}                    // lower third
+    {"text": "Jiufen", "start": 13.15, "end": 15.0, "kind": "place"},                   // lower third
+    // film style title: big yellow condensed text with a small spaced serif line above
+    {"text": "TAIWAN", "kicker": "DAYS IN", "start": 0.8, "end": 5.0, "kind": "title", "look": "film"}
   ]
 }
 ```

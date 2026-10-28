@@ -29,6 +29,9 @@ def analyze_music(path: str) -> dict:
     if energy.max() > energy.min():
         energy = (energy - energy.min()) / (energy.max() - energy.min())
 
+    # Musical accents (note and hit onsets); the "film" pacing snaps cuts to these, not a strict grid.
+    onsets = librosa.onset.onset_detect(onset_envelope=onset_env, sr=sr, units="time")
+
     return {
         "path": path,
         "duration": round(float(duration), 3),
@@ -36,6 +39,7 @@ def analyze_music(path: str) -> dict:
         "beats": [round(float(b), 3) for b in beats],
         "downbeats": [round(float(b), 3) for b in downbeats],
         "energy": [round(float(e), 3) for e in energy],
+        "onsets": [round(float(o), 3) for o in onsets],
     }
 
 

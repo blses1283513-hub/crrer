@@ -37,8 +37,10 @@ Or step by step: `analyze` → `plan` (then look at `work/storyboard.jpg` and ed
 | `punchy` | every 2 beats (4 when quiet) | hard cuts; punch-in, whip and flash on accents; white flash between places |
 | `balanced` | every 2–4 beats | hard cuts; crossfade, slide and zoom on accents; flash between places |
 | `cinematic` | every 4–8 beats | dissolves; dip to black between places |
+| `film` | bursts of ~1-beat cuts between 3–6 s holds; cuts snap to musical accents | hard cuts; short dissolve between places. 3:2 frame letterboxed in 9:16, teal/orange grade with grain, bold yellow title with a spaced serif kicker |
 
-Every cut lands on a detected beat. Shots get shorter when the music gets louder. The film opens
+In the beat styles, every cut lands on a detected beat (the `film` style snaps cuts to musical
+accents instead, like a hand edit). Shots get shorter when the music gets louder. The film opens
 on the highest-scoring shot as a hook, then follows the trip in time order. It ends on a downbeat
 with a fade.
 
@@ -61,6 +63,7 @@ with a fade.
 | `director/storyboard.py` | Contact sheet for approval |
 | `director/styles.json` | Editing styles (add your own) |
 | `reports/` | Research report on the tools chosen and why |
+| `assets/fonts/` | Anton and Crimson Text (SIL Open Font License) for the `film` title |
 | `requirements-ml.txt` | Optional: CLIP scene tags and beauty scores, beat_this downbeats (needs PyTorch) |
 
 ## Licensing notes

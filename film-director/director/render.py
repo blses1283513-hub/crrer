@@ -17,6 +17,11 @@ from PIL import Image
 
 from . import FPS, HEIGHT, WIDTH
 
+ASSET_FONTS = Path(__file__).resolve().parent.parent / "assets" / "fonts"
+FILM_TITLE_FONT = ASSET_FONTS / "Anton-Regular.ttf"        # bold condensed (OFL)
+FILM_KICKER_FONT = ASSET_FONTS / "CrimsonText-Regular.ttf"  # classic serif (OFL)
+FILM_YELLOW = "0xF2B21B"
+
 FONT_CANDIDATES = [
     "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
     "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
@@ -54,36 +59,38 @@ def _transition_len(seg: dict, last: bool) -> float:
     return 1 / FPS if t["type"] == "cut" or t["dur"] <= 0 else t["dur"]
 
 
-def _photo_filter(seg: dict, length: float) -> str:
+def _photo_filter(seg: dict, length: float, fw: int, fh: int) -> str:
     w, h = Image.open(seg["src"]).size
     frames = max(1, round(length * FPS))
     motion = seg.get("motion", "zoom_in")
     if motion.startswith("pan"):
-        scale = max(WIDTH / w, HEIGHT / h)
-        sw, sh = max(WIDTH, round(w * scale / 2) * 2), max(HEIGHT, round(h * scale / 2) * 2)
-        travel = min(sw - WIDTH, round(0.18 * WIDTH * length))  # gentle: ~200 px per second
-        x0 = (sw - WIDTH - travel) / 2
+        # 10% overscan guarantees some travel even when the photo already matches the frame shape.
+        scale = max(fw / w, fh / h) * 1.10
+        sw, sh = round(w * scale / 2) * 2, round(h * scale / 2) * 2
+        travel = min(sw - fw, round(0.18 * fw * length))  # gentle: ~200 px per second
+        x0 = (sw - fw - travel) / 2
         x = f"{x0:.1f}+{travel}*t/{length:.4f}" if motion == "pan_lr" else f"{x0 + travel:.1f}-{travel}*t/{length:.4f}"
-        return (f"scale={sw}:{sh}:flags=lanczos,crop={WIDTH}:{HEIGHT}:x='{x}':y='(ih-{HEIGHT})/2',"
+        return (f"scale={sw}:{sh}:flags=lanczos,crop={fw}:{fh}:x='{x}':y='(ih-{fh})/2',"
                 f"setsar=1,fps={FPS},format=yuv420p")
     z = f"1+0.10*on/{frames}" if motion == "zoom_in" else f"1.10-0.10*on/{frames}"
     # Work at 2x resolution so zoompan's integer positions do not jitter.
-    return (f"scale={2 * WIDTH}:{2 * HEIGHT}:force_original_aspect_ratio=increase:flags=lanczos,"
-            f"crop={2 * WIDTH}:{2 * HEIGHT},"
-            f"zoompan=z='{z}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:s={WIDTH}x{HEIGHT}:fps={FPS},"
+    return (f"scale={2 * fw}:{2 * fh}:force_original_aspect_ratio=increase:flags=lanczos,"
+            f"crop={2 * fw}:{2 * fh},"
+            f"zoompan=z='{z}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:s={fw}x{fh}:fps={FPS},"
             f"setsar=1,format=yuv420p")
 
 
-def render_segment(seg: dict, length: float, out: Path) -> None:
+def render_segment(seg: dict, length: float, out: Path, frame=(WIDTH, HEIGHT)) -> None:
+    fw, fh = frame
     frames = max(1, round(length * FPS))
     common = ["-an", "-c:v", "libx264", "-preset", "veryfast", "-crf", "17", "-pix_fmt", "yuv420p",
               "-r", str(FPS), "-video_track_timescale", str(FPS * 512), "-frames:v", str(frames), str(out)]
     if seg["kind"] == "photo":
         cmd = ["ffmpeg", "-y", "-v", "error", "-loop", "1", "-framerate", str(FPS), "-t", f"{length + 0.5:.3f}",
-               "-i", seg["src"], "-vf", _photo_filter(seg, length)] + common
+               "-i", seg["src"], "-vf", _photo_filter(seg, length, fw, fh)] + common
     else:
-        vf = (f"fps={FPS},scale={WIDTH}:{HEIGHT}:force_original_aspect_ratio=increase,"
-              f"crop={WIDTH}:{HEIGHT},setsar=1")
+        vf = (f"fps={FPS},scale={fw}:{fh}:force_original_aspect_ratio=increase,"
+              f"crop={fw}:{fh},setsar=1")
         # Pad generously with the last frame; -frames:v trims to the exact length.
         vf += f",tpad=stop_mode=clone:stop_duration={length:.3f},format=yuv420p"
         cmd = ["ffmpeg", "-y", "-v", "error", "-ss", f"{seg['in']:.3f}", "-i", seg["src"],
@@ -91,9 +98,28 @@ def render_segment(seg: dict, length: float, out: Path) -> None:
     _run(cmd)
 
 
+def _film_title(cap: dict, i: int, work: Path, fh: int, alpha: str, a: float, b: float) -> list[str]:
+    """Small letter-spaced serif kicker over a bold condensed yellow title (the reference look)."""
+    out = []
+    size = round(fh * 0.115)
+    title = work / "captions" / f"cap{i}.txt"
+    title.write_text(cap["text"], encoding="utf-8")
+    common = f"fontcolor={FILM_YELLOW}:x=(w-text_w)/2:enable='between(t,{a},{b})':alpha='{alpha}'"
+    out.append(f"drawtext=fontfile={_q(FILM_TITLE_FONT)}:textfile={_q(title)}:fontsize={size}:"
+               f"y=(h-text_h)/2+{round(size * 0.18)}:shadowcolor=black@0.35:shadowx=2:shadowy=2:{common}")
+    if cap.get("kicker"):
+        kick = work / "captions" / f"cap{i}k.txt"
+        kick.write_text("  ".join(" ".join(word) for word in cap["kicker"].split()), encoding="utf-8")
+        ksize = round(fh * 0.034)
+        out.append(f"drawtext=fontfile={_q(FILM_KICKER_FONT)}:textfile={_q(kick)}:fontsize={ksize}:"
+                   f"y=(h/2)-{round(size * 0.55)}-{ksize}:shadowcolor=black@0.5:shadowx=1:shadowy=1:{common}")
+    return out
+
+
 def _caption_filters(plan: dict, work: Path) -> list[str]:
     if not plan.get("captions"):
         return []
+    fh = plan["canvas"].get("frame", [WIDTH, HEIGHT])[1]
     font = _font()
     out = []
     for i, cap in enumerate(plan["captions"]):
@@ -103,6 +129,10 @@ def _caption_filters(plan: dict, work: Path) -> list[str]:
         a, b = cap["start"], cap["end"]
         fade = 0.25
         alpha = f"if(lt(t,{a}+{fade}),(t-{a})/{fade},if(gt(t,{b}-{fade}),({b}-t)/{fade},1))"
+        if cap.get("look") == "film":
+            slow = f"if(lt(t,{a}+0.5),(t-{a})/0.5,if(gt(t,{b}-0.5),({b}-t)/0.5,1))"
+            out += _film_title(cap, i, work, fh, slow, a, b)
+            continue
         if cap.get("kind") == "title":
             size, y = 92, "(h-text_h)/2-h*0.06"
         else:
@@ -122,12 +152,13 @@ def render(plan: dict, work: Path, out: Path, keep_segments: bool = False) -> Pa
     seg_dir.mkdir(parents=True, exist_ok=True)
     segs = plan["segments"]
     n = len(segs)
+    frame = tuple(plan["canvas"].get("frame", [WIDTH, HEIGHT]))
     files = []
     for k, seg in enumerate(segs):
         length = seg["dur"] + _transition_len(seg, k == n - 1)
         path = seg_dir / f"seg{k:03d}.mp4"
         print(f"  segment {k + 1}/{n}: {seg['name']} ({seg['kind']}, {length:.2f}s)")
-        render_segment(seg, length, path)
+        render_segment(seg, length, path, frame)
         files.append(path)
 
     total = plan["duration"]
@@ -143,12 +174,14 @@ def render(plan: dict, work: Path, out: Path, keep_segments: bool = False) -> Pa
 
     post = [f for f in [plan.get("grade")] if f]
     post += _caption_filters(plan, work)
+    if frame != (WIDTH, HEIGHT):  # letterbox the film frame inside the 9:16 canvas
+        post.append(f"pad={WIDTH}:{HEIGHT}:(ow-iw)/2:(oh-ih)/2:color=black")
     ef = plan.get("end_fade", 0.6)
     post += [f"fade=t=out:st={max(0, total - ef):.3f}:d={ef}", "format=yuv420p"]
     lines.append(f"[{prev}]" + ",".join(post) + "[vout]")
 
     music = plan["music"]
-    afade = min(1.5, total / 4)
+    afade = min(plan.get("audio_fade", 1.5), total / 4)
     lines.append(f"[{n}:a]atrim=start={music['start']:.3f}:duration={total:.3f},asetpts=PTS-STARTPTS,"
                  f"afade=t=in:d=0.05,afade=t=out:st={total - afade:.3f}:d={afade:.3f}[aout]")
     script = work / "filtergraph.txt"

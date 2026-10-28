@@ -27,8 +27,12 @@ Run every command below from the project folder with `.venv/bin/python -m direct
 
 Ask only what you can't infer; one short message is enough:
 - Where the media is (a folder; Google Drive files can be downloaded into one first).
-- Feel: **punchy** (fast cuts, flashes, punch-ins), **balanced** (default), or **cinematic**
-  (long holds, dissolves). If the user shares reference reels or describes a feel, map it to the
+- Feel: **punchy** (fast cuts, flashes, punch-ins), **balanced** (default), **cinematic**
+  (long holds, dissolves), or **film** (the user's own reference look: a 3:2 film frame
+  letterboxed inside 9:16, runs of quick cuts between long held shots, teal/orange film grade
+  with grain, and a bold yellow title under a small spaced serif line such as "DAYS IN").
+  Suggest **film** whenever the user asks for a cinematic, moody, "Perfect Days" or
+  movie-like feel. If the user shares reference reels or describes a feel, map it to the
   closest style and note any tweaks to make in the plan (step 5).
 - Length if they care (default: as long as the material supports, never over 60 s).
 - Opening title text, if they want something other than "Place · Month Year".
@@ -49,7 +53,8 @@ better than a slow 60 s one.
 ## 3. Choose the music (Epidemic Sound connector)
 
 The music sets the pacing, so choose it before planning. Target BPM by style:
-punchy 110–135, balanced 95–125, cinematic 70–100.
+punchy 110–135, balanced 95–125, cinematic 70–100, film 70–100 or 120–140 (mellow indie,
+lo-fi or soft piano with a clear pulse; its quick-cut runs need some rhythmic accents).
 
 1. `SearchRecordings` with `query.term` describing the trip's mood (e.g. "sunny island road trip
    upbeat", "rainy Tokyo night lo-fi"), `filter.bpm`, and `filter.vocals: false` (vocals fight
@@ -86,6 +91,10 @@ what a human editor would:
 - Does the order tell the trip (places in sequence, a satisfying last shot)?
 - Any weak, ugly or repetitive shots? Too many from one clip?
 - Do the transitions suit the feel? Location changes get the flash/dip transition by design.
+
+In the **film** style, also check that the long holds (opening, middle and last shot) carry
+the strongest, calmest shots, and that the quick-cut runs use lively shots. The title is two
+lines: pass `--title "DAYS IN|KYOTO"` to set both the small line and the big line.
 
 Show the storyboard to the user (send the image) with a two-line summary (length, shot count,
 music, style) and ask for changes before rendering. Rendering takes a minute or two; changing the
